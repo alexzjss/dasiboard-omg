@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.routes import auth, users, kanban, grades, events
+from app.db.session import init_db
 
 app = FastAPI(
     title="DaSIboard API",
@@ -18,6 +19,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
 
 app.include_router(auth.router,   prefix="/auth",   tags=["Auth"])
 app.include_router(users.router,  prefix="/users",  tags=["Users"])
