@@ -1,18 +1,14 @@
 # ⚙️ Configuração de Variáveis de Ambiente - DigitalOcean
 
-## 📌 Antes de Começar
+## 📌 PostgreSQL Only Setup
 
-Escolha sua configuração:
+A partir desta versão, o projeto usa **PostgreSQL apenas** para gerenciar tokens de autenticação.
 
-### **Opção 1: PostgreSQL + Redis** (Recomendado)
-- ⚡ Performance melhor
-- 🔄 Gerenciamento de tokens mais rápido
-- 🎯 Escalável para >100k tokens
-
-### **Opção 2: PostgreSQL Only** (Simplificado)
-- 💰 Apenas 1 banco de dados
-- 🟢 Suficiente para projetos pequenos/médios
-- 📖 Guia: [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md)
+**Mudanças implementadas:**
+- ✅ Redis removido completamente
+- ✅ Refresh tokens armazenados na tabela `RefreshToken` do Prisma
+- ✅ Limpeza automática de tokens expirados (a cada 1 hora)
+- ✅ Infraestrutura simplificada: apenas PostgreSQL necessário
 
 ---
 
@@ -46,26 +42,7 @@ Encrypt: ✅ SIM
 1. No DigitalOcean, crie um **Managed PostgreSQL Database** 15+
 2. Copie a connection string da aba **Connection** → **Connection String**
 
-#### 2. REDIS_URL *(Opcional - pule se usar PostgreSQL Only)*
-
-```
-Key:     REDIS_URL
-Value:   rediss://:password@redis-12345.db.ondigitalocean.com:25061
-Scope:   RUN_TIME
-Encrypt: ✅ SIM
-```
-
-**Como obter:**
-1. No DigitalOcean, crie **Managed Redis Database** (versão 7+)
-   - *Ou pule esta variável se preferir usar PostgreSQL only*
-2. Copie a connection string
-
-**⚠️ IMPORTANTE:**
-- Se NÃO vai usar Redis, continue sem adicionar esta variável
-- Se vai usar, adicione ela agora
-- Veja [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md) para remover Redis permanentemente
-
-#### 3. JWT_SECRET
+#### 2. JWT_SECRET
 ```
 Key:     JWT_SECRET
 Value:   a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6  (32 caracteres)
@@ -79,7 +56,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 Cole o resultado no campo "Value"
 
-#### 4. JWT_REFRESH_SECRET
+#### 3. JWT_REFRESH_SECRET
 ```
 Key:     JWT_REFRESH_SECRET
 Value:   x1y2z3a4b5c6d7e8f9g0h1i2j3k4l5m6  (32 caracteres diferentes)
@@ -92,7 +69,7 @@ Encrypt: ✅ SIM
 
 ### Variáveis Opcionais (mas recomendadas)
 
-#### 5. NODE_ENV
+#### 4. NODE_ENV
 ```
 Key:     NODE_ENV
 Value:   production
@@ -100,7 +77,7 @@ Scope:   RUN_AND_BUILD_TIME
 Encrypt: ❌ NÃO
 ```
 
-#### 6. PORT
+#### 5. PORT
 ```
 Key:     PORT
 Value:   8080
@@ -108,7 +85,7 @@ Scope:   RUN_TIME
 Encrypt: ❌ NÃO
 ```
 
-#### 7. CORS_ORIGIN
+#### 6. CORS_ORIGIN
 ```
 Key:     CORS_ORIGIN
 Value:   https://seu-dominio.com
@@ -117,7 +94,7 @@ Encrypt: ❌ NÃO
 ```
 (Ou deixe em branco para usar o padrão de desenvolvimento)
 
-#### 8. DO_SPACES_KEY (se usar upload de arquivos)
+#### 7. DO_SPACES_KEY (se usar upload de arquivos)
 ```
 Key:     DO_SPACES_KEY
 Value:   sua-chave-spaces
@@ -125,7 +102,7 @@ Scope:   RUN_TIME
 Encrypt: ✅ SIM
 ```
 
-#### 9. DO_SPACES_SECRET (se usar upload de arquivos)
+#### 8. DO_SPACES_SECRET (se usar upload de arquivos)
 ```
 Key:     DO_SPACES_SECRET
 Value:   seu-secret-spaces
@@ -162,13 +139,13 @@ Encrypt: ✅ SIM
 Antes de clicar em **Deploy**, verifique:
 
 - [ ] ✅ DATABASE_URL adicionada e encriptada
-- [ ] ✅ REDIS_URL adicionada e encriptada
 - [ ] ✅ JWT_SECRET adicionada e encriptada
 - [ ] ✅ JWT_REFRESH_SECRET adicionada e encriptada
 - [ ] ✅ NODE_ENV = production
 - [ ] ✅ PORT = 8080
 - [ ] ✅ CORS_ORIGIN preenchida com seu domínio
 - [ ] ✅ Nenhuma variável vazia ou com valores de exemplo
+- [ ] ✅ Redis NÃO configurado (removido nesta versão)
 
 ---
 

@@ -1,27 +1,32 @@
 # Deployment no DigitalOcean
 
-## Variáveis de Ambiente Obrigatórias
+## 🎯 Arquitetura Atual: PostgreSQL Only
 
-Antes de fazer o deploy no DigitalOcean, você precisa configurar as seguintes variáveis de ambiente:
+A partir desta versão, o projeto usa **apenas PostgreSQL** para gerenciar todos os dados, incluindo tokens de autenticação.
+
+**Benefícios:**
+- ✅ Infraestrutura simplificada
+- ✅ Apenas 1 banco de dados
+- ✅ Menor custo operacional
+- ✅ Gerenciamento de tokens automático (limpeza periódica)
+
+---
+
+## Variáveis de Ambiente Obrigatórias
 
 ### 1. **DATABASE_URL** (Obrigatório)
 - **O quê:** URL de conexão com o banco de dados PostgreSQL
-- **Exemplo:** `postgresql://user:password@host:5432/dasiboard_db`
-- **Como obter:** Use um banco PostgreSQL no DigitalOcean ou Managed Database
+- **Exemplo:** `postgresql://user:password@host:5432/dasiboard_db?sslmode=require`
+- **Como obter:** Use um banco PostgreSQL no DigitalOcean com Managed Database (v15+)
 
-### 2. **REDIS_URL** (Obrigatório)
-- **O quê:** URL de conexão com Redis (cache e sessions)
-- **Exemplo:** `redis://default:password@host:6379`
-- **Como obter:** Use o Redis gerenciado do DigitalOcean ou sua própria instância
-
-### 3. **JWT_SECRET** (Obrigatório)
+### 2. **JWT_SECRET** (Obrigatório)
 - **O quê:** Chave secreta para assinar JWT tokens
 - **Como gerar:**
   ```bash
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
   ```
 
-### 4. **JWT_REFRESH_SECRET** (Obrigatório)
+### 3. **JWT_REFRESH_SECRET** (Obrigatório)
 - **O quê:** Chave secreta para refresh tokens
 - **Como gerar:**
   ```bash
@@ -48,9 +53,7 @@ Se você gerencia a configuração via arquivo, edite o `app.yaml`:
 ```yaml
 envs:
   - key: DATABASE_URL
-    value: postgresql://user:password@host:5432/dasiboard_db
-  - key: REDIS_URL
-    value: redis://default:password@host:6379
+    value: postgresql://user:password@host:5432/dasiboard_db?sslmode=require
   - key: JWT_SECRET
     value: your-generated-secret-key-here
   - key: JWT_REFRESH_SECRET
@@ -63,21 +66,7 @@ envs:
 
 ## Passos Completos para Deploy
 
-**🎯 Escolha sua estratégia:**
-
-### ✅ **Opção 1: PostgreSQL + Redis (Recomendado)**
-Melhor performance, perfetto para escalabilidade
-
-### ✅ **Opção 2: PostgreSQL Only**
-Mais simples, 1 banco apenas. Veja [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md)
-
----
-
-## Configuração: PostgreSQL + Redis
-
-1. **Variáveis de Ambiente - Configuração no Console:**
-
-No DigitalOcean Console, para cada variável clique em **+ Add Variable** e configure:
+1. **Criar PostgreSQL Managed Database:**
 
 | Key | Value | Scope | Encrypt |
 |-----|-------|-------|---------|
