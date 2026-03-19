@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently \"pnpm --filter @dasiboard/api dev\" \"pnpm --filter @dasiboard/web dev\"",
     "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "start": "pnpm --filter @dasiboard/api start",
     "db:migrate": "pnpm --filter @dasiboard/api db:migrate",
     "db:generate": "pnpm --filter @dasiboard/api db:generate",
     "db:studio": "pnpm --filter @dasiboard/api db:studio"
