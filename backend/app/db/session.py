@@ -135,13 +135,23 @@ def get_pool():
 
 
 def init_db():
-    """Cria as tabelas se ainda não existirem. Chamado na startup do app."""
+    """Cria as tabelas se ainda não existirem.
+    Usa advisory lock para garantir que só um worker execute por vez."""
     pool = get_pool()
     conn = pool.getconn()
     try:
+        conn.autocommit = True
         with conn.cursor() as cur:
-            cur.execute(INIT_SQL)
-        conn.commit()
+            # Tenta adquirir lock exclusivo — outros workers aguardam
+            cur.execute("SELECT pg_advisory_lock(12345678)")
+            try:
+                cur.execute(INIT_SQL)
+            finally:
+                cur.execute("SELECT pg_advisory_unlock(12345678)")
+        conn.autocommit = False
+    except Exception:
+        conn.autocommit = False
+        raise
     finally:
         pool.putconn(conn)
 
