@@ -15,7 +15,7 @@ export const env = {
   PORT: parseInt(optionalEnv('PORT', '3000'), 10),
 
   DATABASE_URL: requireEnv('DATABASE_URL'),
-  REDIS_URL: requireEnv('REDIS_URL'),
+  REDIS_URL: optionalEnv('REDIS_URL', ''), // Opcional - PostgreSQL apenas
 
   JWT_SECRET: requireEnv('JWT_SECRET'),
   JWT_REFRESH_SECRET: requireEnv('JWT_REFRESH_SECRET'),

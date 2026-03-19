@@ -1,40 +1,78 @@
-import { Redis } from 'ioredis'
-import { env } from './env'
+import { prisma } from './prisma'
 
-export const redis = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: 3,
-  lazyConnect: true,
-  enableReadyCheck: true,
-})
+/**
+ * Salva um refresh token no banco com expiração
+ * @param userId ID do usuário
+ * @param token Token JWT
+ * @param ttlSeconds Tempo de vida em segundos (padrão: 7 dias)
+ */
+export async function setRefreshToken(
+  userId: string,
+  token: string,
+  ttlSeconds: number = 7 * 24 * 60 * 60
+): Promise<void> {
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 
-redis.on('error', (err) => {
-  console.error('❌ Redis error:', err)
-})
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Salva um refresh token no Redis com TTL em segundos */
-export async function setRefreshToken(userId: string, token: string, ttlSeconds: number) {
-  await redis.setex(`refresh:${token}`, ttlSeconds, userId)
+  await prisma.refreshToken.create({
+    data: {
+      token,
+      userId,
+      expiresAt,
+    },
+  })
 }
 
-/** Verifica se um refresh token é válido e retorna o userId */
+/**
+ * Recupera e valida um refresh token
+ * Retorna o userId se válido, null caso contrário
+ */
 export async function getRefreshToken(token: string): Promise<string | null> {
-  return redis.get(`refresh:${token}`)
-}
+  const record = await prisma.refreshToken.findUnique({
+    where: { token },
+  })
 
-/** Invalida um refresh token */
-export async function deleteRefreshToken(token: string) {
-  await redis.del(`refresh:${token}`)
-}
+  // Token não existe
+  if (!record) return null
 
-/** Invalida todos os refresh tokens de um usuário (logout de todos os devices) */
-export async function deleteAllUserRefreshTokens(userId: string) {
-  const keys = await redis.keys(`refresh:*`)
-  const pipeline = redis.pipeline()
-  for (const key of keys) {
-    const uid = await redis.get(key)
-    if (uid === userId) pipeline.del(key)
+  // Token expirado
+  if (record.expiresAt < new Date()) {
+    await deleteRefreshToken(token)
+    return null
   }
-  await pipeline.exec()
+
+  return record.userId
+}
+
+/**
+ * Deleta um refresh token específico (logout de um dispositivo)
+ */
+export async function deleteRefreshToken(token: string): Promise<void> {
+  await prisma.refreshToken.deleteMany({
+    where: { token },
+  })
+}
+
+/**
+ * Deleta todos os refresh tokens de um usuário (logout de todos os dispositivos)
+ */
+export async function deleteAllUserRefreshTokens(userId: string): Promise<void> {
+  await prisma.refreshToken.deleteMany({
+    where: { userId },
+  })
+}
+
+/**
+ * Limpa tokens expirados (executar periodicamente)
+ * Recomendado: a cada 1 hora
+ */
+export async function cleanupExpiredTokens(): Promise<number> {
+  const result = await prisma.refreshToken.deleteMany({
+    where: {
+      expiresAt: {
+        lt: new Date(),
+      },
+    },
+  })
+
+  return result.count
 }

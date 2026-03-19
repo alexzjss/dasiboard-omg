@@ -16,11 +16,6 @@ spec:
           scope: RUN_TIME
           value: ${db.connection_string}
         
-        # ─── Redis (Gerenciado) ──────────────────────────────────────
-        - key: REDIS_URL
-          scope: RUN_TIME
-          value: ${redis.connection_string}
-        
         # ─── JWT (Configure valores únicos) ──────────────────────────
         # Gere com: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
         - key: JWT_SECRET
