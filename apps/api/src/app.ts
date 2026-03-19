@@ -23,7 +23,7 @@ import entidadesRoutes from './routes/entidades'
 import toolsRoutes from './routes/tools'
 import challengesRoutes from './routes/challenges'
 
-const app = express()
+const app: express.Application = express()
 
 // ─── Security ─────────────────────────────────────────────────────────────────
 app.use(helmet())

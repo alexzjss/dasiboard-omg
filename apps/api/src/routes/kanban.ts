@@ -1,8 +1,11 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { kanbanService } from '../services/kanban.service'
 import { requireAuth } from '../middlewares/auth'
 import { KanbanColumn, KanbanTag } from '../utils/enums'
+
+const router: ExpressRouter = Router()
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -81,8 +84,6 @@ const controller = {
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-
-const router = Router()
 
 router.use(requireAuth) // todas as rotas do kanban exigem auth
 

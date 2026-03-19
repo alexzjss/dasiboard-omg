@@ -1,8 +1,11 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth, requireRole } from '../middlewares/auth'
 import { MaterialType } from '../utils/enums'
+
+const router: ExpressRouter = Router()
 
 const materialSchema = z.object({
   title: z.string().min(2),
@@ -14,8 +17,6 @@ const materialSchema = z.object({
   fileUrl: z.string().url().optional(),
   tags: z.array(z.string()).default([]),
 })
-
-const router = Router()
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {

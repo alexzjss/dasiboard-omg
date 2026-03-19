@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth, requireRole } from '../middlewares/auth'
+
+const router: ExpressRouter = Router()
 
 const docenteSchema = z.object({
   name: z.string().min(2),
@@ -13,8 +16,6 @@ const docenteSchema = z.object({
   site: z.string().url().optional(),
   active: z.boolean().default(true),
 })
-
-const router = Router()
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {

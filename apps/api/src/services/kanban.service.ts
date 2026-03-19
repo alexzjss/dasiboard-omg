@@ -76,7 +76,7 @@ export const kanbanService = {
       })
     }
 
-    await prisma.$transaction(updates)
+    await prisma.$transaction(updates as any)
   },
 
   async clearDone(userId: string) {

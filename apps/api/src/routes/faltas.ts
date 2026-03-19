@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth } from '../middlewares/auth'
+
+const router: ExpressRouter = Router()
 
 const absenceSchema = z.object({
   disciplineName: z.string().min(1),
@@ -34,7 +37,6 @@ const service = {
   },
 }
 
-const router = Router()
 router.use(requireAuth)
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {

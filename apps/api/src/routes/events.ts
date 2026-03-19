@@ -1,8 +1,9 @@
 import { Router } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { eventsController } from '../controllers/events.controller'
 import { requireAuth, requireRole, optionalAuth } from '../middlewares/auth'
 
-const router = Router()
+const router: ExpressRouter = Router()
 
 // Leitura pública (com auth opcional para filtros personalizados)
 router.get('/', optionalAuth, eventsController.list)

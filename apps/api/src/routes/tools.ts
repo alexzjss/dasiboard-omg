@@ -1,11 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth } from '../middlewares/auth'
 
 const toolKeySchema = z.enum(['notes', 'flashcards', 'checklist'])
 
-const router = Router()
+const router: ExpressRouter = Router()
 router.use(requireAuth)
 
 // GET /api/tools/:key  — busca dados de uma ferramenta

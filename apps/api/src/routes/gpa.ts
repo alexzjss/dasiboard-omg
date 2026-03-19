@@ -1,10 +1,13 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth } from '../middlewares/auth'
 import { Decimal } from '@prisma/client/runtime/library'
 
 // ─── Service ──────────────────────────────────────────────────────────────────
+
+const router: ExpressRouter = Router()
 
 const gpaService = {
   async getGrades(userId: string) {
@@ -92,7 +95,6 @@ const controller = {
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-const router = Router()
 router.use(requireAuth)
 
 router.get('/', controller.getGrades)

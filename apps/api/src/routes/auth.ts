@@ -1,8 +1,9 @@
 import { Router } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { authController } from '../controllers/auth.controller'
 import { requireAuth } from '../middlewares/auth'
 
-const router = Router()
+const router: ExpressRouter = Router()
 
 // POST /api/auth/register
 router.post('/register', authController.register)

@@ -1,9 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import vm from 'vm'
 import { prisma } from '../utils/prisma'
 import { requireAuth } from '../middlewares/auth'
 import { ChallengeLanguage } from '../utils/enums'
+
+const router: ExpressRouter = Router()
 
 // ─── Sandbox seguro via Node.js vm ────────────────────────────────────────────
 // Executa código JS do usuário em contexto isolado com timeout.
@@ -75,8 +78,6 @@ const submitSchema = z.object({
   code: z.string().min(1).max(10000),
 })
 
-const router = Router()
-
 router.get('/', (_req: Request, res: Response) => {
   const list = Object.values(CHALLENGES).map(({ testFn: _t, fnName: _f, ...c }) => c)
   res.json({ challenges: list })
@@ -126,7 +127,7 @@ router.post('/:id/submit', requireAuth, async (req: Request, res: Response, next
         lang,
         code,
         passed,
-        testResults,
+        testResults: { results: testResults } as any,
       },
     })
 

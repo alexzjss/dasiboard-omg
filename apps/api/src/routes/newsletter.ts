@@ -2,9 +2,12 @@
 // newsletter.ts
 // ============================================================
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth, requireRole } from '../middlewares/auth'
+
+const router: ExpressRouter = Router()
 
 const issueSchema = z.object({
   title: z.string().min(2),
@@ -13,8 +16,6 @@ const issueSchema = z.object({
   entidadeId: z.string().uuid().optional(),
   publishedAt: z.string().datetime().optional(),
 })
-
-const router = Router()
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import type { Router as ExpressRouter } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth, requireRole } from '../middlewares/auth'
+
+const router: ExpressRouter = Router()
 
 const entidadeSchema = z.object({
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/),
@@ -16,8 +19,6 @@ const entidadeSchema = z.object({
   links: z.array(z.object({ label: z.string(), url: z.string(), icon: z.string().optional() })).default([]),
   active: z.boolean().default(true),
 })
-
-const router = Router()
 
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
