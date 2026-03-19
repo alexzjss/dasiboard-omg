@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "description": "DaSIboard v2 — Dashboard acadêmico SI-USP (monorepo)",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
+    "dev": "concurrently \"pnpm --filter @dasiboard/api dev\" \"pnpm --filter @dasiboard/web dev\"",
     "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
     "db:migrate": "pnpm --filter @dasiboard/api db:migrate",
     "db:generate": "pnpm --filter @dasiboard/api db:generate",
@@ -18,8 +18,7 @@
     "concurrently": "^8.2.2"
   },
   "engines": {
-    "node": "20.x",
-    "pnpm": ">=8.0.0"
+    "node": "20.x"
   },
   "packageManager": "pnpm@8.15.9"
 }
