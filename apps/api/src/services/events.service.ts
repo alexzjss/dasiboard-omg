@@ -1,4 +1,4 @@
-import { EventStatus, EventType, Prisma } from '@prisma/client'
+import { EventStatus, EventType } from '../utils/enums'
 import { prisma } from '../utils/prisma'
 import { Errors } from '../utils/errors'
 
@@ -12,7 +12,7 @@ export interface EventFilters {
 
 export const eventsService = {
   async list(filters: EventFilters = {}) {
-    const where: Prisma.EventWhereInput = {}
+    const where: Record<string, unknown> = {}
 
     if (filters.status) {
       where.status = filters.status

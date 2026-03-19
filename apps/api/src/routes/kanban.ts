@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { kanbanService } from '../services/kanban.service'
 import { requireAuth } from '../middlewares/auth'
-import { KanbanColumn, KanbanTag } from '@prisma/client'
+import { KanbanColumn, KanbanTag } from '../utils/enums'
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 

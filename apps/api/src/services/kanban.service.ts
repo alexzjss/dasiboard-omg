@@ -1,4 +1,4 @@
-import { KanbanColumn, KanbanTag, Prisma } from '@prisma/client'
+import { KanbanColumn, KanbanTag } from '../utils/enums'
 import { prisma } from '../utils/prisma'
 
 export const kanbanService = {
@@ -10,9 +10,9 @@ export const kanbanService = {
     })
 
     return {
-      todo: cards.filter((c) => c.column === 'todo'),
-      doing: cards.filter((c) => c.column === 'doing'),
-      done: cards.filter((c) => c.column === 'done'),
+      todo: cards.filter((c: { column: string; [key: string]: unknown }) => c.column === 'todo'),
+      doing: cards.filter((c: { column: string; [key: string]: unknown }) => c.column === 'doing'),
+      done: cards.filter((c: { column: string; [key: string]: unknown }) => c.column === 'done'),
     }
   },
 
@@ -63,7 +63,7 @@ export const kanbanService = {
     doing: string[]
     done: string[]
   }) {
-    const updates: Prisma.PrismaPromise<unknown>[] = []
+    const updates: Promise<unknown>[] = []
 
     for (const [col, ids] of Object.entries(columns) as [KanbanColumn, string[]][]) {
       ids.forEach((id, position) => {

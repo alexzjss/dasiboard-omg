@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { prisma } from '../utils/prisma'
 import { requireAuth, requireRole } from '../middlewares/auth'
-import { MaterialType } from '@prisma/client'
+import { MaterialType } from '../utils/enums'
 
 const materialSchema = z.object({
   title: z.string().min(2),

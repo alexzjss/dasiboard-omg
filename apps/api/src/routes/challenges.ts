@@ -3,7 +3,7 @@ import { z } from 'zod'
 import vm from 'vm'
 import { prisma } from '../utils/prisma'
 import { requireAuth } from '../middlewares/auth'
-import { ChallengeLanguage } from '@prisma/client'
+import { ChallengeLanguage } from '../utils/enums'
 
 // ─── Sandbox seguro via Node.js vm ────────────────────────────────────────────
 // Executa código JS do usuário em contexto isolado com timeout.
@@ -90,7 +90,7 @@ router.get('/progress', requireAuth, async (req: Request, res: Response, next: N
       distinct: ['challengeId'],
     })
     const progress: Record<string, boolean> = {}
-    for (const s of subs) progress[s.challengeId] = s.passed
+    for (const s of subs) progress[s.challengeId as string] = s.passed as boolean
     res.json({ progress })
   } catch (err) { next(err) }
 })

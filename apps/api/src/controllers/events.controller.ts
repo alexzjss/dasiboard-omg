@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { eventsService } from '../services/events.service'
-import { EventType } from '@prisma/client'
+import { EventType } from '../utils/enums'
 
 const eventSchema = z.object({
   title: z.string().min(2).max(120),
