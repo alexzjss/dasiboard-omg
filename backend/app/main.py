@@ -19,11 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router,   prefix="/api/auth",   tags=["Auth"])
-app.include_router(users.router,  prefix="/api/users",  tags=["Users"])
-app.include_router(kanban.router, prefix="/api/kanban", tags=["Kanban"])
-app.include_router(grades.router, prefix="/api/grades", tags=["Grades"])
-app.include_router(events.router, prefix="/api/events", tags=["Events"])
+app.include_router(auth.router,   prefix="/auth",   tags=["Auth"])
+app.include_router(users.router,  prefix="/users",  tags=["Users"])
+app.include_router(kanban.router, prefix="/kanban", tags=["Kanban"])
+app.include_router(grades.router, prefix="/grades", tags=["Grades"])
+app.include_router(events.router, prefix="/events", tags=["Events"])
 
 
 @app.get("/health", tags=["Health"])
