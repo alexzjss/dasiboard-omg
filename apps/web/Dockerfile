@@ -1,7 +1,7 @@
 FROM node:20-alpine AS builder
-RUN npm install -g pnpm@8
+RUN npm install -g pnpm@8.15.9
 WORKDIR /app
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json ./apps/web/
 RUN pnpm install --frozen-lockfile --filter @dasiboard/web
 COPY apps/web ./apps/web

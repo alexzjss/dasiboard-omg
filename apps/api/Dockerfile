@@ -1,10 +1,10 @@
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@8
+RUN npm install -g pnpm@8.15.9
 
 # Dependencies
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile --filter @dasiboard/api
 
