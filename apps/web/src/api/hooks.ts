@@ -37,7 +37,7 @@ export interface Entidade {
 
 export interface StudyMaterial {
   id: string; title: string; type: string; area?: string
-  discipline?: string; author?: string; url?: string; tags: string[]
+  discipline?: string; author?: string; url?: string; fileUrl?: string; tags: string[]
 }
 
 export interface UserGrade {

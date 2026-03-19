@@ -7,7 +7,7 @@ export const api = axios.create({
 })
 
 // ─── Request interceptor — injeta o access token ──────────────────────────────
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
@@ -23,7 +23,7 @@ function processQueue(error: unknown, token: string | null = null) {
 }
 
 api.interceptors.response.use(
-  (res) => res,
+  (res: import('axios').AxiosResponse) => res,
   async (error: AxiosError) => {
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 

@@ -43,7 +43,7 @@ export default function Profile() {
             </div>
             <span style={{ fontSize:10, fontWeight:600, padding:'3px 8px', borderRadius:5, background:'rgba(124,58,237,.2)', color:'var(--primary)', letterSpacing:'.05em' }}>{user.role}</span>
           </div>
-          <Button variant="danger" onClick={logout} style={{ width:'100%', justifyContent:'center' }}>Encerrar sessão</Button>
+          <Button variant="danger" onClick={logout} className="btn-full">Encerrar sessão</Button>
         </Card>
 
         <Card>
@@ -70,7 +70,7 @@ export default function Profile() {
           </form>
         </Card>
       </div>
-      <style>{`@media(max-width:600px){div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}}`}</style>
+      <style>{`@media(max-width:600px){div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}} .btn-full{width:100%;justify-content:center;}`}</style>
     </div>
   )
 }
