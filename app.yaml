@@ -1,0 +1,74 @@
+name: dasiboard
+kind: App
+
+spec:
+  # Serviço HTTP: API
+  services:
+    - name: api
+      github:
+        repo: alexzjss/dasiboard-omg
+        branch: main
+      build_command: npm run build
+      run_command: npm run start
+      envs:
+        # ─── Database (Gerenciado) ───────────────────────────────────
+        - key: DATABASE_URL
+          scope: RUN_AND_BUILD_TIME
+          value: ${db.connection_string}
+        
+        # ─── Redis (Gerenciado) ──────────────────────────────────────
+        - key: REDIS_URL
+          scope: RUN_AND_BUILD_TIME
+          value: ${redis.connection_string}
+        
+        # ─── JWT (Configure valores únicos) ──────────────────────────
+        # Gere com: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+        - key: JWT_SECRET
+          scope: RUN_AND_BUILD_TIME
+          value: ${JWT_SECRET}
+        
+        - key: JWT_REFRESH_SECRET
+          scope: RUN_AND_BUILD_TIME
+          value: ${JWT_REFRESH_SECRET}
+        
+        # ─── Configuração da Aplicação (Opcional) ────────────────────
+        - key: NODE_ENV
+          value: production
+        
+        - key: PORT
+          value: "8080"
+        
+        - key: CORS_ORIGIN
+          value: https://seu-dominio.com
+        
+        # ─── DigitalOcean Spaces (Opcional - para upload arquivos) ────
+        - key: DO_SPACES_KEY
+          scope: RUN_TIME
+          value: ${DO_SPACES_KEY}
+        
+        - key: DO_SPACES_SECRET
+          scope: RUN_TIME
+          value: ${DO_SPACES_SECRET}
+        
+        - key: DO_SPACES_BUCKET
+          value: dasiboard
+        
+        - key: DO_SPACES_ENDPOINT
+          value: https://nyc3.digitaloceanspaces.com
+      
+      http_port: 8080
+      instance_count: 1
+      instance_size_slug: basic-xs
+      source_dir: apps/api
+  
+  # (Opcional) Banco de Dados PostgreSQL Gerenciado
+  databases:
+    - name: db
+      engine: PG
+      version: "15"
+      production: true
+  
+  # (Opcional) Redis Cache Gerenciado
+  redis:
+    - name: redis
+      version: "7"

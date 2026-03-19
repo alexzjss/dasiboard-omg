@@ -1,1 +1,41 @@
-node_modules
+# Dependencies
+node_modules/
+.pnpm-store/
+pnpm-debug.log
+
+# Environment variables (local only)
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+
+# Prisma
+/prisma/migrations/seed.ts
+generated/
