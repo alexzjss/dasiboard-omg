@@ -1,0 +1,209 @@
+/* DaSIboard v2 — Global Styles
+   Sistema de temas portado do original (9 dark + 9 light + modo leve)
+   Usa CSS custom properties para compatibilidade com Tailwind */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ─── Reset ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── Tema Padrão (dark) ─────────────────────────────────────────────────────── */
+:root, [data-theme="padrao"] {
+  --bg: #0b0b0f;
+  --bg2: #12121a;
+  --bg3: #1a1a26;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.10);
+  --text: #e8e8f0;
+  --text-muted: #8888aa;
+  --text-dim: #555570;
+  --primary: #7c3aed;
+  --primary-light: #a855f7;
+  --secondary: #6366f1;
+  --accent: #c084fc;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #38bdf8;
+  --sidebar-w: 240px;
+}
+
+/* ─── Tema Oceano ────────────────────────────────────────────────────────────── */
+[data-theme="oceano"] {
+  --bg: #050d1a; --bg2: #0a1628; --bg3: #0f2040;
+  --glass: rgba(56,189,248,0.05); --glass-border: rgba(56,189,248,0.12);
+  --border: rgba(56,189,248,0.15);
+  --text: #e0f2fe; --text-muted: #7dd3fc; --text-dim: #38607a;
+  --primary: #0ea5e9; --primary-light: #38bdf8; --secondary: #06b6d4;
+  --accent: #67e8f9; --success: #10b981; --warning: #f59e0b;
+  --danger: #f43f5e; --info: #a78bfa;
+}
+
+/* ─── Tema Floresta ──────────────────────────────────────────────────────────── */
+[data-theme="floresta"] {
+  --bg: #050f0a; --bg2: #0a1f12; --bg3: #0f2d1a;
+  --glass: rgba(34,197,94,0.05); --glass-border: rgba(34,197,94,0.12);
+  --border: rgba(34,197,94,0.15);
+  --text: #dcfce7; --text-muted: #86efac; --text-dim: #2d6a3f;
+  --primary: #16a34a; --primary-light: #22c55e; --secondary: #059669;
+  --accent: #4ade80; --success: #22c55e; --warning: #eab308;
+  --danger: #ef4444; --info: #38bdf8;
+}
+
+/* ─── Tema Crepúsculo ────────────────────────────────────────────────────────── */
+[data-theme="crepusculo"] {
+  --bg: #0f0a00; --bg2: #1a1200; --bg3: #261c00;
+  --glass: rgba(251,191,36,0.05); --glass-border: rgba(251,191,36,0.10);
+  --border: rgba(251,191,36,0.12);
+  --text: #fef9e7; --text-muted: #fcd34d; --text-dim: #7a6010;
+  --primary: #d97706; --primary-light: #f59e0b; --secondary: #b45309;
+  --accent: #fbbf24; --success: #22c55e; --warning: #f97316;
+  --danger: #ef4444; --info: #38bdf8;
+}
+
+/* ─── Tema Rosa ──────────────────────────────────────────────────────────────── */
+[data-theme="rosa"] {
+  --bg: #0f050d; --bg2: #1a0a18; --bg3: #260f24;
+  --glass: rgba(236,72,153,0.05); --glass-border: rgba(236,72,153,0.12);
+  --border: rgba(236,72,153,0.15);
+  --text: #fce7f3; --text-muted: #f9a8d4; --text-dim: #7a2050;
+  --primary: #db2777; --primary-light: #ec4899; --secondary: #be185d;
+  --accent: #f472b6; --success: #22c55e; --warning: #f59e0b;
+  --danger: #ef4444; --info: #38bdf8;
+}
+
+/* ─── Tema Cyberpunk ─────────────────────────────────────────────────────────── */
+[data-theme="cyberpunk"] {
+  --bg: #050010; --bg2: #0a0020; --bg3: #100030;
+  --glass: rgba(0,255,200,0.05); --glass-border: rgba(0,255,200,0.10);
+  --border: rgba(0,255,200,0.15);
+  --text: #e0fff8; --text-muted: #00ffc8; --text-dim: #006655;
+  --primary: #00e5ff; --primary-light: #18ffff; --secondary: #7c4dff;
+  --accent: #ff4081; --success: #00e676; --warning: #ffea00;
+  --danger: #ff1744; --info: #40c4ff;
+}
+
+/* ─── Tema Mono ──────────────────────────────────────────────────────────────── */
+[data-theme="mono"] {
+  --bg: #0a0a0a; --bg2: #141414; --bg3: #1e1e1e;
+  --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.10);
+  --text: #f0f0f0; --text-muted: #888888; --text-dim: #444444;
+  --primary: #ffffff; --primary-light: #cccccc; --secondary: #aaaaaa;
+  --accent: #666666; --success: #22c55e; --warning: #f59e0b;
+  --danger: #ef4444; --info: #38bdf8;
+}
+
+/* ─── Temas Light ────────────────────────────────────────────────────────────── */
+[data-theme="light"], [data-theme="light-padrao"] {
+  --bg: #f8f8fc; --bg2: #ffffff; --bg3: #f0f0f8;
+  --glass: rgba(0,0,0,0.02); --glass-border: rgba(0,0,0,0.08);
+  --border: rgba(0,0,0,0.10);
+  --text: #111118; --text-muted: #555570; --text-dim: #aaaacc;
+  --primary: #7c3aed; --primary-light: #a855f7; --secondary: #6366f1;
+  --accent: #c084fc; --success: #16a34a; --warning: #d97706;
+  --danger: #dc2626; --info: #0284c7;
+}
+
+[data-theme="light-oceano"] {
+  --bg: #f0f9ff; --bg2: #ffffff; --bg3: #e0f2fe;
+  --glass: rgba(0,0,0,0.02); --glass-border: rgba(14,165,233,0.15);
+  --border: rgba(14,165,233,0.20);
+  --text: #0c1a26; --text-muted: #0369a1; --text-dim: #7dd3fc;
+  --primary: #0284c7; --primary-light: #0ea5e9; --secondary: #0891b2;
+  --accent: #06b6d4; --success: #16a34a; --warning: #d97706;
+  --danger: #dc2626; --info: #7c3aed;
+}
+
+[data-theme="light-floresta"] {
+  --bg: #f0fdf4; --bg2: #ffffff; --bg3: #dcfce7;
+  --glass: rgba(0,0,0,0.02); --glass-border: rgba(22,163,74,0.15);
+  --border: rgba(22,163,74,0.20);
+  --text: #052e16; --text-muted: #15803d; --text-dim: #86efac;
+  --primary: #16a34a; --primary-light: #22c55e; --secondary: #059669;
+  --accent: #4ade80; --success: #16a34a; --warning: #d97706;
+  --danger: #dc2626; --info: #0284c7;
+}
+
+/* ─── Modo Leve (desativa animações e efeitos pesados) ──────────────────────── */
+[data-lite="1"] * {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+[data-lite="1"] .bg-orbs { display: none !important; }
+
+/* ─── Base styles ────────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* ─── Orbs background ────────────────────────────────────────────────────────── */
+.bg-orbs {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); opacity: 0.12;
+}
+.orb-1 { width: 600px; height: 600px; background: var(--primary); top: -200px; left: -200px; }
+.orb-2 { width: 500px; height: 500px; background: var(--secondary); bottom: -150px; right: -150px; }
+.orb-3 { width: 400px; height: 400px; background: var(--accent); top: 40%; left: 50%; transform: translate(-50%,-50%); opacity: 0.06; }
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ─── Focus ──────────────────────────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+/* ─── Animations ─────────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.anim-fade-up { animation: fadeUp 0.4s ease both; }
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.12s; }
+.stagger-3 { animation-delay: 0.20s; }
+
+/* ─── Spinner ────────────────────────────────────────────────────────────────── */
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.loading-center {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px; gap: 12px; color: var(--text-muted); font-size: 14px;
+}
+
+/* ─── Skip link ──────────────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute; top: -40px; left: 0; padding: 8px 16px;
+  background: var(--primary); color: white; text-decoration: none;
+  border-radius: 0 0 8px 0; z-index: 9999;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 0; }

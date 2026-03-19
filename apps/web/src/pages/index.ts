@@ -1,0 +1,17 @@
+// Re-exports de todas as páginas — facilita imports no App.tsx
+
+export { default as Home }        from './Home/Home'
+export { default as Calendar }    from './Calendar/Calendar'
+export { default as Schedule }    from './Schedule/Schedule'
+export { default as Kanban }      from './Kanban/Kanban'
+export { default as Newsletter }  from './Newsletter/Newsletter'
+export { default as Docentes }    from './Docentes/Docentes'
+export { default as Estudos }     from './Estudos/Estudos'
+export { default as NotasGPA }    from './NotasGPA/NotasGPA'
+export { default as Faltas }      from './Faltas/Faltas'
+export { default as Entidades }   from './Entidades/Entidades'
+export { default as Ferramentas } from './Ferramentas/Ferramentas'
+export { default as Desafios }    from './Desafios/Desafios'
+export { default as Login }       from './Login/Login'
+export { default as Signup }      from './Signup/Signup'
+export { default as Profile }     from './Profile/Profile'
