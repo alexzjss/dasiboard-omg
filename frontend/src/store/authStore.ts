@@ -7,6 +7,8 @@ interface User {
   full_name: string
   nusp?: string
   avatar_url?: string
+  is_verified?: boolean
+  created_at?: string
 }
 
 interface AuthState {
