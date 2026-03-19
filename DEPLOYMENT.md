@@ -63,11 +63,36 @@ envs:
 
 ## Passos Completos para Deploy
 
-1. **Certifique-se de que todas as variáveis obrigatórias estão configuradas**
-   - DATABASE_URL ✓
-   - REDIS_URL ✓
-   - JWT_SECRET ✓
-   - JWT_REFRESH_SECRET ✓
+1. **Variáveis de Ambiente - Configuração no Console:**
+
+No DigitalOcean Console, para cada variável clique em **+ Add Variable** e configure:
+
+| Key | Value | Scope | Encrypt |
+|-----|-------|-------|---------|
+| `DATABASE_URL` | `postgresql://user:pass@host:5432/db` | RUN_TIME | ✅ Sim |
+| `REDIS_URL` | `redis://default:pass@host:6379` | RUN_TIME | ✅ Sim |
+| `JWT_SECRET` | 32 chars aleatórios | RUN_AND_BUILD_TIME | ✅ Sim |
+| `JWT_REFRESH_SECRET` | 32 chars aleatórios | RUN_AND_BUILD_TIME | ✅ Sim |
+| `NODE_ENV` | `production` | RUN_AND_BUILD_TIME | ❌ Não |
+| `PORT` | `8080` | RUN_TIME | ❌ Não |
+| `CORS_ORIGIN` | `https://seu-dominio.com` | RUN_TIME | ❌ Não |
+| `DO_SPACES_KEY` | Sua chave Spaces | RUN_TIME | ✅ Sim |
+| `DO_SPACES_SECRET` | Seu secret Spaces | RUN_TIME | ✅ Sim |
+
+**Dicas de Configuração:**
+
+- **Scope**: 
+  - `RUN_AND_BUILD_TIME` = Afeta o build e execução (JWT, NODE_ENV)
+  - `RUN_TIME` = Apenas afeta execução (banco, redis, credenciais)
+
+- **Encrypt**: 
+  - ✅ **Ativar** para: senhas, tokens, secrets, chaves
+  - ❌ **Desativar** para: valores públicos (porta, ambiente)
+
+- **Gerar JWT Secrets**:
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ```
 
 2. **Faça o commit do arquivo `.env.example`:**
    ```bash
@@ -77,7 +102,7 @@ envs:
    ```
 
 3. **Trigger um novo deploy no DigitalOcean**
-   - Após configurar as variáveis, clique em **Deploy**
+   - Após configurar todas as variáveis, clique em **Deploy**
 
 ## Troubleshooting
 

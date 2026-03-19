@@ -13,12 +13,12 @@ spec:
       envs:
         # ─── Database (Gerenciado) ───────────────────────────────────
         - key: DATABASE_URL
-          scope: RUN_AND_BUILD_TIME
+          scope: RUN_TIME
           value: ${db.connection_string}
         
         # ─── Redis (Gerenciado) ──────────────────────────────────────
         - key: REDIS_URL
-          scope: RUN_AND_BUILD_TIME
+          scope: RUN_TIME
           value: ${redis.connection_string}
         
         # ─── JWT (Configure valores únicos) ──────────────────────────
@@ -31,17 +31,20 @@ spec:
           scope: RUN_AND_BUILD_TIME
           value: ${JWT_REFRESH_SECRET}
         
-        # ─── Configuração da Aplicação (Opcional) ────────────────────
+        # ─── Configuração da Aplicação ──────────────────────────────
         - key: NODE_ENV
+          scope: RUN_AND_BUILD_TIME
           value: production
         
         - key: PORT
+          scope: RUN_TIME
           value: "8080"
         
         - key: CORS_ORIGIN
+          scope: RUN_TIME
           value: https://seu-dominio.com
         
-        # ─── DigitalOcean Spaces (Opcional - para upload arquivos) ────
+        # ─── DigitalOcean Spaces (Opcional - arquivo upload) ──────────
         - key: DO_SPACES_KEY
           scope: RUN_TIME
           value: ${DO_SPACES_KEY}
@@ -51,9 +54,11 @@ spec:
           value: ${DO_SPACES_SECRET}
         
         - key: DO_SPACES_BUCKET
+          scope: RUN_TIME
           value: dasiboard
         
         - key: DO_SPACES_ENDPOINT
+          scope: RUN_TIME
           value: https://nyc3.digitaloceanspaces.com
       
       http_port: 8080

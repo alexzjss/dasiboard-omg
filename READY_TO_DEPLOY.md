@@ -54,16 +54,25 @@ Se for primeira vez, crie um novo app com:
 
 ### 3. **Adicione Variáveis de Ambiente** 🔑
 
-No console, vá para **Settings** → **Environment** → **Add Variable**:
+No console, vá para **Settings** → **Environment** → **+ Add Variable**
 
-| Variável | Valor | Como Gerar |
-|----------|-------|-----------|
-| `DATABASE_URL` | URL do Postgres | Use Managed Database do DO |
-| `REDIS_URL` | URL do Redis | Use Managed Cache do DO |
-| `JWT_SECRET` | 32 chars aleatórios | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `JWT_REFRESH_SECRET` | 32 chars aleatórios | Mesmo comando anterior |
-| `NODE_ENV` | `production` | Direto |
-| `CORS_ORIGIN` | `https://seu-dominio.com` | Seu domínio |
+Para **cada variável**, configure:
+
+| Key | Value | Scope | Encrypt | Descrição |
+|-----|-------|-------|---------|-----------|
+| `DATABASE_URL` | `postgresql://...` | RUN_TIME | ✅ Sim | PostgreSQL Managed DB |
+| `REDIS_URL` | `redis://...` | RUN_TIME | ✅ Sim | Redis Managed Cache |
+| `JWT_SECRET` | 32 chars aleatórios | RUN_AND_BUILD_TIME | ✅ Sim | Gere com: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `JWT_REFRESH_SECRET` | 32 chars aleatórios | RUN_AND_BUILD_TIME | ✅ Sim | Mesma geração do anterior |
+| `NODE_ENV` | `production` | RUN_AND_BUILD_TIME | ❌ Não | Ambiente de produção |
+| `PORT` | `8080` | RUN_TIME | ❌ Não | Porta HTTP |
+| `CORS_ORIGIN` | `https://seu-dominio.com` | RUN_TIME | ❌ Não | Domínio do frontend |
+
+**Configuração Rápida:**
+- **Encrypt = SIM** ✅ para: senhas, tokens, secrets
+- **Encrypt = NÃO** ❌ para: valores públicos
+- **Scope = RUN_AND_BUILD_TIME** para variáveis de build (JWT, NODE_ENV)
+- **Scope = RUN_TIME** para variáveis de runtime (banco, redis)
 
 ### 4. **Configure Banco de Dados**
 Se não tem ainda:
