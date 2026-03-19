@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { eventsService } from '../services/events.service'
-import { EventType } from '../utils/enums'
+import { EventStatus, EventType } from '../utils/enums'
 
 const eventSchema = z.object({
   title: z.string().min(2).max(120),
@@ -44,7 +44,7 @@ export const eventsController = {
         ...data,
         date: new Date(data.date),
         createdById: req.user?.sub,
-        status: 'published', // admin cria direto como publicado
+        status: EventStatus.published, // admin cria direto como publicado
       })
       res.status(201).json({ event })
     } catch (err) {
@@ -59,7 +59,7 @@ export const eventsController = {
         ...data,
         date: new Date(data.date),
         createdById: req.user?.sub,
-        status: 'pending', // usuário comum: aguarda aprovação
+        status: EventStatus.pending, // usuário comum: aguarda aprovação
       })
       res.status(201).json({ event, message: 'Evento enviado para aprovação' })
     } catch (err) {

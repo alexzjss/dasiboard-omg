@@ -9,7 +9,7 @@ import { KanbanColumn, KanbanTag } from '../utils/enums'
 const createCardSchema = z.object({
   title: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
-  column: z.nativeEnum(KanbanColumn).default('todo'),
+  column: z.nativeEnum(KanbanColumn).default(KanbanColumn.todo),
   tag: z.nativeEnum(KanbanTag).optional(),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 })
