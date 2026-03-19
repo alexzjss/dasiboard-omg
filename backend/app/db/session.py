@@ -101,12 +101,12 @@ CREATE INDEX IF NOT EXISTS idx_events_owner    ON events (owner_id);
 CREATE INDEX IF NOT EXISTS idx_events_start_at ON events (start_at);
 
 CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS \$\$
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-\$\$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE TRIGGER trg_users_updated_at
     BEFORE UPDATE ON users
