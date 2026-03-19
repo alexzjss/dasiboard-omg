@@ -63,6 +63,18 @@ envs:
 
 ## Passos Completos para Deploy
 
+**🎯 Escolha sua estratégia:**
+
+### ✅ **Opção 1: PostgreSQL + Redis (Recomendado)**
+Melhor performance, perfetto para escalabilidade
+
+### ✅ **Opção 2: PostgreSQL Only**
+Mais simples, 1 banco apenas. Veja [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md)
+
+---
+
+## Configuração: PostgreSQL + Redis
+
 1. **Variáveis de Ambiente - Configuração no Console:**
 
 No DigitalOcean Console, para cada variável clique em **+ Add Variable** e configure:

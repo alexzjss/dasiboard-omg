@@ -1,5 +1,21 @@
 # ⚙️ Configuração de Variáveis de Ambiente - DigitalOcean
 
+## 📌 Antes de Começar
+
+Escolha sua configuração:
+
+### **Opção 1: PostgreSQL + Redis** (Recomendado)
+- ⚡ Performance melhor
+- 🔄 Gerenciamento de tokens mais rápido
+- 🎯 Escalável para >100k tokens
+
+### **Opção 2: PostgreSQL Only** (Simplificado)
+- 💰 Apenas 1 banco de dados
+- 🟢 Suficiente para projetos pequenos/médios
+- 📖 Guia: [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md)
+
+---
+
 ## Passo-a-Passo Visual
 
 ### 1️⃣ Acesse o Console
@@ -30,16 +46,24 @@ Encrypt: ✅ SIM
 1. No DigitalOcean, crie um **Managed PostgreSQL Database** 15+
 2. Copie a connection string da aba **Connection** → **Connection String**
 
-#### 2. REDIS_URL
+#### 2. REDIS_URL *(Opcional - pule se usar PostgreSQL Only)*
+
 ```
 Key:     REDIS_URL
 Value:   rediss://:password@redis-12345.db.ondigitalocean.com:25061
 Scope:   RUN_TIME
 Encrypt: ✅ SIM
 ```
+
 **Como obter:**
-1. No DigitalOcean, crie **Managed Redis Database**
+1. No DigitalOcean, crie **Managed Redis Database** (versão 7+)
+   - *Ou pule esta variável se preferir usar PostgreSQL only*
 2. Copie a connection string
+
+**⚠️ IMPORTANTE:**
+- Se NÃO vai usar Redis, continue sem adicionar esta variável
+- Se vai usar, adicione ela agora
+- Veja [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md) para remover Redis permanentemente
 
 #### 3. JWT_SECRET
 ```

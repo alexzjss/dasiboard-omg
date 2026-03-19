@@ -74,19 +74,40 @@ Para **cada variável**, configure:
 - **Scope = RUN_AND_BUILD_TIME** para variáveis de build (JWT, NODE_ENV)
 - **Scope = RUN_TIME** para variáveis de runtime (banco, redis)
 
-### 4. **Configure Banco de Dados**
-Se não tem ainda:
-1. Vá para **Components** · Clique **+ Add** · Selecione **Database**
-2. Escolha **PostgreSQL** versão 15+
-3. Conecte ao app
+**⚠️ IMPORTANTE - Escolha uma opção:**
 
-### 5. **Configure Cache/Sessions**
-1. Vá para **Components** · Clique **+ Add** · Selecione **Redis**
-2. Versão 7+ recomendado
-3. Conecte ao app
+### 4️⃣ **Opção A: PostgreSQL + Redis** (Recomendado)
 
-### 6. **Deploy**
-Clique em **Deploy** no console
+1. Configure Banco de Dados:
+   - Vá para **Components** · **+ Add** · **Database**
+   - Escolha **PostgreSQL** versão 15+
+   - Conecte ao app
+
+2. Configure Redis Cache:
+   - Vá para **Components** · **+ Add** · **Redis**
+   - Versão 7+ recomendado
+   - Conecte ao app
+
+3. Deploy clicando em **Deploy**
+
+### 4️⃣ **Opção B: PostgreSQL Only** (Simplificado)
+
+1. Configure apenas o banco:
+   - Vá para **Components** · **+ Add** · **Database**
+   - Escolha **PostgreSQL** versão 15+
+
+2. **Remova REDIS_URL** das variáveis de ambiente
+
+3. Depois, refatore o código:
+   - Siga o guia em [POSTGRESQL_ONLY.md](POSTGRESQL_ONLY.md)
+
+4. Deploy
+
+---
+
+**Qual escolher?**
+- 🚀 **PostgreSQL + Redis** = Melhor performance, escalável
+- 💰 **PostgreSQL Only** = Mais simples, menos custo
 
 ---
 
