@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sidebar-w: 240px;
+    --topbar-h: 60px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* ── Cards ─────────────────────────────────── */
+  .card {
+    @apply bg-slate-900 border border-slate-800 rounded-2xl p-5;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:border-brand-600/50 hover:shadow-lg hover:shadow-brand-950/40;
+  }
+
+  /* ── Buttons ───────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-500 active:scale-95 shadow-lg shadow-brand-900/40;
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-400 hover:text-slate-100 hover:bg-slate-800;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-600/30;
+  }
+
+  /* ── Inputs ────────────────────────────────── */
+  .input {
+    @apply w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500
+           focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider;
+  }
+
+  /* ── Badge ─────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* ── Scrollbar ─────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-slate-600; }
+}
+
+/* ── Animations ────────────────────────────────── */
+.animate-in {
+  animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Kanban drag ghost ─────────────────────────── */
+.dragging {
+  opacity: 0.4;
+  transform: rotate(2deg);
+}
