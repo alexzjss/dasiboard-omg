@@ -100,6 +100,27 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_owner    ON events (owner_id);
 CREATE INDEX IF NOT EXISTS idx_events_start_at ON events (start_at);
 
+CREATE TABLE IF NOT EXISTS global_events (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    title       VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_type  VARCHAR(20) NOT NULL DEFAULT 'academic'
+                    CHECK (event_type IN ('academic', 'personal', 'deadline', 'exam', 'work')),
+    start_at    TIMESTAMPTZ NOT NULL,
+    end_at      TIMESTAMPTZ,
+    all_day     BOOLEAN     NOT NULL DEFAULT FALSE,
+    color       VARCHAR(7)  NOT NULL DEFAULT '#8B5CF6',
+    location    VARCHAR(255),
+    class_code  VARCHAR(30),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_global_events_start ON global_events (start_at);
+
+ALTER TABLE events ADD COLUMN IF NOT EXISTS class_code VARCHAR(30);
+ALTER TABLE events DROP CONSTRAINT IF EXISTS events_event_type_check;
+ALTER TABLE events ADD CONSTRAINT events_event_type_check
+    CHECK (event_type IN ('academic', 'personal', 'deadline', 'exam', 'work'));
+
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
