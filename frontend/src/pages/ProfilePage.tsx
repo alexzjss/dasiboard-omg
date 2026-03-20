@@ -312,7 +312,7 @@ export default function ProfilePage() {
   const initials = user.full_name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
+    <div className="p-4 md:p-8 max-w-2xl mx-auto">
       <h1 className="font-display text-2xl font-bold mb-8 flex items-center gap-2 animate-in"
           style={{ color: 'var(--text-primary)' }}>
         <User size={22} style={{ color: 'var(--accent-3)' }} /> Perfil
