@@ -69,10 +69,10 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
 
       {/* ── Hero header ──────────────────────────── */}
-      <div className="relative mb-8 overflow-hidden rounded-2xl p-7 animate-in"
+      <div className="relative mb-8 overflow-hidden rounded-2xl p-5 md:p-7 animate-in"
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
@@ -88,7 +88,7 @@ export default function DashboardPage() {
                style={{ color: 'var(--text-muted)' }}>
               {format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
-            <h1 className="font-display text-3xl font-bold animate-in-delay-2"
+            <h1 className="font-display text-2xl md:text-3xl font-bold animate-in-delay-2"
                 style={{ color: 'var(--text-primary)' }}>
               {greeting}, {firstName} 👋
             </h1>
