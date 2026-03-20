@@ -103,11 +103,30 @@ CREATE TABLE IF NOT EXISTS events (
     all_day     BOOLEAN     NOT NULL DEFAULT FALSE,
     color       VARCHAR(7)  NOT NULL DEFAULT '#10B981',
     location    VARCHAR(255),
+    class_code  VARCHAR(20),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_owner    ON events (owner_id);
 CREATE INDEX IF NOT EXISTS idx_events_start_at ON events (start_at);
+
+-- ── Global Events (visíveis para todos) ────────────────────
+CREATE TABLE IF NOT EXISTS global_events (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    title       VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_type  VARCHAR(20) NOT NULL DEFAULT 'academic'
+                    CHECK (event_type IN ('academic', 'personal', 'deadline', 'exam')),
+    start_at    TIMESTAMPTZ NOT NULL,
+    end_at      TIMESTAMPTZ,
+    all_day     BOOLEAN     NOT NULL DEFAULT FALSE,
+    color       VARCHAR(7)  NOT NULL DEFAULT '#4d67f5',
+    location    VARCHAR(255),
+    class_code  VARCHAR(20),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_global_events_start_at ON global_events (start_at);
 
 -- ── Trigger: updated_at automático ────────────────────────
 CREATE OR REPLACE FUNCTION set_updated_at()

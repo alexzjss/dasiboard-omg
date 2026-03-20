@@ -56,6 +56,7 @@ class CardCreate(BaseModel):
     priority: str = "medium"
     due_date: Optional[datetime] = None
     position: int = 0
+    column_id: Optional[UUID] = None
 
 
 class CardOut(BaseModel):

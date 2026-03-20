@@ -84,9 +84,10 @@ def update_card(card_id: str, body: CardCreate, db: RealDictCursor = Depends(get
         raise HTTPException(404, "Card não encontrado")
     db.execute(
         """UPDATE kanban_cards
-           SET title=%s, description=%s, priority=%s, due_date=%s, position=%s
+           SET title=%s, description=%s, priority=%s, due_date=%s, position=%s, column_id=COALESCE(%s, column_id)
            WHERE id=%s RETURNING *""",
-        (body.title, body.description, body.priority, body.due_date, body.position, card_id),
+        (body.title, body.description, body.priority, body.due_date, body.position,
+         str(body.column_id) if body.column_id else None, card_id),
     )
     return db.fetchone()
 

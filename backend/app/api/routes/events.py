@@ -26,8 +26,19 @@ def list_events(
     db: RealDictCursor = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    personal_q = "SELECT *, FALSE AS is_global FROM events WHERE owner_id = %s"
-    global_q   = "SELECT *, TRUE AS is_global FROM global_events WHERE 1=1"
+    # Use explicit column list so both queries have the same shape regardless of table differences
+    personal_q = (
+        "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
+        "all_day, color, location, created_at, "
+        "NULL::varchar AS class_code, FALSE AS is_global "
+        "FROM events WHERE owner_id = %s"
+    )
+    global_q = (
+        "SELECT id, NULL::uuid AS owner_id, title, description, event_type, start_at, end_at, "
+        "all_day, color, location, created_at, "
+        "class_code, TRUE AS is_global "
+        "FROM global_events WHERE 1=1"
+    )
     p_params = [str(user["id"])]
     g_params: list = []
 

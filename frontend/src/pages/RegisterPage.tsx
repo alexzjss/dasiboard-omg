@@ -36,23 +36,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8">
+    <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundColor: 'var(--bg-base)' }}>
       <div className="w-full max-w-sm animate-in">
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+               style={{ background: 'var(--gradient-btn)' }}>
             <GraduationCap size={15} className="text-white" />
           </div>
-          <span className="font-display font-bold text-white">DaSIboard</span>
+          <span className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>DaSIboard</span>
         </div>
 
-        <h2 className="font-display text-2xl font-bold text-white mb-1">Criar conta</h2>
-        <p className="text-slate-400 text-sm mb-8">Apenas alunos com e-mail @usp.br</p>
+        <h2 className="font-display text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Criar conta</h2>
+        <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Apenas alunos com e-mail @usp.br</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label">Nome completo</label>
             <div className="relative">
-              <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input type="text" className="input pl-10" placeholder="Seu nome" value={form.full_name} onChange={set('full_name')} required />
             </div>
           </div>
@@ -60,15 +61,15 @@ export default function RegisterPage() {
           <div>
             <label className="label">E-mail USP</label>
             <div className="relative">
-              <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input type="email" className="input pl-10" placeholder="seunome@usp.br" value={form.email} onChange={set('email')} required />
             </div>
           </div>
 
           <div>
-            <label className="label">Nº USP <span className="normal-case text-slate-600">(opcional)</span></label>
+            <label className="label">Nº USP <span className="normal-case" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
             <div className="relative">
-              <Hash size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Hash size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input type="text" className="input pl-10" placeholder="12345678" value={form.nusp} onChange={set('nusp')} />
             </div>
           </div>
@@ -76,7 +77,7 @@ export default function RegisterPage() {
           <div>
             <label className="label">Senha</label>
             <div className="relative">
-              <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input
                 type={show ? 'text' : 'password'}
                 className="input pl-10 pr-10"
@@ -85,7 +86,11 @@ export default function RegisterPage() {
                 onChange={set('password')}
                 required
               />
-              <button type="button" onClick={() => setShow(!show)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+              <button type="button" onClick={() => setShow(!show)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
+                      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
                 {show ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
@@ -96,9 +101,13 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-slate-500 text-sm text-center mt-6">
+        <p className="text-sm text-center mt-6" style={{ color: 'var(--text-muted)' }}>
           Já tem conta?{' '}
-          <Link to="/login" className="text-brand-400 hover:text-brand-300 font-medium">Entrar</Link>
+          <Link to="/login" className="font-medium transition-colors" style={{ color: 'var(--accent-3)' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.75')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}>
+            Entrar
+          </Link>
         </p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, BookOpen, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, BookOpen, TrendingUp, ChevronDown, ChevronRight, Award } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import clsx from 'clsx'
@@ -13,15 +13,25 @@ function weightedAvg(grades: Grade[]) {
   return grades.reduce((a, g) => a + (g.value / g.max_value) * 10 * g.weight, 0) / totalWeight
 }
 
+function GradeBar({ value, max }: { value: number; max: number }) {
+  const pct = Math.min(100, (value / max) * 100)
+  const color = pct >= 70 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444'
+  return (
+    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+    </div>
+  )
+}
+
 function SubjectCard({ subject, onDelete, onAddGrade, onDeleteGrade }: {
   subject: Subject
   onDelete: () => void
   onAddGrade: (subjectId: string, grade: Partial<Grade>) => void
   onDeleteGrade: (subjectId: string, gradeId: string) => void
 }) {
-  const [open, setOpen]         = useState(false)
-  const [adding, setAdding]     = useState(false)
-  const [form, setForm]         = useState({ label: '', value: '', weight: '1', max_value: '10' })
+  const [open, setOpen]     = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [form, setForm]     = useState({ label: '', value: '', weight: '1', max_value: '10' })
 
   const avg = weightedAvg(subject.grades)
   const passFail = avg === null ? null : avg >= 5
@@ -39,78 +49,106 @@ function SubjectCard({ subject, onDelete, onAddGrade, onDeleteGrade }: {
   }
 
   return (
-    <div className="card">
+    <div className="card transition-all" style={{ borderLeft: `3px solid ${subject.color}` }}>
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-slate-500">{subject.code}</span>
-            <span className="text-xs text-slate-600">·</span>
-            <span className="text-xs text-slate-500">{subject.semester}</span>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded"
+                  style={{ background: subject.color + '22', color: subject.color }}>
+              {subject.code}
+            </span>
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{subject.semester}</span>
           </div>
-          <h3 className="font-display font-bold text-white truncate">{subject.name}</h3>
-          {subject.professor && <p className="text-xs text-slate-500 mt-0.5">{subject.professor}</p>}
+          <h3 className="font-display font-bold truncate" style={{ color: 'var(--text-primary)' }}>{subject.name}</h3>
+          {subject.professor && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>👤 {subject.professor}</p>
+          )}
         </div>
 
         {/* Average badge */}
-        <div className={clsx(
-          'px-3 py-1.5 rounded-xl text-center min-w-[56px]',
-          avg === null ? 'bg-slate-800' :
-          passFail ? 'bg-emerald-900/40 border border-emerald-700/40' : 'bg-red-900/40 border border-red-700/40'
-        )}>
-          <p className={clsx('font-display font-bold text-lg leading-none',
-            avg === null ? 'text-slate-600' : passFail ? 'text-emerald-400' : 'text-red-400'
-          )}>
+        <div className="px-3 py-2 rounded-xl text-center min-w-[60px]"
+             style={{
+               background: avg === null ? 'var(--bg-elevated)' :
+                 passFail ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+               border: `1px solid ${avg === null ? 'var(--border)' : passFail ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+             }}>
+          <p className="font-display font-bold text-xl leading-none"
+             style={{ color: avg === null ? 'var(--text-muted)' : passFail ? '#22c55e' : '#ef4444' }}>
             {avg !== null ? avg.toFixed(1) : '—'}
           </p>
-          <p className="text-[9px] text-slate-600 mt-0.5">média</p>
+          <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>média</p>
         </div>
 
-        <button onClick={() => setOpen(!open)} className="text-slate-600 hover:text-slate-400 transition-colors">
+        <button onClick={() => setOpen(!open)} className="transition-colors p-1"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
           {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
-        <button onClick={onDelete} className="text-slate-700 hover:text-red-400 transition-colors">
+        <button onClick={onDelete} className="transition-colors p-1"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
           <Trash2 size={14} />
         </button>
       </div>
 
       {/* Grades list */}
       {open && (
-        <div className="mt-4 border-t border-slate-800 pt-4 space-y-2 animate-in">
+        <div className="mt-4 pt-4 space-y-2 animate-in" style={{ borderTop: '1px solid var(--border)' }}>
           {subject.grades.length === 0 && (
-            <p className="text-xs text-slate-600 text-center py-2">Nenhuma nota cadastrada</p>
+            <p className="text-xs text-center py-3" style={{ color: 'var(--text-muted)' }}>
+              Nenhuma nota cadastrada
+            </p>
           )}
           {subject.grades.map((g) => (
-            <div key={g.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-800/50 group">
-              <div className="flex-1">
-                <span className="text-sm text-slate-300 font-medium">{g.label}</span>
-                {g.notes && <p className="text-xs text-slate-600">{g.notes}</p>}
+            <div key={g.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl group transition-all"
+                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{g.label}</span>
+                {g.notes && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{g.notes}</p>}
               </div>
-              <span className="text-xs text-slate-500">peso {g.weight}</span>
-              <span className="font-mono font-bold text-sm text-white">{g.value}/{g.max_value}</span>
+              <span className="text-[11px] px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+                ×{g.weight}
+              </span>
+              <GradeBar value={g.value} max={g.max_value} />
+              <span className="font-mono font-bold text-sm w-14 text-right" style={{ color: 'var(--text-primary)' }}>
+                {g.value}<span style={{ color: 'var(--text-muted)' }}>/{g.max_value}</span>
+              </span>
               <button
                 onClick={() => onDeleteGrade(subject.id, g.id)}
-                className="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-red-400 transition-all"
-              >
+                className="opacity-0 group-hover:opacity-100 transition-all"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
                 <Trash2 size={12} />
               </button>
             </div>
           ))}
 
           {adding ? (
-            <div className="grid grid-cols-2 gap-2 mt-3">
-              <input className="input text-sm col-span-2" placeholder="Ex: P1, P2, Trabalho" value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} />
-              <input className="input text-sm" type="number" placeholder="Nota (ex: 8.5)" value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))} />
-              <input className="input text-sm" type="number" placeholder="Nota máx (10)" value={form.max_value} onChange={(e) => setForm((f) => ({ ...f, max_value: e.target.value }))} />
-              <input className="input text-sm" type="number" placeholder="Peso (1)" value={form.weight} onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))} />
+            <div className="grid grid-cols-2 gap-2 mt-3 p-3 rounded-xl animate-in"
+                 style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <input className="input text-sm col-span-2" placeholder="Ex: P1, P2, Trabalho"
+                     value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} />
+              <input className="input text-sm" type="number" placeholder="Nota (ex: 8.5)"
+                     value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))} />
+              <input className="input text-sm" type="number" placeholder="Nota máx (10)"
+                     value={form.max_value} onChange={(e) => setForm((f) => ({ ...f, max_value: e.target.value }))} />
+              <input className="input text-sm" type="number" placeholder="Peso (1)"
+                     value={form.weight} onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))} />
               <div className="flex gap-2">
                 <button className="btn-primary text-xs flex-1" onClick={submitGrade}>Salvar</button>
                 <button className="btn-ghost text-xs" onClick={() => setAdding(false)}>✕</button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-brand-400 transition-colors mt-1">
+            <button onClick={() => setAdding(true)}
+                    className="flex items-center gap-1.5 text-xs transition-colors mt-1 py-1"
+                    style={{ color: 'var(--text-muted)' }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--accent-3)')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
               <Plus size={12} /> Adicionar nota
             </button>
           )}
@@ -142,6 +180,7 @@ export default function GradesPage() {
       setSubjects((prev) => [...prev, data])
       setForm({ code: '', name: '', professor: '', semester: '2025.1', color: '#8B5CF6' })
       setCreating(false)
+      toast.success('Disciplina criada!')
     } catch { toast.error('Erro ao criar disciplina') }
   }
 
@@ -168,57 +207,90 @@ export default function GradesPage() {
 
   const allGrades = subjects.flatMap((s) => s.grades)
   const overallAvg = weightedAvg(allGrades)
+  const passing = subjects.filter((s) => { const a = weightedAvg(s.grades); return a !== null && a >= 5 }).length
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="font-display text-2xl font-bold text-white flex items-center gap-2">
-            <BookOpen size={22} className="text-violet-400" /> Notas
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2 animate-in"
+              style={{ color: 'var(--text-primary)' }}>
+            <BookOpen size={22} style={{ color: 'var(--accent-3)' }} /> Notas
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Suas disciplinas e notas do semestre</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+            {subjects.length} disciplina{subjects.length !== 1 ? 's' : ''} cadastrada{subjects.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        {overallAvg !== null && (
-          <div className="card text-center px-5">
-            <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
-              <TrendingUp size={12} /> Média geral
+
+        {!loading && subjects.length > 0 && (
+          <div className="flex gap-3 animate-in-delay-1">
+            {overallAvg !== null && (
+              <div className="card text-center px-4 py-3"
+                   style={{
+                     background: overallAvg >= 5
+                       ? 'linear-gradient(135deg, rgba(34,197,94,0.1), var(--bg-card))'
+                       : 'linear-gradient(135deg, rgba(239,68,68,0.1), var(--bg-card))',
+                   }}>
+                <div className="flex items-center gap-1.5 mb-1" style={{ color: 'var(--text-muted)' }}>
+                  <TrendingUp size={11} />
+                  <span className="text-[10px] uppercase tracking-wider">Média geral</span>
+                </div>
+                <p className="font-display font-bold text-2xl leading-none"
+                   style={{ color: overallAvg >= 5 ? '#22c55e' : '#ef4444' }}>
+                  {overallAvg.toFixed(1)}
+                </p>
+              </div>
+            )}
+            <div className="card text-center px-4 py-3">
+              <div className="flex items-center gap-1.5 mb-1" style={{ color: 'var(--text-muted)' }}>
+                <Award size={11} />
+                <span className="text-[10px] uppercase tracking-wider">Aprovações</span>
+              </div>
+              <p className="font-display font-bold text-2xl leading-none" style={{ color: 'var(--text-primary)' }}>
+                {passing}<span className="text-base font-normal" style={{ color: 'var(--text-muted)' }}>/{subjects.length}</span>
+              </p>
             </div>
-            <p className={clsx('font-display font-bold text-2xl', overallAvg >= 5 ? 'text-emerald-400' : 'text-red-400')}>
-              {overallAvg.toFixed(1)}
-            </p>
           </div>
         )}
       </div>
 
-      {/* Add subject */}
+      {/* Add subject form */}
       {creating ? (
         <div className="card mb-6 animate-in space-y-3">
-          <h3 className="font-display font-bold text-white text-sm">Nova disciplina</h3>
+          <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Nova disciplina</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Código</label>
-              <input className="input text-sm" placeholder="ACH2041" value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} />
+              <input className="input text-sm" placeholder="ACH2041" value={form.code}
+                     onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} />
             </div>
             <div>
               <label className="label">Semestre</label>
-              <input className="input text-sm" placeholder="2025.1" value={form.semester} onChange={(e) => setForm((f) => ({ ...f, semester: e.target.value }))} />
+              <input className="input text-sm" placeholder="2025.1" value={form.semester}
+                     onChange={(e) => setForm((f) => ({ ...f, semester: e.target.value }))} />
             </div>
             <div className="col-span-2">
               <label className="label">Nome</label>
-              <input className="input text-sm" placeholder="Nome da disciplina" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+              <input className="input text-sm" placeholder="Nome da disciplina" value={form.name}
+                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             </div>
             <div className="col-span-2">
-              <label className="label">Professor(a) <span className="normal-case text-slate-600">(opcional)</span></label>
-              <input className="input text-sm" placeholder="Nome do professor" value={form.professor} onChange={(e) => setForm((f) => ({ ...f, professor: e.target.value }))} />
+              <label className="label">Professor(a) <span className="normal-case" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
+              <input className="input text-sm" placeholder="Nome do professor" value={form.professor}
+                     onChange={(e) => setForm((f) => ({ ...f, professor: e.target.value }))} />
             </div>
             <div className="col-span-2">
-              <label className="label">Cor</label>
+              <label className="label">Cor identificadora</label>
               <div className="flex gap-2">
                 {COLORS.map((c) => (
                   <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))}
-                    className={clsx('w-7 h-7 rounded-full transition-transform', form.color === c && 'scale-125 ring-2 ring-white/30')}
-                    style={{ backgroundColor: c }}
+                    className="w-7 h-7 rounded-full transition-all"
+                    style={{
+                      backgroundColor: c,
+                      transform: form.color === c ? 'scale(1.25)' : 'scale(1)',
+                      boxShadow: form.color === c ? `0 0 0 2px var(--bg-card), 0 0 0 4px ${c}` : 'none',
+                    }}
                   />
                 ))}
               </div>
@@ -237,22 +309,40 @@ export default function GradesPage() {
 
       {/* List */}
       {loading ? (
-        <div className="text-slate-600 text-sm text-center py-12">Carregando…</div>
+        <div className="space-y-3">
+          {[0,1,2].map((i) => (
+            <div key={i} className="card">
+              <div className="flex items-center gap-3">
+                <div className="shimmer w-16 h-5 rounded" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="shimmer h-4 w-48 rounded" />
+                  <div className="shimmer h-3 w-32 rounded" />
+                </div>
+                <div className="shimmer w-14 h-12 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : subjects.length === 0 ? (
-        <div className="text-center py-16 text-slate-600">
+        <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>
           <BookOpen size={40} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Nenhuma disciplina cadastrada ainda</p>
+          <button onClick={() => setCreating(true)} className="text-xs mt-2 inline-block"
+                  style={{ color: 'var(--accent-3)' }}>
+            + Adicionar primeira disciplina
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
-          {subjects.map((s) => (
-            <SubjectCard
-              key={s.id}
-              subject={s}
-              onDelete={() => deleteSubject(s.id)}
-              onAddGrade={addGrade}
-              onDeleteGrade={deleteGrade}
-            />
+          {subjects.map((s, i) => (
+            <div key={s.id} className="animate-in" style={{ animationDelay: `${i * 40}ms` }}>
+              <SubjectCard
+                subject={s}
+                onDelete={() => deleteSubject(s.id)}
+                onAddGrade={addGrade}
+                onDeleteGrade={deleteGrade}
+              />
+            </div>
           ))}
         </div>
       )}

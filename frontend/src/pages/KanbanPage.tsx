@@ -234,6 +234,8 @@ export default function KanbanPage() {
   const [newBoardTitle, setNewBoardTitle] = useState('')
   const [creating, setCreating]     = useState(false)
   const [loading, setLoading]       = useState(true)
+  // Track drag origin so handleDragEnd can reference pre-mutation state
+  const dragOriginRef = useRef<{ cardId: string; fromColId: string } | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -307,7 +309,11 @@ export default function KanbanPage() {
 
   const handleDragStart = (e: DragStartEvent) => {
     const card = currentBoard?.columns.flatMap((c) => c.cards).find((c) => c.id === e.active.id)
-    if (card) setActiveCard(card)
+    if (card) {
+      setActiveCard(card)
+      const col = currentBoard?.columns.find((c) => c.cards.some((x) => x.id === card.id))
+      if (col) dragOriginRef.current = { cardId: card.id, fromColId: col.id }
+    }
   }
 
   const handleDragOver = (e: DragOverEvent) => {
@@ -342,32 +348,45 @@ export default function KanbanPage() {
     setActiveCard(null)
     setOverId(null)
     const { active: a, over } = e
-    if (!over || !currentBoard) return
+    if (!over || !currentBoard) { dragOriginRef.current = null; return }
 
-    const fromCol = findColOfCard(String(a.id), currentBoard)
-    if (!fromCol) return
+    const origin = dragOriginRef.current
+    dragOriginRef.current = null
 
-    let toCol = findColOfCard(String(over.id), currentBoard)
-    if (!toCol) toCol = findColById(String(over.id), currentBoard)
-    if (!toCol) return
+    if (!origin) return
 
-    if (fromCol.id === toCol.id) {
+    const fromColId = origin.fromColId
+
+    // Determine target column from drop target
+    let toColId: string | null = null
+    // Check if dropped on a card
+    const targetCard = currentBoard.columns.flatMap((c) => c.cards).find((c) => c.id === over.id)
+    if (targetCard) {
+      toColId = currentBoard.columns.find((c) => c.cards.some((x) => x.id === targetCard.id))?.id ?? null
+    } else {
+      // Dropped on a column directly
+      toColId = currentBoard.columns.find((c) => c.id === over.id)?.id ?? null
+    }
+
+    if (!toColId) return
+
+    if (fromColId === toColId) {
       // Reorder within same column
-      const oldIdx = fromCol.cards.findIndex((c) => c.id === a.id)
-      const newIdx = fromCol.cards.findIndex((c) => c.id === over.id)
-      if (oldIdx === newIdx) return
-      const reordered = arrayMove(fromCol.cards, oldIdx, newIdx)
+      const col = currentBoard.columns.find((c) => c.id === fromColId)!
+      const oldIdx = col.cards.findIndex((c) => c.id === a.id)
+      const newIdx = col.cards.findIndex((c) => c.id === over.id)
+      if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) return
+      const reordered = arrayMove(col.cards, oldIdx, newIdx)
       setBoards((prev) => prev.map((b) => ({
         ...b,
-        columns: b.columns.map((c) => c.id === fromCol.id ? { ...c, cards: reordered } : c),
+        columns: b.columns.map((c) => c.id === fromColId ? { ...c, cards: reordered } : c),
       })))
     } else {
-      // Cross-column move — persist to backend
-      const card = fromCol.cards.find((c) => c.id === a.id) ??
-        toCol.cards.find((c) => c.id === a.id)
+      // Cross-column — card already moved optimistically, just persist
+      const card = currentBoard.columns.flatMap((c) => c.cards).find((c) => c.id === a.id)
       if (!card) return
       try {
-        await api.patch(`/kanban/cards/${card.id}`, { ...card, column_id: toCol.id })
+        await api.patch(`/kanban/cards/${card.id}`, { ...card, column_id: toColId })
       } catch { toast.error('Erro ao mover card'); load() }
     }
   }

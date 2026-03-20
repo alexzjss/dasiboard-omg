@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, User, LogOut, Sun, Moon, Users,
+  CalendarDays, User, LogOut, GraduationCap, Sun, Moon, Users,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useTheme } from '@/context/ThemeContext'
@@ -36,9 +36,9 @@ export default function AppLayout() {
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 relative z-10"
              style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-               style={{ background: 'transparent' }}>
-            <img src="/logo-dasi.png" alt="DaSI Logo" className="w-8 h-8 object-contain" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+               style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 12px var(--accent-glow)' }}>
+            <GraduationCap size={16} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>
