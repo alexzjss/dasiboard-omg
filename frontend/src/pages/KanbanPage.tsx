@@ -68,8 +68,7 @@ function CardModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4 overflow-y-auto" style={{maxHeight:"90dvh"}}
-           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4 overflow-y-auto" style={{maxHeight:"90dvh",background:"var(--bg-card)",border:"1px solid var(--border)",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
             Editar card
@@ -251,8 +250,8 @@ function KanbanColumn({
 
   return (
     <div
-      className="shrink-0 flex flex-col rounded-2xl transition-all" style={{width: "min(288px, 80vw)"}}
-      style={{
+      className="shrink-0 flex flex-col rounded-2xl transition-all"
+      style={{width:"min(288px,80vw)",
         background: isOver ? style.bg : 'var(--bg-surface)',
         border: `1px solid ${isOver ? style.accent + '66' : 'var(--border)'}`,
         boxShadow: isOver ? `0 0 0 2px ${style.accent}33, 0 4px 24px ${style.accent}11` : 'none',
@@ -623,8 +622,8 @@ export default function KanbanPage() {
               const style = COL_STYLES[idx % 3] ?? COL_STYLES[0]
               const prioConfig = PRIORITY[activeCard.priority as keyof typeof PRIORITY] ?? PRIORITY.medium
               return (
-                <div className="rounded-xl p-3 rotate-2" style={{width:"min(288px,80vw)"}}
-                     style={{
+                <div className="rounded-xl p-3 rotate-2"
+                     style={{width:"min(288px,80vw)",
                        background: 'var(--bg-card)',
                        border: `1px solid ${style.accent}66`,
                        boxShadow: `0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px ${style.accent}33`,
