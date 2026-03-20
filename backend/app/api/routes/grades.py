@@ -3,7 +3,7 @@ from psycopg2.extras import RealDictCursor
 from typing import List
 from app.db.session import get_db
 from app.api.routes.auth import get_current_user
-from app.schemas.schemas import SubjectCreate, SubjectOut, GradeCreate, GradeOut
+from app.schemas.schemas import SubjectCreate, SubjectUpdate, SubjectOut, GradeCreate, GradeOut
 
 router = APIRouter()
 
@@ -22,12 +22,32 @@ def list_subjects(db: RealDictCursor = Depends(get_db), user=Depends(get_current
 @router.post("/subjects", response_model=SubjectOut, status_code=201)
 def create_subject(body: SubjectCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
     db.execute(
-        """INSERT INTO subjects (owner_id, code, name, professor, semester, color)
-           VALUES (%s, %s, %s, %s, %s, %s) RETURNING *""",
-        (str(user["id"]), body.code, body.name, body.professor, body.semester, body.color),
+        """INSERT INTO subjects (owner_id, code, name, professor, semester, color, total_classes, attended)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
+        (str(user["id"]), body.code, body.name, body.professor, body.semester, body.color,
+         body.total_classes, body.attended),
     )
     s = db.fetchone()
     return {**s, "grades": []}
+
+
+@router.patch("/subjects/{subject_id}", response_model=SubjectOut)
+def update_subject(subject_id: str, body: SubjectUpdate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    db.execute("SELECT * FROM subjects WHERE id = %s AND owner_id = %s", (subject_id, str(user["id"])))
+    s = db.fetchone()
+    if not s:
+        raise HTTPException(404, "Disciplina não encontrada")
+    total = body.total_classes if body.total_classes is not None else s["total_classes"]
+    attended = body.attended if body.attended is not None else s["attended"]
+    professor = body.professor if body.professor is not None else s["professor"]
+    color = body.color if body.color is not None else s["color"]
+    db.execute(
+        "UPDATE subjects SET total_classes=%s, attended=%s, professor=%s, color=%s WHERE id=%s RETURNING *",
+        (total, attended, professor, color, subject_id),
+    )
+    updated = db.fetchone()
+    db.execute("SELECT * FROM grades WHERE subject_id = %s ORDER BY created_at", (subject_id,))
+    return {**updated, "grades": db.fetchall()}
 
 
 @router.delete("/subjects/{subject_id}", status_code=204)

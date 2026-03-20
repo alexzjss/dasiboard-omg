@@ -220,7 +220,7 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {[
                 { to: '/kanban',   label: 'Quadros Kanban',  icon: KanbanSquare,  desc: 'Organizar tarefas'   },
-                { to: '/grades',   label: 'Notas',            icon: BookOpen,      desc: 'Ver disciplinas'     },
+                { to: '/grades',   label: 'Disciplinas',       icon: BookOpen,      desc: 'Ver disciplinas'     },
                 { to: '/calendar', label: 'Calendário',       icon: CalendarDays,  desc: 'Eventos e provas'    },
               ].map(({ to, label, icon: Icon, desc }) => (
                 <Link

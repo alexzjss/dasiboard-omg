@@ -45,7 +45,6 @@ class UserOut(BaseModel):
     avatar_url: Optional[str] = None
     is_verified: bool
     created_at: datetime
-
     model_config = {"from_attributes": True}
 
 
@@ -101,7 +100,24 @@ class BoardOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Grades ────────────────────────────────────────────────
+# ── Subjects / Grades ─────────────────────────────────────
+class SubjectCreate(BaseModel):
+    code: str
+    name: str
+    professor: Optional[str] = None
+    semester: str
+    color: str = "#8B5CF6"
+    total_classes: int = 0
+    attended: int = 0
+
+
+class SubjectUpdate(BaseModel):
+    total_classes: Optional[int] = None
+    attended: Optional[int] = None
+    professor: Optional[str] = None
+    color: Optional[str] = None
+
+
 class GradeCreate(BaseModel):
     label: str
     value: float
@@ -124,14 +140,6 @@ class GradeOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class SubjectCreate(BaseModel):
-    code: str
-    name: str
-    professor: Optional[str] = None
-    semester: str
-    color: str = "#8B5CF6"
-
-
 class SubjectOut(BaseModel):
     id: UUID
     owner_id: UUID
@@ -140,13 +148,14 @@ class SubjectOut(BaseModel):
     professor: Optional[str] = None
     semester: str
     color: str
+    total_classes: int = 0
+    attended: int = 0
     grades: List[GradeOut] = []
     created_at: datetime
     model_config = {"from_attributes": True}
 
 
-
-# ── EventCreate + EventOut updated with global/class_code ────────────────────
+# ── Events ────────────────────────────────────────────────
 class EventCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -158,6 +167,8 @@ class EventCreate(BaseModel):
     location: Optional[str] = None
     class_code: Optional[str] = None
     is_global: bool = False
+    entity_id: Optional[UUID] = None
+    members_only: bool = False
 
 
 class EventOut(BaseModel):
@@ -173,5 +184,41 @@ class EventOut(BaseModel):
     location: Optional[str] = None
     class_code: Optional[str] = None
     is_global: bool = False
+    entity_id: Optional[UUID] = None
+    members_only: bool = False
     created_at: datetime
     model_config = {"from_attributes": True}
+
+
+# ── Entities ──────────────────────────────────────────────
+class EntityOut(BaseModel):
+    id: UUID
+    slug: str
+    name: str
+    short_name: str
+    description: str
+    category: str
+    color: str
+    icon_emoji: str
+    website_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    email: Optional[str] = None
+    member_count: int = 0
+    is_member: bool = False
+    model_config = {"from_attributes": True}
+
+
+class EntityJoin(BaseModel):
+    key: str
+
+
+class EntityEventCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    event_type: str = "entity"
+    start_at: datetime
+    end_at: Optional[datetime] = None
+    all_day: bool = False
+    color: str = "#7c3aed"
+    location: Optional[str] = None
+    members_only: bool = False

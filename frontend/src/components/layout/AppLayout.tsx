@@ -8,12 +8,12 @@ import { useTheme } from '@/context/ThemeContext'
 import clsx from 'clsx'
 
 const nav = [
-  { to: '/',          label: 'Dashboard',  icon: LayoutDashboard, end: true },
-  { to: '/kanban',    label: 'Kanban',      icon: KanbanSquare },
-  { to: '/grades',    label: 'Notas',       icon: BookOpen },
-  { to: '/calendar',  label: 'Calendário',  icon: CalendarDays },
-  { to: '/docentes',  label: 'Docentes',    icon: Users },
-  { to: '/profile',   label: 'Perfil',      icon: User },
+  { to: '/',          label: 'Dashboard',   icon: LayoutDashboard, end: true },
+  { to: '/kanban',    label: 'Kanban',       icon: KanbanSquare },
+  { to: '/grades',    label: 'Disciplinas',  icon: BookOpen },
+  { to: '/calendar',  label: 'Calendário',   icon: CalendarDays },
+  { to: '/entities',  label: 'Entidades',    icon: Users },
+  { to: '/profile',   label: 'Perfil',       icon: User },
 ]
 
 export default function AppLayout() {

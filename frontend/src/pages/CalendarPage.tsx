@@ -18,15 +18,16 @@ interface Event {
   event_type: string; start_at: string; end_at?: string
   all_day: boolean; color: string; location?: string
   class_code?: string; is_global?: boolean
+  entity_id?: string; members_only?: boolean
 }
 
 const TYPE_COLORS: Record<string, string> = {
   exam: '#EF4444', deadline: '#F59E0B',
-  academic: '#4d67f5', personal: '#10B981', work: '#EC4899',
+  academic: '#4d67f5', personal: '#10B981', work: '#EC4899', entity: '#a855f7',
 }
 const TYPE_LABELS: Record<string, string> = {
   exam: 'Prova', deadline: 'Deadline',
-  academic: 'Acadêmico', personal: 'Pessoal', work: 'Trabalho',
+  academic: 'Acadêmico', personal: 'Pessoal', work: 'Trabalho', entity: 'Entidade',
 }
 
 export default function CalendarPage() {
@@ -212,6 +213,7 @@ export default function CalendarPage() {
                     <div key={ev.id} className="text-[10px] rounded px-1 py-0.5 truncate font-medium flex items-center gap-1"
                          style={{backgroundColor:ev.color+'22',color:ev.color}}>
                       {ev.is_global&&<Globe size={8}/>}
+                      {ev.entity_id&&!ev.is_global&&<span style={{fontSize:7,lineHeight:1}}>✦</span>}
                       {ev.title}
                     </div>
                   ))}
