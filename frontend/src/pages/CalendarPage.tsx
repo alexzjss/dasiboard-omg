@@ -137,7 +137,7 @@ export default function CalendarPage() {
   return (
     <div className="flex h-full">
       {/* ── Calendar grid ─── */}
-      <div className="flex-1 flex flex-col p-6">
+      <div className="flex-1 flex flex-col p-3 md:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-display text-xl font-bold capitalize animate-in" style={{ color:'var(--text-primary)' }}>
