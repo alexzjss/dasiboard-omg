@@ -4,36 +4,10 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   User, Mail, Hash, Calendar, GraduationCap, LogOut,
-  Download, RefreshCw, Award, Star, Zap, Shield, Trophy,
-  Heart, Code2, BookOpen, Coffee, Flame, Crown, Sparkles,
-  Globe, Music, Camera, X, Check,
+  Download, RefreshCw, Award, X, Check, Code2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-
-// ── Badge definitions ─────────────────────────────────────────────────────────
-interface Badge {
-  id: string
-  emoji: string
-  label: string
-  desc: string
-  color: string
-  unlocked: boolean
-}
-
-const ALL_BADGES: Badge[] = [
-  { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',     desc: 'Um dos primeiros membros',         color: '#f59e0b', unlocked: true  },
-  { id: 'coder',      emoji: '💻', label: 'Dev',          desc: 'Fanático por código',               color: '#6366f1', unlocked: true  },
-  { id: 'kanban_pro', emoji: '📋', label: 'Kanban Pro',   desc: 'Mestre do quadro Kanban',           color: '#22c55e', unlocked: true  },
-  { id: 'night_owl',  emoji: '🦉', label: 'Coruja',       desc: 'Estuda de madrugada',               color: '#a855f7', unlocked: true  },
-  { id: 'dasi',       emoji: '🎓', label: 'DASI',         desc: 'Membro do Diretório',               color: '#ec4899', unlocked: false },
-  { id: 'hype',       emoji: '🤖', label: 'HypE',         desc: 'Membro do HypE',                    color: '#f97316', unlocked: false },
-  { id: 'conway',     emoji: '🎮', label: 'Conway',       desc: 'Game developer',                    color: '#10b981', unlocked: false },
-  { id: 'sintese',    emoji: '💼', label: 'Síntese Jr.',  desc: 'Membro da empresa júnior',          color: '#ef4444', unlocked: false },
-  { id: 'spidey',     emoji: '🕷️', label: 'Aranha',       desc: 'Completou o modo Aranha',           color: '#e60000', unlocked: false },
-  { id: 'retro',      emoji: '📺', label: 'Retro',        desc: 'Usou todos os temas',               color: '#0ea5e9', unlocked: false },
-  { id: 'shell',      emoji: '💀', label: 'Hacker',       desc: 'Membro da EACH in the Shell',       color: '#00ff41', unlocked: false },
-  { id: 'pet',        emoji: '📚', label: 'PET-SI',       desc: 'Membro do PET-SI',                  color: '#4d67f5', unlocked: false },
-]
+import api from '@/utils/api'
 
 // ── PRNG ─────────────────────────────────────────────────────────────────────
 function seededRng(seed: string) {
@@ -48,368 +22,342 @@ function seededRng(seed: string) {
   }
 }
 
-// ── Card style variants (seeded, so always same per user) ─────────────────────
-interface CardStyle {
-  bgA: string; bgB: string; bgC: string
-  accentA: string; accentB: string
-  layout: 'split-left' | 'split-right' | 'top-banner' | 'diagonal' | 'gradient-full'
-  textDark: boolean
-  pattern: 'none' | 'dots' | 'grid' | 'diagonal-lines' | 'circles' | 'noise' | 'hexagon'
-  font: string
-}
-
-const CARD_PALETTES: Omit<CardStyle, 'layout' | 'pattern' | 'font'>[] = [
-  // Warm cream (original)
-  { bgA: '#faf8f5', bgB: '#f5f0ea', bgC: '#ede5d8', accentA: '#d4580a', accentB: '#8b3a0a', textDark: true },
-  // Deep night purple
-  { bgA: '#0f0a1e', bgB: '#1a1035', bgC: '#130c28', accentA: '#a855f7', accentB: '#c084fc', textDark: false },
-  // Spider-Man red & blue
-  { bgA: '#ffffff', bgB: '#fff0f0', bgC: '#f0f0ff', accentA: '#e60000', accentB: '#1a5ccc', textDark: true },
-  // Retrowave sunset
-  { bgA: '#1a0030', bgB: '#2d0050', bgC: '#0a0015', accentA: '#ff6600', accentB: '#ff0080', textDark: false },
-  // Emerald dark
-  { bgA: '#061610', bgB: '#0a2218', bgC: '#051210', accentA: '#22c55e', accentB: '#4ade80', textDark: false },
-  // Newspaper comic
-  { bgA: '#f8f3e3', bgB: '#ede5c8', bgC: '#e5dab8', accentA: '#1a1a1a', accentB: '#e60000', textDark: true },
-  // Ocean blue
-  { bgA: '#0a1628', bgB: '#0f2040', bgC: '#080e1e', accentA: '#0ea5e9', accentB: '#38bdf8', textDark: false },
-  // Rose gold
-  { bgA: '#2a1020', bgB: '#3a1828', bgC: '#1e0a16', accentA: '#f472b6', accentB: '#e879f9', textDark: false },
-  // Matrix green
-  { bgA: '#000000', bgB: '#020f04', bgC: '#000000', accentA: '#00ff41', accentB: '#00cc33', textDark: false },
-  // Nordic snow
-  { bgA: '#f0f4f8', bgB: '#e2eaf4', bgC: '#d8e4f0', accentA: '#2563eb', accentB: '#1d4ed8', textDark: true },
-  // Amber fire
-  { bgA: '#18080a', bgB: '#280c10', bgC: '#100508', accentA: '#f97316', accentB: '#fbbf24', textDark: false },
-  // Mint fresh
-  { bgA: '#f0fdf4', bgB: '#dcfce7', bgC: '#e8f8ed', accentA: '#16a34a', accentB: '#15803d', textDark: true },
+// ── Titles ────────────────────────────────────────────────────────────────────
+const TITLES = [
+  'Explorador Incansável','Arquiteto de Sonhos','Nômade Digital',
+  'Construtor do Futuro','Caçador de Bugs','Artesão do Código',
+  'Viajante entre Mundos','Filósofo dos Pixels','Guardião da Stack',
+  'Detetive de Dados','Mago das Abstrações','Pesquisador Curioso',
+  'Estrategista Criativo','Desbravador de APIs','Artista do Terminal',
+  'Navegador de Incertezas','Alquimista Digital','Construtor Obstinado',
+  'Sonhador Pragmático','Engenheiro de Possibilidades','Entusiasta Nato',
+  'Pensador Lateral','Hacker de Soluções','Curador de Conhecimento',
+  'Montador de Sistemas','Visonário Técnico','Explorador de Fronteiras',
 ]
 
-const CARD_PATTERNS: CardStyle['pattern'][] = ['none','dots','grid','diagonal-lines','circles','noise','hexagon']
-const CARD_LAYOUTS:  CardStyle['layout'][]  = ['split-left','split-right','top-banner','diagonal','gradient-full']
-const CARD_FONTS = [
-  "'Syne', sans-serif",
-  "'DM Sans', sans-serif",
-  "'Orbitron', sans-serif",
-  "'Rajdhani', sans-serif",
-  "'JetBrains Mono', monospace",
-  "'Playfair Display', serif",
-  "'Share Tech Mono', monospace",
+// ── Areas & Languages ────────────────────────────────────────────────────────
+export const AREAS = [
+  'Frontend','Backend','Fullstack','Mobile','Data Science',
+  'IA & ML','DevOps','Cybersecurity','Game Dev','Design',
+  'Pesquisa','UX/UI','Cloud','Embedded','Blockchain','QA',
 ]
 
-function getCardStyle(userId: string): CardStyle {
-  const rng = seededRng(userId + '-card-style')
-  const pal = CARD_PALETTES[Math.floor(rng() * CARD_PALETTES.length)]
-  return {
-    ...pal,
-    layout:  CARD_LAYOUTS[Math.floor(rng() * CARD_LAYOUTS.length)],
-    pattern: CARD_PATTERNS[Math.floor(rng() * CARD_PATTERNS.length)],
-    font:    CARD_FONTS[Math.floor(rng() * CARD_FONTS.length)],
-  }
+export const LANGUAGES = [
+  'Python','JavaScript','TypeScript','Java','Kotlin','Swift',
+  'Go','Rust','C','C++','C#','PHP','Ruby','Dart','Scala',
+  'R','MATLAB','Haskell','SQL','Shell','Lua','Zig','Elixir',
+  'Clojure','F#','OCaml','Assembly','VHDL','Prolog',
+]
+
+// ── Badge definitions ─────────────────────────────────────────────────────────
+export interface Badge {
+  id: string; emoji: string; label: string; desc: string
+  color: string; unlocked: boolean
 }
+
+export const buildBadges = (opts: {
+  hasBoards: boolean
+  hasLanguage: boolean
+  hasPassedSubject: boolean
+  memberSlugs: string[]
+}): Badge[] => [
+  { id: 'pioneer',   emoji: '🚀', label: 'Pioneiro',    desc: 'Membro fundador do DaSIboard',            color: '#f59e0b', unlocked: true },
+  { id: 'coder',     emoji: '💻', label: 'Dev',         desc: 'Selecionou uma linguagem principal',      color: '#6366f1', unlocked: opts.hasLanguage },
+  { id: 'eisenhower',emoji: '📋', label: 'Eisenhower',  desc: 'Criou um quadro Kanban',                  color: '#22c55e', unlocked: opts.hasBoards },
+  { id: 'night_owl', emoji: '🦉', label: 'Coruja',      desc: 'Aprovado em pelo menos uma disciplina',   color: '#a855f7', unlocked: opts.hasPassedSubject },
+  { id: 'dasi',      emoji: '🎓', label: 'DASI',        desc: 'Membro do Diretório Acadêmico',           color: '#ec4899', unlocked: opts.memberSlugs.includes('dasi') },
+  { id: 'hype',      emoji: '🤖', label: 'HypE',        desc: 'Membro do HypE (Dados & IA)',             color: '#f97316', unlocked: opts.memberSlugs.includes('hype') },
+  { id: 'conway',    emoji: '🎮', label: 'Conway',      desc: 'Membro do Conway Game Studio',            color: '#10b981', unlocked: opts.memberSlugs.includes('conway') },
+  { id: 'sintese',   emoji: '💼', label: 'Síntese Jr.', desc: 'Membro da Síntese Jr.',                   color: '#ef4444', unlocked: opts.memberSlugs.includes('sintese') },
+  { id: 'shell',     emoji: '💀', label: 'Shell',       desc: 'Membro da EACH in the Shell',             color: '#00cc44', unlocked: opts.memberSlugs.includes('each-in-shell') },
+  { id: 'pet',       emoji: '📚', label: 'PET-SI',      desc: 'Membro do PET-SI',                        color: '#4d67f5', unlocked: opts.memberSlugs.includes('pet-si') },
+  { id: 'lab_minas', emoji: '🔬', label: 'Lab Minas',   desc: 'Membro do Lab das Minas',                 color: '#f472b6', unlocked: opts.memberSlugs.includes('lab-minas') },
+  { id: 'grace',     emoji: '🌸', label: 'GrACE',       desc: 'Membro do GrACE',                         color: '#e879f9', unlocked: opts.memberSlugs.includes('grace') },
+  { id: 'semana_si', emoji: '🎪', label: 'SemanaSI',    desc: 'Membro da Semana de SI',                  color: '#a855f7', unlocked: opts.memberSlugs.includes('semana-si') },
+  { id: 'codelab',   emoji: '⚙️', label: 'CodeLab',     desc: 'Membro do CodeLab Leste',                 color: '#06b6d4', unlocked: opts.memberSlugs.includes('codelab') },
+]
 
 // ── Canvas helpers ────────────────────────────────────────────────────────────
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r)
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h)
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r)
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath()
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r)
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r)
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r)
+  ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r)
+  ctx.closePath()
 }
 
-function drawPattern(ctx: CanvasRenderingContext2D, pattern: CardStyle['pattern'], rng: ()=>number, W: number, H: number, color: string) {
-  ctx.save()
-  switch(pattern) {
-    case 'dots':
-      for (let x=0; x<W; x+=20) for (let y=0; y<H; y+=20) {
-        ctx.beginPath(); ctx.arc(x,y,1.5,0,Math.PI*2)
-        ctx.fillStyle = color + '30'; ctx.fill()
-      }
-      break
-    case 'grid':
-      ctx.strokeStyle = color + '20'; ctx.lineWidth = 0.5
-      for (let x=0; x<W; x+=32) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke() }
-      for (let y=0; y<H; y+=32) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke() }
-      break
-    case 'diagonal-lines':
-      ctx.strokeStyle = color + '18'; ctx.lineWidth = 1
-      for (let i=-H; i<W+H; i+=18) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+H,H); ctx.stroke() }
-      break
-    case 'circles':
-      ctx.strokeStyle = color + '15'; ctx.lineWidth = 1
-      for (let r=40; r<Math.max(W,H)*1.5; r+=40) {
-        ctx.beginPath(); ctx.arc(W*0.15, H*0.15, r, 0, Math.PI*2); ctx.stroke()
-      }
-      break
-    case 'hexagon':
-      ctx.strokeStyle = color + '18'; ctx.lineWidth = 0.8
-      const hw = 20, hh = 23
-      for (let col=0; col<Math.ceil(W/hw)+2; col++) {
-        for (let row=0; row<Math.ceil(H/hh)+2; row++) {
-          const ox = col*hw*2 + (row%2)*hw - hw
-          const oy = row*hh - hh
-          ctx.beginPath()
-          for (let a=0; a<6; a++) {
-            const angle = (a*60-30)*Math.PI/180
-            const px = ox + hw*Math.cos(angle), py = oy + hh*Math.sin(angle)
-            a===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py)
-          }
-          ctx.closePath(); ctx.stroke()
-        }
-      }
-      break
-    case 'noise':
-      for (let i=0; i<2000; i++) {
-        const nx=rng()*W, ny=rng()*H
-        ctx.fillStyle = color + Math.floor(rng()*30).toString(16).padStart(2,'0')
-        ctx.fillRect(nx,ny,1,1)
-      }
-      break
+// Cardinal-spline smooth blob — fully random shape
+function drawBlob(ctx: CanvasRenderingContext2D, rng: () => number, cx: number, cy: number, baseR: number) {
+  const n = 7 + Math.floor(rng() * 6)   // 7–12 points
+  const pts: [number, number][] = []
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2
+    // Dramatically varied radii — creates truly organic shapes
+    const r = baseR * (0.45 + rng() * 0.90)
+    pts.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r])
   }
-  ctx.restore()
+  ctx.beginPath()
+  for (let i = 0; i < pts.length; i++) {
+    const p0 = pts[(i - 1 + n) % n]
+    const p1 = pts[i]
+    const p2 = pts[(i + 1) % n]
+    const p3 = pts[(i + 2) % n]
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 5
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 5
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 5
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 5
+    if (i === 0) ctx.moveTo(p1[0], p1[1])
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+  }
+  ctx.closePath()
 }
 
-// ── Main drawCard function ────────────────────────────────────────────────────
-function drawCard(canvas: HTMLCanvasElement, user: {
-  full_name: string; email: string; nusp?: string; created_at?: string; id: string
-}, activeBadges: Badge[]) {
-  const W = 900, H = 520
-  canvas.width = W * 2; canvas.height = H * 2
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
+function addNoise(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count = 5000) {
+  for (let i = 0; i < count; i++) {
+    const x = rng() * W, y = rng() * H
+    const v = Math.floor(rng() * 200)
+    ctx.fillStyle = `rgba(${v},${v},${v},${alpha * rng()})`
+    ctx.fillRect(x, y, 1, 1)
+  }
+}
+
+// ── Main card drawing function ─────────────────────────────────────────────────
+function drawCard(
+  canvas: HTMLCanvasElement,
+  user: { full_name: string; email: string; nusp?: string; id: string },
+  activeBadges: Badge[],
+  area: string,
+  language: string,
+) {
+  const W = 680, H = 960   // Arc-browser portrait ratio
+  canvas.width  = W * 2; canvas.height = H * 2
+  canvas.style.width  = W + 'px'; canvas.style.height = H + 'px'
   const ctx = canvas.getContext('2d')!
   ctx.scale(2, 2)
 
-  const rng = seededRng(user.id)
-  const style = getCardStyle(user.id)
-  const ink   = style.textDark ? '#1a1410' : '#ffffff'
-  const inkM  = style.textDark ? 'rgba(30,20,10,0.45)' : 'rgba(255,255,255,0.45)'
-  const inkS  = style.textDark ? 'rgba(30,20,10,0.65)' : 'rgba(255,255,255,0.65)'
-  const r = style.layout === 'diagonal' ? 0 : 20
+  // ── Seeded randoms ─────────────────────────────────────
+  const rngBlob  = seededRng(user.id + '-blob')
+  const rngColor = seededRng(user.id + '-hue')
 
-  // ── Background fill ───────────────────────────────────
-  roundRect(ctx, 0, 0, W, H, r); ctx.clip()
-  const bgGrad = ctx.createLinearGradient(0, 0, W, H)
-  bgGrad.addColorStop(0, style.bgA); bgGrad.addColorStop(0.6, style.bgB); bgGrad.addColorStop(1, style.bgC)
-  ctx.fillStyle = bgGrad; ctx.fillRect(0,0,W,H)
+  // Full-spectrum hue — any hue, vivid saturation
+  const hue      = Math.floor(rngColor() * 360)
+  const sat      = 70 + Math.floor(rngColor() * 20)   // 70–90
+  const blobLit  = 50 + Math.floor(rngColor() * 20)   // 50–70
+  const bgLit    = 96 + Math.floor(rngColor() * 3)    // 96–99 (near white)
 
-  // ── Pattern overlay ───────────────────────────────────
-  drawPattern(ctx, style.pattern, rng, W, H, style.accentA)
+  const bgColor    = `hsl(${hue}, ${Math.floor(sat * 0.12)}%, ${bgLit}%)`
+  const inkColor   = `hsl(${hue}, 60%, 22%)`
+  const inkMid     = `hsl(${hue}, 45%, 38%)`
+  const blobMain   = `hsl(${hue}, ${sat}%, ${blobLit}%)`
+  const blobShift  = `hsl(${(hue + 28) % 360}, ${sat - 8}%, ${blobLit - 14}%)`
+  const accentPill = `hsl(${hue}, ${sat}%, ${Math.max(blobLit - 28, 20)}%)`
 
-  // ── Layout-specific panel + accent ────────────────────
-  const initials = user.full_name.split(' ').map((n:string)=>n[0]).slice(0,2).join('').toUpperCase()
-
-  if (style.layout === 'split-left' || style.layout === 'split-right') {
-    const panelW = 260
-    const px = style.layout === 'split-left' ? 0 : W - panelW
-    const panelGrad = ctx.createLinearGradient(px, 0, px+panelW, 0)
-    panelGrad.addColorStop(0, style.accentA + 'dd')
-    panelGrad.addColorStop(1, style.accentB + 'aa')
-    ctx.fillStyle = panelGrad; ctx.fillRect(px, 0, panelW, H)
-    // divider line
-    ctx.strokeStyle = style.textDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(style.layout === 'split-left' ? panelW : W-panelW, 0)
-    ctx.lineTo(style.layout === 'split-left' ? panelW : W-panelW, H)
-    ctx.stroke()
-    drawPanelContent(ctx, style, px+panelW/2, H/2+10, initials, user.full_name, '#ffffff', rng)
-    drawInfoSection(ctx, style, style.layout==='split-left'?panelW+36:36, 52, W, user, activeBadges, ink, inkM, inkS)
-  } else if (style.layout === 'top-banner') {
-    const bannerH = 160
-    const bannerGrad = ctx.createLinearGradient(0, 0, W, 0)
-    bannerGrad.addColorStop(0, style.accentA); bannerGrad.addColorStop(1, style.accentB)
-    ctx.fillStyle = bannerGrad; ctx.fillRect(0, 0, W, bannerH)
-    drawPanelContent(ctx, style, 90, bannerH/2+10, initials, user.full_name, '#ffffff', rng)
-    drawInfoSection(ctx, style, 200, bannerH+28, W, user, activeBadges, ink, inkM, inkS)
-  } else if (style.layout === 'diagonal') {
-    // Diagonal split
-    ctx.save()
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(W*0.55,0); ctx.lineTo(W*0.35,H); ctx.lineTo(0,H); ctx.closePath()
-    const dg = ctx.createLinearGradient(0,0,W*0.55,H)
-    dg.addColorStop(0, style.accentA); dg.addColorStop(1, style.accentB)
-    ctx.fillStyle = dg; ctx.fill(); ctx.restore()
-    drawPanelContent(ctx, style, W*0.17, H/2+5, initials, user.full_name, '#ffffff', rng)
-    drawInfoSection(ctx, style, W*0.4, 52, W, user, activeBadges, ink, inkM, inkS)
-  } else if (style.layout === 'gradient-full') {
-    // Full gradient background with centered content
-    const fg = ctx.createRadialGradient(W*0.25, H*0.25, 20, W*0.25, H*0.25, W*0.7)
-    fg.addColorStop(0, style.accentA+'55'); fg.addColorStop(1, 'transparent')
-    ctx.fillStyle = fg; ctx.fillRect(0,0,W,H)
-    // Avatar top-left
-    drawAvatarCircle(ctx, 90, 90, 60, style, initials, rng)
-    // Name below avatar
-    ctx.font = `700 18px ${style.font}`; ctx.textAlign = 'left'
-    ctx.fillStyle = ink; ctx.fillText(user.full_name, 170, 76)
-    ctx.font = `400 12px 'DM Sans', sans-serif`; ctx.fillStyle = inkS
-    ctx.fillText('SI · EACH · USP', 170, 96)
-    drawInfoSection(ctx, style, 36, 170, W, user, activeBadges, ink, inkM, inkS)
-  }
-
-  // ── Card code bottom-right ─────────────────────────────
-  const cardCode = '#' + user.id.replace(/-/g,'').slice(0,8).toUpperCase()
-  ctx.font = `400 9px 'JetBrains Mono', monospace`
-  ctx.textAlign = 'right'; ctx.fillStyle = inkM
-  ctx.fillText(cardCode, W-20, H-14)
-
-  // ── DaSIboard watermark ───────────────────────────────
-  ctx.font = `700 11px '${style.font}'`
-  ctx.fillStyle = inkM; ctx.textAlign = 'right'
-  ctx.fillText('DaSIboard', W-20, H-26)
-
-  // ── Border ───────────────────────────────────────────
-  ctx.strokeStyle = style.textDark ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'
-  ctx.lineWidth = 1.5
-  if (r > 0) { roundRect(ctx, 0.75, 0.75, W-1.5, H-1.5, r); ctx.stroke() }
-}
-
-function drawAvatarCircle(
-  ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
-  style: CardStyle, initials: string, rng: ()=>number
-) {
+  // ── Card base ──────────────────────────────────────────
   ctx.save()
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip()
-  const ag = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r)
-  ag.addColorStop(0, style.accentA); ag.addColorStop(1, style.accentB)
-  ctx.fillStyle = ag; ctx.fill(); ctx.restore()
-  ctx.fillStyle = 'rgba(255,255,255,0.95)'
-  ctx.font = `bold 24px 'Syne', sans-serif`
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-  ctx.fillText(initials, cx, cy+1)
-  ctx.beginPath(); ctx.arc(cx, cy, r+3, 0, Math.PI*2)
-  ctx.strokeStyle = style.accentA + '60'; ctx.lineWidth = 2; ctx.stroke()
-  ctx.textBaseline = 'alphabetic'
-}
+  roundRect(ctx, 0, 0, W, H, 36)
+  ctx.clip()
 
-function drawPanelContent(
-  ctx: CanvasRenderingContext2D, style: CardStyle,
-  cx: number, cy: number, initials: string, fullName: string, textColor: string,
-  rng: ()=>number
-) {
-  drawAvatarCircle(ctx, cx, cy - 50, 48, style, initials, rng)
-  const parts = fullName.split(' ')
-  ctx.fillStyle = textColor; ctx.textAlign = 'center'
-  ctx.font = `700 16px ${style.font}`
-  ctx.fillText(parts[0] ?? '', cx, cy + 20)
-  if (parts.length > 1) {
-    ctx.font = `400 13px 'DM Sans', sans-serif`
-    ctx.fillStyle = 'rgba(255,255,255,0.75)'
-    ctx.fillText(parts.slice(1).join(' '), cx, cy + 38)
-  }
-  // course badge
-  ctx.font = `600 10px 'DM Sans', sans-serif`
-  const bl = 'SI · EACH · USP'
-  const bw = ctx.measureText(bl).width + 18
-  ctx.fillStyle = 'rgba(255,255,255,0.18)'
-  roundRect(ctx, cx-bw/2, cy+50, bw, 20, 10); ctx.fill()
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'
-  ctx.fillText(bl, cx, cy+64)
-}
+  ctx.fillStyle = bgColor
+  ctx.fillRect(0, 0, W, H)
 
-function drawInfoSection(
-  ctx: CanvasRenderingContext2D, style: CardStyle,
-  x: number, y: number, W: number,
-  user: { email: string; nusp?: string; created_at?: string },
-  activeBadges: Badge[],
-  ink: string, inkM: string, inkS: string
-) {
-  const maxW = W - x - 32
-  const items = [
-    { label: 'E-MAIL',       value: user.email },
-    { label: 'Nº USP',       value: user.nusp ?? 'Não informado' },
-    { label: 'CURSO',        value: 'Sistemas de Informação' },
-    { label: 'MEMBRO DESDE', value: user.created_at
-        ? format(new Date(user.created_at), "MMM yyyy", { locale: ptBR })
-        : '—' },
-  ]
+  // ── Blob — large, occupies top ~60% ──────────────────
+  // Random position within upper area so it feels organic
+  const blobCx = W * (0.30 + rngBlob() * 0.40)
+  const blobCy = H * (0.12 + rngBlob() * 0.22)
+  const blobR  = W * (0.40 + rngBlob() * 0.28)
 
-  let iy = y
-  for (const item of items) {
-    ctx.font = `600 8px 'DM Sans', sans-serif`
-    ctx.fillStyle = style.accentA; ctx.textAlign = 'left'
-    ctx.fillText(item.label, x, iy); iy += 13
+  const grad = ctx.createRadialGradient(
+    blobCx - blobR * 0.30, blobCy - blobR * 0.25, blobR * 0.04,
+    blobCx + blobR * 0.10, blobCy + blobR * 0.10, blobR * 1.15
+  )
+  grad.addColorStop(0,    blobMain)
+  grad.addColorStop(0.50, blobShift)
+  grad.addColorStop(1,    blobShift + '00')
 
-    ctx.font = `500 13px 'DM Sans', sans-serif`
-    ctx.fillStyle = ink
-    let val = item.value
-    while (ctx.measureText(val).width > maxW && val.length > 8) val = val.slice(0,-4)+'…'
-    ctx.fillText(val, x, iy); iy += 22
+  drawBlob(ctx, rngBlob, blobCx, blobCy, blobR)
+  ctx.fillStyle = grad
+  ctx.fill()
 
-    ctx.strokeStyle = style.textDark ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'
-    ctx.lineWidth = 0.5
-    ctx.beginPath(); ctx.moveTo(x, iy); ctx.lineTo(x+maxW, iy); ctx.stroke()
-    iy += 8
-  }
+  // Grain on blob
+  ctx.save()
+  drawBlob(ctx, seededRng(user.id + '-blob'), blobCx, blobCy, blobR)
+  ctx.clip()
+  addNoise(ctx, seededRng(user.id + '-grain'), W, H * 0.72, 0.055, 6000)
+  ctx.restore()
 
-  // Badges row
-  if (activeBadges.length > 0) {
-    iy += 6
-    ctx.font = `600 8px 'DM Sans', sans-serif`
-    ctx.fillStyle = style.accentA; ctx.fillText('BADGES', x, iy); iy += 12
-    let bx = x
-    for (const badge of activeBadges.slice(0, 6)) {
-      ctx.font = '16px serif'
-      ctx.fillText(badge.emoji, bx, iy + 4)
-      bx += 26
+  // Light grain over whole card
+  addNoise(ctx, seededRng(user.id + '-bg-grain'), W, H, 0.018, 3000)
+
+  ctx.restore()  // unclip card
+
+  // ── Text area ─────────────────────────────────────────
+  const textX = 48
+  const textY = H * 0.605
+
+  // Name — bold first name, light rest
+  ctx.textAlign = 'left'
+  const parts = user.full_name.split(' ')
+  const firstName = parts[0]
+  const lastName  = parts.slice(1).join(' ')
+
+  ctx.font = `800 56px 'Syne', sans-serif`
+  ctx.fillStyle = inkColor
+  const fnW = ctx.measureText(firstName).width
+  ctx.fillText(firstName, textX, textY)
+
+  if (lastName) {
+    ctx.font = `300 56px 'Syne', sans-serif`
+    ctx.fillStyle = inkColor + 'aa'
+    // Wrap to next line if doesn't fit
+    if (fnW + ctx.measureText(' ' + lastName).width < W - textX * 2) {
+      ctx.fillText(' ' + lastName, textX + fnW, textY)
+    } else {
+      ctx.fillText(lastName, textX, textY + 62)
     }
   }
-}
 
-// ── Badge picker modal ────────────────────────────────────────────────────────
-function BadgePicker({
-  badges, selected, onSave, onClose
-}: {
-  badges: Badge[]
-  selected: string[]
-  onSave: (ids: string[]) => void
-  onClose: () => void
-}) {
-  const [sel, setSel] = useState<string[]>(selected)
-  const MAX = 6
+  // Title (seeded)
+  const titleRng  = seededRng(user.id + '-title')
+  const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
+  ctx.font = `400 20px 'DM Sans', sans-serif`
+  ctx.fillStyle = inkMid + 'bb'
+  const titleY = lastName && (fnW + ctx.measureText(' ' + lastName).width >= W - textX * 2)
+    ? textY + 62 + 40
+    : textY + 46
+  ctx.fillText(titleText, textX, titleY)
 
-  const toggle = (id: string) => {
-    setSel(prev =>
-      prev.includes(id)
-        ? prev.filter(x => x !== id)
-        : prev.length < MAX ? [...prev, id] : prev
-    )
+  // USP # + email — monospace, small
+  const infoY = titleY + 36
+  ctx.font = `400 13px 'JetBrains Mono', monospace`
+  ctx.fillStyle = inkColor + '60'
+  const nuspStr = user.nusp ? `#${user.nusp}` : ''
+  ctx.fillText([nuspStr, user.email].filter(Boolean).join('  ·  '), textX, infoY)
+
+  // ── Bottom section ────────────────────────────────────
+  const bottomY = H - 104
+
+  // Left pill: area /// language  (exact Arc style)
+  if (area || language) {
+    const aLabel = area || '—'
+    const lLabel = language || '—'
+    const pillH  = 38
+
+    ctx.font = `600 13px 'DM Sans', sans-serif`
+    const aW = ctx.measureText(aLabel).width + 22
+    const lW = ctx.measureText(lLabel).width + 22
+    const gapW = 10  // stripe separator width
+    const totalW = aW + gapW + lW
+    const px = textX, py = bottomY
+
+    // Outer border
+    ctx.strokeStyle = accentPill + '70'
+    ctx.lineWidth = 1.5
+    roundRect(ctx, px, py, totalW, pillH, pillH / 2)
+    ctx.stroke()
+
+    // Stripe separator
+    ctx.save()
+    ctx.beginPath()
+    roundRect(ctx, px + aW, py + 4, gapW, pillH - 8, 2)
+    ctx.clip()
+    ctx.fillStyle = accentPill + '20'
+    ctx.fillRect(px + aW, py + 4, gapW, pillH - 8)
+    ctx.strokeStyle = accentPill + '50'
+    ctx.lineWidth = 1
+    for (let sx = -pillH; sx < gapW + pillH; sx += 4) {
+      ctx.beginPath()
+      ctx.moveTo(px + aW + sx, py + 4)
+      ctx.lineTo(px + aW + sx + pillH, py + 4 + pillH)
+      ctx.stroke()
+    }
+    ctx.restore()
+
+    // Labels
+    ctx.fillStyle = accentPill
+    ctx.textAlign = 'center'
+    ctx.font = `600 13px 'DM Sans', sans-serif`
+    ctx.fillText(aLabel, px + aW / 2, py + pillH / 2 + 5)
+    ctx.fillText(lLabel, px + aW + gapW + lW / 2, py + pillH / 2 + 5)
+    ctx.textAlign = 'left'
   }
 
+  // Right: active badges (up to 4, right-aligned)
+  const unlockedBadges = activeBadges.filter(b => b.unlocked).slice(0, 4)
+  if (unlockedBadges.length > 0) {
+    let bx = W - textX
+    ctx.font = '22px serif'
+    ctx.textAlign = 'right'
+    for (const badge of [...unlockedBadges].reverse()) {
+      ctx.fillText(badge.emoji, bx, bottomY + 26)
+      bx -= 30
+    }
+    ctx.textAlign = 'left'
+  }
+
+  // ── Card ID bottom-left ───────────────────────────────
+  ctx.font = `400 9px 'JetBrains Mono', monospace`
+  ctx.fillStyle = inkColor + '38'
+  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), textX, H - 24)
+
+  // ── Border ────────────────────────────────────────────
+  ctx.strokeStyle = inkColor + '14'
+  ctx.lineWidth = 1.5
+  roundRect(ctx, 0.75, 0.75, W - 1.5, H - 1.5, 36)
+  ctx.stroke()
+}
+
+// ── Badge Picker modal ────────────────────────────────────────────────────────
+function BadgePicker({ badges, selected, onSave, onClose }: {
+  badges: Badge[]; selected: string[]
+  onSave: (ids: string[]) => void; onClose: () => void
+}) {
+  const [sel, setSel] = useState<string[]>(selected)
+  const MAX = 4
+  const toggle = (id: string) => setSel(p =>
+    p.includes(id) ? p.filter(x => x !== id) : p.length < MAX ? [...p, id] : p
+  )
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in" style={{maxHeight:"85dvh",overflowY:"auto",background:"var(--bg-card)",border:"1px solid var(--border)",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>
-            Escolher badges <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>({sel.length}/{MAX})</span>
-          </h3>
-          <button onClick={onClose} style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
+      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-y-auto animate-in"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '85dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
         </div>
-        <div className="grid grid-cols-4 sm:grid-cols-3 gap-2 mb-4">
+        <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+          <div>
+            <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Badges no cartão</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{sel.length}/{MAX} · só os selecionados e desbloqueados aparecem</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-4 pb-4 grid grid-cols-2 gap-2 mt-1">
           {badges.map(b => (
-            <button
-              key={b.id}
-              disabled={!b.unlocked}
-              onClick={() => b.unlocked && toggle(b.id)}
-              className="flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all"
-              style={{
-                border: sel.includes(b.id) ? `2px solid ${b.color}` : '2px solid var(--border)',
-                background: sel.includes(b.id) ? b.color + '18' : b.unlocked ? 'var(--bg-elevated)' : 'var(--bg-surface)',
-                opacity: b.unlocked ? 1 : 0.4,
-                cursor: b.unlocked ? 'pointer' : 'not-allowed',
-              }}>
-              <span className="text-2xl">{b.emoji}</span>
-              <span className="text-[10px] font-semibold text-center leading-tight"
-                    style={{ color: sel.includes(b.id) ? b.color : 'var(--text-secondary)' }}>
-                {b.label}
-              </span>
-              {!b.unlocked && (
-                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>🔒</span>
-              )}
+            <button key={b.id} onClick={() => b.unlocked && toggle(b.id)} disabled={!b.unlocked}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all text-left active:scale-[0.97]"
+                    style={{
+                      border: `2px solid ${sel.includes(b.id) ? b.color : 'var(--border)'}`,
+                      background: sel.includes(b.id) ? b.color + '18' : 'var(--bg-elevated)',
+                      opacity: b.unlocked ? 1 : 0.4,
+                      cursor: b.unlocked ? 'pointer' : 'not-allowed',
+                    }}>
+              <span className="text-2xl shrink-0">{b.emoji}</span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold truncate"
+                   style={{ color: sel.includes(b.id) ? b.color : 'var(--text-primary)' }}>{b.label}</p>
+                <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  {b.unlocked ? b.desc : '🔒 Bloqueado'}
+                </p>
+              </div>
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="px-4 pb-5 flex gap-2">
           <button className="btn-primary flex-1 justify-center" onClick={() => { onSave(sel); onClose() }}>
             <Check size={14} /> Salvar
           </button>
@@ -423,19 +371,45 @@ function BadgePicker({
 // ── Profile Page ──────────────────────────────────────────────────────────────
 export default function ProfilePage() {
   const { user, logout } = useAuthStore()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [showBadgePicker, setShowBadgePicker] = useState(false)
+
+  const [area,     setAreaState]     = useState<string>(() => localStorage.getItem('dasiboard-area') ?? '')
+  const [language, setLanguageState] = useState<string>(() => localStorage.getItem('dasiboard-lang') ?? '')
   const [activeBadgeIds, setActiveBadgeIds] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('dasiboard-badges') ?? '[]') } catch { return [] }
   })
+  const [showBadgePicker, setShowBadgePicker] = useState(false)
 
-  const activeBadges = ALL_BADGES.filter(b => activeBadgeIds.includes(b.id) && b.unlocked)
+  // Dynamic unlock state from API
+  const [memberSlugs,      setMemberSlugs]      = useState<string[]>([])
+  const [hasBoards,        setHasBoards]         = useState(false)
+  const [hasPassedSubject, setHasPassedSubject]  = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/entities/').catch(() => ({ data: [] })),
+      api.get('/kanban/boards').catch(() => ({ data: [] })),
+      api.get('/grades/subjects').catch(() => ({ data: [] })),
+    ]).then(([entRes, boardRes, subRes]) => {
+      setMemberSlugs((entRes.data as any[]).filter((e: any) => e.is_member).map((e: any) => e.slug))
+      setHasBoards((boardRes.data as any[]).length > 0)
+      const subjects = subRes.data as any[]
+      setHasPassedSubject(subjects.some((s: any) => {
+        const tw = s.grades.reduce((a: number, g: any) => a + g.weight, 0)
+        if (!tw) return false
+        return s.grades.reduce((a: number, g: any) => a + (g.value / g.max_value) * 10 * g.weight, 0) / tw >= 5
+      }))
+    })
+  }, [])
+
+  const badges = buildBadges({ hasBoards, hasLanguage: !!language, hasPassedSubject, memberSlugs })
+  const activeBadges = badges.filter(b => activeBadgeIds.includes(b.id) && b.unlocked)
 
   const draw = useCallback(() => {
     if (!canvasRef.current || !user) return
-    drawCard(canvasRef.current, user, activeBadges)
-  }, [user, activeBadgeIds])
+    drawCard(canvasRef.current, user, activeBadges, area, language)
+  }, [user, activeBadges, area, language])
 
   useEffect(() => { draw() }, [draw])
 
@@ -444,123 +418,129 @@ export default function ProfilePage() {
   const handleDownload = () => {
     if (!canvasRef.current || !user) return
     const a = document.createElement('a')
-    a.download = `dasiboard-${user.full_name.toLowerCase().replace(/\s+/g,'-')}.png`
+    a.download = `dasiboard-${user.full_name.toLowerCase().replace(/\s+/g, '-')}.png`
     a.href = canvasRef.current.toDataURL('image/png', 1.0)
     a.click()
   }
 
-  const saveBadges = (ids: string[]) => {
-    localStorage.setItem('dasiboard-badges', JSON.stringify(ids))
-    setActiveBadgeIds(ids)
-  }
+  const saveBadges = (ids: string[]) => { localStorage.setItem('dasiboard-badges', JSON.stringify(ids)); setActiveBadgeIds(ids) }
+  const saveArea   = (v: string)     => { localStorage.setItem('dasiboard-area', v); setAreaState(v) }
+  const saveLang   = (v: string)     => { localStorage.setItem('dasiboard-lang', v); setLanguageState(v) }
 
   if (!user) return null
 
-  const cardStyle = getCardStyle(user.id)
-  const initials = user.full_name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase()
-
   return (
     <div className="px-4 py-4 sm:px-6 md:px-8 md:py-8 max-w-2xl mx-auto w-full">
+
       {showBadgePicker && (
-        <BadgePicker
-          badges={ALL_BADGES}
-          selected={activeBadgeIds}
-          onSave={saveBadges}
-          onClose={() => setShowBadgePicker(false)}
-        />
+        <BadgePicker badges={badges} selected={activeBadgeIds} onSave={saveBadges} onClose={() => setShowBadgePicker(false)} />
       )}
 
-      <h1 className="font-display text-2xl font-bold mb-6 flex items-center gap-2 animate-in"
+      <h1 className="font-display text-2xl font-bold mb-5 flex items-center gap-2 animate-in"
           style={{ color: 'var(--text-primary)' }}>
         <User size={22} style={{ color: 'var(--accent-3)' }} /> Perfil
       </h1>
 
-      {/* ── Identity card ────────────────────── */}
+      {/* ── Card ────────────────────────────────────── */}
       <div className="mb-5 animate-in">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-            Cartão de identificação
-          </p>
-          <div className="flex gap-2">
-            <button onClick={() => setShowBadgePicker(true)}
-                    className="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1.5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Cartão</p>
+          <div className="flex gap-1.5">
+            <button onClick={() => setShowBadgePicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
               <Award size={12} /> Badges
             </button>
-            <button onClick={draw} className="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1.5">
-              <RefreshCw size={12} /> Atualizar
+            <button onClick={draw} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
+              <RefreshCw size={12} />
             </button>
-            <button onClick={handleDownload} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5">
+            <button onClick={handleDownload} className="btn-primary text-xs py-1.5 px-2.5 gap-1.5">
               <Download size={12} /> PNG
             </button>
           </div>
         </div>
-        <div className="rounded-2xl overflow-hidden"
-             style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15)', lineHeight: 0 }}>
+        {/* Portrait canvas — max 340px wide */}
+        <div className="mx-auto overflow-hidden rounded-2xl"
+             style={{ maxWidth: 340, lineHeight: 0, boxShadow: '0 20px 60px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.12)' }}>
           <canvas ref={canvasRef}
-                  style={{ display: 'block', width: '100%', cursor: 'pointer', borderRadius: 16 }}
-                  onClick={handleDownload} title="Clique para baixar" />
+                  style={{ display: 'block', width: '100%', cursor: 'pointer', borderRadius: 18 }}
+                  onClick={handleDownload} title="Toque para baixar" />
         </div>
         <p className="text-[10px] text-center mt-2" style={{ color: 'var(--text-muted)' }}>
-          Estilo único para sua conta · clique para baixar
+          Único por conta · toque para baixar
         </p>
       </div>
 
-      {/* ── Active badges showcase ────────────── */}
+      {/* ── Área & Linguagem ────────────────────────── */}
       <div className="card mb-4 animate-in-delay-1">
+        <h3 className="font-display font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Code2 size={15} style={{ color: 'var(--accent-3)' }} /> Área & Linguagem
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="label">Área de atuação</label>
+            <select className="input text-sm" value={area} onChange={(e) => saveArea(e.target.value)}>
+              <option value="">Selecionar...</option>
+              {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Linguagem principal</label>
+            <select className="input text-sm" value={language} onChange={(e) => saveLang(e.target.value)}>
+              <option value="">Selecionar...</option>
+              {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+        {language && (
+          <p className="text-xs mt-2.5 flex items-center gap-1.5" style={{ color: 'var(--accent-3)' }}>
+            💻 Badge <strong>Dev</strong> desbloqueada!
+          </p>
+        )}
+        {hasBoards && (
+          <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: '#22c55e' }}>
+            📋 Badge <strong>Eisenhower</strong> desbloqueada!
+          </p>
+        )}
+        {hasPassedSubject && (
+          <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: '#a855f7' }}>
+            🦉 Badge <strong>Coruja</strong> desbloqueada!
+          </p>
+        )}
+      </div>
+
+      {/* ── Badges ──────────────────────────────────── */}
+      <div className="card mb-4 animate-in-delay-2">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-semibold text-sm flex items-center gap-2"
-              style={{ color: 'var(--text-primary)' }}>
-            <Award size={15} style={{ color: 'var(--accent-3)' }} /> Meus badges
+          <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+            Badges <span className="font-normal text-xs" style={{ color: 'var(--text-muted)' }}>
+              ({badges.filter(b => b.unlocked).length}/{badges.length})
+            </span>
           </h3>
-          <button onClick={() => setShowBadgePicker(true)}
-                  className="text-xs transition-colors"
-                  style={{ color: 'var(--accent-3)' }}>
-            Gerenciar →
+          <button onClick={() => setShowBadgePicker(true)} className="text-xs" style={{ color: 'var(--accent-3)' }}>
+            Editar →
           </button>
         </div>
-        {activeBadges.length === 0 ? (
-          <div className="py-4 text-center" style={{ color: 'var(--text-muted)' }}>
-            <p className="text-sm">Nenhum badge selecionado</p>
-            <button onClick={() => setShowBadgePicker(true)}
-                    className="text-xs mt-1" style={{ color: 'var(--accent-3)' }}>
-              + Escolher badges
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {activeBadges.map(b => (
-              <div key={b.id}
-                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold"
-                   style={{ background: b.color+'18', border: `1px solid ${b.color}44`, color: b.color }}
-                   title={b.desc}>
-                <span>{b.emoji}</span> {b.label}
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-            {ALL_BADGES.filter(b=>b.unlocked).length} de {ALL_BADGES.length} badges desbloqueados
-          </p>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {ALL_BADGES.filter(b=>!b.unlocked).map(b => (
-              <div key={b.id} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px]"
-                   style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-                   title={b.desc}>
-                <span className="opacity-40">{b.emoji}</span>
-                <span className="opacity-60">{b.label}</span>
-                <span className="opacity-40">🔒</span>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {badges.map(b => (
+            <div key={b.id}
+                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all"
+                 style={{
+                   background: b.unlocked ? b.color + '18' : 'var(--bg-elevated)',
+                   border: `1px solid ${b.unlocked ? b.color + '44' : 'var(--border)'}`,
+                   color: b.unlocked ? b.color : 'var(--text-muted)',
+                   opacity: b.unlocked ? 1 : 0.4,
+                 }}
+                 title={b.desc}>
+              <span>{b.emoji}</span>
+              <span className="font-semibold">{b.label}</span>
+              {!b.unlocked && <span className="text-[9px]">🔒</span>}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── Account info ─────────────────────── */}
-      <div className="card mb-4 space-y-4 animate-in-delay-2">
-        <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Informações da conta
-        </h3>
+      {/* ── Account info ─────────────────────────────── */}
+      <div className="card mb-4 space-y-4 animate-in-delay-3">
+        <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>Conta</h3>
         {[
           { icon: Mail,          label: 'E-mail',       value: user.email },
           { icon: Hash,          label: 'Nº USP',       value: user.nusp ?? 'Não informado' },
@@ -579,23 +559,6 @@ export default function ProfilePage() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* ── About ────────────────────────────── */}
-      <div className="card mb-6 animate-in-delay-3">
-        <h3 className="font-display font-semibold text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-          Sobre o DaSIboard
-        </h3>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-          Dashboard acadêmico dos alunos de Sistemas de Informação da EACH‑USP.
-          Tarefas, notas, frequência, calendário e entidades do curso em um só lugar.
-        </p>
-        <div className="flex gap-2 mt-4 flex-wrap">
-          {['v2.0.0','FastAPI','React','PostgreSQL'].map(t => (
-            <span key={t} className="badge text-[10px]"
-                  style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>{t}</span>
-          ))}
-        </div>
       </div>
 
       <button onClick={handleLogout} className="btn-danger w-full justify-center animate-in-delay-4">
