@@ -226,8 +226,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ── Side panel ─── */}
-      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5" style={{borderTop:'1px solid var(--border)', borderLeft:'none'}} data-side="calendar-side">
-        <style>{`@media(min-width:768px){[data-side="calendar-side"]{border-top:none!important;border-left:1px solid var(--border)!important}}`}</style>>
+      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5 cal-side-panel">
         {/* Global key delete modal */}
         {showKeyInput && (
           <div className="animate-in space-y-3 mb-4 p-4 rounded-xl"
