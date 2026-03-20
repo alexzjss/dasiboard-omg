@@ -1,11 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from psycopg2.extras import RealDictCursor
-from typing import List, Optional
+from typing import List
 from app.db.session import get_db
 from app.api.routes.auth import get_current_user
 from app.schemas.schemas import EntityOut, EntityJoin, EntityEventCreate, EventOut
+from app.core.config import settings
 
 router = APIRouter()
+
+
+def _resolve_key(slug: str) -> str | None:
+    """Return the configured member key for a slug, or None if the entity is open."""
+    return settings.get_entity_key(slug)
 
 
 @router.get("/", response_model=List[EntityOut])
@@ -19,7 +25,14 @@ def list_entities(db: RealDictCursor = Depends(get_db), user=Depends(get_current
         GROUP BY e.id
         ORDER BY e.name
     """, (str(user["id"]),))
-    return db.fetchall()
+    rows = db.fetchall()
+    result = []
+    for row in rows:
+        r = dict(row)
+        # Tell the frontend whether this entity requires a key
+        r["has_key"] = bool(_resolve_key(r["slug"]))
+        result.append(r)
+    return result
 
 
 @router.get("/{slug}", response_model=EntityOut)
@@ -36,26 +49,32 @@ def get_entity(slug: str, db: RealDictCursor = Depends(get_db), user=Depends(get
     row = db.fetchone()
     if not row:
         raise HTTPException(404, "Entidade não encontrada")
-    return row
+    r = dict(row)
+    r["has_key"] = bool(_resolve_key(slug))
+    return r
 
 
 @router.post("/{slug}/join")
-def join_entity(slug: str, body: EntityJoin, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT id, member_key FROM entities WHERE slug = %s", (slug,))
+def join_entity(
+    slug: str,
+    body: EntityJoin,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    db.execute("SELECT id FROM entities WHERE slug = %s", (slug,))
     entity = db.fetchone()
     if not entity:
         raise HTTPException(404, "Entidade não encontrada")
-    if not entity["member_key"]:
-        raise HTTPException(400, "Esta entidade não requer chave de acesso")
-    if body.key != entity["member_key"]:
-        raise HTTPException(403, "Chave inválida")
-    try:
-        db.execute(
-            "INSERT INTO entity_members (entity_id, user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-            (str(entity["id"]), str(user["id"])),
-        )
-    except Exception:
-        pass
+
+    required_key = _resolve_key(slug)
+    if required_key:
+        if not body.key or body.key != required_key:
+            raise HTTPException(403, "Chave de acesso inválida")
+
+    db.execute(
+        "INSERT INTO entity_members (entity_id, user_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+        (str(entity["id"]), str(user["id"])),
+    )
     return {"ok": True}
 
 
@@ -65,8 +84,10 @@ def leave_entity(slug: str, db: RealDictCursor = Depends(get_db), user=Depends(g
     entity = db.fetchone()
     if not entity:
         raise HTTPException(404, "Entidade não encontrada")
-    db.execute("DELETE FROM entity_members WHERE entity_id=%s AND user_id=%s",
-               (str(entity["id"]), str(user["id"])))
+    db.execute(
+        "DELETE FROM entity_members WHERE entity_id=%s AND user_id=%s",
+        (str(entity["id"]), str(user["id"])),
+    )
     return {"ok": True}
 
 
@@ -77,20 +98,22 @@ def entity_events(slug: str, db: RealDictCursor = Depends(get_db), user=Depends(
     if not entity:
         raise HTTPException(404, "Entidade não encontrada")
 
-    is_member_q = "SELECT 1 FROM entity_members WHERE entity_id=%s AND user_id=%s"
-    db.execute(is_member_q, (str(entity["id"]), str(user["id"])))
+    db.execute(
+        "SELECT 1 FROM entity_members WHERE entity_id=%s AND user_id=%s",
+        (str(entity["id"]), str(user["id"])),
+    )
     is_member = db.fetchone() is not None
 
     if is_member:
-        db.execute("""
-            SELECT *, FALSE AS is_global FROM events
-            WHERE entity_id = %s ORDER BY start_at
-        """, (str(entity["id"]),))
+        db.execute(
+            "SELECT *, FALSE AS is_global FROM events WHERE entity_id = %s ORDER BY start_at",
+            (str(entity["id"]),),
+        )
     else:
-        db.execute("""
-            SELECT *, FALSE AS is_global FROM events
-            WHERE entity_id = %s AND members_only = FALSE ORDER BY start_at
-        """, (str(entity["id"]),))
+        db.execute(
+            "SELECT *, FALSE AS is_global FROM events WHERE entity_id = %s AND members_only = FALSE ORDER BY start_at",
+            (str(entity["id"]),),
+        )
 
     rows = db.fetchall()
     result = []
@@ -113,16 +136,22 @@ def create_entity_event(
     entity = db.fetchone()
     if not entity:
         raise HTTPException(404, "Entidade não encontrada")
-    db.execute("SELECT 1 FROM entity_members WHERE entity_id=%s AND user_id=%s",
-               (str(entity["id"]), str(user["id"])))
+
+    db.execute(
+        "SELECT 1 FROM entity_members WHERE entity_id=%s AND user_id=%s",
+        (str(entity["id"]), str(user["id"])),
+    )
     if not db.fetchone():
-        raise HTTPException(403, "Apenas membros podem criar eventos para a entidade")
-    db.execute("""
-        INSERT INTO events (owner_id, title, description, event_type, start_at, end_at,
-                           all_day, color, location, entity_id, members_only)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        RETURNING *, FALSE AS is_global
-    """, (str(user["id"]), body.title, body.description, body.event_type,
-          body.start_at, body.end_at, body.all_day, body.color, body.location,
-          str(entity["id"]), body.members_only))
+        raise HTTPException(403, "Apenas membros podem criar eventos para esta entidade")
+
+    db.execute(
+        """INSERT INTO events
+               (owner_id, title, description, event_type, start_at, end_at,
+                all_day, color, location, entity_id, members_only)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+           RETURNING *, FALSE AS is_global""",
+        (str(user["id"]), body.title, body.description, body.event_type,
+         body.start_at, body.end_at, body.all_day, body.color, body.location,
+         str(entity["id"]), body.members_only),
+    )
     return db.fetchone()
