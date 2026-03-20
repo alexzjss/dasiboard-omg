@@ -518,7 +518,7 @@ export default function KanbanPage() {
   }
 
   if (loading) return (
-    <div className="p-8 flex flex-col gap-6">
+    <div className="p-4 md:p-8 flex flex-col gap-6">
       <div className="shimmer h-8 w-48 rounded-xl" />
       <div className="flex gap-5">
         {[0,1,2].map((i) => (
@@ -602,7 +602,7 @@ export default function KanbanPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex-1 overflow-auto p-6">
+          <div className="flex-1 overflow-auto p-3 md:p-6">
             <div className="flex gap-5 h-full items-start">
               {currentBoard.columns.map((col) => (
                 <KanbanColumn
