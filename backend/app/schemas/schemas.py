@@ -108,7 +108,7 @@ class SubjectCreate(BaseModel):
     semester: str
     color: str = "#8B5CF6"
     total_classes: int = 0
-    attended: int = 0
+    attended: Optional[int] = None  # defaults to total_classes if not provided
 
 
 class SubjectUpdate(BaseModel):
