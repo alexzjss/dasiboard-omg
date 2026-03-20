@@ -1,18 +1,19 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, User, LogOut, GraduationCap, Sun, Moon,
+  CalendarDays, User, LogOut, GraduationCap, Sun, Moon, Users,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useTheme } from '@/context/ThemeContext'
 import clsx from 'clsx'
 
 const nav = [
-  { to: '/',         label: 'Dashboard',  icon: LayoutDashboard, end: true },
-  { to: '/kanban',   label: 'Kanban',     icon: KanbanSquare },
-  { to: '/grades',   label: 'Notas',      icon: BookOpen },
-  { to: '/calendar', label: 'Calendário', icon: CalendarDays },
-  { to: '/profile',  label: 'Perfil',     icon: User },
+  { to: '/',          label: 'Dashboard',  icon: LayoutDashboard, end: true },
+  { to: '/kanban',    label: 'Kanban',      icon: KanbanSquare },
+  { to: '/grades',    label: 'Notas',       icon: BookOpen },
+  { to: '/calendar',  label: 'Calendário',  icon: CalendarDays },
+  { to: '/docentes',  label: 'Docentes',    icon: Users },
+  { to: '/profile',   label: 'Perfil',      icon: User },
 ]
 
 export default function AppLayout() {
