@@ -1476,3 +1476,15 @@
   letter-spacing: 0.1em;
   font-size: 10px;
 }
+
+/* ── Calendar side panel — top border on mobile, left border on desktop ── */
+.cal-side-panel {
+  border-top: 1px solid var(--border);
+  border-left: none;
+}
+@media (min-width: 768px) {
+  .cal-side-panel {
+    border-top: none;
+    border-left: 1px solid var(--border);
+  }
+}
