@@ -135,9 +135,9 @@ export default function CalendarPage() {
   const WEEK_DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
   return (
-    <div className="flex flex-col md:flex-row h-full">
+    <div className="flex flex-col md:flex-row" style={{height:"100%",minHeight:0}}>
       {/* ── Calendar grid ─── */}
-      <div className="flex-1 flex flex-col p-3 md:p-6">
+      <div className="flex-1 flex flex-col p-3 md:p-5 overflow-hidden" style={{minHeight:0}}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-display text-xl font-bold capitalize animate-in" style={{ color:'var(--text-primary)' }}>
@@ -161,7 +161,7 @@ export default function CalendarPage() {
 
         {/* Filters */}
         {showFilters && (
-          <div className="flex items-center gap-3 mb-4 p-3 rounded-xl animate-in"
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 p-3 rounded-xl animate-in"
                style={{background:'var(--bg-card)',border:'1px solid var(--border)'}}>
             <div className="flex items-center gap-2">
               <span className="label mb-0">Tipo</span>
@@ -190,7 +190,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Day grid */}
-        <div className="grid grid-cols-7 flex-1 gap-px rounded-2xl overflow-hidden"
+        <div className="grid grid-cols-7 gap-px rounded-xl overflow-auto flex-1" style={{minHeight:"200px"}}
              style={{background:'var(--border)',border:'1px solid var(--border)'}}>
           {days.map((day)=>{
             const dayEvs=eventsForDay(day)
@@ -199,7 +199,7 @@ export default function CalendarPage() {
             return (
               <button key={day.toISOString()}
                 onClick={()=>setSelected(isSameDay(day,selected??new Date('')) ? null : day)}
-                className={clsx('relative flex flex-col p-1 md:p-2 text-left transition-colors min-h-[56px] md:min-h-[80px]',!isCurrentMonth&&'opacity-30')}
+                className={clsx('relative flex flex-col p-1 sm:p-2 text-left transition-colors min-h-[52px] sm:min-h-[72px] md:min-h-[80px]',!isCurrentMonth&&'opacity-30')}
                 style={{backgroundColor:isSel?'var(--accent-soft)':'var(--bg-base)'}}
                 onMouseEnter={(e)=>{if(!isSel)(e.currentTarget as HTMLElement).style.backgroundColor='var(--bg-surface)'}}
                 onMouseLeave={(e)=>{if(!isSel)(e.currentTarget as HTMLElement).style.backgroundColor='var(--bg-base)'}}
@@ -208,8 +208,9 @@ export default function CalendarPage() {
                       style={isToday(day)?{background:'var(--gradient-btn)',color:'#fff',fontWeight:700}:{color:'var(--text-secondary)'}}>
                   {format(day,'d')}
                 </span>
-                <div className="space-y-0.5 w-full overflow-hidden">
-                  {dayEvs.slice(0,3).map((ev)=>(
+                {/* Mobile: colored dots. Desktop: event labels */}
+                <div className="hidden sm:block space-y-0.5 w-full overflow-hidden">
+                  {dayEvs.slice(0,2).map((ev)=>(
                     <div key={ev.id} className="text-[10px] rounded px-1 py-0.5 truncate font-medium flex items-center gap-1"
                          style={{backgroundColor:ev.color+'22',color:ev.color}}>
                       {ev.is_global&&<Globe size={8}/>}
@@ -217,7 +218,14 @@ export default function CalendarPage() {
                       {ev.title}
                     </div>
                   ))}
-                  {dayEvs.length>3&&<div className="text-[10px]" style={{color:'var(--text-muted)'}}>+{dayEvs.length-3}</div>}
+                  {dayEvs.length>2&&<div className="text-[10px]" style={{color:'var(--text-muted)'}}>+{dayEvs.length-2}</div>}
+                </div>
+                {/* Mobile dots */}
+                <div className="sm:hidden flex gap-0.5 mt-0.5 flex-wrap">
+                  {dayEvs.slice(0,3).map((ev)=>(
+                    <div key={ev.id} className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:ev.color}} />
+                  ))}
+                  {dayEvs.length>3&&<div className="w-1.5 h-1.5 rounded-full opacity-40" style={{backgroundColor:'var(--text-muted)'}} />}
                 </div>
               </button>
             )
@@ -226,7 +234,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ── Side panel ─── */}
-      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5 cal-side-panel">
+      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5 cal-side-panel" style={{maxHeight: selected || showForm ? undefined : "auto"}}>
         {/* Global key delete modal */}
         {showKeyInput && (
           <div className="animate-in space-y-3 mb-4 p-4 rounded-xl"
