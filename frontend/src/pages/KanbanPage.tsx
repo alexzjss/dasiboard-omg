@@ -65,10 +65,10 @@ function CardModal({
   const prioConfig = PRIORITY[priority as keyof typeof PRIORITY] ?? PRIORITY.medium
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full max-w-lg rounded-2xl p-6 animate-in space-y-4"
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4 overflow-y-auto" style={{maxHeight:"90dvh"}}
            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
@@ -251,7 +251,7 @@ function KanbanColumn({
 
   return (
     <div
-      className="w-64 md:w-72 shrink-0 flex flex-col rounded-2xl transition-all"
+      className="shrink-0 flex flex-col rounded-2xl transition-all" style={{width: "min(288px, 80vw)"}}
       style={{
         background: isOver ? style.bg : 'var(--bg-surface)',
         border: `1px solid ${isOver ? style.accent + '66' : 'var(--border)'}`,
@@ -533,7 +533,7 @@ export default function KanbanPage() {
   )
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col" style={{height:"100%",minHeight:0}}>
       {/* Modal */}
       {editingCard && (
         <CardModal
@@ -545,11 +545,11 @@ export default function KanbanPage() {
       )}
 
       {/* Header */}
-      <div className="px-4 md:px-6 py-3 md:py-4 flex flex-wrap items-center gap-2 md:gap-4 shrink-0"
+      <div className="px-3 py-2 md:px-6 md:py-4 flex items-center gap-2 shrink-0 overflow-hidden"
            style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
         <h1 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Kanban</h1>
         <div className="w-px h-5" style={{ background: 'var(--border)' }} />
-        <div className="flex-1 flex items-center gap-2 overflow-x-auto">
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-hide min-w-0">
           {boards.map((b) => (
             <button key={b.id} onClick={() => setActive(b.id)}
                     className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
@@ -602,8 +602,8 @@ export default function KanbanPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex-1 overflow-auto p-3 md:p-6 overflow-x-auto">
-            <div className="flex gap-3 md:gap-5 h-full items-start pb-4">
+          <div className="flex-1 overflow-x-auto overflow-y-hidden p-3 md:p-4 scrollbar-hide" style={{minHeight:0}}>
+            <div className="flex gap-3 md:gap-4 h-full items-start pb-2" style={{minWidth:"max-content"}}>
               {currentBoard.columns.map((col) => (
                 <KanbanColumn
                   key={col.id}
@@ -623,7 +623,7 @@ export default function KanbanPage() {
               const style = COL_STYLES[idx % 3] ?? COL_STYLES[0]
               const prioConfig = PRIORITY[activeCard.priority as keyof typeof PRIORITY] ?? PRIORITY.medium
               return (
-                <div className="rounded-xl p-3 w-64 md:w-72 rotate-2"
+                <div className="rounded-xl p-3 rotate-2" style={{width:"min(288px,80vw)"}}
                      style={{
                        background: 'var(--bg-card)',
                        border: `1px solid ${style.accent}66`,
