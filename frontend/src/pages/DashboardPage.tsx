@@ -69,10 +69,10 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto">
+    <div className="px-4 py-4 md:px-8 md:py-8 max-w-5xl mx-auto w-full">
 
       {/* ── Hero header ──────────────────────────── */}
-      <div className="relative mb-8 overflow-hidden rounded-2xl p-5 md:p-7 animate-in"
+      <div className="relative mb-4 md:mb-8 overflow-hidden rounded-2xl p-4 md:p-7 animate-in"
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
@@ -88,7 +88,7 @@ export default function DashboardPage() {
                style={{ color: 'var(--text-muted)' }}>
               {format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </p>
-            <h1 className="font-display text-2xl md:text-3xl font-bold animate-in-delay-2"
+            <h1 className="font-display text-xl md:text-3xl font-bold animate-in-delay-2"
                 style={{ color: 'var(--text-primary)' }}>
               {greeting}, {firstName} 👋
             </h1>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stat cards ──────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         {loading
           ? [0,1,2,3].map((i) => <div key={i}>{skeletonCard}</div>)
           : cards.map(({ label, value, icon: Icon, to, key, highlight }, i) => (
