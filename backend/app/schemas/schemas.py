@@ -144,7 +144,8 @@ class SubjectOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Events ────────────────────────────────────────────────
+
+# ── EventCreate + EventOut updated with global/class_code ────────────────────
 class EventCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -154,6 +155,8 @@ class EventCreate(BaseModel):
     all_day: bool = False
     color: str = "#10B981"
     location: Optional[str] = None
+    class_code: Optional[str] = None
+    is_global: bool = False
 
 
 class EventOut(BaseModel):
@@ -167,5 +170,7 @@ class EventOut(BaseModel):
     all_day: bool
     color: str
     location: Optional[str] = None
+    class_code: Optional[str] = None
+    is_global: bool = False
     created_at: datetime
     model_config = {"from_attributes": True}
