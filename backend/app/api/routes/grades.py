@@ -23,7 +23,6 @@ function absenceRate(total: number, attended: number) {
   return ((total - attended) / total) * 100
 }
 
-// ── Mini circular progress ────────────────────────────────
 function CircleProgress({ pct, color, size = 44 }: { pct: number; color: string; size?: number }) {
   const r = (size - 6) / 2
   const circ = 2 * Math.PI * r
