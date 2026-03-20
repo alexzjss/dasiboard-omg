@@ -21,11 +21,13 @@ def list_subjects(db: RealDictCursor = Depends(get_db), user=Depends(get_current
 
 @router.post("/subjects", response_model=SubjectOut, status_code=201)
 def create_subject(body: SubjectCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    # Default attended = total_classes (start fully attended, track absences via -=)
+    attended = body.attended if body.attended is not None else body.total_classes
     db.execute(
         """INSERT INTO subjects (owner_id, code, name, professor, semester, color, total_classes, attended)
            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
         (str(user["id"]), body.code, body.name, body.professor, body.semester, body.color,
-         body.total_classes, body.attended),
+         body.total_classes, attended),
     )
     s = db.fetchone()
     return {**s, "grades": []}
