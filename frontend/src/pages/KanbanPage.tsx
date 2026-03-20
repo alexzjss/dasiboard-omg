@@ -94,21 +94,17 @@ function KanbanCard({ card, onDelete, onChangePriority }: {
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+      }}
       className={clsx(
         'rounded-xl p-3 group transition-all',
         isDragging && 'opacity-40 rotate-1'
       )}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139,92,246,0.4)' }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-      onMouseEnterCapture={undefined}
-      {...{style: {
-        ...style,
-        backgroundColor: 'var(--bg-elevated)',
-        border: '1px solid var(--border)',
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}}
     >
       <div className="flex items-start gap-2">
         <button
