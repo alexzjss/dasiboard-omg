@@ -8,6 +8,7 @@ import KanbanPage from '@/pages/KanbanPage'
 import GradesPage from '@/pages/GradesPage'
 import CalendarPage from '@/pages/CalendarPage'
 import ProfilePage from '@/pages/ProfilePage'
+import DocentesPage from '@/pages/DocentesPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.accessToken)
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="grades"   element={<GradesPage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="profile"  element={<ProfilePage />} />
+        <Route path="docentes" element={<DocentesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
