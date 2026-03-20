@@ -62,8 +62,7 @@ function EventModal({ entity, onClose, onCreated }: {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto"}}
-           style={{ background: 'var(--bg-card)', border: `1px solid ${entity.color}33`, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div className="w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto",background:"var(--bg-card)",border:`1px solid ${entity.color}33`,boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex items-center justify-between">
           <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>
             {entity.icon_emoji} Novo evento — {entity.short_name}
@@ -145,8 +144,7 @@ function JoinModal({ entity, onClose, onJoined }: {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto"}}
-           style={{ background: 'var(--bg-card)', border: `1px solid ${entity.color}33`, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+      <div className="w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto",background:"var(--bg-card)",border:`1px solid ${entity.color}33`,boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
                style={{ background: entity.color + '22', border: `1px solid ${entity.color}44` }}>
