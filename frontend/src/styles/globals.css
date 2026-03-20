@@ -1316,168 +1316,28 @@
 .card, .card-hover { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
 
 /* ═══════════════════════════════════════════════════════════
-   📱  MOBILE RESPONSIVE — global overrides for small screens
+   📱  MOBILE — complete portrait-first system
+   Bottom nav bar + responsive pages
 ═══════════════════════════════════════════════════════════ */
 
-/* ── Sidebar width variable ── */
+/* ── CSS vars override for mobile ── */
 @media (max-width: 1023px) {
-  :root {
-    --sidebar-w: 0px;
-  }
+  :root { --sidebar-w: 0px; }
 }
 
-/* ── Touch-friendly tap targets ── */
-@media (max-width: 767px) {
-  .btn { @apply px-3 py-2; min-height: 40px; }
-  .btn-primary, .btn-ghost, .btn-danger { min-height: 40px; }
-  .input { @apply py-3; min-height: 44px; }
-  .nav-active, .nav-inactive { min-height: 44px; }
-  .card { @apply p-4 rounded-xl; }
-  .card-hover { @apply rounded-xl; }
-  .badge { @apply text-xs px-2 py-1; }
-}
+/* ── Bottom nav bar styles ── */
+.nav-bottom-active  { }
+.nav-bottom-inactive { }
 
-/* ── Typography scale-down on mobile ── */
-@media (max-width: 480px) {
-  h1 { font-size: 1.35rem !important; }
-  h2 { font-size: 1.15rem !important; }
-  h3 { font-size: 1rem !important; }
-}
-
-/* ── Kanban columns — horizontal scroll on mobile ── */
-@media (max-width: 767px) {
-  /* Kanban board flex container */
-  .kanban-board-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 16px;
-  }
-  .kanban-col-snap {
-    scroll-snap-align: start;
-  }
-}
-
-/* ── Calendar — smaller day cells on mobile ── */
-@media (max-width: 639px) {
-  /* smaller week header text */
-  .cal-week-header { font-size: 9px !important; letter-spacing: 0 !important; }
-}
-
-/* ── Card canvas — full width on narrow screens ── */
-@media (max-width: 767px) {
-  canvas[title="Clique para baixar"] {
-    border-radius: 12px !important;
-  }
-}
-
-/* ── Theme picker modal — full screen on mobile ── */
-@media (max-width: 480px) {
-  .theme-picker-modal {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 24px 24px 0 0 !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: auto !important;
-  }
-}
-
-/* ── Aranha comic theme — mobile font scale ── */
-@media (max-width: 767px) {
-  [data-theme="dark-aranha"] .nav-active,
-  [data-theme="dark-aranha"] .nav-inactive {
-    font-size: 13px;
-    letter-spacing: 0.01em;
-  }
-  [data-theme="dark-aranha"] .card {
-    border-radius: 4px !important;
-    border-width: 2px;
-    box-shadow: 3px 3px 0 rgba(26,10,0,0.2);
-  }
-  [data-theme="dark-aranha"] .btn-primary {
-    border-radius: 4px !important;
-    box-shadow: 2px 2px 0 rgba(26,10,0,0.4);
-  }
-}
-
-/* ── Hypado theme — disable heavy animations on mobile for perf ── */
-@media (max-width: 767px) {
-  [data-theme="dark-hypado"] .sidebar-bg::after {
-    animation: none;
-    opacity: 0.4;
-  }
-  [data-theme="dark-hypado"] body::after {
-    display: none;
-  }
-}
-
-/* ── DLC theme — reduce RGB animation on mobile ── */
-@media (max-width: 767px) {
-  [data-theme="dark-dlc"] h1,
-  [data-theme="dark-dlc"] h2,
-  [data-theme="dark-dlc"] h3 {
-    animation-duration: 8s;
-  }
-  [data-theme="dark-dlc"] .btn-primary {
-    animation-duration: 6s;
-  }
-}
-
-/* ── Scrollbar hide on mobile ── */
-@media (max-width: 767px) {
-  ::-webkit-scrollbar { width: 0; height: 0; }
-}
-
-/* ── Safe area for iPhone notch/home bar ── */
-@supports (padding: max(0px)) {
-  .mobile-safe-bottom {
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-  }
-  main {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* ── Aranha: main content gets a comic-cover style top border on mobile too ── */
+/* ── Touch-friendly base targets (min 44px) ── */
 @media (max-width: 1023px) {
-  [data-theme="dark-aranha"] main::before {
-    left: 0 !important;
-  }
+  .btn        { min-height: 44px; padding-left: 14px; padding-right: 14px; }
+  .input      { min-height: 44px; padding-top: 11px; padding-bottom: 11px; }
+  .card       { border-radius: 16px; padding: 16px; }
+  .card-hover { border-radius: 16px; }
 }
 
-/* ── Aranha: panel corners on all cards add comic-book inset label area ── */
-[data-theme="dark-aranha"] .card > h1:first-child,
-[data-theme="dark-aranha"] .card > h2:first-child,
-[data-theme="dark-aranha"] .card > h3:first-child {
-  display: inline-block;
-  background: #e60000;
-  color: #ffffff;
-  padding: 2px 10px;
-  margin-bottom: 8px;
-  margin-left: -20px;
-  padding-left: 20px;
-  box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
-}
-
-/* ── Aranha: page headers ── */
-[data-theme="dark-aranha"] .font-display {
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-/* ── Aranha: section headings get yellow speech-bubble style caption ── */
-[data-theme="dark-aranha"] .label {
-  color: #8b1a00;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 10px;
-}
-
-/* ── Calendar side panel — top border on mobile, left border on desktop ── */
+/* ── Calendar side panel border direction ── */
 .cal-side-panel {
   border-top: 1px solid var(--border);
   border-left: none;
@@ -1488,3 +1348,78 @@
     border-left: 1px solid var(--border);
   }
 }
+
+/* ── Scrollbar: hidden on touch devices ── */
+@media (hover: none) {
+  ::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+/* ── Aranha comic theme mobile ── */
+@media (max-width: 1023px) {
+  [data-theme="dark-aranha"] .card { box-shadow: 3px 3px 0 rgba(26,10,0,0.18); }
+  [data-theme="dark-aranha"] .btn-primary { box-shadow: 2px 2px 0 rgba(26,10,0,0.35); }
+  [data-theme="dark-aranha"] main::before { left: 0 !important; }
+}
+
+/* ── Hypado: disable heavy animation on mobile for perf ── */
+@media (hover: none) {
+  [data-theme="dark-hypado"] body::after { display: none; }
+  [data-theme="dark-hypado"] .sidebar-bg::after { animation: none; opacity: 0.35; }
+}
+
+/* ── DLC: slow down RGB on mobile ── */
+@media (hover: none) {
+  [data-theme="dark-dlc"] h1,
+  [data-theme="dark-dlc"] h2,
+  [data-theme="dark-dlc"] h3 { animation-duration: 10s; }
+}
+
+/* ── Safe area (iPhone notch / home bar) ── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-nav-bar { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* ── Scrollbar hide utility ── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Fix h-full / h-screen in mobile content ── */
+@media (max-width: 1023px) {
+  /* Pages that use h-full need 100dvh minus the nav bars */
+  .mobile-page-height {
+    height: calc(100dvh - 52px - 60px);
+  }
+  /* Kanban board area fill */
+  .kanban-board-area {
+    height: calc(100dvh - 52px - 60px - 52px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Calendar fill */
+  .calendar-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+/* ── Bottom sheet handle ── */
+.sheet-handle {
+  width: 40px; height: 4px;
+  background: var(--border-light);
+  border-radius: 99px;
+  margin: 8px auto 4px;
+}
+
+/* ── Prevent text overflow on mobile ── */
+@media (max-width: 639px) {
+  .truncate-mobile { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Tighter card padding */
+  .card { padding: 14px !important; }
+  /* Font shrink on headings */
+  .font-display { letter-spacing: -0.01em; }
+}
+
+/* ── Fix 100vh on mobile (use dvh) ── */
+.h-screen-mobile { height: 100dvh; }
