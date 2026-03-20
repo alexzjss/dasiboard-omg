@@ -1,76 +1,464 @@
-from fastapi import APIRouter, Depends, HTTPException
-from psycopg2.extras import RealDictCursor
-from typing import List
-from app.db.session import get_db
-from app.api.routes.auth import get_current_user
-from app.schemas.schemas import SubjectCreate, SubjectUpdate, SubjectOut, GradeCreate, GradeOut
+import { useEffect, useState } from 'react'
+import {
+  Plus, Trash2, BookOpen, TrendingUp, ChevronDown, ChevronRight,
+  Award, Users, AlertTriangle, CheckCircle2, Edit2, X, Check,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
+import api from '@/utils/api'
 
-router = APIRouter()
+interface Grade   { id: string; label: string; value: number; weight: number; max_value: number; date?: string; notes?: string }
+interface Subject {
+  id: string; code: string; name: string; professor?: string; semester: string
+  color: string; grades: Grade[]; total_classes: number; attended: number
+}
 
+function weightedAvg(grades: Grade[]) {
+  const tw = grades.reduce((a, g) => a + g.weight, 0)
+  if (!tw) return null
+  return grades.reduce((a, g) => a + (g.value / g.max_value) * 10 * g.weight, 0) / tw
+}
 
-@router.get("/subjects", response_model=List[SubjectOut])
-def list_subjects(db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT * FROM subjects WHERE owner_id = %s ORDER BY created_at", (str(user["id"]),))
-    subjects = db.fetchall()
-    result = []
-    for s in subjects:
-        db.execute("SELECT * FROM grades WHERE subject_id = %s ORDER BY created_at", (str(s["id"]),))
-        result.append({**s, "grades": db.fetchall()})
-    return result
+function absenceRate(total: number, attended: number) {
+  if (!total) return 0
+  return ((total - attended) / total) * 100
+}
 
+// ── Mini circular progress ────────────────────────────────
+function CircleProgress({ pct, color, size = 44 }: { pct: number; color: string; size?: number }) {
+  const r = (size - 6) / 2
+  const circ = 2 * Math.PI * r
+  const dash = (pct / 100) * circ
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={3} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={3}
+              strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
+              style={{ transition: 'stroke-dasharray 0.6s ease' }} />
+    </svg>
+  )
+}
 
-@router.post("/subjects", response_model=SubjectOut, status_code=201)
-def create_subject(body: SubjectCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute(
-        """INSERT INTO subjects (owner_id, code, name, professor, semester, color, total_classes, attended)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
-        (str(user["id"]), body.code, body.name, body.professor, body.semester, body.color,
-         body.total_classes, body.attended),
-    )
-    s = db.fetchone()
-    return {**s, "grades": []}
+// ── Attendance editor ─────────────────────────────────────
+function AttendanceEditor({ subject, onUpdate }: { subject: Subject; onUpdate: (total: number, att: number) => void }) {
+  const [total, setTotal]   = useState(String(subject.total_classes))
+  const [att, setAtt]       = useState(String(subject.attended))
+  const [editing, setEditing] = useState(false)
 
+  const absent = subject.total_classes - subject.attended
+  const rate   = absenceRate(subject.total_classes, subject.attended)
+  const maxFaltas = subject.total_classes > 0 ? Math.floor(subject.total_classes * 0.3) : null
+  const remaining = maxFaltas !== null ? Math.max(0, maxFaltas - absent) : null
+  const danger = rate >= 25
+  const critical = rate >= 30
 
-@router.patch("/subjects/{subject_id}", response_model=SubjectOut)
-def update_subject(subject_id: str, body: SubjectUpdate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT * FROM subjects WHERE id = %s AND owner_id = %s", (subject_id, str(user["id"])))
-    s = db.fetchone()
-    if not s:
-        raise HTTPException(404, "Disciplina não encontrada")
-    total = body.total_classes if body.total_classes is not None else s["total_classes"]
-    attended = body.attended if body.attended is not None else s["attended"]
-    professor = body.professor if body.professor is not None else s["professor"]
-    color = body.color if body.color is not None else s["color"]
-    db.execute(
-        "UPDATE subjects SET total_classes=%s, attended=%s, professor=%s, color=%s WHERE id=%s RETURNING *",
-        (total, attended, professor, color, subject_id),
-    )
-    updated = db.fetchone()
-    db.execute("SELECT * FROM grades WHERE subject_id = %s ORDER BY created_at", (subject_id,))
-    return {**updated, "grades": db.fetchall()}
+  const save = () => {
+    const t = parseInt(total) || 0
+    const a = Math.min(parseInt(att) || 0, t)
+    onUpdate(t, a)
+    setEditing(false)
+  }
 
+  return (
+    <div className="p-3 rounded-xl" style={{ background: 'var(--bg-elevated)', border: `1px solid ${critical ? 'rgba(239,68,68,0.4)' : danger ? 'rgba(245,158,11,0.3)' : 'var(--border)'}` }}>
+      <div className="flex items-center gap-3">
+        <div className="relative flex items-center justify-center">
+          <CircleProgress
+            pct={subject.total_classes ? Math.min(100, rate) : 0}
+            color={critical ? '#ef4444' : danger ? '#f59e0b' : '#22c55e'}
+            size={48}
+          />
+          <span className="absolute text-[10px] font-bold"
+                style={{ color: critical ? '#ef4444' : danger ? '#f59e0b' : '#22c55e' }}>
+            {subject.total_classes ? Math.round(rate) : 0}%
+          </span>
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            {critical ? <AlertTriangle size={12} color="#ef4444" /> :
+             danger   ? <AlertTriangle size={12} color="#f59e0b" /> :
+                        <CheckCircle2 size={12} color="#22c55e" />}
+            <span className="text-xs font-medium"
+                  style={{ color: critical ? '#ef4444' : danger ? '#f59e0b' : '#22c55e' }}>
+              {critical ? 'Reprovação por faltas!' : danger ? 'Atenção às faltas' : 'Frequência ok'}
+            </span>
+          </div>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {subject.attended}/{subject.total_classes} aulas · {absent} falta{absent !== 1 ? 's' : ''}
+            {remaining !== null && !critical && (
+              <span> · <strong style={{ color: 'var(--text-secondary)' }}>ainda pode faltar {remaining}×</strong></span>
+            )}
+          </p>
+        </div>
+        <button onClick={() => setEditing(!editing)} className="p-1.5 rounded-lg transition-all"
+                style={{ color: 'var(--text-muted)', background: editing ? 'var(--accent-soft)' : 'transparent' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--accent-3)')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+          <Edit2 size={12} />
+        </button>
+      </div>
+      {editing && (
+        <div className="mt-3 flex items-center gap-2 animate-in">
+          <div className="flex-1">
+            <label className="label text-[9px]">Total de aulas</label>
+            <input type="number" min="0" className="input text-sm py-1.5" value={total}
+                   onChange={(e) => setTotal(e.target.value)} />
+          </div>
+          <div className="flex-1">
+            <label className="label text-[9px]">Presentes</label>
+            <input type="number" min="0" className="input text-sm py-1.5" value={att}
+                   onChange={(e) => setAtt(e.target.value)} />
+          </div>
+          <button className="btn-primary text-xs py-2 mt-4" onClick={save}>
+            <Check size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
-@router.delete("/subjects/{subject_id}", status_code=204)
-def delete_subject(subject_id: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT id FROM subjects WHERE id = %s AND owner_id = %s", (subject_id, str(user["id"])))
-    if not db.fetchone():
-        raise HTTPException(404, "Disciplina não encontrada")
-    db.execute("DELETE FROM subjects WHERE id = %s", (subject_id,))
+// ── Subject card ─────────────────────────────────────────
+function SubjectCard({ subject, onDelete, onAddGrade, onDeleteGrade, onUpdateAttendance }: {
+  subject: Subject; onDelete: () => void
+  onAddGrade: (id: string, g: Partial<Grade>) => void
+  onDeleteGrade: (sid: string, gid: string) => void
+  onUpdateAttendance: (id: string, total: number, att: number) => void
+}) {
+  const [open, setOpen]     = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [form, setForm]     = useState({ label: '', value: '', weight: '1', max_value: '10' })
 
+  const avg = weightedAvg(subject.grades)
+  const passFail = avg === null ? null : avg >= 5
+  const rate = absenceRate(subject.total_classes, subject.attended)
+  const failedByAbs = rate >= 30 && subject.total_classes > 0
 
-@router.post("/subjects/{subject_id}/grades", response_model=GradeOut, status_code=201)
-def add_grade(subject_id: str, body: GradeCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT id FROM subjects WHERE id = %s AND owner_id = %s", (subject_id, str(user["id"])))
-    if not db.fetchone():
-        raise HTTPException(404, "Disciplina não encontrada")
-    db.execute(
-        """INSERT INTO grades (subject_id, label, value, weight, max_value, date, notes)
-           VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING *""",
-        (subject_id, body.label, body.value, body.weight, body.max_value, body.date, body.notes),
-    )
-    return db.fetchone()
+  const submit = () => {
+    if (!form.label || !form.value) return
+    onAddGrade(subject.id, { label: form.label, value: parseFloat(form.value), weight: parseFloat(form.weight), max_value: parseFloat(form.max_value) })
+    setForm({ label: '', value: '', weight: '1', max_value: '10' })
+    setAdding(false)
+  }
 
+  return (
+    <div className="card transition-all" style={{ borderLeft: `3px solid ${subject.color}` }}>
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded"
+                  style={{ background: subject.color + '22', color: subject.color }}>
+              {subject.code}
+            </span>
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{subject.semester}</span>
+            {failedByAbs && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+                ⚠️ FF
+              </span>
+            )}
+          </div>
+          <h3 className="font-display font-bold truncate" style={{ color: 'var(--text-primary)' }}>{subject.name}</h3>
+          {subject.professor && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>👤 {subject.professor}</p>
+          )}
+        </div>
 
-@router.delete("/grades/{grade_id}", status_code=204)
-def delete_grade(grade_id: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("DELETE FROM grades WHERE id = %s", (grade_id,))
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-2 rounded-xl text-center min-w-[60px]"
+               style={{
+                 background: avg === null ? 'var(--bg-elevated)' : passFail ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                 border: `1px solid ${avg === null ? 'var(--border)' : passFail ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+               }}>
+            <p className="font-display font-bold text-xl leading-none"
+               style={{ color: avg === null ? 'var(--text-muted)' : passFail ? '#22c55e' : '#ef4444' }}>
+              {avg !== null ? avg.toFixed(1) : '—'}
+            </p>
+            <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>média</p>
+          </div>
+          <button onClick={() => setOpen(!open)} className="p-1 transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+            {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          <button onClick={onDelete} className="p-1 transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Attendance */}
+      <div className="mt-3">
+        <AttendanceEditor subject={subject} onUpdate={(t, a) => onUpdateAttendance(subject.id, t, a)} />
+      </div>
+
+      {/* Grades */}
+      {open && (
+        <div className="mt-3 pt-3 space-y-2 animate-in" style={{ borderTop: '1px solid var(--border)' }}>
+          {subject.grades.length === 0 && (
+            <p className="text-xs text-center py-2" style={{ color: 'var(--text-muted)' }}>Nenhuma nota cadastrada</p>
+          )}
+          {subject.grades.map((g) => {
+            const pct = Math.min(100, (g.value / g.max_value) * 100)
+            const gc = pct >= 70 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444'
+            return (
+              <div key={g.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl group transition-all"
+                   style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{g.label}</span>
+                  {g.notes && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{g.notes}</p>}
+                </div>
+                <span className="text-[11px] px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+                  ×{g.weight}
+                </span>
+                <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: gc }} />
+                </div>
+                <span className="font-mono font-bold text-sm w-14 text-right" style={{ color: 'var(--text-primary)' }}>
+                  {g.value}<span style={{ color: 'var(--text-muted)' }}>/{g.max_value}</span>
+                </span>
+                <button onClick={() => onDeleteGrade(subject.id, g.id)}
+                        className="opacity-0 group-hover:opacity-100 transition-all"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            )
+          })}
+          {adding ? (
+            <div className="grid grid-cols-2 gap-2 mt-2 p-3 rounded-xl animate-in"
+                 style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+              <input className="input text-sm col-span-2" placeholder="Ex: P1, P2, Trabalho"
+                     value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} />
+              <input className="input text-sm" type="number" step="0.1" placeholder="Nota (ex: 8.5)"
+                     value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))} />
+              <input className="input text-sm" type="number" step="0.1" placeholder="Nota máx (10)"
+                     value={form.max_value} onChange={(e) => setForm((f) => ({ ...f, max_value: e.target.value }))} />
+              <input className="input text-sm" type="number" step="0.1" placeholder="Peso (1)"
+                     value={form.weight} onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))} />
+              <div className="flex gap-2">
+                <button className="btn-primary text-xs flex-1 justify-center" onClick={submit}>Salvar</button>
+                <button className="btn-ghost text-xs" onClick={() => setAdding(false)}>✕</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setAdding(true)}
+                    className="flex items-center gap-1.5 text-xs py-1 transition-colors"
+                    style={{ color: 'var(--text-muted)' }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--accent-3)')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+              <Plus size={12} /> Adicionar nota
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────
+export default function GradesPage() {
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [form, setForm]         = useState({ code: '', name: '', professor: '', semester: '2025.1', color: '#8B5CF6', total_classes: '', attended: '' })
+
+  const COLORS = ['#8B5CF6', '#4d67f5', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899']
+
+  useEffect(() => {
+    api.get('/grades/subjects')
+      .then(({ data }) => setSubjects(data))
+      .catch(() => toast.error('Erro ao carregar disciplinas'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const createSubject = async () => {
+    if (!form.code || !form.name) return
+    try {
+      const { data } = await api.post('/grades/subjects', {
+        ...form,
+        total_classes: parseInt(form.total_classes) || 0,
+        attended: parseInt(form.attended) || 0,
+      })
+      setSubjects((prev) => [...prev, data])
+      setForm({ code: '', name: '', professor: '', semester: '2025.1', color: '#8B5CF6', total_classes: '', attended: '' })
+      setCreating(false)
+      toast.success('Disciplina criada!')
+    } catch { toast.error('Erro ao criar disciplina') }
+  }
+
+  const deleteSubject = async (id: string) => {
+    await api.delete(`/grades/subjects/${id}`)
+    setSubjects((prev) => prev.filter((s) => s.id !== id))
+    toast.success('Disciplina removida')
+  }
+
+  const addGrade = async (subjectId: string, grade: Partial<Grade>) => {
+    try {
+      const { data } = await api.post(`/grades/subjects/${subjectId}/grades`, grade)
+      setSubjects((prev) => prev.map((s) => s.id === subjectId ? { ...s, grades: [...s.grades, data] } : s))
+    } catch { toast.error('Erro ao adicionar nota') }
+  }
+
+  const deleteGrade = async (subjectId: string, gradeId: string) => {
+    await api.delete(`/grades/grades/${gradeId}`)
+    setSubjects((prev) => prev.map((s) => s.id === subjectId ? { ...s, grades: s.grades.filter((g) => g.id !== gradeId) } : s))
+  }
+
+  const updateAttendance = async (subjectId: string, total: number, att: number) => {
+    try {
+      const { data } = await api.patch(`/grades/subjects/${subjectId}`, { total_classes: total, attended: att })
+      setSubjects((prev) => prev.map((s) => s.id === subjectId ? { ...s, ...data } : s))
+    } catch { toast.error('Erro ao atualizar frequência') }
+  }
+
+  const allGrades = subjects.flatMap((s) => s.grades)
+  const overallAvg = weightedAvg(allGrades)
+  const passing = subjects.filter((s) => { const a = weightedAvg(s.grades); return a !== null && a >= 5 }).length
+  const failingAbs = subjects.filter((s) => absenceRate(s.total_classes, s.attended) >= 30 && s.total_classes > 0).length
+
+  return (
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2 animate-in"
+              style={{ color: 'var(--text-primary)' }}>
+            <BookOpen size={22} style={{ color: 'var(--accent-3)' }} /> Disciplinas
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+            {subjects.length} disciplina{subjects.length !== 1 ? 's' : ''} · notas e frequência
+          </p>
+        </div>
+        {!loading && subjects.length > 0 && (
+          <div className="flex gap-3 animate-in-delay-1">
+            {overallAvg !== null && (
+              <div className="card text-center px-4 py-3"
+                   style={{ background: overallAvg >= 5 ? 'linear-gradient(135deg, rgba(34,197,94,0.1), var(--bg-card))' : 'linear-gradient(135deg, rgba(239,68,68,0.1), var(--bg-card))' }}>
+                <div className="flex items-center gap-1 mb-1" style={{ color: 'var(--text-muted)' }}>
+                  <TrendingUp size={10} /><span className="text-[10px] uppercase tracking-wider">Média</span>
+                </div>
+                <p className="font-display font-bold text-2xl leading-none"
+                   style={{ color: overallAvg >= 5 ? '#22c55e' : '#ef4444' }}>{overallAvg.toFixed(1)}</p>
+              </div>
+            )}
+            <div className="card text-center px-4 py-3">
+              <div className="flex items-center gap-1 mb-1" style={{ color: 'var(--text-muted)' }}>
+                <Award size={10} /><span className="text-[10px] uppercase tracking-wider">Aprov.</span>
+              </div>
+              <p className="font-display font-bold text-2xl leading-none" style={{ color: 'var(--text-primary)' }}>
+                {passing}<span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>/{subjects.length}</span>
+              </p>
+            </div>
+            {failingAbs > 0 && (
+              <div className="card text-center px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.1), var(--bg-card))' }}>
+                <div className="flex items-center gap-1 mb-1" style={{ color: '#f87171' }}>
+                  <AlertTriangle size={10} /><span className="text-[10px] uppercase tracking-wider">FF</span>
+                </div>
+                <p className="font-display font-bold text-2xl leading-none" style={{ color: '#ef4444' }}>{failingAbs}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Create form */}
+      {creating ? (
+        <div className="card mb-6 animate-in space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Nova disciplina</h3>
+            <button onClick={() => setCreating(false)} style={{ color: 'var(--text-muted)' }}><X size={16} /></button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Código</label>
+              <input className="input text-sm" placeholder="ACH2041" value={form.code}
+                     onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Semestre</label>
+              <input className="input text-sm" placeholder="2025.1" value={form.semester}
+                     onChange={(e) => setForm((f) => ({ ...f, semester: e.target.value }))} />
+            </div>
+            <div className="col-span-2">
+              <label className="label">Nome da disciplina</label>
+              <input className="input text-sm" placeholder="Ex: Estruturas de Dados" value={form.name}
+                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="col-span-2">
+              <label className="label">Professor(a) <span className="normal-case" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
+              <input className="input text-sm" placeholder="Nome do professor" value={form.professor}
+                     onChange={(e) => setForm((f) => ({ ...f, professor: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Total de aulas</label>
+              <input type="number" className="input text-sm" placeholder="Ex: 60" value={form.total_classes}
+                     onChange={(e) => setForm((f) => ({ ...f, total_classes: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Aulas presentes</label>
+              <input type="number" className="input text-sm" placeholder="Ex: 58" value={form.attended}
+                     onChange={(e) => setForm((f) => ({ ...f, attended: e.target.value }))} />
+            </div>
+            <div className="col-span-2">
+              <label className="label">Cor</label>
+              <div className="flex gap-2">
+                {COLORS.map((c) => (
+                  <button key={c} onClick={() => setForm((f) => ({ ...f, color: c }))}
+                          className="w-7 h-7 rounded-full transition-all"
+                          style={{ backgroundColor: c, transform: form.color === c ? 'scale(1.25)' : 'scale(1)', boxShadow: form.color === c ? `0 0 0 2px var(--bg-card), 0 0 0 4px ${c}` : 'none' }} />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button className="btn-primary" onClick={createSubject}>Criar disciplina</button>
+            <button className="btn-ghost" onClick={() => setCreating(false)}>Cancelar</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setCreating(true)} className="btn-primary mb-6">
+          <Plus size={15} /> Nova disciplina
+        </button>
+      )}
+
+      {/* List */}
+      {loading ? (
+        <div className="space-y-3">
+          {[0,1,2].map((i) => (
+            <div key={i} className="card space-y-3">
+              <div className="flex gap-3"><div className="shimmer w-20 h-5 rounded" /><div className="shimmer flex-1 h-5 rounded" /></div>
+              <div className="shimmer h-16 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      ) : subjects.length === 0 ? (
+        <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>
+          <BookOpen size={40} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Nenhuma disciplina cadastrada</p>
+          <button onClick={() => setCreating(true)} className="text-xs mt-2 inline-block" style={{ color: 'var(--accent-3)' }}>
+            + Adicionar primeira disciplina
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {subjects.map((s, i) => (
+            <div key={s.id} className="animate-in" style={{ animationDelay: `${i * 40}ms` }}>
+              <SubjectCard
+                subject={s} onDelete={() => deleteSubject(s.id)}
+                onAddGrade={addGrade} onDeleteGrade={deleteGrade}
+                onUpdateAttendance={updateAttendance}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
