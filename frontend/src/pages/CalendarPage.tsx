@@ -190,8 +190,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Day grid */}
-        <div className="grid grid-cols-7 gap-px rounded-xl overflow-auto flex-1" style={{minHeight:"200px"}}
-             style={{background:'var(--border)',border:'1px solid var(--border)'}}>
+        <div className="grid grid-cols-7 gap-px rounded-xl overflow-auto flex-1" style={{minHeight:"200px",background:"var(--border)",border:"1px solid var(--border)"}}>
           {days.map((day)=>{
             const dayEvs=eventsForDay(day)
             const isCurrentMonth=isSameMonth(day,current)
