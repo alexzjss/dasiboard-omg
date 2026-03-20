@@ -187,7 +187,7 @@ INSERT INTO entities (slug, name, short_name, description, category, color, icon
 ('dasi',         'Diretório Acadêmico de Sistemas de Informação', 'DASI',
  'O DASI é o diretório acadêmico do curso de Sistemas de Informação da EACH-USP. Representa os estudantes, organiza eventos, promove a integração do curso e defende os direitos e interesses dos alunos.',
  'academic',  '#7c3aed', '🎓', 'https://instagram.com/dasi.each', 'dasi@usp.br'),
-('each-in-shell','EACH in the Shell', 'EachShell',
+('each-in-shell','EACH in the Shell', 'EITS',
  'Grupo dedicado à segurança da informação, hacking ético e CTF (Capture The Flag). Realiza workshops, treinamentos e competições de cybersegurança, formando profissionais na área.',
  'tech',      '#ef4444', '💻', 'https://instagram.com/eachintheshell', NULL),
 ('hype',         'HypE — Hub de Pesquisa', 'HypE',
