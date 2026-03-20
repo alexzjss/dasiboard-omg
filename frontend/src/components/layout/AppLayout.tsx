@@ -1,25 +1,31 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
   CalendarDays, User, LogOut, GraduationCap, Sun, Moon, Users,
+  Palette, X,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useTheme } from '@/context/ThemeContext'
+import { useTheme, THEMES, ThemeId } from '@/context/ThemeContext'
 import clsx from 'clsx'
 
 const nav = [
-  { to: '/',          label: 'Dashboard',   icon: LayoutDashboard, end: true },
-  { to: '/kanban',    label: 'Kanban',       icon: KanbanSquare },
-  { to: '/grades',    label: 'Disciplinas',  icon: BookOpen },
-  { to: '/calendar',  label: 'Calendário',   icon: CalendarDays },
-  { to: '/entities',  label: 'Entidades',    icon: Users },
-  { to: '/profile',   label: 'Perfil',       icon: User },
+  { to: '/',         label: 'Dashboard',  icon: LayoutDashboard, end: true },
+  { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare },
+  { to: '/grades',   label: 'Disciplinas', icon: BookOpen },
+  { to: '/calendar', label: 'Calendário',  icon: CalendarDays },
+  { to: '/entities', label: 'Entidades',   icon: Users },
+  { to: '/profile',  label: 'Perfil',      icon: User },
 ]
+
+const DARK_THEMES  = THEMES.filter(t => t.dark)
+const LIGHT_THEMES = THEMES.filter(t => !t.dark)
 
 export default function AppLayout() {
   const { user, logout } = useAuthStore()
-  const { theme, isDark, cycleTheme, toggleDarkLight } = useTheme()
+  const { theme, isDark, toggleDarkLight, setTheme } = useTheme()
   const navigate = useNavigate()
+  const [showPicker, setShowPicker] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/login') }
   const initials = user?.full_name
@@ -27,10 +33,84 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
-      {/* ── Sidebar ─────────────────────────────────── */}
-      <aside className="w-[var(--sidebar-w)] flex flex-col sidebar-bg shrink-0">
 
-        {/* Accent orb decoration */}
+      {/* ── Theme picker overlay ─────────────────────── */}
+      {showPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+             onClick={(e) => { if (e.target === e.currentTarget) setShowPicker(false) }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm animate-in"
+               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+                Escolher tema
+              </h3>
+              <button onClick={() => setShowPicker(false)}
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
+                      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Dark themes */}
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2"
+               style={{ color: 'var(--text-muted)' }}>Escuros</p>
+            <div className="space-y-1 mb-4">
+              {DARK_THEMES.map(t => (
+                <button key={t.id} onClick={() => { setTheme(t.id as ThemeId); setShowPicker(false) }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left"
+                        style={{
+                          background: theme.id === t.id ? 'var(--accent-soft)' : 'transparent',
+                          border: `1px solid ${theme.id === t.id ? 'var(--accent-1)' : 'transparent'}`,
+                          color: theme.id === t.id ? 'var(--accent-3)' : 'var(--text-secondary)',
+                        }}
+                        onMouseEnter={(e) => { if (theme.id !== t.id) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--border)' }}
+                        onMouseLeave={(e) => { if (theme.id !== t.id) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
+                  <span className="text-base">{t.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm leading-none">{t.name}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{t.description}</p>
+                  </div>
+                  {theme.id === t.id && (
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--accent-1)' }} />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Light themes */}
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2"
+               style={{ color: 'var(--text-muted)' }}>Claros</p>
+            <div className="space-y-1">
+              {LIGHT_THEMES.map(t => (
+                <button key={t.id} onClick={() => { setTheme(t.id as ThemeId); setShowPicker(false) }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left"
+                        style={{
+                          background: theme.id === t.id ? 'var(--accent-soft)' : 'transparent',
+                          border: `1px solid ${theme.id === t.id ? 'var(--accent-1)' : 'transparent'}`,
+                          color: theme.id === t.id ? 'var(--accent-3)' : 'var(--text-secondary)',
+                        }}
+                        onMouseEnter={(e) => { if (theme.id !== t.id) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--border)' }}
+                        onMouseLeave={(e) => { if (theme.id !== t.id) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
+                  <span className="text-base">{t.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm leading-none">{t.name}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{t.description}</p>
+                  </div>
+                  {theme.id === t.id && (
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--accent-1)' }} />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sidebar ─────────────────────────────────── */}
+      <aside className="w-[var(--sidebar-w)] flex flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
+
         <div className="accent-orb" style={{ width: 120, height: 120, top: -40, left: -40 }} />
 
         {/* Logo */}
@@ -48,55 +128,44 @@ export default function AppLayout() {
               SI · EACH · USP
             </p>
           </div>
-
-          {/* Dark/light toggle */}
-          <button
-            onClick={toggleDarkLight}
-            title={isDark ? 'Tema claro' : 'Tema escuro'}
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110 shrink-0"
-            style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
-          >
+          {/* dark/light toggle */}
+          <button onClick={toggleDarkLight}
+                  title={isDark ? 'Modo claro' : 'Modo escuro'}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110 shrink-0"
+                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
             {isDark ? <Sun size={12} /> : <Moon size={12} />}
           </button>
         </div>
 
-        {/* Theme cycle button */}
+        {/* Theme selector button */}
         <div className="px-3 pt-3 relative z-10">
-          <button
-            onClick={cycleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: 'var(--accent-soft)',
-              border: '1px solid var(--accent-1)',
-              color: 'var(--accent-3)',
-            }}
-          >
+          <button onClick={() => setShowPicker(true)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'var(--accent-soft)',
+                    border: '1px solid var(--accent-1)',
+                    color: 'var(--accent-3)',
+                  }}>
             <span className="flex items-center gap-2">
               <span>{theme.emoji}</span>
-              <span>Tema {theme.name}</span>
+              <span>{theme.name}</span>
             </span>
-            <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>trocar →</span>
+            <Palette size={11} style={{ color: 'var(--text-muted)' }} />
           </button>
         </div>
 
-        {/* Gradient accent line */}
+        {/* Accent line */}
         <div className="h-px mx-4 mt-3"
              style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.4 }} />
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10">
           {nav.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                  isActive ? 'nav-active' : 'nav-inactive'
-                )
-              }
-            >
+            <NavLink key={to} to={to} end={end}
+                     className={({ isActive }) =>
+                       clsx('flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                             isActive ? 'nav-active' : 'nav-inactive')
+                     }>
               <Icon size={17} />
               {label}
             </NavLink>
@@ -105,7 +174,7 @@ export default function AppLayout() {
 
         {/* User footer */}
         <div className="p-3 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-all group cursor-default"
+          <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-all cursor-default"
                style={{ color: 'var(--text-primary)' }}
                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
@@ -121,13 +190,10 @@ export default function AppLayout() {
                 {user?.email}
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              title="Sair"
-              style={{ color: 'var(--text-muted)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}
-            >
+            <button onClick={handleLogout} title="Sair"
+                    style={{ color: 'var(--text-muted)' }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
               <LogOut size={14} />
             </button>
           </div>
