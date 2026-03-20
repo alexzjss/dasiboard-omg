@@ -229,7 +229,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
            style={{ background: `linear-gradient(135deg, ${entity.color}22 0%, var(--bg-surface) 60%)`, borderBottom: '1px solid var(--border)' }}>
         <div className="absolute inset-0 pointer-events-none"
              style={{ background: `radial-gradient(ellipse at 80% 50%, ${entity.color}18 0%, transparent 60%)` }} />
-        <div className="relative z-10 p-8">
+        <div className="relative z-10 p-4 md:p-8">
           <button onClick={onBack} className="flex items-center gap-2 text-sm mb-6 transition-all"
                   style={{ color: 'var(--text-muted)' }}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-primary)')}
@@ -492,7 +492,7 @@ export default function EntitiesPage() {
   const memberCount = entities.filter((e) => e.is_member).length
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
