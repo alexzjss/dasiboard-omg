@@ -13,31 +13,61 @@ router = APIRouter()
 def list_events(
     start: Optional[datetime] = Query(None),
     end: Optional[datetime] = Query(None),
+    event_type: Optional[str] = Query(None),
+    class_code: Optional[str] = Query(None),
     db: RealDictCursor = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    query = "SELECT * FROM events WHERE owner_id = %s"
-    params = [str(user["id"])]
+    personal_q = "SELECT *, FALSE AS is_global FROM events WHERE owner_id = %s"
+    global_q   = "SELECT *, TRUE AS is_global FROM global_events WHERE 1=1"
+    p_params = [str(user["id"])]
+    g_params: list = []
+
     if start:
-        query += " AND start_at >= %s"
-        params.append(start)
+        personal_q += " AND start_at >= %s"; p_params.append(start)
+        global_q   += " AND start_at >= %s"; g_params.append(start)
     if end:
-        query += " AND start_at <= %s"
-        params.append(end)
-    query += " ORDER BY start_at"
-    db.execute(query, params)
-    return db.fetchall()
+        personal_q += " AND start_at <= %s"; p_params.append(end)
+        global_q   += " AND start_at <= %s"; g_params.append(end)
+    if event_type:
+        personal_q += " AND event_type = %s"; p_params.append(event_type)
+        global_q   += " AND event_type = %s"; g_params.append(event_type)
+    if class_code:
+        personal_q += " AND class_code ILIKE %s"; p_params.append(f"%{class_code}%")
+        global_q   += " AND class_code ILIKE %s"; g_params.append(f"%{class_code}%")
+
+    combined = f"({personal_q}) UNION ALL ({global_q}) ORDER BY start_at"
+    db.execute(combined, p_params + g_params)
+    rows = db.fetchall()
+    result = []
+    for row in rows:
+        r = dict(row)
+        if r.get("is_global") and not r.get("owner_id"):
+            r["owner_id"] = "00000000-0000-0000-0000-000000000000"
+        result.append(r)
+    return result
 
 
 @router.post("/", response_model=EventOut, status_code=201)
 def create_event(body: EventCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute(
-        """INSERT INTO events (owner_id, title, description, event_type, start_at, end_at, all_day, color, location)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *""",
-        (str(user["id"]), body.title, body.description, body.event_type,
-         body.start_at, body.end_at, body.all_day, body.color, body.location),
-    )
-    return db.fetchone()
+    if body.is_global:
+        db.execute(
+            "INSERT INTO global_events (title, description, event_type, start_at, end_at, all_day, color, location, class_code) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *, TRUE AS is_global",
+            (body.title, body.description, body.event_type,
+             body.start_at, body.end_at, body.all_day, body.color, body.location, body.class_code),
+        )
+        row = dict(db.fetchone())
+        row["owner_id"] = "00000000-0000-0000-0000-000000000000"
+        return row
+    else:
+        db.execute(
+            "INSERT INTO events (owner_id, title, description, event_type, start_at, end_at, all_day, color, location, class_code) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *, FALSE AS is_global",
+            (str(user["id"]), body.title, body.description, body.event_type,
+             body.start_at, body.end_at, body.all_day, body.color, body.location, body.class_code),
+        )
+        return db.fetchone()
 
 
 @router.patch("/{event_id}", response_model=EventOut)
@@ -46,10 +76,10 @@ def update_event(event_id: str, body: EventCreate, db: RealDictCursor = Depends(
     if not db.fetchone():
         raise HTTPException(404, "Evento não encontrado")
     db.execute(
-        """UPDATE events SET title=%s, description=%s, event_type=%s, start_at=%s,
-           end_at=%s, all_day=%s, color=%s, location=%s WHERE id=%s RETURNING *""",
+        "UPDATE events SET title=%s, description=%s, event_type=%s, start_at=%s, "
+        "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s WHERE id=%s RETURNING *, FALSE AS is_global",
         (body.title, body.description, body.event_type, body.start_at,
-         body.end_at, body.all_day, body.color, body.location, event_id),
+         body.end_at, body.all_day, body.color, body.location, body.class_code, event_id),
     )
     return db.fetchone()
 
