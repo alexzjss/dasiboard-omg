@@ -97,7 +97,7 @@ function AttendanceEditor({ subject, onUpdate }: { subject: Subject; onUpdate: (
         </button>
       </div>
       {editing && (
-        <div className="mt-3 flex items-center gap-2 animate-in">
+        <div className="mt-3 grid grid-cols-2 gap-2 animate-in">
           <div className="flex-1">
             <label className="label text-[9px]">Total de aulas</label>
             <input type="number" min="0" className="input text-sm py-1.5" value={total}
@@ -232,7 +232,7 @@ function SubjectCard({ subject, onDelete, onAddGrade, onDeleteGrade, onUpdateAtt
             )
           })}
           {adding ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 p-3 rounded-xl animate-in"
+            <div className="grid grid-cols-2 gap-2 mt-2 p-3 rounded-xl animate-in"
                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <input className="input text-sm col-span-2" placeholder="Ex: P1, P2, Trabalho"
                      value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} />
@@ -324,9 +324,9 @@ export default function GradesPage() {
   const failingAbs = subjects.filter((s) => absenceRate(s.total_classes, s.attended) >= 30 && s.total_classes > 0).length
 
   return (
-    <div className="p-4 md:p-8 max-w-3xl mx-auto">
+    <div className="px-4 py-4 md:px-8 md:py-8 max-w-3xl mx-auto w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 md:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4 md:mb-8">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2 animate-in"
               style={{ color: 'var(--text-primary)' }}>
@@ -337,7 +337,7 @@ export default function GradesPage() {
           </p>
         </div>
         {!loading && subjects.length > 0 && (
-          <div className="flex gap-2 md:gap-3 flex-wrap animate-in-delay-1">
+          <div className="flex gap-2 flex-wrap animate-in-delay-1">
             {overallAvg !== null && (
               <div className="card text-center px-4 py-3"
                    style={{ background: overallAvg >= 5 ? 'linear-gradient(135deg, rgba(34,197,94,0.1), var(--bg-card))' : 'linear-gradient(135deg, rgba(239,68,68,0.1), var(--bg-card))' }}>
@@ -375,7 +375,7 @@ export default function GradesPage() {
             <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Nova disciplina</h3>
             <button onClick={() => setCreating(false)} style={{ color: 'var(--text-muted)' }}><X size={16} /></button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
             <div>
               <label className="label">Código</label>
               <input className="input text-sm" placeholder="ACH2041" value={form.code}
