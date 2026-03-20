@@ -135,7 +135,7 @@ export default function CalendarPage() {
   const WEEK_DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col md:flex-row h-full">
       {/* ── Calendar grid ─── */}
       <div className="flex-1 flex flex-col p-3 md:p-6">
         {/* Header */}
@@ -143,18 +143,18 @@ export default function CalendarPage() {
           <h1 className="font-display text-xl font-bold capitalize animate-in" style={{ color:'var(--text-primary)' }}>
             {format(current,'MMMM yyyy',{locale:ptBR})}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 flex-wrap justify-end">
             <button onClick={() => setShowFilters(!showFilters)}
                     className={clsx('btn-ghost p-2',showFilters && 'text-purple-400')}>
               <Filter size={15}/>
             </button>
             <button onClick={() => setCurrent(subMonths(current,1))} className="btn-ghost p-2"><ChevronLeft size={16}/></button>
-            <button onClick={() => setCurrent(new Date())} className="btn-ghost text-xs px-3">Hoje</button>
+            <button onClick={() => setCurrent(new Date())} className="btn-ghost text-xs px-2">Hoje</button>
             <button onClick={() => setCurrent(addMonths(current,1))} className="btn-ghost p-2"><ChevronRight size={16}/></button>
-            <button onClick={() => openForm(false)} className="btn-primary ml-2"><Plus size={15}/> Evento</button>
+            <button onClick={() => openForm(false)} className="btn-primary"><Plus size={15}/> <span className="hidden sm:inline">Evento</span></button>
             <button onClick={() => openForm(true)} className="btn text-white text-sm"
                     style={{background:'linear-gradient(135deg,var(--accent-1),#db2777)',boxShadow:'0 2px 12px var(--accent-glow)'}}>
-              <Globe size={15}/> Global
+              <Globe size={15}/> <span className="hidden sm:inline">Global</span>
             </button>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function CalendarPage() {
             return (
               <button key={day.toISOString()}
                 onClick={()=>setSelected(isSameDay(day,selected??new Date('')) ? null : day)}
-                className={clsx('relative flex flex-col p-2 text-left transition-colors min-h-[80px]',!isCurrentMonth&&'opacity-30')}
+                className={clsx('relative flex flex-col p-1 md:p-2 text-left transition-colors min-h-[56px] md:min-h-[80px]',!isCurrentMonth&&'opacity-30')}
                 style={{backgroundColor:isSel?'var(--accent-soft)':'var(--bg-base)'}}
                 onMouseEnter={(e)=>{if(!isSel)(e.currentTarget as HTMLElement).style.backgroundColor='var(--bg-surface)'}}
                 onMouseLeave={(e)=>{if(!isSel)(e.currentTarget as HTMLElement).style.backgroundColor='var(--bg-base)'}}
@@ -226,7 +226,8 @@ export default function CalendarPage() {
       </div>
 
       {/* ── Side panel ─── */}
-      <div className="w-72 flex flex-col p-5" style={{borderLeft:'1px solid var(--border)'}}>
+      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5" style={{borderTop:'1px solid var(--border)', borderLeft:'none'}} data-side="calendar-side">
+        <style>{`@media(min-width:768px){[data-side="calendar-side"]{border-top:none!important;border-left:1px solid var(--border)!important}}`}</style>>
         {/* Global key delete modal */}
         {showKeyInput && (
           <div className="animate-in space-y-3 mb-4 p-4 rounded-xl"

@@ -259,7 +259,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
                 <span className="flex items-center gap-1"><Users size={11} /> {entity.member_count} membros</span>
               </div>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-2 flex-wrap shrink-0">
               {entity.is_member ? (
                 <>
                   <button onClick={() => setShowEvent(true)} className="btn-primary text-sm"
@@ -313,7 +313,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
       </div>
 
       {/* Events */}
-      <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl">
+      <div className="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 max-w-5xl">
         {/* Upcoming */}
         <div>
           <h2 className="font-display font-bold mb-4 flex items-center gap-2"
@@ -494,7 +494,7 @@ export default function EntitiesPage() {
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6 md:mb-8">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2 animate-in"
               style={{ color: 'var(--text-primary)' }}>
@@ -519,7 +519,7 @@ export default function EntitiesPage() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="card space-y-3">
               <div className="flex gap-3"><div className="shimmer w-10 h-10 rounded-xl" /><div className="flex-1 space-y-2"><div className="shimmer h-3 w-16 rounded" /><div className="shimmer h-4 w-28 rounded" /></div></div>

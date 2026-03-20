@@ -78,25 +78,35 @@
      🕷️  DARK — Aranha (Ultimate Spider-Man: vermelho, azul, preto)
   ═══════════════════════════════════════════════════════ */
   [data-theme="dark-aranha"] {
-    --bg-base:        #0c0008;
-    --bg-surface:     #140010;
-    --bg-elevated:    #1c0018;
-    --bg-card:        #20001c;
-    --border:         #3a0030;
-    --border-light:   #600050;
-    --text-primary:   #ffffff;
-    --text-secondary: #ff8888;
-    --text-muted:     #6a2040;
-    --accent-1:       #ff1a1a;
+    --bg-base:        #f5f0e8;
+    --bg-surface:     #ffffff;
+    --bg-elevated:    #faf7f2;
+    --bg-card:        #ffffff;
+    --border:         #d4c8b0;
+    --border-light:   #c0b090;
+    --text-primary:   #1a0a00;
+    --text-secondary: #8b1a00;
+    --text-muted:     #b09070;
+    --accent-1:       #e60000;
     --accent-2:       #cc0000;
-    --accent-3:       #4488ff;
-    --accent-glow:    rgba(255,26,26,0.40);
-    --accent-soft:    rgba(68,136,255,0.14);
-    --gradient-hero:  linear-gradient(135deg, #ff1a1a 0%, #4488ff 60%, #0c0008 100%);
-    --gradient-btn:   linear-gradient(135deg, #ff1a1a, #cc0000);
-    --noise-opacity:  0.02;
+    --accent-3:       #1a5ccc;
+    --accent-glow:    rgba(230,0,0,0.20);
+    --accent-soft:    rgba(26,92,204,0.10);
+    --gradient-hero:  linear-gradient(135deg, #e60000 0%, #1a5ccc 60%, #f5f0e8 100%);
+    --gradient-btn:   linear-gradient(135deg, #e60000, #cc0000);
+    --noise-opacity:  0.04;
     --card-blur:      0px;
     --sidebar-overlay: none;
+    font-family: "DM Sans", sans-serif;
+  }
+  [data-theme="dark-aranha"] h1,
+  [data-theme="dark-aranha"] h2,
+  [data-theme="dark-aranha"] h3,
+  [data-theme="dark-aranha"] h4 {
+    font-family: "Bangers", "Syne", sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -663,175 +673,270 @@
 }
 
 /* ────────────────────────────────────────────────────────
-   🕷️  ARANHA — Ultimate Spider-Man: vermelho e azul
-   vibrantes, estilo comics, halftone, teia dinâmica
+   🕷️  ARANHA — TOTAL comic-book HQ overhaul
+   Paleta: papel envelhecido + vermelho Marvel + azul Royal
+   Estilo: Ben-Day dots, ink hatching, painéis de quadrinhos
 ──────────────────────────────────────────────────────── */
 
-@keyframes webSway {
-  0%,100% { transform: rotate(-1deg) scale(1); }
-  50%      { transform: rotate(1deg) scale(1.02); }
+/* ── Keyframes ── */
+@keyframes comicPageTurn {
+  0%   { transform: perspective(600px) rotateY(0deg); }
+  50%  { transform: perspective(600px) rotateY(2deg); }
+  100% { transform: perspective(600px) rotateY(0deg); }
 }
-@keyframes heroSlide {
-  from { background-position: 0 0; }
-  to   { background-position: 40px 40px; }
+@keyframes inkFlicker {
+  0%,95%,100% { opacity: 1; }
+  96%          { opacity: 0.9; }
+  97%          { opacity: 1; }
+  98%          { opacity: 0.85; }
+}
+@keyframes actionBurst {
+  0%   { transform: scale(1) rotate(0deg); opacity: 0.5; }
+  50%  { transform: scale(1.08) rotate(3deg); opacity: 0.7; }
+  100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+}
+@keyframes webSwing {
+  0%,100% { transform: translateX(0) rotate(-1deg); }
+  50%      { transform: translateX(4px) rotate(1deg); }
 }
 
-/* Halftone dot overlay on entire page */
+/* ── Body — aged newsprint base + Ben-Day dots ── */
+[data-theme="dark-aranha"] body {
+  background: #f5f0e8;
+}
 [data-theme="dark-aranha"] body::before {
   content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: radial-gradient(circle, rgba(255,26,26,0.08) 1.5px, transparent 1.5px);
-  background-size: 20px 20px;
-  opacity: 1;
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  /* Halftone Ben-Day dots — warm red tint */
+  background-image:
+    radial-gradient(circle, rgba(200,80,40,0.10) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
 }
-
-/* Blue halftone panel in top-right corner */
+/* Action-lines burst in top-right corner */
 [data-theme="dark-aranha"] body::after {
   content: '';
   position: fixed;
-  top: 0; right: 0;
-  width: 40%; height: 40%;
-  pointer-events: none;
-  z-index: 0;
-  background-image: radial-gradient(circle, rgba(68,136,255,0.12) 1.5px, transparent 1.5px);
-  background-size: 18px 18px;
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  top: -40px; right: -40px;
+  width: 320px; height: 320px;
+  pointer-events: none; z-index: 0;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(230,0,0,0.07) 0deg 6deg,
+    transparent 6deg 12deg
+  );
+  border-radius: 50%;
+  animation: actionBurst 12s ease-in-out infinite;
 }
 
+/* ── Sidebar — comic cover left panel ── */
 [data-theme="dark-aranha"] .sidebar-bg {
-  background:
-    linear-gradient(180deg, #1a0018 0%, #0c0008 100%);
-  border-right: 2px solid #ff1a1a;
-  position: relative;
-  overflow: hidden;
+  background: linear-gradient(180deg, #fff8ee 0%, #f5f0e8 100%);
+  border-right: 3px solid #1a0a00;
+  box-shadow: 4px 0 0 rgba(26,10,0,0.08);
+  position: relative; overflow: hidden;
 }
-
-/* Spider-web pattern on sidebar using SVG-like CSS */
+/* Bold action lines from top-left corner */
 [data-theme="dark-aranha"] .sidebar-bg::before {
   content: '';
-  position: absolute;
-  top: -20px; right: -20px;
-  width: 180px; height: 180px;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    /* Radial web rings */
-    radial-gradient(circle at 100% 0%, transparent 28%, rgba(255,26,26,0.20) 28%, transparent 30%),
-    radial-gradient(circle at 100% 0%, transparent 48%, rgba(255,26,26,0.14) 48%, transparent 50%),
-    radial-gradient(circle at 100% 0%, transparent 68%, rgba(255,26,26,0.10) 68%, transparent 70%),
-    radial-gradient(circle at 100% 0%, transparent 88%, rgba(255,26,26,0.07) 88%, transparent 90%),
-    /* Diagonal web lines */
-    linear-gradient(45deg, transparent 47%, rgba(255,26,26,0.12) 48%, transparent 49%),
-    linear-gradient(-45deg, transparent 47%, rgba(255,26,26,0.12) 48%, transparent 49%),
-    linear-gradient(0deg, transparent 47%, rgba(255,26,26,0.08) 48%, transparent 49%),
-    linear-gradient(90deg, transparent 47%, rgba(255,26,26,0.08) 48%, transparent 49%);
-  animation: webSway 8s ease-in-out infinite;
+  position: absolute; top: -30px; left: -30px;
+  width: 200px; height: 200px;
+  pointer-events: none; z-index: 0;
+  background: repeating-conic-gradient(
+    from 0deg at 15% 15%,
+    rgba(230,0,0,0.12) 0deg 5deg,
+    transparent 5deg 10deg
+  );
+  border-radius: 50%;
+  animation: actionBurst 8s ease-in-out infinite;
 }
-
-/* Bold red bar at sidebar top */
+/* Ben-Day dots on sidebar */
 [data-theme="dark-aranha"] .sidebar-bg::after {
   content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #ff1a1a, #4488ff, #ff1a1a);
-  box-shadow: 0 0 16px rgba(255,26,26,0.6), 0 0 4px rgba(68,136,255,0.4);
-  pointer-events: none;
-  z-index: 2;
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(circle, rgba(26,92,204,0.06) 1px, transparent 1px);
+  background-size: 14px 14px;
 }
 
+/* ── Nav items — comic panel style ── */
+[data-theme="dark-aranha"] .nav-active {
+  background: #e60000;
+  border: 2px solid #1a0a00;
+  color: #ffffff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: 3px 3px 0 rgba(26,10,0,0.4);
+  border-radius: 4px !important;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+}
+[data-theme="dark-aranha"] .nav-inactive {
+  color: #1a0a00;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 12px;
+  border-radius: 4px !important;
+}
+[data-theme="dark-aranha"] .nav-inactive:hover {
+  background: rgba(230,0,0,0.08);
+  color: #e60000;
+  border: 1px solid rgba(230,0,0,0.3);
+}
+
+/* ── Cards — comic book panels ── */
 [data-theme="dark-aranha"] .card {
-  background: rgba(32,0,28,0.92);
-  border: 1px solid rgba(255,26,26,0.25);
-  box-shadow:
-    0 2px 16px rgba(255,26,26,0.12),
-    -1px 0 0 rgba(68,136,255,0.08);
+  background: #ffffff;
+  border: 2px solid #1a0a00;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0 rgba(26,10,0,0.25);
   position: relative;
   overflow: hidden;
 }
-/* Halftone corner on cards */
+/* Panel top accent bar — alternating red/blue like comic panels */
+[data-theme="dark-aranha"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, #e60000 50%, #1a5ccc 50%);
+  pointer-events: none;
+}
+/* Halftone corner detail */
 [data-theme="dark-aranha"] .card::after {
   content: '';
-  position: absolute;
-  bottom: -4px; right: -4px;
-  width: 60px; height: 60px;
-  background-image: radial-gradient(circle, rgba(68,136,255,0.15) 1px, transparent 1px);
+  position: absolute; bottom: 0; right: 0;
+  width: 80px; height: 80px;
+  background-image: radial-gradient(circle, rgba(26,92,204,0.12) 1px, transparent 1px);
   background-size: 8px 8px;
   pointer-events: none;
-  border-radius: inherit;
 }
 [data-theme="dark-aranha"] .card-hover:hover {
-  border-color: #ff1a1a;
-  box-shadow:
-    0 4px 32px rgba(255,26,26,0.45),
-    0 0 0 2px #ff1a1a,
-    4px 0 0 rgba(68,136,255,0.3),
-    inset 0 0 24px rgba(255,26,26,0.04);
+  border-color: #e60000;
+  box-shadow: 6px 6px 0 rgba(230,0,0,0.3), 0 0 0 2px #e60000;
+  transform: translate(-2px, -2px);
 }
 
-[data-theme="dark-aranha"] .nav-active {
-  background: linear-gradient(90deg, rgba(255,26,26,0.25), rgba(68,136,255,0.15));
-  border-color: #ff1a1a;
-  color: #ff6666;
-  text-shadow: 0 0 10px rgba(255,26,26,0.7);
-  border-left: 3px solid #ff1a1a;
-  border-right: 3px solid #4488ff;
-}
-[data-theme="dark-aranha"] .nav-inactive:hover {
-  color: #ff8888;
-  background: rgba(255,26,26,0.08);
-  border-left: 2px solid rgba(255,26,26,0.3);
-}
-
+/* ── Buttons — bold action style ── */
 [data-theme="dark-aranha"] .btn-primary {
-  background: linear-gradient(135deg, #ff1a1a, #cc0000);
-  box-shadow: 0 2px 24px rgba(255,26,26,0.50), 2px 2px 0 rgba(68,136,255,0.3);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,100,100,0.3);
+  background: #e60000;
+  border: 2px solid #1a0a00;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0 rgba(26,10,0,0.4);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
 }
 [data-theme="dark-aranha"] .btn-primary:hover {
-  box-shadow: 0 4px 36px rgba(255,26,26,0.65), 3px 3px 0 rgba(68,136,255,0.4);
+  box-shadow: 5px 5px 0 rgba(26,10,0,0.5);
+  transform: translate(-1px, -1px);
+  filter: brightness(1.05);
+}
+[data-theme="dark-aranha"] .btn-ghost {
+  border: 2px solid #d4c8b0;
+  border-radius: 4px !important;
+  color: #1a0a00;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+[data-theme="dark-aranha"] .btn-ghost:hover {
+  border-color: #1a5ccc;
+  color: #1a5ccc;
+  background: rgba(26,92,204,0.06);
+}
+[data-theme="dark-aranha"] .btn-danger {
+  border-radius: 4px !important;
+  border: 2px solid rgba(220,38,38,0.5);
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
+/* ── Inputs — newspaper classifieds style ── */
 [data-theme="dark-aranha"] .input {
-  background: rgba(32,0,28,0.9);
-  border-color: rgba(255,26,26,0.2);
+  background: #fffdf8;
+  border: 2px solid #d4c8b0;
+  border-radius: 4px !important;
+  color: #1a0a00;
+  font-weight: 500;
 }
 [data-theme="dark-aranha"] .input:focus {
-  border-color: #ff1a1a;
-  box-shadow: 0 0 0 2px rgba(255,26,26,0.20), -2px 0 0 rgba(68,136,255,0.25);
+  border-color: #e60000;
+  box-shadow: 3px 3px 0 rgba(230,0,0,0.15);
+}
+[data-theme="dark-aranha"] .label {
+  color: #8b1a00;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+[data-theme="dark-aranha"] .badge {
+  border-radius: 3px !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
+/* ── Accent orb — action burst ── */
 [data-theme="dark-aranha"] .accent-orb {
-  background: radial-gradient(circle at 35% 35%, #ff1a1a 0%, #880000 50%, #4488ff 100%);
+  background: radial-gradient(circle, #e60000 0%, #cc0000 100%);
+  opacity: 0.12;
+  filter: blur(60px);
 }
 
+/* ── Scrollbar ── */
 [data-theme="dark-aranha"] ::-webkit-scrollbar-thumb {
-  background: #ff1a1a;
-  box-shadow: 0 0 6px rgba(255,26,26,0.5);
+  background: #e60000;
+  border-radius: 2px;
+}
+[data-theme="dark-aranha"] ::-webkit-scrollbar-track {
+  background: #f0ead8;
 }
 
-/* Comic panel diagonal accent on main area top-right */
+/* ── Shimmer — parchment shimmer ── */
+[data-theme="dark-aranha"] .shimmer {
+  background: linear-gradient(90deg, #f5f0e8 25%, #ede5d0 50%, #f5f0e8 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Main content — page border frame ── */
+[data-theme="dark-aranha"] main {
+  position: relative;
+  background: #f5f0e8;
+}
+/* Top action burst on main area */
 [data-theme="dark-aranha"] main::before {
   content: '';
-  position: fixed;
-  top: 0; right: 0;
-  width: 200px; height: 6px;
-  background: linear-gradient(90deg, transparent, #4488ff);
-  pointer-events: none;
-  z-index: 5;
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 4px;
+  background: repeating-linear-gradient(90deg,
+    #e60000 0px, #e60000 40px,
+    #1a5ccc 40px, #1a5ccc 80px,
+    #1a0a00 80px, #1a0a00 84px,
+    #e60000 84px
+  );
+  pointer-events: none; z-index: 5;
 }
+/* Panel grid lines — subtle comic page layout feel */
 [data-theme="dark-aranha"] main::after {
   content: '';
-  position: fixed;
-  top: 0; right: 0;
-  width: 6px; height: 200px;
-  background: linear-gradient(180deg, #4488ff, transparent);
-  pointer-events: none;
-  z-index: 5;
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(26,10,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,10,0,0.03) 1px, transparent 1px);
+  background-size: 200px 200px;
+}
+
+/* Theme picker in aranha uses comic-book styling */
+[data-theme="dark-aranha"] .card .card {
+  border-radius: 4px !important;
+}
+
+/* ── Typography overrides ── */
+[data-theme="dark-aranha"] p, [data-theme="dark-aranha"] span {
+  line-height: 1.5;
 }
 
 /* ────────────────────────────────────────────────────────
@@ -1209,3 +1314,165 @@
 * { transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease; }
 .btn, .input { transition: all 0.2s ease; }
 .card, .card-hover { transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s; }
+
+/* ═══════════════════════════════════════════════════════════
+   📱  MOBILE RESPONSIVE — global overrides for small screens
+═══════════════════════════════════════════════════════════ */
+
+/* ── Sidebar width variable ── */
+@media (max-width: 1023px) {
+  :root {
+    --sidebar-w: 0px;
+  }
+}
+
+/* ── Touch-friendly tap targets ── */
+@media (max-width: 767px) {
+  .btn { @apply px-3 py-2; min-height: 40px; }
+  .btn-primary, .btn-ghost, .btn-danger { min-height: 40px; }
+  .input { @apply py-3; min-height: 44px; }
+  .nav-active, .nav-inactive { min-height: 44px; }
+  .card { @apply p-4 rounded-xl; }
+  .card-hover { @apply rounded-xl; }
+  .badge { @apply text-xs px-2 py-1; }
+}
+
+/* ── Typography scale-down on mobile ── */
+@media (max-width: 480px) {
+  h1 { font-size: 1.35rem !important; }
+  h2 { font-size: 1.15rem !important; }
+  h3 { font-size: 1rem !important; }
+}
+
+/* ── Kanban columns — horizontal scroll on mobile ── */
+@media (max-width: 767px) {
+  /* Kanban board flex container */
+  .kanban-board-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 16px;
+  }
+  .kanban-col-snap {
+    scroll-snap-align: start;
+  }
+}
+
+/* ── Calendar — smaller day cells on mobile ── */
+@media (max-width: 639px) {
+  /* smaller week header text */
+  .cal-week-header { font-size: 9px !important; letter-spacing: 0 !important; }
+}
+
+/* ── Card canvas — full width on narrow screens ── */
+@media (max-width: 767px) {
+  canvas[title="Clique para baixar"] {
+    border-radius: 12px !important;
+  }
+}
+
+/* ── Theme picker modal — full screen on mobile ── */
+@media (max-width: 480px) {
+  .theme-picker-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+  }
+}
+
+/* ── Aranha comic theme — mobile font scale ── */
+@media (max-width: 767px) {
+  [data-theme="dark-aranha"] .nav-active,
+  [data-theme="dark-aranha"] .nav-inactive {
+    font-size: 13px;
+    letter-spacing: 0.01em;
+  }
+  [data-theme="dark-aranha"] .card {
+    border-radius: 4px !important;
+    border-width: 2px;
+    box-shadow: 3px 3px 0 rgba(26,10,0,0.2);
+  }
+  [data-theme="dark-aranha"] .btn-primary {
+    border-radius: 4px !important;
+    box-shadow: 2px 2px 0 rgba(26,10,0,0.4);
+  }
+}
+
+/* ── Hypado theme — disable heavy animations on mobile for perf ── */
+@media (max-width: 767px) {
+  [data-theme="dark-hypado"] .sidebar-bg::after {
+    animation: none;
+    opacity: 0.4;
+  }
+  [data-theme="dark-hypado"] body::after {
+    display: none;
+  }
+}
+
+/* ── DLC theme — reduce RGB animation on mobile ── */
+@media (max-width: 767px) {
+  [data-theme="dark-dlc"] h1,
+  [data-theme="dark-dlc"] h2,
+  [data-theme="dark-dlc"] h3 {
+    animation-duration: 8s;
+  }
+  [data-theme="dark-dlc"] .btn-primary {
+    animation-duration: 6s;
+  }
+}
+
+/* ── Scrollbar hide on mobile ── */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+/* ── Safe area for iPhone notch/home bar ── */
+@supports (padding: max(0px)) {
+  .mobile-safe-bottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  main {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ── Aranha: main content gets a comic-cover style top border on mobile too ── */
+@media (max-width: 1023px) {
+  [data-theme="dark-aranha"] main::before {
+    left: 0 !important;
+  }
+}
+
+/* ── Aranha: panel corners on all cards add comic-book inset label area ── */
+[data-theme="dark-aranha"] .card > h1:first-child,
+[data-theme="dark-aranha"] .card > h2:first-child,
+[data-theme="dark-aranha"] .card > h3:first-child {
+  display: inline-block;
+  background: #e60000;
+  color: #ffffff;
+  padding: 2px 10px;
+  margin-bottom: 8px;
+  margin-left: -20px;
+  padding-left: 20px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+}
+
+/* ── Aranha: page headers ── */
+[data-theme="dark-aranha"] .font-display {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ── Aranha: section headings get yellow speech-bubble style caption ── */
+[data-theme="dark-aranha"] .label {
+  color: #8b1a00;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+}

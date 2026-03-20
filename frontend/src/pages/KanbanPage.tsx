@@ -251,7 +251,7 @@ function KanbanColumn({
 
   return (
     <div
-      className="w-72 shrink-0 flex flex-col rounded-2xl transition-all"
+      className="w-64 md:w-72 shrink-0 flex flex-col rounded-2xl transition-all"
       style={{
         background: isOver ? style.bg : 'var(--bg-surface)',
         border: `1px solid ${isOver ? style.accent + '66' : 'var(--border)'}`,
@@ -545,7 +545,7 @@ export default function KanbanPage() {
       )}
 
       {/* Header */}
-      <div className="px-6 py-4 flex items-center gap-4 shrink-0"
+      <div className="px-4 md:px-6 py-3 md:py-4 flex flex-wrap items-center gap-2 md:gap-4 shrink-0"
            style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
         <h1 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Kanban</h1>
         <div className="w-px h-5" style={{ background: 'var(--border)' }} />
@@ -581,7 +581,7 @@ export default function KanbanPage() {
         </div>
         {currentBoard && (
           <button onClick={() => deleteBoard(currentBoard.id)} className="btn-danger text-xs shrink-0">
-            <Trash2 size={13} /> Excluir board
+            <Trash2 size={13} /> <span className="hidden sm:inline">Excluir board</span>
           </button>
         )}
       </div>
@@ -602,8 +602,8 @@ export default function KanbanPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex-1 overflow-auto p-3 md:p-6">
-            <div className="flex gap-5 h-full items-start">
+          <div className="flex-1 overflow-auto p-3 md:p-6 overflow-x-auto">
+            <div className="flex gap-3 md:gap-5 h-full items-start pb-4">
               {currentBoard.columns.map((col) => (
                 <KanbanColumn
                   key={col.id}
@@ -623,7 +623,7 @@ export default function KanbanPage() {
               const style = COL_STYLES[idx % 3] ?? COL_STYLES[0]
               const prioConfig = PRIORITY[activeCard.priority as keyof typeof PRIORITY] ?? PRIORITY.medium
               return (
-                <div className="rounded-xl p-3 w-72 rotate-2"
+                <div className="rounded-xl p-3 w-64 md:w-72 rotate-2"
                      style={{
                        background: 'var(--bg-card)',
                        border: `1px solid ${style.accent}66`,
