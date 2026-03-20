@@ -21,4 +21,6 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
 
+    GLOBAL_EVENTS_KEY: str = "changeme-global-key"
+
 settings = Settings()
