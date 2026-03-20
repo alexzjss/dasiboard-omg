@@ -375,10 +375,10 @@ function BadgePicker({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full max-w-sm rounded-2xl p-6 animate-in"
+      <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in" style={{maxHeight:"85dvh",overflowY:"auto"}}
            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -386,7 +386,7 @@ function BadgePicker({
           </h3>
           <button onClick={onClose} style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
         </div>
-        <div className="grid grid-cols-3 gap-2 mb-5">
+        <div className="grid grid-cols-4 sm:grid-cols-3 gap-2 mb-4">
           {badges.map(b => (
             <button
               key={b.id}
@@ -461,7 +461,7 @@ export default function ProfilePage() {
   const initials = user.full_name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase()
 
   return (
-    <div className="p-4 md:p-8 max-w-2xl mx-auto">
+    <div className="px-4 py-4 sm:px-6 md:px-8 md:py-8 max-w-2xl mx-auto w-full">
       {showBadgePicker && (
         <BadgePicker
           badges={ALL_BADGES}
