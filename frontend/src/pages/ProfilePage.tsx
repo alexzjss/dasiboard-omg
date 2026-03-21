@@ -196,9 +196,9 @@ function drawCard(
   ctx.restore() // ← restore from card clip
 
   // ── 4. Avatar (above name) ──────────────────────────
-  const avatarSize = 96
+  const avatarSize = 108
   const textX = 48
-  const avatarY = Math.round(H * 0.22)
+  const avatarY = Math.round(H * 0.24)
 
   if (user.avatar_url) {
     const img = new Image()
