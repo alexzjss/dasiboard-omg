@@ -15,6 +15,10 @@ export type ThemeId =
   | 'light-ilha'
   | 'dark-colina'
   | 'light-vidro'
+  | 'light-blueprint'
+  | 'light-vanilla'
+  | 'dark-pixel'
+  | 'light-lite'
 
 export interface ThemeMeta {
   id: ThemeId
@@ -42,6 +46,10 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-ilha',       name: 'Ilha',         dark: false, emoji: '🏝️', description: 'Destiny Islands · KH · Sol' },
   { id: 'dark-colina',      name: 'Colina',       dark: true,  emoji: '🌫️', description: 'Silent Hill · Névoa · Cinza' },
   { id: 'light-vidro',      name: 'Vidro',        dark: false, emoji: '🔮', description: 'Glassmorphism · Liquid Glass' },
+  { id: 'light-blueprint',  name: 'Blueprint',    dark: false, emoji: '📐', description: 'Azulejo técnico · Plantas' },
+  { id: 'light-vanilla',    name: 'Vanilla',      dark: false, emoji: '🍦', description: 'Bege elegante · Minimalista' },
+  { id: 'dark-pixel',       name: 'Pixel',        dark: true,  emoji: '🎮', description: 'SNES · NES · GBA · Pixel Art' },
+  { id: 'light-lite',       name: 'Lite',         dark: false, emoji: '✨', description: 'Leve · Sem efeitos · Rápido' },
 ]
 
 const DARK_THEMES  = THEMES.filter(t => t.dark)
