@@ -196,27 +196,30 @@ function drawCard(
   ctx.restore() // ← restore from card clip
 
   // ── 4. Avatar (above name) ──────────────────────────
-  const avatarSize = 56
+  const avatarSize = 80
   const textX = 48
-  const avatarY = Math.round(H * 0.38)
+  const avatarY = Math.round(H * 0.30)
 
   if (user.avatar_url) {
     const img = new Image()
     img.src = user.avatar_url
-    // Draw avatar as circle
+    const cx = textX + avatarSize / 2
+    const cy = avatarY + avatarSize / 2
+    const r  = avatarSize / 2
+    // Clip and draw
     ctx.save()
     ctx.beginPath()
-    ctx.arc(textX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2)
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
     ctx.clip()
     ctx.drawImage(img, textX, avatarY, avatarSize, avatarSize)
     ctx.restore()
-    // Subtle border
+    // Subtle border — slightly larger than clip
     ctx.save()
     ctx.beginPath()
-    ctx.arc(textX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2)
+    ctx.arc(cx, cy, r + 1.5, 0, Math.PI * 2)
     ctx.strokeStyle = inkColor
-    ctx.globalAlpha = 0.12
-    ctx.lineWidth = 2
+    ctx.globalAlpha = 0.18
+    ctx.lineWidth = 3
     ctx.stroke()
     ctx.globalAlpha = 1
     ctx.restore()
@@ -224,7 +227,7 @@ function drawCard(
 
   // ── 5. Text — name ──────────────────────────────────
   const textY = user.avatar_url
-    ? avatarY + avatarSize + 18
+    ? avatarY + avatarSize + 28
     : Math.round(H * 0.56)
 
   ctx.textAlign = 'left'
