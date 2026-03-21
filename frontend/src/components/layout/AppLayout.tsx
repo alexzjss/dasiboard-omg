@@ -4,7 +4,6 @@ import {
   LayoutDashboard, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
   LogOut, Palette, Search, BookMarked, ChevronDown,
-  Keyboard,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'

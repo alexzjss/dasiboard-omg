@@ -1,17 +1,17 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Keyboard, X } from 'lucide-react'
 
 // ── Swipe Gestures Hook ───────────────────────────────────
 const ROUTES = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile']
 
 export function useSwipeNavigation() {
-  const navigate  = useNavigate()
-  const location  = useLocation()
+  const navigate   = useNavigate()
+  const location   = useLocation()
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null)
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
-      // Ignore if inside a scrollable area (kanban, fluxogram, etc.)
       const target = e.target as HTMLElement
       if (target.closest('.kanban-scroll') || target.closest('.grades-fluxo') || target.closest('[data-no-swipe]')) return
       touchStart.current = {
@@ -27,15 +27,12 @@ export function useSwipeNavigation() {
       const dy = e.changedTouches[0].clientY - touchStart.current.y
       const dt = Date.now() - touchStart.current.time
 
-      // Only horizontal swipes, fast enough, and dominant axis
       if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7 || dt > 400) return
 
       const idx = ROUTES.indexOf(location.pathname)
       if (dx < -60 && idx < ROUTES.length - 1) {
-        // Swipe left → next page
         navigate(ROUTES[idx + 1])
       } else if (dx > 60 && idx > 0) {
-        // Swipe right → previous page
         navigate(ROUTES[idx - 1])
       }
       touchStart.current = null
@@ -64,7 +61,6 @@ export interface Shortcut {
 export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Skip if inside input/textarea/select
       const tag = (e.target as HTMLElement).tagName
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
 
@@ -87,9 +83,6 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
 }
 
 // ── Keyboard Shortcuts Help Modal ────────────────────────
-import { useState } from 'react'
-import { Keyboard, X } from 'lucide-react'
-
 interface ShortcutGroup {
   group: string
   items: Omit<Shortcut, 'action'>[]
@@ -128,14 +121,14 @@ export function KeyboardHelpModal({ shortcuts, onClose }: {
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2"
                  style={{ color: 'var(--accent-3)' }}>{g.group}</p>
               <div className="space-y-1.5">
-                {g.items.map(s => (
-                  <div key={s.key + s.description} className="flex items-center justify-between gap-3">
+                {g.items.map((s, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3">
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{s.description}</span>
                     <div className="flex items-center gap-1 shrink-0">
-                      {s.ctrl && <KbdKey>Ctrl</KbdKey>}
+                      {s.ctrl  && <KbdKey>Ctrl</KbdKey>}
                       {s.shift && <KbdKey>⇧</KbdKey>}
-                      {s.alt && <KbdKey>Alt</KbdKey>}
-                      <KbdKey>{s.key.toUpperCase()}</KbdKey>
+                      {s.alt   && <KbdKey>Alt</KbdKey>}
+                      <KbdKey>{s.key === 'Escape' ? 'Esc' : s.key === 'ArrowRight' ? '→' : s.key === 'ArrowLeft' ? '←' : s.key.toUpperCase()}</KbdKey>
                     </div>
                   </div>
                 ))}
@@ -145,7 +138,7 @@ export function KeyboardHelpModal({ shortcuts, onClose }: {
         </div>
         <div className="px-5 pb-5 text-center">
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Pressione <KbdKey inline>?</KbdKey> para abrir/fechar esta ajuda
+            Pressione <KbdKey>?</KbdKey> para abrir/fechar
           </p>
         </div>
       </div>
@@ -153,16 +146,15 @@ export function KeyboardHelpModal({ shortcuts, onClose }: {
   )
 }
 
-function KbdKey({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
+function KbdKey({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className={inline ? 'inline' : ''}
-         style={{
-           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-           padding: '2px 6px', borderRadius: 6, fontSize: 11, fontFamily: 'monospace',
-           background: 'var(--bg-elevated)', border: '1px solid var(--border-light)',
-           color: 'var(--text-secondary)', minWidth: 22,
-           boxShadow: '0 2px 0 var(--border)',
-         }}>
+    <kbd style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      padding: '2px 6px', borderRadius: 6, fontSize: 11, fontFamily: 'monospace',
+      background: 'var(--bg-elevated)', border: '1px solid var(--border-light)',
+      color: 'var(--text-secondary)', minWidth: 22,
+      boxShadow: '0 2px 0 var(--border)',
+    }}>
       {children}
     </kbd>
   )

@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  X, ChevronRight, ChevronLeft, GraduationCap, KanbanSquare,
-  BookOpen, CalendarDays, Users, BookMarked, User, Sparkles,
-  Brain, Palette, Keyboard,
-} from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react'
 
 const STORAGE_KEY = 'dasiboard-onboarding-done'
 

@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
-  Timer, Brain, Music, Focus, X, Play, Pause, RotateCcw,
-  Volume2, VolumeX, Coffee, BookOpen, ChevronRight, Check,
-  Zap, Target, Clock,
+  Timer, Brain, X, Play, Pause, RotateCcw,
+  Volume2, VolumeX, ChevronRight, Check,
+  Zap, Target, ChevronDown,
 } from 'lucide-react'
-import clsx from 'clsx'
 
 // ── Types ─────────────────────────────────────────────────
 type PomodoroPhase = 'focus' | 'short-break' | 'long-break'
