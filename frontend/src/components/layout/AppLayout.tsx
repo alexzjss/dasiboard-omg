@@ -425,6 +425,11 @@ export default function AppLayout() {
 
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
 
+  useSwipeNavigation()
+  const { active: easterActive, close: closeEaster } = useEasterEggs()
+  const { open: searchOpen, setOpen: setSearchOpen } = useGlobalSearch()
+  const presentation = usePresentationMode()
+
   // Listen for global search open event (from sidebar button)
   useEffect(() => {
     const handler = () => setSearchOpen(true)
@@ -435,11 +440,7 @@ export default function AppLayout() {
       document.removeEventListener('global-search:open', handler)
       document.removeEventListener('presentation:toggle', pHandler)
     }
-  }, [setSearchOpen])
-  useSwipeNavigation()
-  const { active: easterActive, close: closeEaster } = useEasterEggs()
-  const { active: searchOpen, setOpen: setSearchOpen } = useGlobalSearch()
-  const presentation = usePresentationMode()
+  }, [setSearchOpen, presentation])
 
   // ── Keyboard shortcuts ────────────────────────────────
   const shortcuts = [

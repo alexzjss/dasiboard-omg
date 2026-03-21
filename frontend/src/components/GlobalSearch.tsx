@@ -245,7 +245,7 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3.5"
              style={{ borderBottom: '1px solid var(--border)' }}>
-          <Search size={18} style={{ color: 'var(--text-muted)', shrink: 0 }} />
+          <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           <input
             ref={inputRef}
             className="flex-1 bg-transparent outline-none text-base"
@@ -313,7 +313,7 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
                             <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{r.subtitle}</p>
                           )}
                         </div>
-                        {isSelected && <ArrowRight size={13} style={{ color: 'var(--accent-3)', shrink: 0 }} />}
+                        {isSelected && <ArrowRight size={13} style={{ color: 'var(--accent-3)', flexShrink: 0 }} />}
                         <span className="text-[9px] font-medium px-1.5 py-0.5 rounded shrink-0"
                               style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
                           {meta.label}
