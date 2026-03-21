@@ -213,6 +213,7 @@ export default function DashboardPage() {
 
   const hour = now.getHours()
   const greeting = hour < 5 ? 'Boa noite' : hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+  const greetingEmoji = hour < 5 ? '🌙' : hour < 12 ? '☀️' : hour < 18 ? '🌤️' : '🌙'
   const firstName = user?.full_name?.split(' ')[0] ?? 'aluno'
 
   return (
@@ -231,7 +232,7 @@ export default function DashboardPage() {
       )}
 
       {/* ── HERO ────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl mb-4 animate-in"
+      <div className="hero-card relative overflow-hidden rounded-2xl mb-4 animate-in"
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
@@ -246,7 +247,7 @@ export default function DashboardPage() {
                 {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
               </p>
               <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {greeting}, {firstName} 👋
+                {greeting}, {firstName} {greetingEmoji}
               </h1>
               <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
                 Sistemas de Informação · EACH · USP

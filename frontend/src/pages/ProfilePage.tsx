@@ -526,6 +526,9 @@ export default function ProfilePage() {
 
   if (!user) return null
 
+  const userTitle = TITLES[Math.abs(user.full_name?.split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0) ?? 0) % TITLES.length]
+  const initials = user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U'
+
   return (
     <div className="px-4 py-4 sm:px-6 md:px-8 md:py-8 max-w-2xl mx-auto w-full">
 
@@ -533,10 +536,30 @@ export default function ProfilePage() {
         <BadgePicker badges={badges} selected={activeBadgeIds} onSave={saveBadges} onClose={() => setShowBadgePicker(false)} />
       )}
 
-      <h1 className="font-display text-2xl font-bold mb-5 flex items-center gap-2 animate-in"
-          style={{ color: 'var(--text-primary)' }}>
-        <User size={22} style={{ color: 'var(--accent-3)' }} /> Perfil
-      </h1>
+      {/* ── Profile header ─────────────────────────── */}
+      <div className="flex items-center gap-4 mb-6 animate-in">
+        <div className="relative shrink-0">
+          <div className="w-14 h-14 rounded-2xl p-0.5 shrink-0"
+               style={{ background: 'var(--gradient-btn)', boxShadow: '0 4px 16px var(--accent-glow)' }}>
+            <div className="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
+                 style={{ background: user.avatar_url ? 'transparent' : 'var(--bg-card)' }}>
+              {user.avatar_url
+                ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                : <span className="text-lg font-bold text-white font-display">{initials}</span>
+              }
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-display text-xl font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+            {user.full_name}
+          </h1>
+          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--accent-3)' }}>{userTitle}</p>
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            {user.email} {user.nusp ? `· Nº ${user.nusp}` : ''}
+          </p>
+        </div>
+      </div>
 
       {/* ── Card ────────────────────────────────────── */}
       <div className="mb-5 animate-in">
@@ -633,30 +656,40 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             Badges <span className="font-normal text-xs" style={{ color: 'var(--text-muted)' }}>
-              ({badges.filter(b => b.unlocked).length}/{badges.length})
+              ({badges.filter(b => b.unlocked).length}/{badges.length} desbloqueadas)
             </span>
           </h3>
-          <button onClick={() => setShowBadgePicker(true)} className="text-xs" style={{ color: 'var(--accent-3)' }}>
-            Editar →
+          <button onClick={() => setShowBadgePicker(true)} className="text-xs font-medium transition-opacity hover:opacity-70" style={{ color: 'var(--accent-3)' }}>
+            Editar seleção →
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
           {badges.map(b => (
             <div key={b.id}
-                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all"
+                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-default"
                  style={{
                    background: b.unlocked ? b.color + '18' : 'var(--bg-elevated)',
                    border: `1px solid ${b.unlocked ? b.color + '44' : 'var(--border)'}`,
                    color: b.unlocked ? b.color : 'var(--text-muted)',
                    opacity: b.unlocked ? 1 : 0.4,
                  }}
-                 title={b.desc}>
+                 data-tooltip={b.unlocked ? b.desc : '🔒 Bloqueado'}>
               <span>{b.emoji}</span>
               <span className="font-semibold">{b.label}</span>
               {!b.unlocked && <span className="text-[9px]">🔒</span>}
             </div>
           ))}
         </div>
+        {activeBadges.length > 0 && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+            <p className="text-[10px] mb-1.5" style={{ color: 'var(--text-muted)' }}>Exibindo no cartão:</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {activeBadges.map(b => (
+                <span key={b.id} className="text-sm" title={b.label}>{b.emoji}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Avatar ──────────────────────────────────── */}
@@ -665,16 +698,23 @@ export default function ProfilePage() {
           Foto de perfil
         </h3>
         <div className="flex items-center gap-4">
-          {/* Avatar preview */}
+          {/* Avatar preview with animated gradient border */}
           <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
-                 style={{ background: 'var(--gradient-btn)', border: '2px solid var(--border)' }}>
-              {user.avatar_url
-                ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                : <span className="text-2xl font-bold text-white font-display">
-                    {user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                  </span>
-              }
+            <div className="relative w-20 h-20 rounded-full p-0.5"
+                 style={{
+                   background: 'var(--gradient-btn)',
+                   boxShadow: '0 0 20px var(--accent-glow)',
+                   animation: 'breathe 3s ease-in-out infinite',
+                 }}>
+              <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
+                   style={{ background: user.avatar_url ? 'transparent' : 'var(--gradient-btn)' }}>
+                {user.avatar_url
+                  ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  : <span className="text-2xl font-bold text-white font-display">
+                      {user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </span>
+                }
+              </div>
             </div>
             {avatarLoading && (
               <div className="absolute inset-0 rounded-full flex items-center justify-center"

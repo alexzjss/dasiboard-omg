@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
+  LogOut, Palette, Search,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useTheme, THEMES, ThemeId } from '@/context/ThemeContext'
@@ -147,16 +148,28 @@ function PokeballButton({ onClick }: { onClick: () => void }) {
 // ── Visual Theme Picker ───────────────────────────────────────────────────────
 function ThemePicker({ onClose }: { onClose: () => void }) {
   const { theme, setTheme } = useTheme()
-  const [group, setGroup] = useState<'dark'|'light'>(theme.dark ? 'dark' : 'light')
+  const [group, setGroup] = useState<'all'|'dark'|'light'>('all')
+  const [search, setSearch] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
 
-  const shown = group === 'dark' ? DARK_THEMES : LIGHT_THEMES
+  useEffect(() => {
+    searchRef.current?.focus()
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  const allThemes = group === 'dark' ? DARK_THEMES : group === 'light' ? LIGHT_THEMES : THEMES
+  const shown = search.trim()
+    ? allThemes.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search.toLowerCase()))
+    : allThemes
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center"
          style={{ background: 'rgba(0,0,0,0.70)', backdropFilter: 'blur(8px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
-           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '90dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '92dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
         {/* Handle */}
         <div className="flex justify-center pt-3 sm:hidden">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
@@ -164,32 +177,55 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
 
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center justify-between">
-          <h3 className="font-display font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="font-display font-bold text-base flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <Palette size={16} style={{ color: 'var(--accent-3)' }} />
             Escolher tema
           </h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+              <kbd>Esc</kbd> fecha
+            </span>
+            <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Dark/Light toggle */}
-        <div className="px-5 mb-4 flex gap-2">
-          {(['dark', 'light'] as const).map(g => (
+        {/* Search */}
+        <div className="px-5 mb-3">
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+            <input ref={searchRef} type="text" placeholder="Buscar tema..." value={search}
+                   onChange={e => setSearch(e.target.value)}
+                   className="w-full pl-8 pr-3 py-2 rounded-xl text-sm"
+                   style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)', outline: 'none' }} />
+          </div>
+        </div>
+
+        {/* Dark/Light/All toggle */}
+        <div className="px-5 mb-4 flex gap-1.5">
+          {(['all', 'dark', 'light'] as const).map(g => (
             <button key={g} onClick={() => setGroup(g)}
-                    className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all"
+                    className="flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all"
                     style={{
                       background: group === g ? 'var(--accent-soft)' : 'var(--bg-elevated)',
                       border: `1px solid ${group === g ? 'var(--accent-1)' : 'var(--border)'}`,
                       color: group === g ? 'var(--accent-3)' : 'var(--text-muted)',
                     }}>
-              {g === 'dark' ? '🌙 Escuros' : '☀️ Claros'}
+              {g === 'all' ? '✨ Todos' : g === 'dark' ? '🌙 Escuros' : '☀️ Claros'}
             </button>
           ))}
         </div>
 
         {/* Theme grid */}
-        <div className="px-4 pb-6 grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto" style={{ maxHeight: '50dvh' }}>
+        <div className="px-4 pb-6 grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto" style={{ maxHeight: '48dvh' }}>
+          {shown.length === 0 && (
+            <div className="col-span-3 sm:col-span-4 text-center py-8" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-sm">Nenhum tema encontrado</p>
+            </div>
+          )}
           {shown.map(t => {
             const preview = THEME_PREVIEWS[t.id] ?? { bg: '#111', accent: '#888', card: '#222' }
             const isActive = theme.id === t.id
@@ -203,39 +239,44 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
                       }}>
                 {/* Mini preview */}
                 <div className="w-full rounded-lg overflow-hidden relative"
-                     style={{ height: 56, background: preview.bg }}>
-                  {/* Fake sidebar strip */}
+                     style={{ height: 52, background: preview.bg }}>
                   <div className="absolute left-0 top-0 bottom-0 w-4"
-                       style={{ background: preview.bg, borderRight: `2px solid ${preview.accent}22` }} />
-                  {/* Fake card */}
+                       style={{ background: preview.bg, borderRight: `2px solid ${preview.accent}33` }} />
                   <div className="absolute right-2 top-2 rounded"
-                       style={{ width: 28, height: 18, background: preview.card, border: `1px solid ${preview.accent}33` }} />
-                  {/* Accent dot */}
+                       style={{ width: 26, height: 16, background: preview.card, border: `1px solid ${preview.accent}33` }} />
+                  <div className="absolute left-5 top-2 rounded"
+                       style={{ width: 12, height: 4, background: preview.accent + '88', borderRadius: 2 }} />
+                  <div className="absolute left-5 top-8 rounded"
+                       style={{ width: 8, height: 4, background: preview.accent + '44', borderRadius: 2 }} />
                   <div className="absolute right-3 bottom-2 rounded-full"
-                       style={{ width: 8, height: 8, background: preview.accent }} />
-                  {/* Active check */}
+                       style={{ width: 7, height: 7, background: preview.accent }} />
                   {isActive && (
                     <div className="absolute inset-0 flex items-center justify-center rounded-lg"
                          style={{ background: `${preview.accent}22` }}>
-                      <span style={{ fontSize: 16 }}>✓</span>
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                           style={{ background: preview.accent, fontSize: 10 }}>✓</div>
                     </div>
                   )}
                 </div>
                 {/* Label */}
                 <div className="text-center">
-                  <span style={{ fontSize: 14, display: 'block' }}>{t.emoji}</span>
+                  <span style={{ fontSize: 13, display: 'block' }}>{t.emoji}</span>
                   <p className="text-[10px] font-semibold mt-0.5 truncate"
                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-primary)' }}>
                     {t.name}
-                  </p>
-                  <p className="text-[9px] leading-tight mt-0.5 truncate"
-                     style={{ color: 'var(--text-muted)' }}>
-                    {t.description}
                   </p>
                 </div>
               </button>
             )
           })}
+        </div>
+
+        {/* Footer hint */}
+        <div className="px-5 pb-4 pt-1" style={{ borderTop: '1px solid var(--border)' }}>
+          <p className="text-[10px] text-center" style={{ color: 'var(--text-muted)' }}>
+            {THEMES.length} temas · Use <kbd className="px-1 py-0.5 rounded text-[9px]"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>Ctrl+T</kbd> para abrir
+          </p>
         </div>
       </div>
     </div>
@@ -319,10 +360,11 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
             <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
           </div>
           <button onClick={() => { logout(); navigate('/login') }} title="Sair"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
                   style={{ color: 'var(--text-muted)' }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#f87171')}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
-            <span style={{ fontSize: 14 }}>×</span>
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; (e.currentTarget as HTMLElement).style.backgroundColor = '#f8717120' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
+            <LogOut size={13} />
           </button>
         </div>
       </div>
@@ -341,6 +383,18 @@ export default function AppLayout() {
   )
 
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+
+  // ── Keyboard shortcut Ctrl+T / Cmd+T → theme picker ──────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+        e.preventDefault()
+        setShowPicker(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const isPixel = theme.id === 'dark-pixel'
 
@@ -365,25 +419,29 @@ export default function AppLayout() {
 
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4"
-           style={{ height: 52, backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
+           style={{ height: 52, backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 8px var(--accent-glow)' }}>
             <GraduationCap size={13} className="text-white" />
           </div>
-          <p className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
+          <div>
+            <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
+            <p className="text-[9px] font-mono leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={toggleDarkLight}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90"
                   style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
           <button onClick={() => setShowPicker(true)}
-                  className="h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs"
+                  className="h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs transition-all active:scale-90"
                   style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)' }}>
-            <span>{theme.emoji}</span>
-            <span className="hidden xs:inline">{theme.name}</span>
+            <Palette size={12} />
+            <span className="hidden xs:inline font-medium">{theme.emoji} {theme.name}</span>
+            <span className="xs:hidden">{theme.emoji}</span>
           </button>
         </div>
       </div>
@@ -396,19 +454,23 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch"
-           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', height: 60, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch relative"
+           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', height: 60, paddingBottom: 'env(safe-area-inset-bottom)', backdropFilter: 'blur(12px)' }}>
         {nav.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
-                   className={({ isActive }) => clsx('flex-1 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95', isActive ? 'nav-bottom-active' : 'nav-bottom-inactive')}>
+                   className={({ isActive }) => clsx('flex-1 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90', isActive ? 'nav-bottom-active' : 'nav-bottom-inactive')}>
             {({ isActive }) => (
               <>
-                <div className={clsx('flex items-center justify-center rounded-xl transition-all', isActive ? 'w-10 h-6' : 'w-6 h-6')}
-                     style={{ background: isActive ? 'var(--accent-soft)' : 'transparent' }}>
-                  <Icon size={isActive ? 16 : 18} style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }} />
+                <div className="relative flex items-center justify-center" style={{ width: 40, height: 24 }}>
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-xl transition-all"
+                         style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
+                  )}
+                  <Icon size={isActive ? 15 : 18} className="relative z-10 transition-all"
+                        style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }} />
                 </div>
-                <span className="text-[9px] font-medium leading-none"
-                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }}>
+                <span className="text-[9px] font-medium leading-none transition-all"
+                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', opacity: isActive ? 1 : 0.7 }}>
                   {label}
                 </span>
               </>

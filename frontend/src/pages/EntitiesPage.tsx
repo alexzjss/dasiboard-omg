@@ -461,6 +461,8 @@ export default function EntitiesPage() {
   const [selected, setSelected]   = useState<Entity | null>(null)
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState<'all' | 'member'>('all')
+  const [search, setSearch]       = useState('')
+  const [catFilter, setCatFilter] = useState('all')
 
   useEffect(() => {
     api.get('/entities/')
@@ -486,30 +488,72 @@ export default function EntitiesPage() {
     )
   }
 
-  const shown = filter === 'member' ? entities.filter((e) => e.is_member) : entities
   const memberCount = entities.filter((e) => e.is_member).length
+  const categories = ['all', ...Array.from(new Set(entities.map(e => e.category)))]
+
+  const shown = entities.filter((e) => {
+    if (filter === 'member' && !e.is_member) return false
+    if (catFilter !== 'all' && e.category !== catFilter) return false
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      return e.name.toLowerCase().includes(q) || e.short_name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
+    }
+    return true
+  })
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6 md:mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2 animate-in"
               style={{ color: 'var(--text-primary)' }}>
             <Users size={22} style={{ color: 'var(--accent-3)' }} /> Entidades
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Organizações do curso de Sistemas de Informação · EACH-USP
+            {entities.length} organizações · {memberCount} como membro
           </p>
         </div>
         <div className="flex gap-2">
           {(['all', 'member'] as const).map((f) => (
             <button key={f} onClick={() => setFilter(f)}
-                    className="text-sm px-3 py-1.5 rounded-lg font-medium transition-all"
+                    className="text-sm px-3 py-1.5 rounded-xl font-medium transition-all"
                     style={filter === f
                       ? { background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }
                       : { color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
               {f === 'all' ? `Todas (${entities.length})` : `Minhas (${memberCount})`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Search + category filters */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <div className="relative flex-1">
+          <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            placeholder="Buscar entidade..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input w-full pl-9 py-2 text-sm"
+          />
+          {search && (
+            <button onClick={() => setSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    style={{ color: 'var(--text-muted)' }}>
+              <X size={13} />
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide shrink-0">
+          {categories.map((cat) => (
+            <button key={cat} onClick={() => setCatFilter(cat)}
+                    className="text-xs px-3 py-2 rounded-xl whitespace-nowrap font-medium transition-all shrink-0"
+                    style={catFilter === cat
+                      ? { background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }
+                      : { color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+              {cat === 'all' ? '✨ Todas' : (CATEGORY_LABELS[cat] ?? cat)}
             </button>
           ))}
         </div>
@@ -528,10 +572,13 @@ export default function EntitiesPage() {
       ) : shown.length === 0 ? (
         <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>
           <Users size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="text-sm">{filter === 'member' ? 'Você ainda não é membro de nenhuma entidade' : 'Nenhuma entidade encontrada'}</p>
-          {filter === 'member' && (
-            <button onClick={() => setFilter('all')} className="text-xs mt-2" style={{ color: 'var(--accent-3)' }}>
-              Ver todas as entidades →
+          <p className="text-sm">
+            {search ? `Nenhuma entidade encontrada para "${search}"` : filter === 'member' ? 'Você ainda não é membro de nenhuma entidade' : 'Nenhuma entidade encontrada'}
+          </p>
+          {(filter === 'member' || search || catFilter !== 'all') && (
+            <button onClick={() => { setFilter('all'); setSearch(''); setCatFilter('all') }}
+                    className="text-xs mt-2" style={{ color: 'var(--accent-3)' }}>
+              Limpar filtros →
             </button>
           )}
         </div>

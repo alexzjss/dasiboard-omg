@@ -151,63 +151,61 @@ function KanbanCard({ card, colAccent, onEdit }: {
       }}
     >
       <div
-        className="rounded-xl p-3 group cursor-default transition-all"
+        className="rounded-xl group cursor-default transition-all overflow-hidden"
         style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
+          borderLeft: `3px solid ${prioConfig.color}`,
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = colAccent + '66' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = colAccent + '88'; (e.currentTarget as HTMLElement).style.borderLeftColor = prioConfig.color; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px rgba(0,0,0,0.12)` }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.borderLeftColor = prioConfig.color; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
       >
-        {/* Priority bar */}
-        <div className="w-full h-0.5 rounded-full mb-2.5" style={{ background: prioConfig.bg }}>
-          <div className="h-full rounded-full w-full" style={{ background: prioConfig.color, opacity: 0.5 }} />
-        </div>
-
-        <div className="flex items-start gap-2">
-          <button
-            {...attributes} {...listeners}
-            className="mt-0.5 cursor-grab active:cursor-grabbing flex-shrink-0"
-            style={{ color: 'var(--text-muted)', touchAction: 'none' }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = colAccent)}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
-            <GripVertical size={14} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
-              {card.title}
-            </p>
-            {card.description && (
-              <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: 'var(--text-muted)' }}>
-                {card.description}
+        <div className="p-3">
+          <div className="flex items-start gap-2">
+            <button
+              {...attributes} {...listeners}
+              className="mt-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity"
+              style={{ color: 'var(--text-muted)', touchAction: 'none' }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = colAccent)}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
+              <GripVertical size={14} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
+                {card.title}
               </p>
-            )}
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                    style={{ background: prioConfig.bg, color: prioConfig.color }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: prioConfig.color }} />
-                {prioConfig.label}
-              </span>
-              {dueDate && (
-                <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full"
-                      style={{
-                        background: isOverdue ? 'rgba(239,68,68,0.12)' : isDueToday ? 'rgba(245,158,11,0.12)' : 'var(--bg-surface)',
-                        color: isOverdue ? '#f87171' : isDueToday ? '#f59e0b' : 'var(--text-muted)',
-                      }}>
-                  <Clock size={9} />
-                  {format(dueDate, 'd MMM', { locale: ptBR })}
-                </span>
+              {card.description && (
+                <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: 'var(--text-muted)' }}>
+                  {card.description}
+                </p>
               )}
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                      style={{ background: prioConfig.bg, color: prioConfig.color }}>
+                  <Flag size={8} />
+                  {prioConfig.label}
+                </span>
+                {dueDate && (
+                  <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium"
+                        style={{
+                          background: isOverdue ? 'rgba(239,68,68,0.12)' : isDueToday ? 'rgba(245,158,11,0.12)' : 'var(--bg-surface)',
+                          color: isOverdue ? '#f87171' : isDueToday ? '#f59e0b' : 'var(--text-muted)',
+                        }}>
+                    <Calendar size={8} />
+                    {isOverdue ? '⚠ ' : isDueToday ? '🔔 ' : ''}{format(dueDate, "d MMM", { locale: ptBR })}
+                  </span>
+                )}
+              </div>
             </div>
+            <button
+              onClick={() => onEdit(card)}
+              className="opacity-0 group-hover:opacity-100 transition-all mt-0.5 flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center"
+              style={{ color: 'var(--text-muted)', background: 'var(--bg-surface)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = colAccent; (e.currentTarget as HTMLElement).style.background = colAccent + '20' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)' }}>
+              <Edit2 size={11} />
+            </button>
           </div>
-          <button
-            onClick={() => onEdit(card)}
-            className="opacity-0 group-hover:opacity-100 transition-all mt-0.5 flex-shrink-0"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = colAccent)}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
-            <Edit2 size={12} />
-          </button>
         </div>
       </div>
     </div>
@@ -248,6 +246,9 @@ function KanbanColumn({
 
   const draggingIntoEmpty = isOver && column.cards.filter(c => c.id !== activeId).length === 0
 
+  const COL_ICONS: Record<number, string> = { 0: '📋', 1: '⚡', 2: '✅' }
+  const COL_LABELS: Record<number, string> = { 0: 'A fazer', 1: 'Em progresso', 2: 'Concluído' }
+
   return (
     <div
       className="shrink-0 flex flex-col rounded-2xl transition-all"
@@ -261,15 +262,24 @@ function KanbanColumn({
       <div className="px-4 py-3 rounded-t-2xl flex items-center justify-between"
            style={{ background: style.header, borderBottom: `1px solid ${style.accent}22` }}>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: style.accent }} />
+          <span style={{ fontSize: 14 }}>{COL_ICONS[idx] ?? '📌'}</span>
           <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
             {column.title}
           </h3>
         </div>
-        <span className="text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
-              style={{ background: style.accent + '22', color: style.accent }}>
-          {column.cards.length}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {column.cards.length > 0 && (
+            <span className="text-[10px] font-bold" style={{ color: style.accent + 'aa' }}>
+              {column.cards.filter(c => c.priority === 'high').length > 0 && (
+                <span title="Alta prioridade">🔴 {column.cards.filter(c => c.priority === 'high').length}</span>
+              )}
+            </span>
+          )}
+          <span className="text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                style={{ background: style.accent + '22', color: style.accent }}>
+            {column.cards.length}
+          </span>
+        </div>
       </div>
 
       {/* Cards area */}
@@ -282,6 +292,12 @@ function KanbanColumn({
             <div className="h-16 rounded-xl border-2 border-dashed flex items-center justify-center text-xs animate-pulse"
                  style={{ borderColor: style.accent, color: style.accent, background: style.bg }}>
               Soltar aqui
+            </div>
+          )}
+          {!draggingIntoEmpty && column.cards.length === 0 && (
+            <div className="h-16 rounded-xl flex items-center justify-center text-xs"
+                 style={{ border: '1px dashed var(--border)', color: 'var(--text-muted)' }}>
+              Vazio
             </div>
           )}
         </div>

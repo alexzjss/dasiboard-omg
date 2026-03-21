@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import type { ReactNode } from 'react'
 import { Search, Mail, MapPin, ExternalLink, BookOpen, X } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -208,7 +209,7 @@ export default function DocentesPage() {
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}
         >
           {filtered.map((doc, i) => (
-            <DocenteCard key={doc.email} doc={doc} index={i} />
+            <DocenteCard key={doc.email} doc={doc} index={i} highlight={query.trim() || undefined} />
           ))}
         </div>
       )}
@@ -218,7 +219,7 @@ export default function DocentesPage() {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
+function DocenteCard({ doc, index, highlight }: { doc: Docente; index: number; highlight?: string }) {
   const initials = getInitials(doc.name)
   const hue = nameToHue(doc.name)
 
@@ -226,12 +227,36 @@ function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
   const avatarBorder = `hsla(${hue}, 60%, 55%, 0.35)`
   const avatarColor = `hsl(${hue}, 70%, 70%)`
 
+  // Extract 2-3 area tags
+  const areasTags = doc.areas
+    .split(/[,;]/)
+    .map(a => a.trim())
+    .filter(a => a.length > 3 && a.length < 40)
+    .slice(0, 3)
+
+  // Highlight matching text
+  const highlightText = (text: string): ReactNode => {
+    if (!highlight?.trim()) return text
+    const idx = text.toLowerCase().indexOf(highlight.toLowerCase())
+    if (idx === -1) return text
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', borderRadius: 3, padding: '0 2px' }}>
+          {text.slice(idx, idx + highlight.length)}
+        </mark>
+        {text.slice(idx + highlight.length)}
+      </>
+    )
+  }
+
   return (
     <div
       className="card-hover flex flex-col gap-3 animate-in"
       style={{
         animationDelay: `${Math.min(index * 0.035, 0.5)}s`,
         animationFillMode: 'both',
+        borderLeft: `3px solid hsla(${hue}, 60%, 55%, 0.4)`,
       }}
     >
       {/* Top row: avatar + name/email/room */}
@@ -242,17 +267,15 @@ function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
             background: avatarBg,
             border: `1px solid ${avatarBorder}`,
             color: avatarColor,
+            letterSpacing: '0.05em',
           }}
         >
           {initials}
         </div>
 
         <div className="flex-1 min-w-0">
-          <p
-            className="text-sm font-semibold leading-snug"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {doc.name}
+          <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
+            {highlightText(doc.name)}
           </p>
 
           <a
@@ -265,10 +288,7 @@ function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
           </a>
 
           {doc.room && (
-            <div
-              className="flex items-center gap-1.5 mt-0.5 text-xs"
-              style={{ color: 'var(--text-muted)' }}
-            >
+            <div className="flex items-center gap-1.5 mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
               <MapPin size={11} />
               <span>{doc.room}</span>
             </div>
@@ -276,18 +296,26 @@ function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
         </div>
       </div>
 
-      {/* Divider */}
-      <div
-        className="h-px"
-        style={{ background: 'var(--border)' }}
-      />
+      {/* Area tags */}
+      <div className="flex flex-wrap gap-1.5">
+        {areasTags.map((tag, i) => (
+          <span key={i} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  background: `hsla(${hue}, 60%, 55%, 0.12)`,
+                  border: `1px solid hsla(${hue}, 60%, 55%, 0.25)`,
+                  color: `hsl(${hue}, 70%, ${hue > 180 ? 50 : 65}%)`,
+                }}>
+            {tag.length > 30 ? tag.slice(0, 28) + '…' : tag}
+          </span>
+        ))}
+      </div>
 
-      {/* Areas */}
-      <p
-        className="text-xs leading-relaxed flex-1"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        {doc.areas}
+      {/* Divider */}
+      <div className="h-px" style={{ background: 'var(--border)' }} />
+
+      {/* Full areas */}
+      <p className="text-xs leading-relaxed flex-1" style={{ color: 'var(--text-secondary)' }}>
+        {highlightText(doc.areas)}
       </p>
 
       {/* Links */}
@@ -299,22 +327,11 @@ function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-[1.03] active:scale-[0.97]"
-              style={{
-                background: 'var(--accent-soft)',
-                border: '1px solid var(--border-light)',
-                color: 'var(--text-secondary)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'var(--accent-1)'
-                e.currentTarget.style.color = 'var(--accent-3)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--border-light)'
-                e.currentTarget.style.color = 'var(--text-secondary)'
-              }}
+              style={{ background: 'var(--accent-soft)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-1)'; e.currentTarget.style.color = 'var(--accent-3)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
             >
-              <ExternalLink size={11} />
-              Lattes
+              <ExternalLink size={11} /> Lattes
             </a>
           )}
           {doc.personal && (
@@ -323,22 +340,11 @@ function DocenteCard({ doc, index }: { doc: Docente; index: number }) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-[1.03] active:scale-[0.97]"
-              style={{
-                background: 'var(--accent-soft)',
-                border: '1px solid var(--border-light)',
-                color: 'var(--text-secondary)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'var(--accent-1)'
-                e.currentTarget.style.color = 'var(--accent-3)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--border-light)'
-                e.currentTarget.style.color = 'var(--text-secondary)'
-              }}
+              style={{ background: 'var(--accent-soft)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-1)'; e.currentTarget.style.color = 'var(--accent-3)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
             >
-              <ExternalLink size={11} />
-              Site
+              <ExternalLink size={11} /> Site
             </a>
           )}
         </div>

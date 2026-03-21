@@ -140,16 +140,26 @@ export default function CalendarPage() {
       <div className="flex-1 flex flex-col p-3 md:p-5 overflow-hidden" style={{minHeight:0}}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="font-display text-xl font-bold capitalize animate-in" style={{ color:'var(--text-primary)' }}>
-            {format(current,'MMMM yyyy',{locale:ptBR})}
-          </h1>
+          <div className="animate-in">
+            <h1 className="font-display text-xl font-bold capitalize" style={{ color:'var(--text-primary)' }}>
+              {format(current,'MMMM yyyy',{locale:ptBR})}
+            </h1>
+            {filtered.length > 0 && (
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {filtered.length} evento{filtered.length !== 1 ? 's' : ''} neste período
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-1 flex-wrap justify-end">
             <button onClick={() => setShowFilters(!showFilters)}
-                    className={clsx('btn-ghost p-2',showFilters && 'text-purple-400')}>
+                    className={clsx('btn-ghost p-2 transition-all',showFilters && 'text-purple-400')}
+                    title="Filtros">
               <Filter size={15}/>
             </button>
             <button onClick={() => setCurrent(subMonths(current,1))} className="btn-ghost p-2"><ChevronLeft size={16}/></button>
-            <button onClick={() => setCurrent(new Date())} className="btn-ghost text-xs px-2">Hoje</button>
+            <button onClick={() => setCurrent(new Date())}
+                    className="btn-ghost text-xs px-2.5 py-1.5 font-medium"
+                    style={{ color: 'var(--accent-3)' }}>Hoje</button>
             <button onClick={() => setCurrent(addMonths(current,1))} className="btn-ghost p-2"><ChevronRight size={16}/></button>
             <button onClick={() => openForm(false)} className="btn-primary"><Plus size={15}/> <span className="hidden sm:inline">Evento</span></button>
             <button onClick={() => openForm(true)} className="btn text-white text-sm"

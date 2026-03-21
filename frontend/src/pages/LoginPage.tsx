@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { GraduationCap, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { GraduationCap, Mail, Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import { useAuthStore } from '@/store/authStore'
@@ -12,6 +12,10 @@ export default function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const { setTokens, setUser }  = useAuthStore()
   const navigate                = useNavigate()
+
+  const emailValid = email.length > 3 && email.endsWith('@usp.br')
+  const emailTouched = email.length > 0
+  const emailError = emailTouched && !emailValid && email.includes('@') && !email.endsWith('@usp.br')
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -40,6 +44,13 @@ export default function LoginPage() {
     }
   }
 
+  const features = [
+    { icon: '📋', label: 'Kanban', desc: 'Organize suas tarefas com drag-and-drop' },
+    { icon: '📊', label: 'Notas', desc: 'Acompanhe suas médias e frequências' },
+    { icon: '📅', label: 'Calendário', desc: 'Provas, deadlines e eventos acadêmicos' },
+    { icon: '🎓', label: 'Fluxograma', desc: 'Visualize sua grade curricular completa' },
+  ]
+
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-base)' }}>
       {/* Left decorative panel */}
@@ -49,8 +60,9 @@ export default function LoginPage() {
              borderRight: '1px solid var(--border)',
            }}>
         {/* decorative orbs */}
-        <div className="accent-orb" style={{ width: 300, height: 300, top: -100, right: -100, opacity: 0.25 }} />
-        <div className="accent-orb" style={{ width: 200, height: 200, bottom: 40, left: -60, opacity: 0.15, animationDelay: '3s' }} />
+        <div className="accent-orb" style={{ width: 320, height: 320, top: -120, right: -100, opacity: 0.2 }} />
+        <div className="accent-orb" style={{ width: 200, height: 200, bottom: 40, left: -60, opacity: 0.12, animationDelay: '3s' }} />
+        <div className="accent-orb" style={{ width: 100, height: 100, top: '40%', left: '30%', opacity: 0.08, animationDelay: '6s' }} />
 
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -58,7 +70,7 @@ export default function LoginPage() {
             <GraduationCap size={20} className="text-white" />
           </div>
           <div>
-            <p className="font-display font-bold text-white">DaSIboard</p>
+            <p className="font-display font-bold text-white text-lg">DaSIboard</p>
             <p className="text-[11px] font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>Sistemas de Informação · EACH · USP</p>
           </div>
         </div>
@@ -67,21 +79,25 @@ export default function LoginPage() {
           <h1 className="font-display text-4xl font-bold text-white leading-tight mb-4">
             Seu dashboard<br />acadêmico.
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <p className="text-sm leading-relaxed mb-10" style={{ color: 'rgba(255,255,255,0.7)' }}>
             Organize suas disciplinas, notas, tarefas e eventos em um só lugar.
             Feito por e para alunos de SI da EACH.
           </p>
-          <div className="mt-10 grid grid-cols-2 gap-3">
-            {['📋 Kanban', '📊 Notas', '📅 Calendário', '👤 Perfil'].map((f) => (
-              <div key={f} className="rounded-xl px-4 py-3 text-sm font-medium text-white"
-                   style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)' }}>
-                {f}
+          <div className="grid grid-cols-1 gap-2.5">
+            {features.map((f) => (
+              <div key={f.label} className="flex items-center gap-3 rounded-xl px-4 py-3"
+                   style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(4px)' }}>
+                <span style={{ fontSize: 20 }}>{f.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{f.label}</p>
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.6)' }}>{f.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
-        <p className="relative z-10 text-xs font-mono" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          © {new Date().getFullYear()} DaSIboard
+        <p className="relative z-10 text-xs font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          © {new Date().getFullYear()} DaSIboard · EACH · USP
         </p>
       </div>
 
@@ -99,22 +115,42 @@ export default function LoginPage() {
           <h2 className="font-display text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
             Bem-vindo(a) de volta
           </h2>
-          <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Entre com seu e-mail @usp.br</p>
+          <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Entre com seu e-mail institucional @usp.br</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">E-mail USP</label>
               <div className="relative">
-                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: emailError ? '#f87171' : emailValid ? '#22c55e' : 'var(--text-muted)' }} />
                 <input
                   type="email"
-                  className="input pl-10"
+                  className="input pl-10 pr-10"
                   placeholder="seunome@usp.br"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  style={{ borderColor: emailError ? '#f87171' : emailValid ? '#22c55e55' : undefined }}
                   required
                 />
+                {emailTouched && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                    {emailValid
+                      ? <CheckCircle size={15} style={{ color: '#22c55e' }} />
+                      : emailError
+                        ? <AlertCircle size={15} style={{ color: '#f87171' }} />
+                        : null}
+                  </div>
+                )}
               </div>
+              {emailError && (
+                <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: '#f87171' }}>
+                  <AlertCircle size={10} /> Use um e-mail com domínio @usp.br
+                </p>
+              )}
+              {emailValid && (
+                <p className="text-[11px] mt-1.5 flex items-center gap-1" style={{ color: '#22c55e' }}>
+                  <CheckCircle size={10} /> E-mail válido
+                </p>
+              )}
             </div>
             <div>
               <label className="label">Senha</label>
@@ -142,7 +178,12 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" className="btn-primary w-full justify-center py-3 mt-2" disabled={loading}>
-              {loading ? 'Entrando…' : 'Entrar'}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Entrando…
+                </span>
+              ) : 'Entrar →'}
             </button>
           </form>
 
