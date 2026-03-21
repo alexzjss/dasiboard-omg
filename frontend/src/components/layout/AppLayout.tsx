@@ -140,8 +140,11 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
         <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-all cursor-default"
              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-btn)' }}>
-            <span className="text-xs font-bold text-white font-display">{initials}</span>
+          <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-btn)' }}>
+            {user?.avatar_url
+              ? <img src={user.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span className="text-xs font-bold text-white font-display">{initials}</span>
+            }
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
