@@ -284,8 +284,9 @@ function SubjectNode({ subject, status, state, isHighlighted, isDimmed, onClick 
       )}
       style={{
         ...bgStyle(),
-        ringColor: baseColor,
         minWidth: 120,
+        outline: isHighlighted ? `2px solid ${baseColor}` : undefined,
+        outlineOffset: isHighlighted ? '1px' : undefined,
       }}>
       <div className="flex items-center gap-1.5 mb-0.5">
         {icon()}
