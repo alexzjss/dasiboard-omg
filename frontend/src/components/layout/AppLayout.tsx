@@ -16,7 +16,13 @@ import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal, KeyboardHe
 import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
+import { LofiPlayer } from '@/components/LofiPlayer'
 import { useFocusMode, FocusModeBar } from '@/components/FocusMode'
+import { ColorBlindFilters, ColorBlindToggle, useColorBlindMode } from '@/components/ColorBlindMode'
+import { ExpBar } from '@/components/ExpCounter'
+import { OfflineBanner } from '@/components/OfflineBanner'
+import { useChronoPortalSound } from '@/hooks/useChronoPortal'
+import { BlueprintRuler } from '@/components/BlueprintRuler'
 import clsx from 'clsx'
 
 const nav = [
@@ -59,6 +65,7 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'light-punkrock':   { bg: '#1a1f8f', accent: '#e60000', card: '#ffffff' },
   'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
   'light-portatil':   { bg: '#9bbc0f', accent: '#306230', card: '#8bac0f' },
+  'dark-aqua':        { bg: '#0a1a3a', accent: '#00aaff', card: '#0d2050' },
   // Chrono Trigger (usa preview base escuro)
   'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
 }
@@ -304,10 +311,11 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
 }
 
 // ── Sidebar inner ─────────────────────────────────────────────────────────────
-function SidebarContent({ onOpenPicker, onToggleFocus, focusActive }: {
+function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }: {
   onOpenPicker: () => void
   onToggleFocus: () => void
   focusActive: boolean
+  colorBlind: ReturnType<typeof useColorBlindMode>
 }) {
   const { user, logout } = useAuthStore()
   const { theme, isDark, toggleDarkLight } = useTheme()
@@ -390,10 +398,10 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive }: {
         ))}
       </nav>
 
-      {/* Study Mode widget + Focus Mode + DLC Lofi — grouped */}
+      {/* Study Mode widget + Focus Mode + Lofi + Accessibility — grouped */}
       <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
-        {/* Focus Mode quick toggle */}
-        <div className="px-3 pt-2 pb-1">
+        {/* Focus Mode + Daltonismo — compact row */}
+        <div className="px-3 pt-2 pb-1 space-y-1">
           <button
             onClick={onToggleFocus}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -410,15 +418,18 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive }: {
             <span className="flex-1 text-left">{focusActive ? 'Sair do foco' : 'Modo Foco'}</span>
             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⇧F</span>
           </button>
+          <ColorBlindToggle mode={colorBlind.mode} apply={colorBlind.apply} />
         </div>
-        {/* DLC Lofi player */}
-        <DLCLofiPlayer />
+        {/* Lo-fi player — shown for DLC, Pixel, 720, Portátil */}
+        <LofiPlayer />
         {/* Pomodoro / Study mode */}
         <StudyMode />
       </div>
 
-      {/* User */}
+      {/* User + EXP bar */}
       <div className="p-3 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
+        {/* EXP bar — Pixel / 720 / Portátil themes only */}
+        <ExpBar />
         <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-all cursor-default"
              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
@@ -519,6 +530,8 @@ export default function AppLayout() {
   const isChrono = theme.id === 'dark-chrono'
   const saveStarter = (id: string) => { localStorage.setItem('dasiboard-starter', id); setStarter(id) }
   const focusMode = useFocusMode()
+  const colorBlind = useColorBlindMode()
+  useChronoPortalSound()
 
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
@@ -540,7 +553,10 @@ export default function AppLayout() {
       {/* Floating keyboard help button — keyboard users only */}
       <KeyboardHelpButton onClick={() => setShowKeyHelp(k => !k)} />
 
-      {/* Focus mode bar — replaces topbar when active */}
+      {/* Global: color blind SVG filters, offline banner */}
+      <ColorBlindFilters />
+      <OfflineBanner />
+      <BlueprintRuler />
       {focusMode.active && <FocusModeBar onExit={focusMode.exit} />}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
 
@@ -558,7 +574,7 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} />
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} colorBlind={colorBlind} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">

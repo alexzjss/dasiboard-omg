@@ -5766,3 +5766,326 @@ html { scroll-behavior: smooth; }
 [data-theme="dark-dlc"] .sidebar-bg::before {
   z-index: 3 !important;  /* stays within sidebar stacking context */
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   👁️  DALTONISMO — Color Blind CSS filter application
+   SVG filters defined in ColorBlindFilters component.
+   Applied via data-colorblind attribute on <html>.
+═══════════════════════════════════════════════════════════════════ */
+
+[data-colorblind="protanopia"]   { filter: url(#cb-protanopia)   !important; }
+[data-colorblind="deuteranopia"] { filter: url(#cb-deuteranopia) !important; }
+[data-colorblind="tritanopia"]   { filter: url(#cb-tritanopia)   !important; }
+[data-colorblind="none"]         { filter: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   📐  BLUEPRINT — Réguas numéricas nas bordas (top + left)
+   Renderizadas como ::before/::after no body, z-index alto.
+═══════════════════════════════════════════════════════════════════ */
+
+/* Top ruler */
+[data-theme="light-blueprint"] body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 32px; right: 0;
+  height: 20px;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(68,153,255,0.5) 0px, rgba(68,153,255,0.5) 1px,
+      transparent 1px, transparent 39px,
+      rgba(68,153,255,0.25) 40px, rgba(68,153,255,0.25) 41px,
+      transparent 41px, transparent 79px,
+      rgba(68,153,255,0.25) 80px, rgba(68,153,255,0.25) 81px,
+      transparent 81px, transparent 119px,
+      rgba(68,153,255,0.25) 120px, rgba(68,153,255,0.25) 121px,
+      transparent 121px, transparent 159px,
+      rgba(68,153,255,0.5) 160px, rgba(68,153,255,0.5) 161px,
+      transparent 161px, transparent 199px
+    ),
+    linear-gradient(180deg, rgba(10,37,64,0.98) 0%, rgba(10,37,64,0.95) 100%);
+  border-bottom: 1px solid rgba(68,153,255,0.35);
+  pointer-events: none;
+  z-index: 9998;
+  font-size: 0;
+}
+
+/* Left ruler */
+[data-theme="light-blueprint"] body::after {
+  content: '';
+  position: fixed;
+  top: 20px; left: 0;
+  width: 32px; bottom: 0;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(68,153,255,0.5) 0px, rgba(68,153,255,0.5) 1px,
+      transparent 1px, transparent 39px,
+      rgba(68,153,255,0.25) 40px, rgba(68,153,255,0.25) 41px,
+      transparent 41px, transparent 79px,
+      rgba(68,153,255,0.25) 80px, rgba(68,153,255,0.25) 81px,
+      transparent 81px, transparent 119px,
+      rgba(68,153,255,0.25) 120px, rgba(68,153,255,0.25) 121px,
+      transparent 121px, transparent 159px,
+      rgba(68,153,255,0.5) 160px, rgba(68,153,255,0.5) 161px,
+      transparent 161px, transparent 199px
+    ),
+    linear-gradient(90deg, rgba(10,37,64,0.98) 0%, rgba(10,37,64,0.95) 100%);
+  border-right: 1px solid rgba(68,153,255,0.35);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* Corner square where rulers meet */
+[data-theme="light-blueprint"] main::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 32px; height: 20px;
+  background: rgba(10,37,64,0.98);
+  border-right: 1px solid rgba(68,153,255,0.35);
+  border-bottom: 1px solid rgba(68,153,255,0.35);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Push content to avoid being hidden by rulers */
+[data-theme="light-blueprint"] .flex.h-\[100dvh\] {
+  padding-top: 20px;
+  padding-left: 32px;
+}
+
+/* Number labels on top ruler — CSS counters trick */
+[data-theme="light-blueprint"] .ruler-top-labels {
+  position: fixed;
+  top: 3px; left: 32px; right: 0;
+  height: 14px;
+  pointer-events: none;
+  z-index: 9999;
+  display: flex;
+  gap: 0;
+}
+
+/* Mobile — hide rulers on small screens */
+@media (max-width: 639px) {
+  [data-theme="light-blueprint"] body::before,
+  [data-theme="light-blueprint"] body::after,
+  [data-theme="light-blueprint"] main::before {
+    display: none;
+  }
+  [data-theme="light-blueprint"] .flex.h-\[100dvh\] {
+    padding-top: 0;
+    padding-left: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   💧  DARK — Aqua  (Windows XP Luna · Azul translúcido vitrificado)
+   Gradientes brilhosos, botões com highlight "glassy",
+   taskbar/orb style, sombras profundas, paleta azul royal
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-aqua"] {
+  --bg-base:        #0a1628;
+  --bg-surface:     #0d1f3c;
+  --bg-elevated:    #102448;
+  --bg-card:        #0d2050;
+  --border:         rgba(0,140,255,0.22);
+  --border-light:   rgba(0,170,255,0.40);
+  --text-primary:   #d8eeff;
+  --text-secondary: #6bb8ff;
+  --text-muted:     #2a5080;
+  --accent-1:       #0078d4;
+  --accent-2:       #005fa3;
+  --accent-3:       #00aaff;
+  --accent-glow:    rgba(0,170,255,0.30);
+  --accent-soft:    rgba(0,120,212,0.15);
+  --gradient-hero:  linear-gradient(180deg, #003e9a 0%, #0054c8 30%, #0078d4 60%, #00aaff 100%);
+  --gradient-btn:   linear-gradient(180deg, #3a9ee8 0%, #0067c0 35%, #0054a0 65%, #004a8f 100%);
+  --noise-opacity:  0;
+  --card-blur:      8px;
+  --sidebar-overlay: none;
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+}
+
+[data-theme="dark-aqua"] h1,
+[data-theme="dark-aqua"] h2,
+[data-theme="dark-aqua"] h3,
+[data-theme="dark-aqua"] h4 {
+  font-family: "Syne", "DM Sans", sans-serif;
+  font-weight: 700;
+  color: #d8eeff;
+  text-shadow: 0 1px 3px rgba(0,100,200,0.5);
+}
+
+/* XP-style taskbar gradient background */
+[data-theme="dark-aqua"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,120,212,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0,80,180,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 50% at 85% 40%, rgba(0,160,255,0.08) 0%, transparent 50%);
+}
+
+/* XP luna orb glow top-right */
+[data-theme="dark-aqua"] body::after {
+  content: '';
+  position: fixed;
+  top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,180,255,0.15) 0%, rgba(0,100,212,0.08) 40%, transparent 70%);
+  pointer-events: none; z-index: 0;
+  animation: aquaOrb 8s ease-in-out infinite alternate;
+}
+@keyframes aquaOrb {
+  0%   { transform: translate(0,0) scale(1); opacity: 0.8; }
+  100% { transform: translate(-20px,20px) scale(1.1); opacity: 1; }
+}
+
+/* Sidebar — XP start menu deep blue */
+[data-theme="dark-aqua"] .sidebar-bg {
+  background: linear-gradient(180deg,
+    #1a3a6e 0%, #0e2b5c 20%,
+    #0a2050 50%, #061840 100%);
+  border-right: 1px solid rgba(0,140,255,0.25);
+  box-shadow: 2px 0 20px rgba(0,80,200,0.3);
+  position: relative;
+}
+
+/* Top gradient stripe — XP luna highlight */
+[data-theme="dark-aqua"] .sidebar-bg::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg,
+    #0050a0, #0078d4, #00aaff, #40c8ff, #00aaff, #0078d4, #0050a0);
+  pointer-events: none;
+}
+
+/* Glass orb decoration bottom of sidebar */
+[data-theme="dark-aqua"] .sidebar-bg::after {
+  content: '';
+  position: absolute; bottom: 60px; left: 50%;
+  transform: translateX(-50%);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%,
+    rgba(255,255,255,0.5) 0%, rgba(0,150,255,0.6) 30%,
+    rgba(0,80,200,0.7) 60%, rgba(0,40,120,0.8) 100%);
+  box-shadow: 0 0 16px rgba(0,150,255,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+/* Nav active — XP selected item */
+[data-theme="dark-aqua"] .nav-active {
+  background: linear-gradient(180deg, rgba(0,150,255,0.25) 0%, rgba(0,100,200,0.20) 100%) !important;
+  border: 1px solid rgba(0,170,255,0.45) !important;
+  color: #80d4ff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 0 8px rgba(0,150,255,0.2) !important;
+}
+[data-theme="dark-aqua"] .nav-inactive { color: rgba(100,180,255,0.55); }
+[data-theme="dark-aqua"] .nav-inactive:hover {
+  background: rgba(0,120,255,0.12) !important;
+  color: #80c8ff;
+}
+
+/* Cards — glassy XP window */
+[data-theme="dark-aqua"] .card {
+  background: linear-gradient(180deg,
+    rgba(16,40,90,0.95) 0%,
+    rgba(10,30,72,0.98) 100%);
+  border: 1px solid rgba(0,140,255,0.22);
+  border-top-color: rgba(0,180,255,0.35);
+  box-shadow:
+    0 4px 24px rgba(0,50,150,0.3),
+    inset 0 1px 0 rgba(100,180,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
+  backdrop-filter: blur(8px);
+}
+[data-theme="dark-aqua"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(100,200,255,0.3), transparent);
+  pointer-events: none;
+}
+[data-theme="dark-aqua"] .card-hover:hover {
+  border-color: rgba(0,180,255,0.45);
+  box-shadow: 0 8px 32px rgba(0,80,200,0.35), inset 0 1px 0 rgba(150,220,255,0.15);
+  transform: translateY(-2px);
+}
+
+/* Buttons — XP Aqua style with inner highlight */
+[data-theme="dark-aqua"] .btn-primary {
+  background: linear-gradient(180deg,
+    #4aadee 0%, #1a88dd 25%,
+    #0070cc 50%, #005aaa 75%,
+    #0050a0 100%) !important;
+  border: 1px solid #003a80 !important;
+  border-top-color: #6ac0f0 !important;
+  box-shadow:
+    0 2px 8px rgba(0,80,200,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -1px 0 rgba(0,0,0,0.2) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,40,100,0.6) !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+}
+[data-theme="dark-aqua"] .btn-primary:hover {
+  background: linear-gradient(180deg,
+    #60c0f8 0%, #2a98ec 25%,
+    #1080d8 50%, #0068b8 75%,
+    #0058aa 100%) !important;
+  box-shadow: 0 4px 14px rgba(0,100,220,0.5), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+[data-theme="dark-aqua"] .btn-ghost {
+  color: #6bb8ff;
+  border-color: rgba(0,140,255,0.3) !important;
+  border-radius: 4px !important;
+}
+[data-theme="dark-aqua"] .btn-ghost:hover {
+  background: rgba(0,120,255,0.12) !important;
+  border-color: rgba(0,180,255,0.5) !important;
+}
+
+/* Inputs */
+[data-theme="dark-aqua"] .input {
+  background: rgba(5,20,55,0.9) !important;
+  border: 1px solid rgba(0,120,255,0.3) !important;
+  border-top-color: rgba(0,80,180,0.5) !important;
+  color: #d8eeff !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
+  border-radius: 3px !important;
+}
+[data-theme="dark-aqua"] .input:focus {
+  border-color: #0078d4 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 0 0 2px rgba(0,120,212,0.3) !important;
+}
+[data-theme="dark-aqua"] .input::placeholder { color: rgba(100,160,255,0.35) !important; }
+
+/* Scrollbar — XP style */
+[data-theme="dark-aqua"] ::-webkit-scrollbar { width: 14px; }
+[data-theme="dark-aqua"] ::-webkit-scrollbar-track {
+  background: #071428;
+  border-left: 1px solid rgba(0,100,200,0.2);
+}
+[data-theme="dark-aqua"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #1a6ab8, #0054a0, #1a6ab8);
+  border: 2px solid #071428;
+  border-radius: 7px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+}
+[data-theme="dark-aqua"] ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #2a7acc, #0068b8, #2a7acc);
+}
+
+/* Badge */
+[data-theme="dark-aqua"] .badge {
+  backdrop-filter: blur(4px);
+  border-radius: 3px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   📱  BLUEPRINT ruler — compensate on mobile topbar
+═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  [data-theme="light-blueprint"] .main-mobile-pad-top { display: none; }
+}

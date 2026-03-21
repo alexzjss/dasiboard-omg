@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 import { playKonamiJingle, playModemNoise } from './useAudioEasterEggs'
+import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
 
 // ── Sequence detector ─────────────────────────────────────────────────────────
 function useSequence(
@@ -545,6 +546,8 @@ export function useEasterEggs() {
     // Audio easter eggs
     if (eggId === 'konami') playKonamiJingle()
     if (eggId === 'matrix') playModemNoise()
+    // EXP reward for finding easter eggs
+    addExp(EXP_REWARDS.easterEgg)
   }, [themeData])
 
   useSequence(themeData?.seq ?? [], trigger)

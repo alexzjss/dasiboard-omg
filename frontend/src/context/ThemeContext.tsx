@@ -10,6 +10,7 @@ export type ThemeId =
   | 'light-punkrock' | 'light-memento'
   | 'dark-chrono'
   | 'light-portatil'
+  | 'dark-aqua'
 
 // Sub-eras do Chrono Trigger que rotacionam por página
 export type ChronoEra = 'prehistoria' | 'antiguidade' | 'era-media' | 'futuro' | 'fim-dos-tempos'
@@ -66,6 +67,7 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-punkrock',   name: 'Punkrock',     dark: false, emoji: '🦸', description: 'Superman · Azul & Vermelho',group: 'super'   },
   { id: 'light-memento',    name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',       group: 'anime'   },
   { id: 'light-portatil',   name: 'Portátil',     dark: false, emoji: '🎮', description: 'Game Boy · Verde acinzentado', group: 'games' },
+  { id: 'dark-aqua',        name: 'Aqua',         dark: true,  emoji: '💧', description: 'Windows XP Luna · Azul vitrificado', group: 'special' },
 ]
 
 export const DARK_THEMES  = THEMES.filter(t => t.dark)
@@ -131,6 +133,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const next = pickEra(chronoEra)
     setChronoEra(next)
     document.documentElement.setAttribute('data-chrono-era', next)
+    // Emit event so audio hook can play portal sound
+    document.dispatchEvent(new CustomEvent('chrono:era-change', { detail: { era: next } }))
   }, [isChrono, chronoEra])
 
   const cycleTheme = () => {

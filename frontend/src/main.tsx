@@ -6,6 +6,10 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import App from './App'
 import './styles/globals.css'
 import './styles/enhancements.css'
+import { registerServiceWorker } from '@/components/OfflineBanner'
+
+// Register service worker for offline caching
+registerServiceWorker()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -32,17 +36,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             },
             success: {
               iconTheme: { primary: '#22c55e', secondary: 'white' },
-              style: {
-                background: 'var(--bg-card)',
-                borderColor: 'rgba(34,197,94,0.35)',
-              },
+              style: { background: 'var(--bg-card)', borderColor: 'rgba(34,197,94,0.35)' },
             },
             error: {
               iconTheme: { primary: '#ef4444', secondary: 'white' },
-              style: {
-                background: 'var(--bg-card)',
-                borderColor: 'rgba(239,68,68,0.35)',
-              },
+              style: { background: 'var(--bg-card)', borderColor: 'rgba(239,68,68,0.35)' },
             },
           }}
         />

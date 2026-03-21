@@ -108,3 +108,49 @@ export function playModemNoise() {
     playTone(ac, 1500, t + cursor + 0.22, 0.10, 'sine', 0.12)
   } catch (e) { console.warn('Audio error', e) }
 }
+
+// ── Chrono Trigger portal sound — plays on era change ─────────────────────────
+export function playChronoPortal() {
+  try {
+    const ac = getCtx()
+    const t  = ac.currentTime
+
+    // Sweeping arpeggio + reverb-like tail = portal whoosh
+    const portalNotes = [
+      [523.25, 0.00, 0.18, 'sine'],    // C5
+      [659.25, 0.12, 0.18, 'sine'],    // E5
+      [783.99, 0.24, 0.18, 'sine'],    // G5
+      [1046.5, 0.36, 0.28, 'sine'],    // C6
+      [1318.5, 0.52, 0.22, 'sine'],    // E6
+      [1567.9, 0.64, 0.36, 'triangle'],// G6 — shimmer
+    ] as [number, number, number, OscillatorType][]
+
+    portalNotes.forEach(([freq, delay, dur, type]) => {
+      playTone(ac, freq, t + delay, dur, type, 0.10)
+      // Octave below for depth
+      playTone(ac, freq * 0.5, t + delay + 0.02, dur * 0.8, 'sine', 0.05)
+    })
+
+    // Whoosh noise burst
+    const buf = ac.createBuffer(1, ac.sampleRate * 0.6, ac.sampleRate)
+    const data = buf.getChannelData(0)
+    for (let i = 0; i < data.length; i++) {
+      const env = i < data.length * 0.3
+        ? i / (data.length * 0.3)
+        : 1 - (i - data.length * 0.3) / (data.length * 0.7)
+      data[i] = (Math.random() * 2 - 1) * env * 0.06
+    }
+    const src = ac.createBufferSource()
+    const bandpass = ac.createBiquadFilter()
+    bandpass.type = 'bandpass'
+    bandpass.frequency.setValueAtTime(800, t)
+    bandpass.frequency.exponentialRampToValueAtTime(4000, t + 0.6)
+    bandpass.Q.value = 1.5
+    const gn = ac.createGain()
+    gn.gain.setValueAtTime(0.12, t)
+    gn.gain.exponentialRampToValueAtTime(0.001, t + 0.6)
+    src.buffer = buf
+    src.connect(bandpass); bandpass.connect(gn); gn.connect(ac.destination)
+    src.start(t)
+  } catch (e) { console.warn('Audio error', e) }
+}
