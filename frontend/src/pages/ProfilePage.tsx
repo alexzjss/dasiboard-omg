@@ -4,13 +4,14 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   User, Mail, Hash, Calendar, GraduationCap, LogOut,
-  Download, RefreshCw, Award, X, Check, Code2,
+  Download, RefreshCw, X, Check, Code2, Trophy,
+  Sparkles, ImagePlus, Trash2, Lock, Star,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 
-// ── PRNG ─────────────────────────────────────────────────────────────────────
+// ── PRNG ──────────────────────────────────────────────────────────────────────
 function seededRng(seed: string) {
   let h = 0
   for (let i = 0; i < seed.length; i++) h = Math.imul(31, h) + seed.charCodeAt(i) | 0
@@ -23,7 +24,6 @@ function seededRng(seed: string) {
   }
 }
 
-// ── Titles ────────────────────────────────────────────────────────────────────
 const TITLES = [
   'Explorador Incansável','Arquiteto de Sonhos','Nômade Digital',
   'Construtor do Futuro','Caçador de Bugs','Artesão do Código',
@@ -33,16 +33,14 @@ const TITLES = [
   'Navegador de Incertezas','Alquimista Digital','Construtor Obstinado',
   'Sonhador Pragmático','Engenheiro de Possibilidades','Entusiasta Nato',
   'Pensador Lateral','Hacker de Soluções','Curador de Conhecimento',
-  'Montador de Sistemas','Visonário Técnico','Explorador de Fronteiras',
+  'Montador de Sistemas','Visionário Técnico','Explorador de Fronteiras',
 ]
 
-// ── Areas & Languages ────────────────────────────────────────────────────────
 export const AREAS = [
   'Frontend','Backend','Fullstack','Mobile','Data Science',
   'IA & ML','DevOps','Cybersecurity','Game Dev','Design',
   'Pesquisa','UX/UI','Cloud','Embedded','Blockchain','QA',
 ]
-
 export const LANGUAGES = [
   'Python','JavaScript','TypeScript','Java','Kotlin','Swift',
   'Go','Rust','C','C++','C#','PHP','Ruby','Dart','Scala',
@@ -50,365 +48,430 @@ export const LANGUAGES = [
   'Clojure','F#','OCaml','Assembly','VHDL','Prolog',
 ]
 
-// ── Badge definitions ─────────────────────────────────────────────────────────
-export interface Badge {
+export interface Achievement {
   id: string; emoji: string; label: string; desc: string
-  color: string; unlocked: boolean
+  hint: string; color: string
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+  unlocked: boolean
+  category: 'profile' | 'academic' | 'kanban' | 'social' | 'secret' | 'system'
 }
 
-export const buildBadges = (opts: {
-  hasBoards: boolean
-  hasLanguage: boolean
-  hasPassedSubject: boolean
-  memberSlugs: string[]
-}): Badge[] => [
-  { id: 'pioneer',   emoji: '🚀', label: 'Pioneiro',    desc: 'Membro fundador do DaSIboard',            color: '#f59e0b', unlocked: true },
-  { id: 'coder',     emoji: '💻', label: 'Dev',         desc: 'Selecionou uma linguagem principal',      color: '#6366f1', unlocked: opts.hasLanguage },
-  { id: 'eisenhower',emoji: '📋', label: 'Eisenhower',  desc: 'Criou um quadro Kanban',                  color: '#22c55e', unlocked: opts.hasBoards },
-  { id: 'night_owl', emoji: '🦉', label: 'Coruja',      desc: 'Aprovado em pelo menos uma disciplina',   color: '#a855f7', unlocked: opts.hasPassedSubject },
-  { id: 'dasi',      emoji: '🎓', label: 'DASI',        desc: 'Membro do Diretório Acadêmico',           color: '#ec4899', unlocked: opts.memberSlugs.includes('dasi') },
-  { id: 'hype',      emoji: '🤖', label: 'HypE',        desc: 'Membro do HypE (Dados & IA)',             color: '#f97316', unlocked: opts.memberSlugs.includes('hype') },
-  { id: 'conway',    emoji: '🎮', label: 'Conway',      desc: 'Membro do Conway Game Studio',            color: '#10b981', unlocked: opts.memberSlugs.includes('conway') },
-  { id: 'sintese',   emoji: '💼', label: 'Síntese Jr.', desc: 'Membro da Síntese Jr.',                   color: '#ef4444', unlocked: opts.memberSlugs.includes('sintese') },
-  { id: 'shell',     emoji: '💀', label: 'Shell',       desc: 'Membro da EACH in the Shell',             color: '#00cc44', unlocked: opts.memberSlugs.includes('each-in-shell') },
-  { id: 'pet',       emoji: '📚', label: 'PET-SI',      desc: 'Membro do PET-SI',                        color: '#4d67f5', unlocked: opts.memberSlugs.includes('pet-si') },
-  { id: 'lab_minas', emoji: '🔬', label: 'Lab Minas',   desc: 'Membro do Lab das Minas',                 color: '#f472b6', unlocked: opts.memberSlugs.includes('lab-minas') },
-  { id: 'grace',     emoji: '🌸', label: 'GrACE',       desc: 'Membro do GrACE',                         color: '#e879f9', unlocked: opts.memberSlugs.includes('grace') },
-  { id: 'semana_si', emoji: '🎪', label: 'SemanaSI',    desc: 'Membro da Semana de SI',                  color: '#a855f7', unlocked: opts.memberSlugs.includes('semana-si') },
-  { id: 'codelab',   emoji: '⚙️', label: 'CodeLab',     desc: 'Membro do CodeLab Leste',                 color: '#06b6d4', unlocked: opts.memberSlugs.includes('codelab') },
+const RARITY_LABEL: Record<string, string> = {
+  common: 'Comum', rare: 'Raro', epic: 'Épico', legendary: 'Lendário',
+}
+const RARITY_COLOR: Record<string, string> = {
+  common: '#6b7280', rare: '#3b82f6', epic: '#a855f7', legendary: '#f59e0b',
+}
+const CATEGORY_LABELS: Record<string, string> = {
+  profile: 'Perfil', academic: 'Acadêmico', kanban: 'Organização',
+  social: 'Comunidade', secret: 'Secretas', system: 'Sistema',
+}
+
+export const buildAchievements = (opts: {
+  hasBoards: boolean; hasMultipleBoards: boolean; hasLanguage: boolean
+  hasArea: boolean; hasPassedSubject: boolean; hasFailedSubject: boolean
+  hasAvatar: boolean; hasNusp: boolean; eventCount: number
+  subjectCount: number; gradeCount: number; loginCount: number
+  easterEggFound: boolean; memberSlugs: string[]
+}): Achievement[] => [
+  { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',       rarity: 'legendary', category: 'system',
+    desc: 'Membro fundador do DaSIboard',          hint: 'Crie sua conta',          color: '#f59e0b', unlocked: true },
+  { id: 'coder',      emoji: '💻', label: 'Desenvolvedor',  rarity: 'common',    category: 'profile',
+    desc: 'Selecionou uma linguagem principal',     hint: 'Escolha sua linguagem',    color: '#6366f1', unlocked: opts.hasLanguage },
+  { id: 'specialist', emoji: '🎯', label: 'Especialista',   rarity: 'common',    category: 'profile',
+    desc: 'Selecionou uma área de atuação',         hint: 'Escolha sua área',          color: '#06b6d4', unlocked: opts.hasArea },
+  { id: 'face',       emoji: '📸', label: 'Fotogênico',     rarity: 'common',    category: 'profile',
+    desc: 'Adicionou foto de perfil',               hint: 'Faça upload de uma foto',   color: '#ec4899', unlocked: opts.hasAvatar },
+  { id: 'identified', emoji: '🪪', label: 'Identificado',   rarity: 'common',    category: 'profile',
+    desc: 'Adicionou número USP',                   hint: 'Informe seu Nº USP',         color: '#8b5cf6', unlocked: opts.hasNusp },
+  { id: 'eisenhower', emoji: '📋', label: 'Eisenhower',     rarity: 'common',    category: 'kanban',
+    desc: 'Criou o primeiro quadro Kanban',         hint: 'Crie um quadro em Kanban',  color: '#22c55e', unlocked: opts.hasBoards },
+  { id: 'organizer',  emoji: '🗂️', label: 'Organizador',   rarity: 'rare',      category: 'kanban',
+    desc: 'Criou 3 ou mais quadros Kanban',         hint: 'Crie pelo menos 3 quadros', color: '#10b981', unlocked: opts.hasMultipleBoards },
+  { id: 'planner',    emoji: '🗓️', label: 'Planejador',    rarity: 'common',    category: 'kanban',
+    desc: 'Criou 5+ eventos no calendário',         hint: 'Adicione eventos',           color: '#f59e0b', unlocked: opts.eventCount >= 5 },
+  { id: 'night_owl',  emoji: '🦉', label: 'Coruja',         rarity: 'rare',      category: 'academic',
+    desc: 'Aprovado em pelo menos uma disciplina',  hint: 'Registre notas e passe',    color: '#a855f7', unlocked: opts.hasPassedSubject },
+  { id: 'survivor',   emoji: '💀', label: 'Sobrevivente',   rarity: 'rare',      category: 'academic',
+    desc: 'Reprovado e voltou mais forte',          hint: 'Registre uma reprovação',   color: '#ef4444', unlocked: opts.hasFailedSubject },
+  { id: 'scholar',    emoji: '📚', label: 'Estudioso',      rarity: 'epic',      category: 'academic',
+    desc: 'Cadastrou 6+ disciplinas',               hint: 'Adicione 6 matérias',       color: '#6366f1', unlocked: opts.subjectCount >= 6 },
+  { id: 'annotator',  emoji: '✏️', label: 'Anotador',       rarity: 'common',    category: 'academic',
+    desc: 'Registrou 10+ notas',                   hint: 'Adicione notas',             color: '#f97316', unlocked: opts.gradeCount >= 10 },
+  { id: 'dasi',       emoji: '🎓', label: 'DASI',           rarity: 'rare',      category: 'social',
+    desc: 'Membro do Diretório Acadêmico',          hint: 'Entre para o DASI',          color: '#ec4899', unlocked: opts.memberSlugs.includes('dasi') },
+  { id: 'hype',       emoji: '🤖', label: 'HypE',           rarity: 'rare',      category: 'social',
+    desc: 'Membro do HypE (Dados & IA)',            hint: 'Entre para o HypE',          color: '#f97316', unlocked: opts.memberSlugs.includes('hype') },
+  { id: 'conway',     emoji: '🎮', label: 'Conway',         rarity: 'rare',      category: 'social',
+    desc: 'Membro do Conway Game Studio',           hint: 'Entre para o Conway',        color: '#10b981', unlocked: opts.memberSlugs.includes('conway') },
+  { id: 'sintese',    emoji: '💼', label: 'Síntese Jr.',    rarity: 'rare',      category: 'social',
+    desc: 'Membro da Síntese Jr.',                  hint: 'Entre para a Síntese',       color: '#ef4444', unlocked: opts.memberSlugs.includes('sintese') },
+  { id: 'shell',      emoji: '💀', label: 'Shell',          rarity: 'rare',      category: 'social',
+    desc: 'Membro da EACH in the Shell',            hint: 'Entre para a Shell',         color: '#00cc44', unlocked: opts.memberSlugs.includes('each-in-shell') },
+  { id: 'pet',        emoji: '📚', label: 'PET-SI',         rarity: 'epic',      category: 'social',
+    desc: 'Membro do PET-SI',                       hint: 'Entre para o PET-SI',        color: '#4d67f5', unlocked: opts.memberSlugs.includes('pet-si') },
+  { id: 'lab_minas',  emoji: '🔬', label: 'Lab Minas',      rarity: 'rare',      category: 'social',
+    desc: 'Membro do Lab das Minas',                hint: 'Entre para o Lab',           color: '#f472b6', unlocked: opts.memberSlugs.includes('lab-minas') },
+  { id: 'grace',      emoji: '🌸', label: 'GrACE',          rarity: 'rare',      category: 'social',
+    desc: 'Membro do GrACE',                        hint: 'Entre para o GrACE',         color: '#e879f9', unlocked: opts.memberSlugs.includes('grace') },
+  { id: 'semana_si',  emoji: '🎪', label: 'Semana SI',      rarity: 'epic',      category: 'social',
+    desc: 'Membro da Semana de SI',                 hint: 'Participe da Semana',        color: '#a855f7', unlocked: opts.memberSlugs.includes('semana-si') },
+  { id: 'codelab',    emoji: '⚙️', label: 'CodeLab',        rarity: 'rare',      category: 'social',
+    desc: 'Membro do CodeLab Leste',                hint: 'Entre para o CodeLab',       color: '#06b6d4', unlocked: opts.memberSlugs.includes('codelab') },
+  { id: 'networker',  emoji: '🌐', label: 'Networker',      rarity: 'epic',      category: 'social',
+    desc: 'Membro de 3+ entidades',                 hint: 'Participe de 3 entidades',   color: '#8b5cf6', unlocked: opts.memberSlugs.length >= 3 },
+  { id: 'easter_egg', emoji: '🥚', label: 'Caçador',        rarity: 'legendary', category: 'secret',
+    desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
+  { id: 'night_coder',emoji: '🌙', label: 'Coder Noturno',  rarity: 'epic',      category: 'secret',
+    desc: 'Usou o app após meia-noite',             hint: '???',                        color: '#6366f1', unlocked: new Date().getHours() >= 0 && new Date().getHours() < 4 },
 ]
 
-// ── Canvas helpers ────────────────────────────────────────────────────────────
+// ── Canvas helpers ─────────────────────────────────────────────────────────────
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
-  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r)
-  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r)
-  ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r)
-  ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r)
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r)
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r)
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r)
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r)
   ctx.closePath()
 }
-
-// Cardinal-spline smooth blob — fully random shape
 function drawBlob(ctx: CanvasRenderingContext2D, rng: () => number, cx: number, cy: number, baseR: number) {
-  const n = 7 + Math.floor(rng() * 6)   // 7–12 points
-  const pts: [number, number][] = []
+  const n = 7 + Math.floor(rng() * 6)
+  const pts: [number,number][] = []
   for (let i = 0; i < n; i++) {
-    const angle = (i / n) * Math.PI * 2 - Math.PI / 2
-    // Dramatically varied radii — creates truly organic shapes
+    const angle = (i/n)*Math.PI*2 - Math.PI/2
     const r = baseR * (0.45 + rng() * 0.90)
-    pts.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r])
+    pts.push([cx + Math.cos(angle)*r, cy + Math.sin(angle)*r])
   }
   ctx.beginPath()
   for (let i = 0; i < pts.length; i++) {
-    const p0 = pts[(i - 1 + n) % n]
-    const p1 = pts[i]
-    const p2 = pts[(i + 1) % n]
-    const p3 = pts[(i + 2) % n]
-    const cp1x = p1[0] + (p2[0] - p0[0]) / 5
-    const cp1y = p1[1] + (p2[1] - p0[1]) / 5
-    const cp2x = p2[0] - (p3[0] - p1[0]) / 5
-    const cp2y = p2[1] - (p3[1] - p1[1]) / 5
-    if (i === 0) ctx.moveTo(p1[0], p1[1])
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+    const p0=pts[(i-1+n)%n], p1=pts[i], p2=pts[(i+1)%n], p3=pts[(i+2)%n]
+    const cp1x=p1[0]+(p2[0]-p0[0])/5, cp1y=p1[1]+(p2[1]-p0[1])/5
+    const cp2x=p2[0]-(p3[0]-p1[0])/5, cp2y=p2[1]-(p3[1]-p1[1])/5
+    if (i===0) ctx.moveTo(p1[0],p1[1])
+    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
   }
   ctx.closePath()
 }
-
-function addNoise(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count = 5000) {
-  for (let i = 0; i < count; i++) {
-    const x = rng() * W, y = rng() * H
-    const v = Math.floor(rng() * 200)
-    ctx.fillStyle = `rgba(${v},${v},${v},${alpha * rng()})`
-    ctx.fillRect(x, y, 1, 1)
+function addNoise(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count=5000) {
+  for (let i=0;i<count;i++) {
+    const x=rng()*W, y=rng()*H, v=Math.floor(rng()*220)
+    ctx.fillStyle=`rgba(${v},${v},${v},${alpha*rng()})`
+    ctx.fillRect(x,y,1,1)
   }
 }
 
-// ── Main card drawing function ─────────────────────────────────────────────────
-function drawCard(
+// ── Portrait card draw (680×920 = 3:4.06) ────────────────────────────────────
+function drawPortraitCard(
   canvas: HTMLCanvasElement,
-  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
-  activeBadges: Badge[],
-  area: string,
-  language: string,
+  user: {full_name:string; email:string; nusp?:string; id:string; avatar_url?:string},
+  activeAchievements: Achievement[],
+  area: string, language: string,
+  entityBg: {color:string; name:string} | null,
 ) {
-  const W = 960, H = 540
-  canvas.width  = W * 2
-  canvas.height = H * 2
-  canvas.style.width  = W + 'px'
-  canvas.style.height = H + 'px'
-  const ctx = canvas.getContext('2d')!
-  ctx.scale(2, 2)
+  const W=680, H=920
+  canvas.width=W*2; canvas.height=H*2
+  canvas.style.width=W+"px"; canvas.style.height=H+"px"
+  const ctx = canvas.getContext("2d")!
+  ctx.scale(2,2)
 
-  const rngBlob  = seededRng(user.id + '-blob')
-  const rngColor = seededRng(user.id + '-hue')
+  const rngBlob  = seededRng(user.id+"-blob")
+  const rngColor = seededRng(user.id+"-hue")
+  const hue      = Math.floor(rngColor()*360)
+  const sat      = 72 + Math.floor(rngColor()*18)
+  const blobLit  = 52 + Math.floor(rngColor()*18)
 
-  // Seeded hue across full rainbow
-  const hue     = Math.floor(rngColor() * 360)
-  const sat     = 70 + Math.floor(rngColor() * 20)
-  const blobLit = 50 + Math.floor(rngColor() * 20)
-  const bgLit   = 96 + Math.floor(rngColor() * 3)
+  const bgColor   = entityBg ? "#f9f9f5" : `hsl(${hue},${Math.floor(sat*0.10)}%,97%)`
+  const inkColor  = `hsl(${hue},60%,14%)`
+  const inkFaint  = `hsl(${hue},35%,52%)`
+  const blobMain  = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${blobLit}%)`
+  const blobShift = entityBg ? entityBg.color+"bb" : `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
+  const accentPill= entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(blobLit-26,18)}%)`
 
-  const bgColor    = `hsl(${hue},${Math.floor(sat * 0.12)}%,${bgLit}%)`
-  const inkColor   = `hsl(${hue},60%,18%)`       // dark solid — no alpha concat
-  const inkFaint   = `hsl(${hue},40%,55%)`        // muted info text
-  const blobMain   = `hsl(${hue},${sat}%,${blobLit}%)`
-  const blobShift  = `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
-  const accentPill = `hsl(${hue},${sat}%,${Math.max(blobLit-28,18)}%)`
+  ctx.clearRect(0,0,W,H)
 
-  // ── 1. Clear canvas ─────────────────────────────────
-  ctx.clearRect(0, 0, W, H)
-
-  // ── 2. Card background (clipped to rounded rect) ────
+  // Card bg
   ctx.save()
-  roundRect(ctx, 0, 0, W, H, 24)
+  roundRect(ctx,0,0,W,H,32)
   ctx.clip()
+  if (entityBg) {
+    const g = ctx.createLinearGradient(0,0,W,H)
+    g.addColorStop(0, entityBg.color+"28")
+    g.addColorStop(0.5,"#f9f9f5")
+    g.addColorStop(1, entityBg.color+"14")
+    ctx.fillStyle = g
+  } else { ctx.fillStyle = bgColor }
+  ctx.fillRect(0,0,W,H)
 
-  ctx.fillStyle = bgColor
-  ctx.fillRect(0, 0, W, H)
-
-  // ── 3. Blob ─────────────────────────────────────────
-  const blobCx = W * (0.60 + rngBlob() * 0.22)
-  const blobCy = H * (0.05 + rngBlob() * 0.18)
-  const blobR  = H * (0.75 + rngBlob() * 0.28)
-
-  const grad = ctx.createRadialGradient(
-    blobCx - blobR * 0.28, blobCy - blobR * 0.22, blobR * 0.04,
-    blobCx + blobR * 0.08, blobCy + blobR * 0.08, blobR * 1.1
+  // Blob in upper 57%
+  const blobZoneH = H*0.57
+  ctx.save()
+  ctx.rect(0,0,W,blobZoneH)
+  ctx.clip()
+  const blobCx = W*(0.42+rngBlob()*0.28)
+  const blobCy = H*(-0.04+rngBlob()*0.12)
+  const blobR  = H*(0.55+rngBlob()*0.18)
+  const blobGrad = ctx.createRadialGradient(
+    blobCx-blobR*0.25,blobCy-blobR*0.20,blobR*0.04,
+    blobCx+blobR*0.10,blobCy+blobR*0.10,blobR*1.05
   )
-  grad.addColorStop(0,    blobMain)
-  grad.addColorStop(0.55, blobShift)
-  grad.addColorStop(1,   `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%,0)`)
-
-  drawBlob(ctx, rngBlob, blobCx, blobCy, blobR)
-  ctx.fillStyle = grad
-  ctx.fill()
-
-  // Grain clipped to blob
+  blobGrad.addColorStop(0, blobMain)
+  blobGrad.addColorStop(0.5, blobShift)
+  blobGrad.addColorStop(1, blobShift.includes("hsl(") ? `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%,0)` : blobShift+"00")
+  drawBlob(ctx,rngBlob,blobCx,blobCy,blobR)
+  ctx.fillStyle = blobGrad; ctx.fill()
   ctx.save()
-  drawBlob(ctx, seededRng(user.id + '-blob'), blobCx, blobCy, blobR)
+  drawBlob(ctx,seededRng(user.id+"-blob"),blobCx,blobCy,blobR)
   ctx.clip()
-  addNoise(ctx, seededRng(user.id + '-grain'), W, H * 0.70, 0.05, 5000)
+  addNoise(ctx,seededRng(user.id+"-grain"),W,blobZoneH,0.055,7000)
+  ctx.restore()
   ctx.restore()
 
-  // Subtle grain over whole card
-  addNoise(ctx, seededRng(user.id + '-bg-grain'), W, H, 0.016, 2500)
+  addNoise(ctx,seededRng(user.id+"-bg"),W,H,0.012,2000)
+  ctx.restore()
 
-  ctx.restore() // ← restore from card clip
-
-  // ── 4. Avatar (above name) ──────────────────────────
-  const avatarSize = 108
-  const textX = 48
-  const avatarY = Math.round(H * 0.24)
-
-  if (user.avatar_url) {
-    const img = new Image()
-    img.src = user.avatar_url
-    const cx = textX + avatarSize / 2
-    const cy = avatarY + avatarSize / 2
-    const r  = avatarSize / 2
-    // Clip and draw
+  // Entity label top-left
+  if (entityBg) {
     ctx.save()
-    ctx.beginPath()
-    ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.clip()
-    ctx.drawImage(img, textX, avatarY, avatarSize, avatarSize)
-    ctx.restore()
-    // Border using blob color for visual harmony with the colored region
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(cx, cy, r + 2.5, 0, Math.PI * 2)
-    ctx.strokeStyle = blobMain
-    ctx.globalAlpha = 0.55
-    ctx.lineWidth = 4
-    ctx.stroke()
-    ctx.globalAlpha = 1
+    ctx.font="600 11px sans-serif"
+    const lw = ctx.measureText(entityBg.name).width+24
+    roundRect(ctx,20,20,lw,26,13)
+    ctx.fillStyle=entityBg.color+"dd"; ctx.fill()
+    ctx.fillStyle="#ffffff"; ctx.textAlign="center"; ctx.textBaseline="middle"
+    ctx.fillText(entityBg.name,20+lw/2,20+13)
     ctx.restore()
   }
 
-  // ── 5. Text — name ──────────────────────────────────
-  const textY = Math.round(H * 0.56)
-
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'alphabetic'
-
-  const parts     = user.full_name.trim().split(/\s+/)
-  const firstName = parts[0] ?? ''
-  const lastName  = parts.slice(1).join(' ')
-
-  // First name bold
-  ctx.font      = `800 46px sans-serif`
-  ctx.fillStyle = inkColor
-  ctx.fillText(firstName, textX, textY)
-  const fnW = ctx.measureText(firstName).width
-
-  // Last name — light, same line or wrapped
+  // Name
+  const textX=44, nameY=H*0.604
+  const parts=user.full_name.trim().split(/\s+/)
+  const firstName=parts[0]??"", lastName=parts.slice(1).join(" ")
+  ctx.textAlign="left"; ctx.textBaseline="alphabetic"
+  ctx.font="800 52px sans-serif"; ctx.fillStyle=inkColor
+  ctx.fillText(firstName,textX,nameY)
+  const fnW=ctx.measureText(firstName).width
   if (lastName) {
-    ctx.font      = `300 46px sans-serif`
-    ctx.fillStyle = inkFaint
-    const spaceW = ctx.measureText(' ').width
-    if (fnW + spaceW + ctx.measureText(lastName).width < W - textX * 2) {
-      ctx.fillText(lastName, textX + fnW + spaceW, textY)
-    } else {
-      ctx.fillText(lastName, textX, textY + 52)
-    }
+    ctx.font="300 52px sans-serif"; ctx.fillStyle=inkFaint
+    const spW=ctx.measureText(" ").width
+    if (fnW+spW+ctx.measureText(lastName).width < W-textX*2)
+      ctx.fillText(lastName,textX+fnW+spW,nameY)
+    else ctx.fillText(lastName,textX,nameY+58)
   }
 
-  // ── 6. Title ────────────────────────────────────────
-  const titleRng  = seededRng(user.id + '-title')
-  const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
-  const titleY    = textY + 38
+  // Title
+  const titleRng=seededRng(user.id+"-title")
+  const titleText=TITLES[Math.floor(titleRng()*TITLES.length)]
+  const titleY=nameY+42
+  ctx.font="400 17px sans-serif"; ctx.fillStyle=inkFaint
+  ctx.fillText(titleText,textX,titleY)
 
-  ctx.font      = `400 16px sans-serif`
-  ctx.fillStyle = inkFaint
-  ctx.fillText(titleText, textX, titleY)
+  // Info
+  const infoY=titleY+30
+  const nuspStr=user.nusp ? `#${user.nusp}` : ""
+  ctx.font="400 12px monospace"; ctx.fillStyle=inkFaint; ctx.globalAlpha=0.6
+  ctx.fillText([nuspStr,user.email].filter(Boolean).join("  ·  "),textX,infoY)
+  ctx.globalAlpha=1
 
-  // ── 7. USP # and email ──────────────────────────────
-  const infoY   = titleY + 28
-  const nuspStr = user.nusp ? `#${user.nusp}` : ''
-  const infoStr = [nuspStr, user.email].filter(Boolean).join('  ·  ')
-
-  ctx.font      = `400 12px monospace`
-  ctx.fillStyle = inkFaint
-  ctx.globalAlpha = 0.7
-  ctx.fillText(infoStr, textX, infoY)
-  ctx.globalAlpha = 1
-
-  // ── 8. Bottom pill: area | language ────────────────
-  const bottomY = H - 72
-  const aLabel  = area || ''
-  const lLabel  = language || ''
-
-  if (aLabel || lLabel) {
-    const pillH = 36
-    ctx.font = `600 13px sans-serif`
-    const aW     = aLabel ? ctx.measureText(aLabel).width + 22 : 0
-    const lW     = lLabel ? ctx.measureText(lLabel).width + 22 : 0
-    const sepW   = (aLabel && lLabel) ? 10 : 0
-    const totalW = aW + sepW + lW
-    const px = textX, py = bottomY
-
-    // Pill border
-    ctx.strokeStyle = accentPill
-    ctx.globalAlpha = 0.55
-    ctx.lineWidth   = 1.5
-    roundRect(ctx, px, py, totalW, pillH, pillH / 2)
-    ctx.stroke()
-    ctx.globalAlpha = 1
-
-    // Diagonal stripe separator
-    if (aLabel && lLabel) {
+  // Bottom: pill + achievements
+  const bottomY=H-64
+  const aLabel=area||"", lLabel=language||""
+  if (aLabel||lLabel) {
+    const pillH=38
+    ctx.font="600 13px sans-serif"
+    const aW=aLabel ? ctx.measureText(aLabel).width+22 : 0
+    const lW=lLabel ? ctx.measureText(lLabel).width+22 : 0
+    const sepW=(aLabel&&lLabel) ? 12 : 0
+    const totalW=aW+sepW+lW
+    ctx.strokeStyle=accentPill; ctx.globalAlpha=0.5; ctx.lineWidth=1.5
+    roundRect(ctx,textX,bottomY,totalW,pillH,pillH/2); ctx.stroke()
+    ctx.globalAlpha=1
+    if (aLabel&&lLabel) {
       ctx.save()
       ctx.beginPath()
-      roundRect(ctx, px + aW, py + 4, sepW, pillH - 8, 2)
+      roundRect(ctx,textX+aW,bottomY+4,sepW,pillH-8,2)
       ctx.clip()
-      ctx.fillStyle   = accentPill
-      ctx.globalAlpha = 0.12
-      ctx.fillRect(px + aW, py + 4, sepW, pillH - 8)
-      ctx.globalAlpha = 0.4
-      ctx.strokeStyle = accentPill
-      ctx.lineWidth   = 1
-      for (let sx = -pillH; sx < sepW + pillH; sx += 4) {
+      ctx.fillStyle=accentPill; ctx.globalAlpha=0.10
+      ctx.fillRect(textX+aW,bottomY+4,sepW,pillH-8)
+      ctx.globalAlpha=0.35; ctx.strokeStyle=accentPill; ctx.lineWidth=1
+      for (let sx=-pillH;sx<sepW+pillH;sx+=4) {
         ctx.beginPath()
-        ctx.moveTo(px + aW + sx,        py + 4)
-        ctx.lineTo(px + aW + sx + pillH, py + 4 + pillH)
+        ctx.moveTo(textX+aW+sx,bottomY+4)
+        ctx.lineTo(textX+aW+sx+pillH,bottomY+4+pillH)
         ctx.stroke()
       }
-      ctx.globalAlpha = 1
-      ctx.restore()
+      ctx.globalAlpha=1; ctx.restore()
     }
-
-    // Text labels
-    ctx.fillStyle   = accentPill
-    ctx.textAlign   = 'center'
-    ctx.font        = `600 13px sans-serif`
-    ctx.globalAlpha = 1
-    if (aLabel) ctx.fillText(aLabel, px + aW / 2, py + pillH / 2 + 5)
-    if (lLabel) ctx.fillText(lLabel, px + aW + sepW + lW / 2, py + pillH / 2 + 5)
-    ctx.textAlign = 'left'
+    ctx.fillStyle=accentPill; ctx.textAlign="center"; ctx.globalAlpha=1
+    if (aLabel) ctx.fillText(aLabel,textX+aW/2,bottomY+pillH/2+5)
+    if (lLabel) ctx.fillText(lLabel,textX+aW+sepW+lW/2,bottomY+pillH/2+5)
+    ctx.textAlign="left"
   }
 
-  // ── 8. Badges (right-aligned) ───────────────────────
-  const displayBadges = activeBadges.filter(b => b.unlocked).slice(0, 4)
-  if (displayBadges.length > 0) {
-    ctx.font      = '20px serif'
-    ctx.textAlign = 'right'
-    let bx = W - textX
-    for (const badge of [...displayBadges].reverse()) {
-      ctx.fillText(badge.emoji, bx, bottomY + 24)
-      bx -= 28
+  // Achievements right side
+  const displayA=activeAchievements.filter(a=>a.unlocked).slice(0,5)
+  if (displayA.length>0) {
+    let bx=W-textX
+    ctx.textAlign="right"; ctx.font="26px serif"
+    for (const ach of [...displayA].reverse()) {
+      ctx.globalAlpha=1; ctx.fillText(ach.emoji,bx,bottomY+30)
+      bx-=30
     }
-    ctx.textAlign = 'left'
+    ctx.textAlign="left"; ctx.globalAlpha=1
   }
 
-  // ── 9. Card ID ──────────────────────────────────────
-  ctx.font        = `400 9px monospace`
-  ctx.fillStyle   = inkColor
-  ctx.globalAlpha = 0.25
-  ctx.fillText(user.id.replace(/-/g, '').slice(0, 8).toUpperCase(), textX, H - 22)
-  ctx.globalAlpha = 1
+  // Watermark
+  ctx.font="400 9px monospace"; ctx.fillStyle=inkColor; ctx.globalAlpha=0.18
+  ctx.fillText(user.id.replace(/-/g,"").slice(0,8).toUpperCase(),textX,H-22)
+  ctx.globalAlpha=1
 
-  // ── 10. Border ──────────────────────────────────────
-  ctx.strokeStyle = inkColor
-  ctx.globalAlpha = 0.1
-  ctx.lineWidth   = 1.5
-  roundRect(ctx, 0.75, 0.75, W - 1.5, H - 1.5, 24)
-  ctx.stroke()
-  ctx.globalAlpha = 1
+  // Border
+  ctx.strokeStyle=inkColor; ctx.globalAlpha=0.08; ctx.lineWidth=1.5
+  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,32); ctx.stroke()
+  ctx.globalAlpha=1
 }
-// ── Badge Picker modal ────────────────────────────────────────────────────────
-function BadgePicker({ badges, selected, onSave, onClose }: {
-  badges: Badge[]; selected: string[]
-  onSave: (ids: string[]) => void; onClose: () => void
+
+// ── Achievement Picker ────────────────────────────────────────────────────────
+function AchievementPicker({achievements,selected,onSave,onClose}: {
+  achievements:Achievement[]; selected:string[]
+  onSave:(ids:string[])=>void; onClose:()=>void
 }) {
-  const [sel, setSel] = useState<string[]>(selected)
-  const MAX = 4
-  const toggle = (id: string) => setSel(p =>
-    p.includes(id) ? p.filter(x => x !== id) : p.length < MAX ? [...p, id] : p
-  )
+  const [sel,setSel]=useState<string[]>(selected)
+  const [filterCat,setFilterCat]=useState<string>("all")
+  const MAX=5
+  const toggle=(id:string)=>setSel(p=>p.includes(id)?p.filter(x=>x!==id):p.length<MAX?[...p,id]:p)
+  const cats=["all",...Array.from(new Set(achievements.map(a=>a.category)))]
+  const shown=filterCat==="all" ? achievements : achievements.filter(a=>a.category===filterCat)
+  const unlockedCount=achievements.filter(a=>a.unlocked).length
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
-         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-y-auto animate-in"
-           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '85dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+         style={{background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)"}}
+         onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
+           style={{background:"var(--bg-card)",border:"1px solid var(--border)",maxHeight:"90dvh",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex justify-center pt-3 sm:hidden">
-          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
+          <div className="w-10 h-1 rounded-full" style={{background:"var(--border-light)"}} />
         </div>
-        <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+        <div className="px-5 pt-4 pb-3 flex items-start justify-between" style={{borderBottom:"1px solid var(--border)"}}>
           <div>
-            <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Badges no cartão</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{sel.length}/{MAX} · só os selecionados e desbloqueados aparecem</p>
+            <h3 className="font-display font-bold flex items-center gap-2" style={{color:"var(--text-primary)"}}>
+              <Trophy size={16} style={{color:"#f59e0b"}} /> Conquistas no cartão
+            </h3>
+            <p className="text-xs mt-0.5" style={{color:"var(--text-muted)"}}>{sel.length}/{MAX} selecionadas · {unlockedCount}/{achievements.length} desbloqueadas</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
-            <X size={16} />
-          </button>
+                  style={{background:"var(--border)",color:"var(--text-muted)"}}><X size={15}/></button>
         </div>
-        <div className="px-4 pb-4 grid grid-cols-2 gap-2 mt-1">
-          {badges.map(b => (
-            <button key={b.id} onClick={() => b.unlocked && toggle(b.id)} disabled={!b.unlocked}
-                    className="flex items-center gap-3 p-3 rounded-xl transition-all text-left active:scale-[0.97]"
+        <div className="px-4 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide" style={{borderBottom:"1px solid var(--border)"}}>
+          {cats.map(cat=>(
+            <button key={cat} onClick={()=>setFilterCat(cat)}
+                    className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all"
                     style={{
-                      border: `2px solid ${sel.includes(b.id) ? b.color : 'var(--border)'}`,
-                      background: sel.includes(b.id) ? b.color + '18' : 'var(--bg-elevated)',
-                      opacity: b.unlocked ? 1 : 0.4,
-                      cursor: b.unlocked ? 'pointer' : 'not-allowed',
+                      background:filterCat===cat?"var(--accent-soft)":"var(--bg-elevated)",
+                      border:`1px solid ${filterCat===cat?"var(--accent-1)":"var(--border)"}`,
+                      color:filterCat===cat?"var(--accent-3)":"var(--text-muted)",
                     }}>
-              <span className="text-2xl shrink-0">{b.emoji}</span>
-              <div className="min-w-0">
-                <p className="text-xs font-bold truncate"
-                   style={{ color: sel.includes(b.id) ? b.color : 'var(--text-primary)' }}>{b.label}</p>
-                <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  {b.unlocked ? b.desc : '🔒 Bloqueado'}
-                </p>
-              </div>
+              {cat==="all"?"✨ Todas":CATEGORY_LABELS[cat]??cat}
             </button>
           ))}
         </div>
-        <div className="px-4 pb-5 flex gap-2">
-          <button className="btn-primary flex-1 justify-center" onClick={() => { onSave(sel); onClose() }}>
-            <Check size={14} /> Salvar
+        <div className="px-4 py-3 grid grid-cols-2 gap-2 overflow-y-auto flex-1">
+          {shown.map(a=>{
+            const isSelected=sel.includes(a.id)
+            const rarityColor=RARITY_COLOR[a.rarity]
+            return (
+              <button key={a.id} onClick={()=>a.unlocked&&toggle(a.id)} disabled={!a.unlocked&&!isSelected}
+                      className="flex items-center gap-3 p-3 rounded-xl text-left transition-all active:scale-[0.97] relative overflow-hidden"
+                      style={{
+                        border:`2px solid ${isSelected?a.color:a.unlocked?"var(--border-light)":"var(--border)"}`,
+                        background:isSelected?a.color+"18":a.unlocked?"var(--bg-elevated)":"var(--bg-base)",
+                        opacity:a.unlocked?1:0.45, cursor:a.unlocked?"pointer":"not-allowed",
+                      }}>
+                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
+                     style={{background:rarityColor,opacity:a.unlocked?1:0.4}} />
+                <span className="text-2xl shrink-0" style={{filter:a.unlocked?"none":"grayscale(1)"}}>{a.unlocked?a.emoji:"🔒"}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold truncate" style={{color:isSelected?a.color:"var(--text-primary)"}}>{a.label}</p>
+                  <p className="text-[9px] leading-tight mt-0.5" style={{color:"var(--text-muted)"}}>{a.unlocked?a.desc:a.hint}</p>
+                  <p className="text-[8px] mt-1 font-semibold" style={{color:rarityColor,opacity:0.8}}>{RARITY_LABEL[a.rarity]}</p>
+                </div>
+                {isSelected&&<div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{background:a.color}}><Check size={9} color="white"/></div>}
+              </button>
+            )
+          })}
+        </div>
+        <div className="px-4 py-4 flex gap-2" style={{borderTop:"1px solid var(--border)"}}>
+          <button className="btn-primary flex-1 justify-center" onClick={()=>{onSave(sel);onClose()}}><Check size={14}/> Salvar</button>
+          <button className="btn-ghost" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Entity Background Picker ──────────────────────────────────────────────────
+interface Entity {id:string; slug:string; name:string; short_name:string; color:string; icon_emoji:string; is_member:boolean}
+
+function EntityBgPicker({entities,currentEntityId,onSave,onClose}: {
+  entities:Entity[]; currentEntityId:string|null
+  onSave:(entityId:string|null)=>void; onClose:()=>void
+}) {
+  const [sel,setSel]=useState<string|null>(currentEntityId)
+  const memberEntities=entities.filter(e=>e.is_member)
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)"}}
+         onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
+           style={{background:"var(--bg-card)",border:"1px solid var(--border)",maxHeight:"80dvh",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
+        <div className="flex justify-center pt-3 sm:hidden"><div className="w-10 h-1 rounded-full" style={{background:"var(--border-light)"}}/></div>
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between" style={{borderBottom:"1px solid var(--border)"}}>
+          <div>
+            <h3 className="font-display font-bold flex items-center gap-2" style={{color:"var(--text-primary)"}}>
+              <ImagePlus size={16} style={{color:"var(--accent-3)"}}/> Fundo do cartão
+            </h3>
+            <p className="text-xs mt-0.5" style={{color:"var(--text-muted)"}}>Escolha uma entidade da qual você faz parte</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{background:"var(--border)",color:"var(--text-muted)"}}><X size={15}/></button>
+        </div>
+        <div className="px-4 py-3 space-y-2 overflow-y-auto" style={{maxHeight:"55dvh"}}>
+          <button onClick={()=>setSel(null)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                  style={{border:`2px solid ${sel===null?"var(--accent-1)":"var(--border)"}`,background:sel===null?"var(--accent-soft)":"var(--bg-elevated)"}}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{background:"var(--border)"}}>
+              <Sparkles size={16} style={{color:"var(--text-muted)"}}/>
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{color:"var(--text-primary)"}}>Padrão</p>
+              <p className="text-xs" style={{color:"var(--text-muted)"}}>Cor única gerada pelo seu ID</p>
+            </div>
+            {sel===null&&<Check size={14} className="ml-auto" style={{color:"var(--accent-3)"}}/>}
           </button>
+          {memberEntities.length===0&&(
+            <div className="text-center py-8" style={{color:"var(--text-muted)"}}>
+              <Lock size={24} className="mx-auto mb-2 opacity-40"/>
+              <p className="text-sm">Entre em alguma entidade primeiro</p>
+            </div>
+          )}
+          {memberEntities.map(e=>(
+            <button key={e.id} onClick={()=>setSel(e.id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                    style={{border:`2px solid ${sel===e.id?e.color:"var(--border)"}`,background:sel===e.id?e.color+"15":"var(--bg-elevated)"}}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+                   style={{background:e.color+"22",border:`1px solid ${e.color}44`}}>{e.icon_emoji}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate" style={{color:sel===e.id?e.color:"var(--text-primary)"}}>{e.name}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <div className="w-2 h-2 rounded-full" style={{background:e.color}}/>
+                  <p className="text-[10px]" style={{color:"var(--text-muted)"}}>{e.short_name}</p>
+                </div>
+              </div>
+              {sel===e.id&&<Check size={14} style={{color:e.color,flexShrink:0}}/>}
+            </button>
+          ))}
+        </div>
+        <div className="px-4 py-4 flex gap-2" style={{borderTop:"1px solid var(--border)"}}>
+          <button className="btn-primary flex-1 justify-center" onClick={()=>{onSave(sel);onClose()}}><Check size={14}/> Aplicar</button>
           <button className="btn-ghost" onClick={onClose}>Cancelar</button>
         </div>
       </div>
@@ -418,370 +481,315 @@ function BadgePicker({ badges, selected, onSave, onClose }: {
 
 // ── Profile Page ──────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const { user, logout, setUser } = useAuthStore()
-  const navigate     = useNavigate()
-  const canvasRef    = useRef<HTMLCanvasElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const {user,logout,setUser}=useAuthStore()
+  const navigate=useNavigate()
+  const canvasRef=useRef<HTMLCanvasElement>(null)
+  const fileInputRef=useRef<HTMLInputElement>(null)
 
-  const [area,     setAreaState]     = useState<string>(() => localStorage.getItem('dasiboard-area') ?? '')
-  const [language, setLanguageState] = useState<string>(() => localStorage.getItem('dasiboard-lang') ?? '')
-  const [activeBadgeIds, setActiveBadgeIds] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('dasiboard-badges') ?? '[]') } catch { return [] }
+  const [area,setAreaState]=useState<string>(()=>localStorage.getItem("dasiboard-area")??"")
+  const [language,setLanguageState]=useState<string>(()=>localStorage.getItem("dasiboard-lang")??"")
+  const [activeAchievIds,setActiveAchievIds]=useState<string[]>(()=>{
+    try{return JSON.parse(localStorage.getItem("dasiboard-achievements")??"[]")}catch{return[]}
   })
-  const [starter, setStarterState] = useState<string>(() => localStorage.getItem('dasiboard-starter') ?? '')
-  const [showBadgePicker, setShowBadgePicker] = useState(false)
-  const [avatarLoading,   setAvatarLoading]   = useState(false)
+  const [entityBgId,setEntityBgId]=useState<string|null>(()=>localStorage.getItem("dasiboard-card-entity")??null)
+  const [showAchievPicker,setShowAchievPicker]=useState(false)
+  const [showEntityPicker,setShowEntityPicker]=useState(false)
+  const [avatarLoading,setAvatarLoading]=useState(false)
+  const [activeTab,setActiveTab]=useState<"conquistas"|"conta">("conquistas")
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 2MB.'); return }
+  const [entities,setEntities]=useState<Entity[]>([])
+  const [memberSlugs,setMemberSlugs]=useState<string[]>([])
+  const [hasBoards,setHasBoards]=useState(false)
+  const [hasMultiBoards,setHasMultiBoards]=useState(false)
+  const [hasPassedSubject,setHasPassedSubject]=useState(false)
+  const [hasFailedSubject,setHasFailedSubject]=useState(false)
+  const [eventCount,setEventCount]=useState(0)
+  const [subjectCount,setSubjectCount]=useState(0)
+  const [gradeCount,setGradeCount]=useState(0)
+  const [easterEggFound,setEasterEggFound]=useState(false)
+
+  useEffect(()=>{
+    setEasterEggFound(!!localStorage.getItem("dasiboard-easter-found"))
+    Promise.all([
+      api.get("/entities/").catch(()=>({data:[]})),
+      api.get("/kanban/boards").catch(()=>({data:[]})),
+      api.get("/grades/subjects").catch(()=>({data:[]})),
+      api.get("/events/").catch(()=>({data:[]})),
+    ]).then(([entRes,boardRes,subRes,evtRes])=>{
+      const ents=entRes.data as Entity[]
+      setEntities(ents)
+      setMemberSlugs(ents.filter((e:any)=>e.is_member).map((e:any)=>e.slug))
+      const boards=boardRes.data as any[]
+      setHasBoards(boards.length>0); setHasMultiBoards(boards.length>=3)
+      const subjects=subRes.data as any[]
+      setSubjectCount(subjects.length)
+      const allGrades=subjects.flatMap((s:any)=>s.grades)
+      setGradeCount(allGrades.length)
+      let passed=false,failed=false
+      subjects.forEach((s:any)=>{
+        const tw=s.grades.reduce((a:number,g:any)=>a+g.weight,0)
+        if(!tw)return
+        const avg=s.grades.reduce((a:number,g:any)=>a+(g.value/g.max_value)*10*g.weight,0)/tw
+        if(avg>=5)passed=true; else failed=true
+      })
+      setHasPassedSubject(passed); setHasFailedSubject(failed)
+      setEventCount((evtRes.data as any[]).length)
+    })
+  },[])
+
+  const achievements=useMemo(()=>buildAchievements({
+    hasBoards, hasMultipleBoards:hasMultiBoards, hasLanguage:!!language,
+    hasArea:!!area, hasPassedSubject, hasFailedSubject, hasAvatar:!!user?.avatar_url,
+    hasNusp:!!user?.nusp, eventCount, subjectCount, gradeCount,
+    loginCount:1, easterEggFound, memberSlugs,
+  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound,memberSlugs])
+
+  const activeAchievements=useMemo(
+    ()=>achievements.filter(a=>activeAchievIds.includes(a.id)&&a.unlocked),
+    [achievements,activeAchievIds]
+  )
+  const entityBgData=useMemo(()=>{
+    if(!entityBgId)return null
+    const ent=entities.find(e=>e.id===entityBgId&&e.is_member)
+    if(!ent)return null
+    return {color:ent.color, name:ent.short_name||ent.name}
+  },[entityBgId,entities])
+
+  const draw=useCallback(()=>{
+    if(!canvasRef.current||!user)return
+    try{drawPortraitCard(canvasRef.current,user,activeAchievements,area,language,entityBgData)}
+    catch(err){console.error("Card draw:",err)}
+  },[user,activeAchievements,area,language,entityBgData])
+
+  useEffect(()=>{draw()},[draw])
+
+  const handleAvatarChange=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+    const file=e.target.files?.[0]; if(!file)return
+    if(file.size>2*1024*1024){toast.error("Imagem muito grande. Máximo 2MB.");return}
     setAvatarLoading(true)
-    try {
-      const base64 = await new Promise<string>((res, rej) => {
-        const reader = new FileReader()
-        reader.onload  = () => res(reader.result as string)
-        reader.onerror = rej
+    try{
+      const base64=await new Promise<string>((res,rej)=>{
+        const reader=new FileReader()
+        reader.onload=()=>res(reader.result as string); reader.onerror=rej
         reader.readAsDataURL(file)
       })
-      const { data } = await api.patch('/users/me/avatar', { avatar_url: base64 })
-      setUser(data)
-      toast.success('Foto atualizada!')
-    } catch { toast.error('Erro ao atualizar foto') }
-    finally { setAvatarLoading(false); e.target.value = '' }
+      const{data}=await api.patch("/users/me/avatar",{avatar_url:base64})
+      setUser(data); toast.success("Foto atualizada!")
+    }catch{toast.error("Erro ao atualizar foto")}
+    finally{setAvatarLoading(false);e.target.value=""}
   }
-
-  const handleRemoveAvatar = async () => {
+  const handleRemoveAvatar=async()=>{
     setAvatarLoading(true)
-    try {
-      const { data } = await api.patch('/users/me/avatar', { avatar_url: null })
-      setUser(data)
-      toast.success('Foto removida')
-    } catch { toast.error('Erro ao remover foto') }
-    finally { setAvatarLoading(false) }
+    try{const{data}=await api.patch("/users/me/avatar",{avatar_url:null});setUser(data);toast.success("Foto removida")}
+    catch{toast.error("Erro ao remover foto")}finally{setAvatarLoading(false)}
+  }
+  const handleDownload=()=>{
+    if(!canvasRef.current||!user)return
+    const a=document.createElement("a")
+    a.download=`dasiboard-${user.full_name.toLowerCase().replace(/\s+/g,"-")}.png`
+    a.href=canvasRef.current.toDataURL("image/png",1.0); a.click()
   }
 
-  // Dynamic unlock state from API
-  const [memberSlugs,      setMemberSlugs]      = useState<string[]>([])
-  const [hasBoards,        setHasBoards]         = useState(false)
-  const [hasPassedSubject, setHasPassedSubject]  = useState(false)
+  const saveAchievements=(ids:string[])=>{localStorage.setItem("dasiboard-achievements",JSON.stringify(ids));setActiveAchievIds(ids)}
+  const saveEntityBg=(id:string|null)=>{if(id)localStorage.setItem("dasiboard-card-entity",id);else localStorage.removeItem("dasiboard-card-entity");setEntityBgId(id)}
+  const saveArea=(v:string)=>{localStorage.setItem("dasiboard-area",v);setAreaState(v)}
+  const saveLang=(v:string)=>{localStorage.setItem("dasiboard-lang",v);setLanguageState(v)}
 
-  useEffect(() => {
-    Promise.all([
-      api.get('/entities/').catch(() => ({ data: [] })),
-      api.get('/kanban/boards').catch(() => ({ data: [] })),
-      api.get('/grades/subjects').catch(() => ({ data: [] })),
-    ]).then(([entRes, boardRes, subRes]) => {
-      setMemberSlugs((entRes.data as any[]).filter((e: any) => e.is_member).map((e: any) => e.slug))
-      setHasBoards((boardRes.data as any[]).length > 0)
-      const subjects = subRes.data as any[]
-      setHasPassedSubject(subjects.some((s: any) => {
-        const tw = s.grades.reduce((a: number, g: any) => a + g.weight, 0)
-        if (!tw) return false
-        return s.grades.reduce((a: number, g: any) => a + (g.value / g.max_value) * 10 * g.weight, 0) / tw >= 5
-      }))
-    })
-  }, [])
+  if(!user)return null
 
-  const badges = useMemo(
-    () => buildBadges({ hasBoards, hasLanguage: !!language, hasPassedSubject, memberSlugs }),
-    [hasBoards, language, hasPassedSubject, memberSlugs]
+  const userTitle=TITLES[Math.abs((user.full_name??"").split("").reduce((a:number,c:string)=>a+c.charCodeAt(0),0))%TITLES.length]
+  const initials=user.full_name?.split(" ").map((n:string)=>n[0]).slice(0,2).join("").toUpperCase()??"U"
+  const unlockedCount=achievements.filter(a=>a.unlocked).length
+
+  const catGroups=Object.entries(
+    achievements.reduce<Record<string,Achievement[]>>((acc,a)=>{
+      if(!acc[a.category])acc[a.category]=[]
+      acc[a.category].push(a); return acc
+    },{})
   )
-  const activeBadges = useMemo(
-    () => badges.filter(b => activeBadgeIds.includes(b.id) && b.unlocked),
-    [badges, activeBadgeIds]
-  )
-
-  const draw = useCallback(() => {
-    if (!canvasRef.current || !user) return
-    if (user.avatar_url) {
-      const img = new Image()
-      img.onload = () => {
-        try { drawCard(canvasRef.current!, user, activeBadges, area, language) }
-        catch (err) { console.error('Card draw error:', err) }
-      }
-      img.src = user.avatar_url
-    } else {
-      try { drawCard(canvasRef.current, user, activeBadges, area, language) }
-      catch (err) { console.error('Card draw error:', err) }
-    }
-  }, [user, activeBadges, area, language])
-
-  useEffect(() => { draw() }, [draw])
-
-  const handleLogout = () => { logout(); navigate('/login') }
-
-  const handleDownload = () => {
-    if (!canvasRef.current || !user) return
-    const a = document.createElement('a')
-    a.download = `dasiboard-${user.full_name.toLowerCase().replace(/\s+/g, '-')}.png`
-    a.href = canvasRef.current.toDataURL('image/png', 1.0)
-    a.click()
-  }
-
-  const saveBadges = (ids: string[]) => { localStorage.setItem('dasiboard-badges', JSON.stringify(ids)); setActiveBadgeIds(ids) }
-  const saveArea   = (v: string)     => { localStorage.setItem('dasiboard-area', v); setAreaState(v) }
-  const saveLang    = (v: string)     => { localStorage.setItem('dasiboard-lang', v); setLanguageState(v) }
-  const saveStarter = (v: string)     => { localStorage.setItem('dasiboard-starter', v); setStarterState(v) }
-
-  if (!user) return null
-
-  const userTitle = TITLES[Math.abs(user.full_name?.split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0) ?? 0) % TITLES.length]
-  const initials = user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U'
 
   return (
-    <div className="px-3 py-4 sm:px-6 md:px-8 md:py-8 max-w-2xl mx-auto w-full page-mobile">
+    <div className="px-3 py-4 sm:px-5 md:px-8 md:py-8 max-w-3xl mx-auto w-full page-mobile">
+      {showAchievPicker&&<AchievementPicker achievements={achievements} selected={activeAchievIds} onSave={saveAchievements} onClose={()=>setShowAchievPicker(false)}/>}
+      {showEntityPicker&&<EntityBgPicker entities={entities} currentEntityId={entityBgId} onSave={saveEntityBg} onClose={()=>setShowEntityPicker(false)}/>}
 
-      {showBadgePicker && (
-        <BadgePicker badges={badges} selected={activeBadgeIds} onSave={saveBadges} onClose={() => setShowBadgePicker(false)} />
-      )}
-
-      {/* ── Profile header ─────────────────────────── */}
-      <div className="flex items-center gap-4 mb-6 animate-in">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-7 animate-in">
         <div className="relative shrink-0">
-          <div className="w-14 h-14 rounded-2xl p-0.5 shrink-0"
-               style={{ background: 'var(--gradient-btn)', boxShadow: '0 4px 16px var(--accent-glow)' }}>
+          <div className="w-16 h-16 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 4px 20px var(--accent-glow)"}}>
             <div className="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
-                 style={{ background: user.avatar_url ? 'transparent' : 'var(--bg-card)' }}>
-              {user.avatar_url
-                ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                : <span className="text-lg font-bold text-white font-display">{initials}</span>
-              }
+                 style={{background:user.avatar_url?"transparent":"var(--bg-card)"}}>
+              {user.avatar_url?<img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover"/>
+                :<span className="text-xl font-bold text-white font-display">{initials}</span>}
             </div>
           </div>
+          {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={14} className="animate-spin text-white"/></div>}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-xl font-bold truncate" style={{ color: 'var(--text-primary)' }}>
-            {user.full_name}
-          </h1>
-          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--accent-3)' }}>{userTitle}</p>
-          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {user.email} {user.nusp ? `· Nº ${user.nusp}` : ''}
-          </p>
+          <h1 className="font-display text-xl font-bold truncate" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
+          <p className="text-xs mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                  style={{background:"rgba(245,158,11,0.12)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.25)"}}>
+              <Trophy size={9}/> {unlockedCount} conquistas
+            </span>
+            {entityBgData&&<span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                  style={{background:entityBgData.color+"18",color:entityBgData.color,border:`1px solid ${entityBgData.color}30`}}>{entityBgData.name}</span>}
+          </div>
         </div>
       </div>
 
-      {/* ── Card ────────────────────────────────────── */}
-      <div className="mb-5 animate-in">
+      {/* Card portrait */}
+      <div className="mb-6 animate-in">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Cartão</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{color:"var(--text-muted)"}}>Cartão de perfil</p>
           <div className="flex gap-1.5">
-            <button onClick={() => setShowBadgePicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
-              <Award size={12} /> Badges
+            <button onClick={()=>setShowEntityPicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5" title="Fundo da entidade">
+              <ImagePlus size={12}/><span className="hidden sm:inline">Fundo</span>
             </button>
-            <button onClick={draw} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
-              <RefreshCw size={12} />
+            <button onClick={()=>setShowAchievPicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
+              <Trophy size={12}/><span className="hidden sm:inline">Conquistas</span>
             </button>
+            <button onClick={draw} className="btn-ghost text-xs py-1.5 px-2.5"><RefreshCw size={12}/></button>
             <button onClick={handleDownload} className="btn-primary text-xs py-1.5 px-2.5 gap-1.5">
-              <Download size={12} /> PNG
+              <Download size={12}/><span className="hidden sm:inline">PNG</span>
             </button>
           </div>
         </div>
-        {/* Landscape card — full width, 16:9 */}
-        <div className="overflow-hidden rounded-2xl w-full"
-             style={{ lineHeight: 0, boxShadow: '0 16px 48px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.12)' }}>
-          <canvas ref={canvasRef}
-                  style={{ display: 'block', width: '100%', height: 'auto', cursor: 'pointer', borderRadius: 16 }}
-                  onClick={handleDownload} title="Toque para baixar" />
+        <div className="flex justify-center">
+          <div className="relative overflow-hidden rounded-3xl" style={{width:"100%",maxWidth:340,lineHeight:0,boxShadow:"0 24px 64px rgba(0,0,0,0.22),0 6px 16px rgba(0,0,0,0.14)"}}>
+            <canvas ref={canvasRef} style={{display:"block",width:"100%",height:"auto",cursor:"pointer",borderRadius:24}} onClick={handleDownload} title="Clique para baixar"/>
+          </div>
         </div>
-        <p className="text-[10px] text-center mt-2" style={{ color: 'var(--text-muted)' }}>
-          Único por conta · toque para baixar
-        </p>
+        <p className="text-[10px] text-center mt-2.5" style={{color:"var(--text-muted)"}}>Único por conta · clique para baixar · blob gerado pelo seu ID</p>
       </div>
 
-      {/* ── Área & Linguagem ────────────────────────── */}
+      {/* Área & Linguagem */}
       <div className="card mb-4 animate-in-delay-1">
-        <h3 className="font-display font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-          <Code2 size={15} style={{ color: 'var(--accent-3)' }} /> Área & Linguagem
+        <h3 className="font-display font-semibold text-sm mb-3 flex items-center gap-2" style={{color:"var(--text-primary)"}}>
+          <Code2 size={15} style={{color:"var(--accent-3)"}}/> Área & Linguagem
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Área de atuação</label>
-            <select className="input text-sm" value={area} onChange={(e) => saveArea(e.target.value)}>
+            <select className="input text-sm" value={area} onChange={e=>saveArea(e.target.value)}>
               <option value="">Selecionar...</option>
-              {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+              {AREAS.map(a=><option key={a} value={a}>{a}</option>)}
             </select>
           </div>
           <div>
             <label className="label">Linguagem principal</label>
-            <select className="input text-sm" value={language} onChange={(e) => saveLang(e.target.value)}>
+            <select className="input text-sm" value={language} onChange={e=>saveLang(e.target.value)}>
               <option value="">Selecionar...</option>
-              {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+              {LANGUAGES.map(l=><option key={l} value={l}>{l}</option>)}
             </select>
           </div>
         </div>
-        {language && (
-          <p className="text-xs mt-2.5 flex items-center gap-1.5" style={{ color: 'var(--accent-3)' }}>
-            💻 Badge <strong>Dev</strong> desbloqueada!
-          </p>
-        )}
-        {hasBoards && (
-          <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: '#22c55e' }}>
-            📋 Badge <strong>Eisenhower</strong> desbloqueada!
-          </p>
-        )}
-        {hasPassedSubject && (
-          <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: '#a855f7' }}>
-            🦉 Badge <strong>Coruja</strong> desbloqueada!
-          </p>
-        )}
+        <div className="mt-3 space-y-1">
+          {language&&<p className="text-xs flex items-center gap-1.5" style={{color:"#6366f1"}}>💻 Conquista <strong>Desenvolvedor</strong> desbloqueada!</p>}
+          {area&&<p className="text-xs flex items-center gap-1.5" style={{color:"#06b6d4"}}>🎯 Conquista <strong>Especialista</strong> desbloqueada!</p>}
+        </div>
       </div>
 
-      {/* ── Inicial Pokémon ─────────────────────────── */}
-      {starter && (
-        <div className="card mb-4 animate-in-delay-1">
-          <h3 className="font-display font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
-            🎮 Inicial Pokémon
-          </h3>
-          <div className="flex items-center gap-4">
-            <span style={{ fontSize: 40, lineHeight: 1 }}>
-              {starter === 'bulbasaur' ? '🌿' : starter === 'charmander' ? '🔥' : '💧'}
-            </span>
-            <div>
-              <p className="font-display font-bold capitalize" style={{ color: 'var(--text-primary)' }}>{starter}</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                {starter === 'bulbasaur' ? 'Planta / Veneno · Nº 001' : starter === 'charmander' ? 'Fogo · Nº 004' : 'Água · Nº 007'}
-              </p>
-              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Inicial da 1ª geração — escolhido no tema Pixel</p>
-            </div>
-            <button className="ml-auto btn-ghost text-xs py-1.5 px-2.5" onClick={() => saveStarter('')}>
-              Remover
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Badges ──────────────────────────────────── */}
-      <div className="card mb-4 animate-in-delay-2">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-            Badges <span className="font-normal text-xs" style={{ color: 'var(--text-muted)' }}>
-              ({badges.filter(b => b.unlocked).length}/{badges.length} desbloqueadas)
-            </span>
-          </h3>
-          <button onClick={() => setShowBadgePicker(true)} className="text-xs font-medium transition-opacity hover:opacity-70" style={{ color: 'var(--accent-3)' }}>
-            Editar seleção →
+      {/* Tabs */}
+      <div className="flex gap-1 mb-4 p-1 rounded-2xl animate-in-delay-1" style={{background:"var(--bg-elevated)",border:"1px solid var(--border)"}}>
+        {(["conquistas","conta"] as const).map(t=>(
+          <button key={t} onClick={()=>setActiveTab(t)} className="flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all"
+                  style={{background:activeTab===t?"var(--bg-card)":"transparent",color:activeTab===t?"var(--text-primary)":"var(--text-muted)",boxShadow:activeTab===t?"0 2px 8px rgba(0,0,0,0.12)":"none"}}>
+            {t==="conquistas"?`🏆 Conquistas (${unlockedCount})`:"👤 Conta"}
           </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {badges.map(b => (
-            <div key={b.id}
-                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-default"
-                 style={{
-                   background: b.unlocked ? b.color + '18' : 'var(--bg-elevated)',
-                   border: `1px solid ${b.unlocked ? b.color + '44' : 'var(--border)'}`,
-                   color: b.unlocked ? b.color : 'var(--text-muted)',
-                   opacity: b.unlocked ? 1 : 0.4,
-                 }}
-                 data-tooltip={b.unlocked ? b.desc : '🔒 Bloqueado'}>
-              <span>{b.emoji}</span>
-              <span className="font-semibold">{b.label}</span>
-              {!b.unlocked && <span className="text-[9px]">🔒</span>}
-            </div>
-          ))}
-        </div>
-        {activeBadges.length > 0 && (
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-            <p className="text-[10px] mb-1.5" style={{ color: 'var(--text-muted)' }}>Exibindo no cartão:</p>
-            <div className="flex gap-1.5 flex-wrap">
-              {activeBadges.map(b => (
-                <span key={b.id} className="text-sm" title={b.label}>{b.emoji}</span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Avatar ──────────────────────────────────── */}
-      <div className="card mb-4 animate-in-delay-3">
-        <h3 className="font-display font-semibold text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-          Foto de perfil
-        </h3>
-        <div className="flex items-center gap-4">
-          {/* Avatar preview with animated gradient border */}
-          <div className="relative shrink-0">
-            <div className="relative w-20 h-20 rounded-full p-0.5"
-                 style={{
-                   background: 'var(--gradient-btn)',
-                   boxShadow: '0 0 20px var(--accent-glow)',
-                   animation: 'breathe 3s ease-in-out infinite',
-                 }}>
-              <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
-                   style={{ background: user.avatar_url ? 'transparent' : 'var(--gradient-btn)' }}>
-                {user.avatar_url
-                  ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                  : <span className="text-2xl font-bold text-white font-display">
-                      {user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                    </span>
-                }
-              </div>
-            </div>
-            {avatarLoading && (
-              <div className="absolute inset-0 rounded-full flex items-center justify-center"
-                   style={{ background: 'rgba(0,0,0,0.5)' }}>
-                <RefreshCw size={16} className="animate-spin text-white" />
-              </div>
-            )}
-          </div>
-          {/* Controls */}
-          <div className="flex flex-col gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={avatarLoading}
-              className="btn-primary text-xs py-1.5 px-3 gap-1.5"
-            >
-              <Download size={12} /> Enviar foto
-            </button>
-            {user.avatar_url && (
-              <button
-                onClick={handleRemoveAvatar}
-                disabled={avatarLoading}
-                className="btn-ghost text-xs py-1.5 px-3 gap-1.5"
-                style={{ color: '#f87171' }}
-              >
-                <X size={12} /> Remover
-              </button>
-            )}
-            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-              JPG, PNG ou WebP · máx 2MB
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Account info ─────────────────────────────── */}
-      <div className="card mb-4 space-y-4 animate-in-delay-4">
-        <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>Conta</h3>
-        {[
-          { icon: Mail,          label: 'E-mail',       value: user.email },
-          { icon: Hash,          label: 'Nº USP',       value: user.nusp ?? 'Não informado' },
-          { icon: GraduationCap, label: 'Curso',        value: 'Sistemas de Informação' },
-          { icon: Calendar,      label: 'Membro desde', value: user.created_at
-              ? format(new Date(user.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : '—' },
-        ].map(({ icon: Icon, label, value }) => (
-          <div key={label} className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                 style={{ background: 'var(--accent-soft)', border: '1px solid var(--border)' }}>
-              <Icon size={14} style={{ color: 'var(--accent-3)' }} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{label}</p>
-              <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{value}</p>
-            </div>
-          </div>
         ))}
       </div>
 
-      <button onClick={handleLogout} className="btn-danger w-full justify-center animate-in-delay-4">
-        <LogOut size={15} /> Sair da conta
-      </button>
+      {/* CONQUISTAS TAB */}
+      {activeTab==="conquistas"&&(
+        <div className="animate-in space-y-4">
+          <div className="grid grid-cols-4 gap-2">
+            {(["common","rare","epic","legendary"] as const).map(r=>{
+              const count=achievements.filter(a=>a.rarity===r&&a.unlocked).length
+              const total=achievements.filter(a=>a.rarity===r).length
+              return (
+                <div key={r} className="rounded-xl p-3 text-center" style={{background:"var(--bg-elevated)",border:`1px solid ${RARITY_COLOR[r]}22`}}>
+                  <p className="text-base font-bold" style={{color:RARITY_COLOR[r]}}>{count}</p>
+                  <p className="text-[9px] mt-0.5" style={{color:"var(--text-muted)"}}>{RARITY_LABEL[r]}</p>
+                  <p className="text-[8px]" style={{color:"var(--text-muted)",opacity:0.6}}>/{total}</p>
+                </div>
+              )
+            })}
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs" style={{color:"var(--text-muted)"}}>{activeAchievements.length} no cartão · máx. 5</p>
+            <button onClick={()=>setShowAchievPicker(true)} className="text-xs font-medium flex items-center gap-1 transition-opacity hover:opacity-70" style={{color:"var(--accent-3)"}}>
+              <Star size={11}/> Editar seleção →
+            </button>
+          </div>
+          {catGroups.map(([cat,items])=>(
+            <div key={cat}>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2 px-0.5" style={{color:"var(--text-muted)"}}>{CATEGORY_LABELS[cat]??cat}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {items.map(a=>(
+                  <div key={a.id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all relative cursor-default"
+                       style={{background:a.unlocked?a.color+"15":"var(--bg-elevated)",border:`1px solid ${a.unlocked?a.color+"40":"var(--border)"}`,color:a.unlocked?a.color:"var(--text-muted)",opacity:a.unlocked?1:0.45}}>
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{background:RARITY_COLOR[a.rarity],opacity:a.unlocked?1:0.3}}/>
+                    <span style={{filter:a.unlocked?"none":"grayscale(1)"}}>{a.unlocked?a.emoji:"🔒"}</span>
+                    <span className="font-semibold">{a.label}</span>
+                    {activeAchievIds.includes(a.id)&&a.unlocked&&(
+                      <div className="w-3 h-3 rounded-full flex items-center justify-center" style={{background:a.color}}><Check size={7} color="white"/></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* CONTA TAB */}
+      {activeTab==="conta"&&(
+        <div className="animate-in space-y-4">
+          <div className="card">
+            <h3 className="font-display font-semibold text-sm mb-3 flex items-center gap-2" style={{color:"var(--text-primary)"}}>
+              <User size={14} style={{color:"var(--accent-3)"}}/> Foto de perfil
+            </h3>
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <div className="w-[72px] h-[72px] rounded-full p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 0 20px var(--accent-glow)"}}>
+                  <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
+                       style={{background:user.avatar_url?"transparent":"var(--gradient-btn)"}}>
+                    {user.avatar_url?<img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover"/>
+                      :<span className="text-xl font-bold text-white font-display">{initials}</span>}
+                  </div>
+                </div>
+                {avatarLoading&&<div className="absolute inset-0 rounded-full flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={14} className="animate-spin text-white"/></div>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange}/>
+                <button onClick={()=>fileInputRef.current?.click()} disabled={avatarLoading} className="btn-primary text-xs py-1.5 px-3 gap-1.5"><Download size={12}/> Enviar foto</button>
+                {user.avatar_url&&<button onClick={handleRemoveAvatar} disabled={avatarLoading} className="btn-ghost text-xs py-1.5 px-3 gap-1.5" style={{color:"#f87171"}}><Trash2 size={12}/> Remover</button>}
+                <p className="text-[10px]" style={{color:"var(--text-muted)"}}>JPG, PNG · máx 2MB</p>
+              </div>
+            </div>
+          </div>
+          <div className="card space-y-4">
+            <h3 className="font-display font-semibold text-sm" style={{color:"var(--text-primary)"}}>Informações</h3>
+            {[
+              {icon:Mail,label:"E-mail",value:user.email},
+              {icon:Hash,label:"Nº USP",value:user.nusp??"Não informado"},
+              {icon:GraduationCap,label:"Curso",value:"Sistemas de Informação · EACH · USP"},
+              {icon:Calendar,label:"Membro desde",value:user.created_at?format(new Date(user.created_at),"d 'de' MMMM 'de' yyyy",{locale:ptBR}):"—"},
+            ].map(({icon:Icon,label,value})=>(
+              <div key={label} className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:"var(--accent-soft)",border:"1px solid var(--border)"}}><Icon size={14} style={{color:"var(--accent-3)"}}/></div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider" style={{color:"var(--text-muted)"}}>{label}</p>
+                  <p className="text-sm truncate" style={{color:"var(--text-primary)"}}>{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={()=>{logout();navigate("/login")}} className="btn-danger w-full justify-center"><LogOut size={15}/> Sair da conta</button>
+        </div>
+      )}
     </div>
   )
 }
