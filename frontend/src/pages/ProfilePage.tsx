@@ -130,30 +130,34 @@ function drawCard(
   area: string,
   language: string,
 ) {
-  const W = 680, H = 960   // Arc-browser portrait ratio
-  canvas.width  = W * 2; canvas.height = H * 2
-  canvas.style.width  = W + 'px'; canvas.style.height = H + 'px'
+  const W = 680, H = 960
+  canvas.width  = W * 2
+  canvas.height = H * 2
+  canvas.style.width  = W + 'px'
+  canvas.style.height = H + 'px'
   const ctx = canvas.getContext('2d')!
   ctx.scale(2, 2)
 
-  // ── Seeded randoms ─────────────────────────────────────
   const rngBlob  = seededRng(user.id + '-blob')
   const rngColor = seededRng(user.id + '-hue')
 
-  // Full-spectrum hue — any hue, vivid saturation
-  const hue      = Math.floor(rngColor() * 360)
-  const sat      = 70 + Math.floor(rngColor() * 20)   // 70–90
-  const blobLit  = 50 + Math.floor(rngColor() * 20)   // 50–70
-  const bgLit    = 96 + Math.floor(rngColor() * 3)    // 96–99 (near white)
+  // Seeded hue across full rainbow
+  const hue     = Math.floor(rngColor() * 360)
+  const sat     = 70 + Math.floor(rngColor() * 20)
+  const blobLit = 50 + Math.floor(rngColor() * 20)
+  const bgLit   = 96 + Math.floor(rngColor() * 3)
 
-  const bgColor    = `hsl(${hue}, ${Math.floor(sat * 0.12)}%, ${bgLit}%)`
-  const inkColor   = `hsl(${hue}, 60%, 22%)`
-  const inkMid     = `hsl(${hue}, 45%, 38%)`
-  const blobMain   = `hsl(${hue}, ${sat}%, ${blobLit}%)`
-  const blobShift  = `hsl(${(hue + 28) % 360}, ${sat - 8}%, ${blobLit - 14}%)`
-  const accentPill = `hsl(${hue}, ${sat}%, ${Math.max(blobLit - 28, 20)}%)`
+  const bgColor    = `hsl(${hue},${Math.floor(sat * 0.12)}%,${bgLit}%)`
+  const inkColor   = `hsl(${hue},60%,18%)`       // dark solid — no alpha concat
+  const inkFaint   = `hsl(${hue},40%,55%)`        // muted info text
+  const blobMain   = `hsl(${hue},${sat}%,${blobLit}%)`
+  const blobShift  = `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
+  const accentPill = `hsl(${hue},${sat}%,${Math.max(blobLit-28,18)}%)`
 
-  // ── Card base ──────────────────────────────────────────
+  // ── 1. Clear canvas ─────────────────────────────────
+  ctx.clearRect(0, 0, W, H)
+
+  // ── 2. Card background (clipped to rounded rect) ────
   ctx.save()
   roundRect(ctx, 0, 0, W, H, 36)
   ctx.clip()
@@ -161,152 +165,166 @@ function drawCard(
   ctx.fillStyle = bgColor
   ctx.fillRect(0, 0, W, H)
 
-  // ── Blob — large, occupies top ~60% ──────────────────
-  // Random position within upper area so it feels organic
+  // ── 3. Blob ─────────────────────────────────────────
   const blobCx = W * (0.30 + rngBlob() * 0.40)
-  const blobCy = H * (0.12 + rngBlob() * 0.22)
-  const blobR  = W * (0.40 + rngBlob() * 0.28)
+  const blobCy = H * (0.10 + rngBlob() * 0.20)
+  const blobR  = W * (0.42 + rngBlob() * 0.24)
 
   const grad = ctx.createRadialGradient(
-    blobCx - blobR * 0.30, blobCy - blobR * 0.25, blobR * 0.04,
-    blobCx + blobR * 0.10, blobCy + blobR * 0.10, blobR * 1.15
+    blobCx - blobR * 0.28, blobCy - blobR * 0.22, blobR * 0.04,
+    blobCx + blobR * 0.08, blobCy + blobR * 0.08, blobR * 1.1
   )
   grad.addColorStop(0,    blobMain)
-  grad.addColorStop(0.50, blobShift)
-  grad.addColorStop(1,    blobShift + '00')
+  grad.addColorStop(0.55, blobShift)
+  grad.addColorStop(1,   `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%,0)`)
 
   drawBlob(ctx, rngBlob, blobCx, blobCy, blobR)
   ctx.fillStyle = grad
   ctx.fill()
 
-  // Grain on blob
+  // Grain clipped to blob
   ctx.save()
   drawBlob(ctx, seededRng(user.id + '-blob'), blobCx, blobCy, blobR)
   ctx.clip()
-  addNoise(ctx, seededRng(user.id + '-grain'), W, H * 0.72, 0.055, 6000)
+  addNoise(ctx, seededRng(user.id + '-grain'), W, H * 0.70, 0.05, 5000)
   ctx.restore()
 
-  // Light grain over whole card
-  addNoise(ctx, seededRng(user.id + '-bg-grain'), W, H, 0.018, 3000)
+  // Subtle grain over whole card
+  addNoise(ctx, seededRng(user.id + '-bg-grain'), W, H, 0.016, 2500)
 
-  ctx.restore()  // unclip card
+  ctx.restore() // ← restore from card clip
 
-  // ── Text area ─────────────────────────────────────────
+  // ── 4. Text — name ──────────────────────────────────
   const textX = 48
-  const textY = H * 0.605
+  const textY = Math.round(H * 0.615)
 
-  // Name — bold first name, light rest
   ctx.textAlign = 'left'
-  const parts = user.full_name.split(' ')
-  const firstName = parts[0]
+  ctx.textBaseline = 'alphabetic'
+
+  const parts     = user.full_name.trim().split(/\s+/)
+  const firstName = parts[0] ?? ''
   const lastName  = parts.slice(1).join(' ')
 
-  ctx.font = `800 56px 'Syne', sans-serif`
+  // First name bold
+  ctx.font      = `800 52px sans-serif`
   ctx.fillStyle = inkColor
-  const fnW = ctx.measureText(firstName).width
   ctx.fillText(firstName, textX, textY)
+  const fnW = ctx.measureText(firstName).width
 
+  // Last name — light, same line or wrapped
   if (lastName) {
-    ctx.font = `300 56px 'Syne', sans-serif`
-    ctx.fillStyle = inkColor + 'aa'
-    // Wrap to next line if doesn't fit
-    if (fnW + ctx.measureText(' ' + lastName).width < W - textX * 2) {
-      ctx.fillText(' ' + lastName, textX + fnW, textY)
+    ctx.font = `300 52px sans-serif`
+    ctx.fillStyle = inkFaint
+    const spaceW = ctx.measureText(' ').width
+    if (fnW + spaceW + ctx.measureText(lastName).width < W - textX * 2) {
+      ctx.fillText(lastName, textX + fnW + spaceW, textY)
     } else {
-      ctx.fillText(lastName, textX, textY + 62)
+      ctx.fillText(lastName, textX, textY + 58)
     }
   }
 
-  // Title (seeded)
+  // ── 5. Title ────────────────────────────────────────
   const titleRng  = seededRng(user.id + '-title')
   const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
-  ctx.font = `400 20px 'DM Sans', sans-serif`
-  ctx.fillStyle = inkMid + 'bb'
-  const titleY = lastName && (fnW + ctx.measureText(' ' + lastName).width >= W - textX * 2)
-    ? textY + 62 + 40
-    : textY + 46
+  const titleY    = textY + (lastName && ctx.measureText(lastName).width > W - textX * 2 - fnW ? 58 : 0) + 44
+
+  ctx.font      = `400 19px sans-serif`
+  ctx.fillStyle = inkFaint
   ctx.fillText(titleText, textX, titleY)
 
-  // USP # + email — monospace, small
-  const infoY = titleY + 36
-  ctx.font = `400 13px 'JetBrains Mono', monospace`
-  ctx.fillStyle = inkColor + '60'
+  // ── 6. USP # and email ──────────────────────────────
+  const infoY   = titleY + 34
   const nuspStr = user.nusp ? `#${user.nusp}` : ''
-  ctx.fillText([nuspStr, user.email].filter(Boolean).join('  ·  '), textX, infoY)
+  const infoStr = [nuspStr, user.email].filter(Boolean).join('  ·  ')
 
-  // ── Bottom section ────────────────────────────────────
-  const bottomY = H - 104
+  ctx.font      = `400 12px monospace`
+  ctx.fillStyle = inkFaint
+  ctx.globalAlpha = 0.7
+  ctx.fillText(infoStr, textX, infoY)
+  ctx.globalAlpha = 1
 
-  // Left pill: area /// language  (exact Arc style)
-  if (area || language) {
-    const aLabel = area || '—'
-    const lLabel = language || '—'
-    const pillH  = 38
+  // ── 7. Bottom pill: area | language ────────────────
+  const bottomY = H - 100
+  const aLabel  = area || ''
+  const lLabel  = language || ''
 
-    ctx.font = `600 13px 'DM Sans', sans-serif`
-    const aW = ctx.measureText(aLabel).width + 22
-    const lW = ctx.measureText(lLabel).width + 22
-    const gapW = 10  // stripe separator width
-    const totalW = aW + gapW + lW
+  if (aLabel || lLabel) {
+    const pillH = 36
+    ctx.font = `600 13px sans-serif`
+    const aW     = aLabel ? ctx.measureText(aLabel).width + 22 : 0
+    const lW     = lLabel ? ctx.measureText(lLabel).width + 22 : 0
+    const sepW   = (aLabel && lLabel) ? 10 : 0
+    const totalW = aW + sepW + lW
     const px = textX, py = bottomY
 
-    // Outer border
-    ctx.strokeStyle = accentPill + '70'
-    ctx.lineWidth = 1.5
+    // Pill border
+    ctx.strokeStyle = accentPill
+    ctx.globalAlpha = 0.55
+    ctx.lineWidth   = 1.5
     roundRect(ctx, px, py, totalW, pillH, pillH / 2)
     ctx.stroke()
+    ctx.globalAlpha = 1
 
-    // Stripe separator
-    ctx.save()
-    ctx.beginPath()
-    roundRect(ctx, px + aW, py + 4, gapW, pillH - 8, 2)
-    ctx.clip()
-    ctx.fillStyle = accentPill + '20'
-    ctx.fillRect(px + aW, py + 4, gapW, pillH - 8)
-    ctx.strokeStyle = accentPill + '50'
-    ctx.lineWidth = 1
-    for (let sx = -pillH; sx < gapW + pillH; sx += 4) {
+    // Diagonal stripe separator
+    if (aLabel && lLabel) {
+      ctx.save()
       ctx.beginPath()
-      ctx.moveTo(px + aW + sx, py + 4)
-      ctx.lineTo(px + aW + sx + pillH, py + 4 + pillH)
-      ctx.stroke()
+      roundRect(ctx, px + aW, py + 4, sepW, pillH - 8, 2)
+      ctx.clip()
+      ctx.fillStyle   = accentPill
+      ctx.globalAlpha = 0.12
+      ctx.fillRect(px + aW, py + 4, sepW, pillH - 8)
+      ctx.globalAlpha = 0.4
+      ctx.strokeStyle = accentPill
+      ctx.lineWidth   = 1
+      for (let sx = -pillH; sx < sepW + pillH; sx += 4) {
+        ctx.beginPath()
+        ctx.moveTo(px + aW + sx,        py + 4)
+        ctx.lineTo(px + aW + sx + pillH, py + 4 + pillH)
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
     }
-    ctx.restore()
 
-    // Labels
-    ctx.fillStyle = accentPill
-    ctx.textAlign = 'center'
-    ctx.font = `600 13px 'DM Sans', sans-serif`
-    ctx.fillText(aLabel, px + aW / 2, py + pillH / 2 + 5)
-    ctx.fillText(lLabel, px + aW + gapW + lW / 2, py + pillH / 2 + 5)
+    // Text labels
+    ctx.fillStyle   = accentPill
+    ctx.textAlign   = 'center'
+    ctx.font        = `600 13px sans-serif`
+    ctx.globalAlpha = 1
+    if (aLabel) ctx.fillText(aLabel, px + aW / 2, py + pillH / 2 + 5)
+    if (lLabel) ctx.fillText(lLabel, px + aW + sepW + lW / 2, py + pillH / 2 + 5)
     ctx.textAlign = 'left'
   }
 
-  // Right: active badges (up to 4, right-aligned)
-  const unlockedBadges = activeBadges.filter(b => b.unlocked).slice(0, 4)
-  if (unlockedBadges.length > 0) {
-    let bx = W - textX
-    ctx.font = '22px serif'
+  // ── 8. Badges (right-aligned) ───────────────────────
+  const displayBadges = activeBadges.filter(b => b.unlocked).slice(0, 4)
+  if (displayBadges.length > 0) {
+    ctx.font      = '20px serif'
     ctx.textAlign = 'right'
-    for (const badge of [...unlockedBadges].reverse()) {
-      ctx.fillText(badge.emoji, bx, bottomY + 26)
-      bx -= 30
+    let bx = W - textX
+    for (const badge of [...displayBadges].reverse()) {
+      ctx.fillText(badge.emoji, bx, bottomY + 24)
+      bx -= 28
     }
     ctx.textAlign = 'left'
   }
 
-  // ── Card ID bottom-left ───────────────────────────────
-  ctx.font = `400 9px 'JetBrains Mono', monospace`
-  ctx.fillStyle = inkColor + '38'
-  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), textX, H - 24)
+  // ── 9. Card ID ──────────────────────────────────────
+  ctx.font        = `400 9px monospace`
+  ctx.fillStyle   = inkColor
+  ctx.globalAlpha = 0.25
+  ctx.fillText(user.id.replace(/-/g, '').slice(0, 8).toUpperCase(), textX, H - 22)
+  ctx.globalAlpha = 1
 
-  // ── Border ────────────────────────────────────────────
-  ctx.strokeStyle = inkColor + '14'
-  ctx.lineWidth = 1.5
+  // ── 10. Border ──────────────────────────────────────
+  ctx.strokeStyle = inkColor
+  ctx.globalAlpha = 0.1
+  ctx.lineWidth   = 1.5
   roundRect(ctx, 0.75, 0.75, W - 1.5, H - 1.5, 36)
   ctx.stroke()
+  ctx.globalAlpha = 1
 }
-
 // ── Badge Picker modal ────────────────────────────────────────────────────────
 function BadgePicker({ badges, selected, onSave, onClose }: {
   badges: Badge[]; selected: string[]
@@ -467,11 +485,11 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-        {/* Portrait canvas — max 340px wide */}
+        {/* Portrait card — scales to fit, max 320px wide */}
         <div className="mx-auto overflow-hidden rounded-2xl"
-             style={{ maxWidth: 340, lineHeight: 0, boxShadow: '0 20px 60px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.12)' }}>
+             style={{ maxWidth: 320, width: '100%', lineHeight: 0, boxShadow: '0 16px 48px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.12)' }}>
           <canvas ref={canvasRef}
-                  style={{ display: 'block', width: '100%', cursor: 'pointer', borderRadius: 18 }}
+                  style={{ display: 'block', width: '100%', height: 'auto', cursor: 'pointer', borderRadius: 16 }}
                   onClick={handleDownload} title="Toque para baixar" />
         </div>
         <p className="text-[10px] text-center mt-2" style={{ color: 'var(--text-muted)' }}>
