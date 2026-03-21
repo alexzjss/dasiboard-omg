@@ -7,6 +7,7 @@ import {
   Download, RefreshCw, Award, X, Check, Code2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import api from '@/utils/api'
 
 // ── PRNG ─────────────────────────────────────────────────────────────────────
