@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
+import DasiLogo from '@/components/DasiLogo'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, User, GraduationCap, Sun, Moon, Users,
+  CalendarDays, User, Sun, Moon, Users,
   Palette, X, LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -97,10 +98,7 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 relative z-10" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-             style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 12px var(--accent-glow)' }}>
-          <GraduationCap size={16} className="text-white" />
-        </div>
+        <DasiLogo size={32} />
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
@@ -185,10 +183,7 @@ export default function AppLayout() {
       <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4"
            style={{ height: 52, backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-               style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 8px var(--accent-glow)' }}>
-            <GraduationCap size={13} className="text-white" />
-          </div>
+          <DasiLogo size={28} />
           <div>
             <p className="font-display font-bold text-sm leading-tight" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           </div>
