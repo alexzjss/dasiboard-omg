@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, User, GraduationCap, Sun, Moon, Users,
+  CalendarDays, User, GraduationCap, Sun, Moon, Users, GitBranch,
   Palette, X, LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -17,6 +17,7 @@ const nav = [
   { to: '/calendar', label: 'Calendário',  icon: CalendarDays,    end: false },
   { to: '/entities', label: 'Entidades',   icon: Users,           end: false },
   { to: '/profile',  label: 'Perfil',      icon: User,            end: false },
+  { to: '/fluxogram', label: 'Fluxograma',  icon: GitBranch,       end: false },
 ]
 
 const DARK_THEMES  = THEMES.filter(t => t.dark)
