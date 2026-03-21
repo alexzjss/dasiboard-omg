@@ -3,10 +3,13 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
-  LogOut, Palette, Search, BookMarked, ChevronDown,
+  LogOut, Palette, Search, BookMarked, ChevronDown, Monitor,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
+import { useEasterEggs, EasterEggRenderer } from '@/hooks/useEasterEggs'
+import { usePresentationMode, PresentationControls, PresentationButton } from '@/components/PresentationMode'
+import { GlobalSearch, useGlobalSearch } from '@/components/GlobalSearch'
 import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
 import { NotificationBanner } from '@/hooks/usePushNotifications'
 import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal } from '@/hooks/useInteractions'
@@ -347,6 +350,25 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
 
       <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.4 }} />
 
+      {/* Search + Presentation shortcuts */}
+      <div className="px-3 pt-2 space-y-1">
+        <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+          <Search size={13} />
+          <span className="flex-1 text-left">Buscar...</span>
+          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⌘K</span>
+        </button>
+        <button onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                title="Oculta sidebar/nav, fontes maiores (Ctrl+Shift+P)">
+          <Monitor size={13} />
+          <span className="flex-1 text-left">Apresentação</span>
+          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⇧P</span>
+        </button>
+      </div>
+
       {/* Nav */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10">
         {nav.map(({ to, label, icon: Icon, end }) => (
@@ -402,7 +424,22 @@ export default function AppLayout() {
   const { show: showOnboarding, markDone: doneOnboarding } = useOnboarding()
 
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+
+  // Listen for global search open event (from sidebar button)
+  useEffect(() => {
+    const handler = () => setSearchOpen(true)
+    const pHandler = () => presentation.toggle()
+    document.addEventListener('global-search:open', handler)
+    document.addEventListener('presentation:toggle', pHandler)
+    return () => {
+      document.removeEventListener('global-search:open', handler)
+      document.removeEventListener('presentation:toggle', pHandler)
+    }
+  }, [setSearchOpen])
   useSwipeNavigation()
+  const { active: easterActive, close: closeEaster } = useEasterEggs()
+  const { active: searchOpen, setOpen: setSearchOpen } = useGlobalSearch()
+  const presentation = usePresentationMode()
 
   // ── Keyboard shortcuts ────────────────────────────────
   const shortcuts = [
@@ -430,6 +467,9 @@ export default function AppLayout() {
     // Ações rápidas
     { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',    group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
     { key: 'r', ctrl: true, description: 'Recarregar dados da página',       group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
+    // Busca e apresentação
+    { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',            group: 'Ações', action: () => setSearchOpen(v => !v) },
+    { key: 'p', ctrl: true, shift: true, description: 'Modo de apresentação',  group: 'Interface', action: () => presentation.toggle() },
     { key: 'f', ctrl: true, description: 'Buscar (em páginas com busca)',    group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
   ]
 
@@ -444,6 +484,9 @@ export default function AppLayout() {
 
       {showOnboarding && <Onboarding onClose={doneOnboarding} />}
       {showPicker && <ThemePicker onClose={() => setShowPicker(false)} />}
+      {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
+      <EasterEggRenderer active={easterActive} onClose={closeEaster} />
+      {presentation.active && <PresentationControls fontSize={presentation.fontSize} setFontSize={presentation.setFontSize} onExit={presentation.exit} />}
       {showKeyHelp && <KeyboardHelpModal shortcuts={shortcuts} onClose={() => setShowKeyHelp(false)} />}
       {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
       <NotificationBanner />
@@ -499,6 +542,12 @@ export default function AppLayout() {
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
                   style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+          <button onClick={() => setSearchOpen(true)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
+                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
+                  title="Busca global (Ctrl+K)">
+            <Search size={15} />
           </button>
           <button onClick={() => setShowPicker(true)}
                   className="h-10 px-3 rounded-xl flex items-center gap-1.5 text-xs transition-all active:scale-90"

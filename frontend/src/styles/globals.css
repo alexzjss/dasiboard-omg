@@ -3467,6 +3467,62 @@
 
 
 /* ════════════════════════════════════════════════════════
+   MODO APRESENTAÇÃO — esconde sidebar/nav, fontes grandes
+════════════════════════════════════════════════════════ */
+
+/* Hide sidebar and nav in presentation mode */
+html.presentation-mode aside,
+html.presentation-mode nav.lg\:hidden,
+html.presentation-mode .mobile-topbar,
+html.presentation-mode .mobile-bottomnav {
+  display: none !important;
+}
+
+/* Remove mobile paddings */
+html.presentation-mode .main-mobile-pad-top,
+html.presentation-mode .main-mobile-pad-bottom {
+  display: none !important;
+}
+
+/* Full width layout */
+html.presentation-mode main {
+  width: 100dvw !important;
+  max-width: 100dvw !important;
+}
+
+/* Font size scaling */
+html[data-presentation="large"] {
+  font-size: 18px;
+}
+html[data-presentation="xl"] {
+  font-size: 22px;
+}
+
+/* Scale up key UI elements in presentation mode */
+html.presentation-mode .font-display {
+  letter-spacing: 0.01em;
+}
+html[data-presentation="large"] h1 { font-size: 2.2rem !important; }
+html[data-presentation="large"] h2 { font-size: 1.6rem !important; }
+html[data-presentation="large"] h3 { font-size: 1.2rem !important; }
+html[data-presentation="xl"] h1 { font-size: 2.8rem !important; }
+html[data-presentation="xl"] h2 { font-size: 2.0rem !important; }
+html[data-presentation="xl"] h3 { font-size: 1.5rem !important; }
+
+/* Cards more prominent */
+html.presentation-mode .card {
+  padding: 1.2em !important;
+}
+
+/* Fluxogram presentation — bigger nodes */
+html.presentation-mode .grades-fluxo-node {
+  min-width: 160px !important;
+  padding: 10px !important;
+  font-size: 12px !important;
+}
+
+
+/* ════════════════════════════════════════════════════════
    ANIMATIONS
 ════════════════════════════════════════════════════════ */
 .animate-in           { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
