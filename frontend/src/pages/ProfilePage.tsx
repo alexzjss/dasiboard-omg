@@ -388,9 +388,10 @@ function BadgePicker({ badges, selected, onSave, onClose }: {
 
 // ── Profile Page ──────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const { user, logout } = useAuthStore()
-  const navigate  = useNavigate()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { user, logout, setUser } = useAuthStore()
+  const navigate     = useNavigate()
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [area,     setAreaState]     = useState<string>(() => localStorage.getItem('dasiboard-area') ?? '')
   const [language, setLanguageState] = useState<string>(() => localStorage.getItem('dasiboard-lang') ?? '')
@@ -398,6 +399,36 @@ export default function ProfilePage() {
     try { return JSON.parse(localStorage.getItem('dasiboard-badges') ?? '[]') } catch { return [] }
   })
   const [showBadgePicker, setShowBadgePicker] = useState(false)
+  const [avatarLoading,   setAvatarLoading]   = useState(false)
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 2MB.'); return }
+    setAvatarLoading(true)
+    try {
+      const base64 = await new Promise<string>((res, rej) => {
+        const reader = new FileReader()
+        reader.onload  = () => res(reader.result as string)
+        reader.onerror = rej
+        reader.readAsDataURL(file)
+      })
+      const { data } = await api.patch('/users/me/avatar', { avatar_url: base64 })
+      setUser(data)
+      toast.success('Foto atualizada!')
+    } catch { toast.error('Erro ao atualizar foto') }
+    finally { setAvatarLoading(false); e.target.value = '' }
+  }
+
+  const handleRemoveAvatar = async () => {
+    setAvatarLoading(true)
+    try {
+      const { data } = await api.patch('/users/me/avatar', { avatar_url: null })
+      setUser(data)
+      toast.success('Foto removida')
+    } catch { toast.error('Erro ao remover foto') }
+    finally { setAvatarLoading(false) }
+  }
 
   // Dynamic unlock state from API
   const [memberSlugs,      setMemberSlugs]      = useState<string[]>([])
@@ -566,8 +597,65 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ── Avatar ──────────────────────────────────── */}
+      <div className="card mb-4 animate-in-delay-3">
+        <h3 className="font-display font-semibold text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
+          Foto de perfil
+        </h3>
+        <div className="flex items-center gap-4">
+          {/* Avatar preview */}
+          <div className="relative shrink-0">
+            <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
+                 style={{ background: 'var(--gradient-btn)', border: '2px solid var(--border)' }}>
+              {user.avatar_url
+                ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                : <span className="text-2xl font-bold text-white font-display">
+                    {user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+              }
+            </div>
+            {avatarLoading && (
+              <div className="absolute inset-0 rounded-full flex items-center justify-center"
+                   style={{ background: 'rgba(0,0,0,0.5)' }}>
+                <RefreshCw size={16} className="animate-spin text-white" />
+              </div>
+            )}
+          </div>
+          {/* Controls */}
+          <div className="flex flex-col gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarLoading}
+              className="btn-primary text-xs py-1.5 px-3 gap-1.5"
+            >
+              <Download size={12} /> Enviar foto
+            </button>
+            {user.avatar_url && (
+              <button
+                onClick={handleRemoveAvatar}
+                disabled={avatarLoading}
+                className="btn-ghost text-xs py-1.5 px-3 gap-1.5"
+                style={{ color: '#f87171' }}
+              >
+                <X size={12} /> Remover
+              </button>
+            )}
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+              JPG, PNG ou WebP · máx 2MB
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* ── Account info ─────────────────────────────── */}
-      <div className="card mb-4 space-y-4 animate-in-delay-3">
+      <div className="card mb-4 space-y-4 animate-in-delay-4">
         <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>Conta</h3>
         {[
           { icon: Mail,          label: 'E-mail',       value: user.email },
