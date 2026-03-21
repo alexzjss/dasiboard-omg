@@ -130,7 +130,7 @@ function drawCard(
   area: string,
   language: string,
 ) {
-  const W = 680, H = 960
+  const W = 960, H = 540
   canvas.width  = W * 2
   canvas.height = H * 2
   canvas.style.width  = W + 'px'
@@ -159,16 +159,16 @@ function drawCard(
 
   // ── 2. Card background (clipped to rounded rect) ────
   ctx.save()
-  roundRect(ctx, 0, 0, W, H, 36)
+  roundRect(ctx, 0, 0, W, H, 24)
   ctx.clip()
 
   ctx.fillStyle = bgColor
   ctx.fillRect(0, 0, W, H)
 
   // ── 3. Blob ─────────────────────────────────────────
-  const blobCx = W * (0.30 + rngBlob() * 0.40)
-  const blobCy = H * (0.10 + rngBlob() * 0.20)
-  const blobR  = W * (0.42 + rngBlob() * 0.24)
+  const blobCx = W * (0.60 + rngBlob() * 0.22)
+  const blobCy = H * (0.05 + rngBlob() * 0.18)
+  const blobR  = H * (0.75 + rngBlob() * 0.28)
 
   const grad = ctx.createRadialGradient(
     blobCx - blobR * 0.28, blobCy - blobR * 0.22, blobR * 0.04,
@@ -196,7 +196,7 @@ function drawCard(
 
   // ── 4. Text — name ──────────────────────────────────
   const textX = 48
-  const textY = Math.round(H * 0.615)
+  const textY = Math.round(H * 0.56)
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -206,14 +206,14 @@ function drawCard(
   const lastName  = parts.slice(1).join(' ')
 
   // First name bold
-  ctx.font      = `800 52px sans-serif`
+  ctx.font      = `800 46px sans-serif`
   ctx.fillStyle = inkColor
   ctx.fillText(firstName, textX, textY)
   const fnW = ctx.measureText(firstName).width
 
   // Last name — light, same line or wrapped
   if (lastName) {
-    ctx.font = `300 52px sans-serif`
+    ctx.font      = `300 46px sans-serif`
     ctx.fillStyle = inkFaint
     const spaceW = ctx.measureText(' ').width
     if (fnW + spaceW + ctx.measureText(lastName).width < W - textX * 2) {
@@ -226,14 +226,14 @@ function drawCard(
   // ── 5. Title ────────────────────────────────────────
   const titleRng  = seededRng(user.id + '-title')
   const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
-  const titleY    = textY + (lastName && ctx.measureText(lastName).width > W - textX * 2 - fnW ? 58 : 0) + 44
+  const titleY    = textY + 38
 
-  ctx.font      = `400 19px sans-serif`
+  ctx.font      = `400 16px sans-serif`
   ctx.fillStyle = inkFaint
   ctx.fillText(titleText, textX, titleY)
 
   // ── 6. USP # and email ──────────────────────────────
-  const infoY   = titleY + 34
+  const infoY   = titleY + 28
   const nuspStr = user.nusp ? `#${user.nusp}` : ''
   const infoStr = [nuspStr, user.email].filter(Boolean).join('  ·  ')
 
@@ -244,7 +244,7 @@ function drawCard(
   ctx.globalAlpha = 1
 
   // ── 7. Bottom pill: area | language ────────────────
-  const bottomY = H - 100
+  const bottomY = H - 72
   const aLabel  = area || ''
   const lLabel  = language || ''
 
@@ -321,7 +321,7 @@ function drawCard(
   ctx.strokeStyle = inkColor
   ctx.globalAlpha = 0.1
   ctx.lineWidth   = 1.5
-  roundRect(ctx, 0.75, 0.75, W - 1.5, H - 1.5, 36)
+  roundRect(ctx, 0.75, 0.75, W - 1.5, H - 1.5, 24)
   ctx.stroke()
   ctx.globalAlpha = 1
 }
@@ -485,9 +485,9 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-        {/* Portrait card — scales to fit, max 320px wide */}
-        <div className="mx-auto overflow-hidden rounded-2xl"
-             style={{ maxWidth: 320, width: '100%', lineHeight: 0, boxShadow: '0 16px 48px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.12)' }}>
+        {/* Landscape card — full width, 16:9 */}
+        <div className="overflow-hidden rounded-2xl w-full"
+             style={{ lineHeight: 0, boxShadow: '0 16px 48px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.12)' }}>
           <canvas ref={canvasRef}
                   style={{ display: 'block', width: '100%', height: 'auto', cursor: 'pointer', borderRadius: 16 }}
                   onClick={handleDownload} title="Toque para baixar" />
