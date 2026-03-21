@@ -4305,3 +4305,741 @@
   letter-spacing: 0.06em;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   ⌛  DARK — CHRONO  (Chrono Trigger · Linhas do Tempo Rotativas)
+   Base vars compartilhadas — sobrescritas por cada era via data-chrono-era
+   UI inspirada no menu do jogo: cinza escuro, bordas metálicas
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── BASE do tema Chrono (fallback / transição) ── */
+[data-theme="dark-chrono"] {
+  --bg-base:        #0a0c10;
+  --bg-surface:     #0f1218;
+  --bg-elevated:    #161c24;
+  --bg-card:        #1c2430;
+  --border:         #2a3848;
+  --border-light:   #3a4858;
+  --text-primary:   #d8e8f0;
+  --text-secondary: #8898a8;
+  --text-muted:     #3a4858;
+  --accent-1:       #4488cc;
+  --accent-2:       #3366aa;
+  --accent-3:       #88ccff;
+  --accent-glow:    rgba(68,136,204,0.30);
+  --accent-soft:    rgba(68,136,204,0.12);
+  --gradient-hero:  linear-gradient(135deg, #4488cc 0%, #1a3a5a 100%);
+  --gradient-btn:   linear-gradient(135deg, #4488cc, #3366aa);
+  --noise-opacity:  0.04;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "DM Sans", sans-serif;
+  image-rendering: auto;
+}
+[data-theme="dark-chrono"] h1,
+[data-theme="dark-chrono"] h2,
+[data-theme="dark-chrono"] h3,
+[data-theme="dark-chrono"] h4 {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ── Menu UI de Chrono Trigger nos cards ── */
+[data-theme="dark-chrono"] .card {
+  background: linear-gradient(180deg, #1e2a38 0%, #16202c 100%);
+  border: 1px solid #3a4858;
+  border-top: 1px solid #4a5868;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+[data-theme="dark-chrono"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(136,204,255,0.3), transparent);
+  pointer-events: none;
+}
+[data-theme="dark-chrono"] .btn-primary {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: linear-gradient(180deg, #5599dd 0%, #3366aa 100%) !important;
+  border: 1px solid #6699cc;
+  box-shadow: 0 2px 8px rgba(68,136,204,0.4), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+}
+[data-theme="dark-chrono"] .input {
+  background: rgba(10,16,24,0.8) !important;
+  border: 1px solid #3a4858 !important;
+  border-top-color: #2a3848 !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4) !important;
+  font-family: "DM Sans", sans-serif;
+}
+[data-theme="dark-chrono"] .input:focus {
+  border-color: #4488cc !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), 0 0 0 2px rgba(68,136,204,0.2) !important;
+}
+[data-theme="dark-chrono"] .label {
+  font-family: "Syne", sans-serif;
+  letter-spacing: 0.10em;
+  color: #88ccff;
+}
+[data-theme="dark-chrono"] ::-webkit-scrollbar { width: 4px; }
+[data-theme="dark-chrono"] ::-webkit-scrollbar-track { background: #0a0c10; }
+[data-theme="dark-chrono"] ::-webkit-scrollbar-thumb { background: #3a4858; border-radius: 2px; }
+
+/* ──────────────────────────────────────────────────────────────────
+   ⚡ ERA: PRÉ-HISTÓRIA  (65000000 A.C.)
+   Laranja-fogo, céu dourado-avermelhado, pterodáctilos
+   Baseado nas imagens 1 e 2
+────────────────────────────────────────────────────────────────── */
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] {
+  --bg-base:        #120800;
+  --bg-surface:     #1a0e00;
+  --bg-elevated:    #221600;
+  --bg-card:        #2a1c04;
+  --border:         #4a2c08;
+  --border-light:   #6a3c10;
+  --text-primary:   #ffe8a0;
+  --text-secondary: #cc8830;
+  --text-muted:     #4a2808;
+  --accent-1:       #e06000;
+  --accent-2:       #c05000;
+  --accent-3:       #ffaa00;
+  --accent-glow:    rgba(224,96,0,0.50);
+  --accent-soft:    rgba(255,170,0,0.12);
+  --gradient-hero:  linear-gradient(180deg, #ff8800 0%, #cc4400 35%, #881800 65%, #120800 100%);
+  --gradient-btn:   linear-gradient(135deg, #e06000, #c05000);
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] h1,
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] h2,
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] h3 {
+  color: #ffaa00;
+  text-shadow: 0 0 20px rgba(255,100,0,0.7), 0 2px 4px rgba(0,0,0,0.6);
+}
+/* Céu de fogo animado */
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 50% at 50% 0%, rgba(255,120,0,0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(255,200,0,0.10) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(200,60,0,0.15) 0%, transparent 60%);
+  animation: prehistoriaSky 8s ease-in-out infinite alternate;
+}
+@keyframes prehistoriaSky {
+  0%   { opacity: 0.7; }
+  100% { opacity: 1; filter: hue-rotate(10deg); }
+}
+/* Cards pré-história — pedra e fogo */
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .card {
+  background: linear-gradient(180deg, #2e1c08 0%, #221408 100%);
+  border: 1px solid #5a3010;
+  border-top-color: #7a4018;
+  box-shadow: 0 4px 20px rgba(200,80,0,0.15), inset 0 1px 0 rgba(255,150,0,0.06);
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .card-hover:hover {
+  border-color: #e06000;
+  box-shadow: 0 6px 28px rgba(224,96,0,0.30), 0 0 0 1px rgba(255,150,0,0.2);
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .sidebar-bg {
+  background: linear-gradient(180deg, #1e1008 0%, #120800 100%);
+  border-right: 2px solid #4a2808;
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .nav-active {
+  background: rgba(224,96,0,0.15) !important;
+  border-color: rgba(255,150,0,0.40) !important;
+  color: #ffaa00 !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   🏔️ ERA: ANTIGUIDADE  (12000 A.C. · Era das Trevas)
+   Azul gelo, branco neve, montanhas geladas, continente flutuante
+   Baseado nas imagens 3 e 4
+────────────────────────────────────────────────────────────────── */
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] {
+  --bg-base:        #060c14;
+  --bg-surface:     #0c1420;
+  --bg-elevated:    #121e2e;
+  --bg-card:        #18283c;
+  --border:         #2a3e58;
+  --border-light:   #3a5068;
+  --text-primary:   #d8eeff;
+  --text-secondary: #78a8d0;
+  --text-muted:     #2a3e58;
+  --accent-1:       #4499cc;
+  --accent-2:       #2277aa;
+  --accent-3:       #88ddff;
+  --accent-glow:    rgba(68,153,204,0.40);
+  --accent-soft:    rgba(136,221,255,0.10);
+  --gradient-hero:  linear-gradient(180deg, #88ddff 0%, #4499cc 30%, #0c2040 70%, #060c14 100%);
+  --gradient-btn:   linear-gradient(135deg, #4499cc, #2277aa);
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] h1,
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] h2,
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] h3 {
+  color: #88ddff;
+  text-shadow: 0 0 20px rgba(68,200,255,0.6), 0 0 40px rgba(68,150,220,0.3);
+}
+/* Névoa gelada */
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(100,200,255,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 20% 100%, rgba(40,80,160,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 100%, rgba(40,80,160,0.10) 0%, transparent 60%);
+  animation: antiqueSnow 12s ease-in-out infinite alternate;
+}
+@keyframes antiqueSnow {
+  0%   { opacity: 0.6; filter: brightness(0.9); }
+  100% { opacity: 1;   filter: brightness(1.1); }
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .card {
+  background: linear-gradient(180deg, #1c2e42 0%, #141e2e 100%);
+  border: 1px solid #2a4060;
+  border-top-color: #3a5878;
+  box-shadow: 0 4px 20px rgba(40,100,180,0.15), inset 0 1px 0 rgba(136,221,255,0.06);
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .card-hover:hover {
+  border-color: #4499cc;
+  box-shadow: 0 6px 28px rgba(68,153,204,0.25), 0 0 0 1px rgba(136,221,255,0.15);
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .sidebar-bg {
+  background: linear-gradient(180deg, #101a28 0%, #060c14 100%);
+  border-right: 2px solid #2a3e58;
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .nav-active {
+  background: rgba(68,153,204,0.15) !important;
+  border-color: rgba(136,221,255,0.35) !important;
+  color: #88ddff !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   🏰 ERA: ERA MÉDIA  (600 D.C.)
+   Verde floresta, castelos, tochas, marrom terra
+   Baseado nas imagens 5 e 6
+────────────────────────────────────────────────────────────────── */
+[data-theme="dark-chrono"][data-chrono-era="era-media"] {
+  --bg-base:        #080c04;
+  --bg-surface:     #0e140a;
+  --bg-elevated:    #141e0e;
+  --bg-card:        #1a2614;
+  --border:         #2e4020;
+  --border-light:   #3e5028;
+  --text-primary:   #d0e8b0;
+  --text-secondary: #7aaa50;
+  --text-muted:     #2e4020;
+  --accent-1:       #5a9030;
+  --accent-2:       #427020;
+  --accent-3:       #aadd66;
+  --accent-glow:    rgba(90,144,48,0.40);
+  --accent-soft:    rgba(170,221,102,0.10);
+  --gradient-hero:  linear-gradient(180deg, #aadd66 0%, #5a9030 30%, #1a3010 70%, #080c04 100%);
+  --gradient-btn:   linear-gradient(135deg, #5a9030, #427020);
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] h1,
+[data-theme="dark-chrono"][data-chrono-era="era-media"] h2,
+[data-theme="dark-chrono"][data-chrono-era="era-media"] h3 {
+  color: #aadd66;
+  text-shadow: 0 0 16px rgba(120,200,60,0.5), 0 2px 4px rgba(0,0,0,0.5);
+}
+/* Floresta noturna com luz de tocha */
+[data-theme="dark-chrono"][data-chrono-era="era-media"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 50% 60% at 10% 80%, rgba(200,120,0,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(60,120,20,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 90% 60%, rgba(40,100,10,0.06) 0%, transparent 50%);
+  animation: medievalForest 10s ease-in-out infinite alternate;
+}
+@keyframes medievalForest {
+  0%   { opacity: 0.7; }
+  50%  { opacity: 1; filter: hue-rotate(5deg); }
+  100% { opacity: 0.8; }
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .card {
+  background: linear-gradient(180deg, #1e2e16 0%, #141e0e 100%);
+  border: 1px solid #304420;
+  border-top-color: #405830;
+  box-shadow: 0 4px 20px rgba(60,100,20,0.12), inset 0 1px 0 rgba(170,221,102,0.05);
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .card-hover:hover {
+  border-color: #5a9030;
+  box-shadow: 0 6px 28px rgba(90,144,48,0.22), 0 0 0 1px rgba(170,221,102,0.15);
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .sidebar-bg {
+  background: linear-gradient(180deg, #121a0a 0%, #080c04 100%);
+  border-right: 2px solid #2e4020;
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .nav-active {
+  background: rgba(90,144,48,0.15) !important;
+  border-color: rgba(170,221,102,0.35) !important;
+  color: #aadd66 !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   🤖 ERA: FUTURO  (2300 D.C. · Distopia pós-apocalíptica)
+   Cinza enferrujado, vermelho apocalíptico, ruínas
+   Baseado nas imagens 7 e 8
+────────────────────────────────────────────────────────────────── */
+[data-theme="dark-chrono"][data-chrono-era="futuro"] {
+  --bg-base:        #0c0806;
+  --bg-surface:     #141008;
+  --bg-elevated:    #1c180c;
+  --bg-card:        #242010;
+  --border:         #3c3020;
+  --border-light:   #504030;
+  --text-primary:   #d8c8a0;
+  --text-secondary: #907060;
+  --text-muted:     #3c3020;
+  --accent-1:       #aa4422;
+  --accent-2:       #882200;
+  --accent-3:       #dd8844;
+  --accent-glow:    rgba(170,68,34,0.45);
+  --accent-soft:    rgba(221,136,68,0.10);
+  --gradient-hero:  linear-gradient(180deg, #dd8844 0%, #aa4422 30%, #300800 70%, #0c0806 100%);
+  --gradient-btn:   linear-gradient(135deg, #aa4422, #882200);
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] h1,
+[data-theme="dark-chrono"][data-chrono-era="futuro"] h2,
+[data-theme="dark-chrono"][data-chrono-era="futuro"] h3 {
+  color: #dd8844;
+  text-shadow: 0 0 16px rgba(200,80,20,0.6), 0 2px 4px rgba(0,0,0,0.7);
+}
+/* Céu distópico cor de ferrugem */
+[data-theme="dark-chrono"][data-chrono-era="futuro"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 0%, rgba(150,50,10,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 20% 50%, rgba(80,30,0,0.10) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(100,30,0,0.12) 0%, transparent 50%);
+  animation: futureSmog 9s ease-in-out infinite alternate;
+}
+@keyframes futureSmog {
+  0%   { opacity: 0.6; filter: hue-rotate(0deg); }
+  100% { opacity: 1;   filter: hue-rotate(-10deg); }
+}
+/* Partículas de cinza no fundo */
+[data-theme="dark-chrono"][data-chrono-era="futuro"] body::after {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle, rgba(200,150,80,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 1;
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .card {
+  background: linear-gradient(180deg, #262016 0%, #1c180c 100%);
+  border: 1px solid #3c3020;
+  border-top-color: #504030;
+  box-shadow: 0 4px 20px rgba(120,40,0,0.18), inset 0 1px 0 rgba(200,130,60,0.05);
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .card-hover:hover {
+  border-color: #aa4422;
+  box-shadow: 0 6px 28px rgba(170,68,34,0.28), 0 0 0 1px rgba(221,136,68,0.15);
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .sidebar-bg {
+  background: linear-gradient(180deg, #181208 0%, #0c0806 100%);
+  border-right: 2px solid #3c3020;
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .nav-active {
+  background: rgba(170,68,34,0.15) !important;
+  border-color: rgba(221,136,68,0.35) !important;
+  color: #dd8844 !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   ⌛ ERA: FIM DOS TEMPOS  (∞)
+   Preto absoluto, lanterna dourada, azul mágico, vazio
+   Baseado nas imagens 9 e 10
+────────────────────────────────────────────────────────────────── */
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] {
+  --bg-base:        #020202;
+  --bg-surface:     #060608;
+  --bg-elevated:    #0c0c10;
+  --bg-card:        #121218;
+  --border:         #1e1e28;
+  --border-light:   #2a2a38;
+  --text-primary:   #e8e0c8;
+  --text-secondary: #9888a0;
+  --text-muted:     #282830;
+  --accent-1:       #b88800;
+  --accent-2:       #906600;
+  --accent-3:       #ffcc44;
+  --accent-glow:    rgba(184,136,0,0.45);
+  --accent-soft:    rgba(255,204,68,0.10);
+  --gradient-hero:  linear-gradient(180deg, #ffcc44 0%, #b88800 30%, #3a2200 70%, #020202 100%);
+  --gradient-btn:   linear-gradient(135deg, #b88800, #906600);
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] h1,
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] h2,
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] h3 {
+  color: #ffcc44;
+  text-shadow: 0 0 20px rgba(220,160,0,0.7), 0 0 40px rgba(180,120,0,0.4), 0 2px 4px rgba(0,0,0,0.9);
+}
+/* Lanterna solitária no vazio */
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 40% 60% at 50% 40%, rgba(200,140,0,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 20% 30% at 50% 38%, rgba(255,200,0,0.08) 0%, transparent 40%);
+  animation: endOfTimeGlow 6s ease-in-out infinite alternate;
+}
+@keyframes endOfTimeGlow {
+  0%   { opacity: 0.5; transform: scale(0.98); }
+  100% { opacity: 1;   transform: scale(1.02); }
+}
+/* Estrelas no vazio */
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] body::after {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,220,100,0.4) 1px, transparent 1px),
+    radial-gradient(circle, rgba(200,180,255,0.3) 1px, transparent 1px);
+  background-size: 80px 80px, 120px 120px;
+  background-position: 0 0, 40px 40px;
+  animation: starsFloat 20s linear infinite;
+}
+@keyframes starsFloat {
+  from { background-position: 0 0, 40px 40px; }
+  to   { background-position: 0 -80px, 40px -40px; }
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .card {
+  background: linear-gradient(180deg, #161620 0%, #0e0e16 100%);
+  border: 1px solid #202030;
+  border-top-color: #2c2c40;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,200,60,0.04);
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .card-hover:hover {
+  border-color: #b88800;
+  box-shadow: 0 6px 32px rgba(184,136,0,0.25), 0 0 0 1px rgba(255,204,68,0.12);
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .sidebar-bg {
+  background: linear-gradient(180deg, #0e0e14 0%, #020202 100%);
+  border-right: 1px solid #1e1e28;
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .nav-active {
+  background: rgba(184,136,0,0.12) !important;
+  border-color: rgba(255,204,68,0.30) !important;
+  color: #ffcc44 !important;
+}
+
+/* ── Sidebar Chrono — UI estilo menu do jogo ── */
+[data-theme="dark-chrono"] .sidebar-bg::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 30px,
+    rgba(255,255,255,0.012) 30px,
+    rgba(255,255,255,0.012) 31px
+  );
+}
+/* ── mobile performance fixes para Chrono ── */
+@media (hover: none) {
+  [data-theme="dark-chrono"] body::before,
+  [data-theme="dark-chrono"] body::after { animation-duration: 20s; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   📱  MOBILE-FIRST — Sistema completo de adaptação vertical
+   Breakpoint principal: < 1024px (mobile + tablet portrait)
+   Breakpoint small: < 640px (phones)
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Container base para páginas scrolláveis ── */
+.page-mobile {
+  width: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+}
+
+/* ── 2. Padding adaptativo por breakpoint ── */
+@media (max-width: 1023px) {
+  .page-padded {
+    padding: 12px 14px;
+  }
+}
+@media (max-width: 639px) {
+  .page-padded {
+    padding: 10px 12px;
+  }
+}
+
+/* ── 3. Grid responsivo universal ── */
+@media (max-width: 639px) {
+  /* 2 colunas em telas pequenas */
+  .grid-auto-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  /* 1 coluna em telas muito pequenas */
+  .grid-auto-1 { grid-template-columns: 1fr !important; }
+  /* Força flex-wrap */
+  .flex-wrap-sm { flex-wrap: wrap !important; }
+}
+
+/* ── 4. Tipografia responsiva global ── */
+@media (max-width: 639px) {
+  /* Reduz headings em mobile sem quebrar layout */
+  h1.font-display, .font-display.text-2xl { font-size: clamp(1.3rem, 5.5vw, 1.75rem) !important; }
+  h1.font-display.text-3xl              { font-size: clamp(1.5rem, 6vw, 2rem) !important; }
+  /* Labels e badges mais legíveis */
+  .text-\[10px\], .text-\[9px\] { font-size: 11px !important; }
+}
+
+/* ── 5. Cards mobile — mais compactos e sem hover transform ── */
+@media (max-width: 1023px) {
+  .card           { padding: 14px !important; border-radius: 16px !important; }
+  .card-hover:hover { transform: none !important; box-shadow: none !important; }
+  .card-hover:active { transform: scale(0.98) !important; }
+}
+
+/* ── 6. Botões — alvos de toque mínimos ── */
+@media (max-width: 1023px) {
+  .btn         { min-height: 44px !important; padding: 10px 16px !important; }
+  .btn-ghost   { min-height: 40px !important; }
+  /* Botão primary maior em mobile */
+  .btn-primary { min-height: 48px !important; font-size: 15px !important; }
+}
+
+/* ── 7. Inputs — tamanho confortável ── */
+@media (max-width: 1023px) {
+  .input            { min-height: 48px !important; font-size: 16px !important; /* evita zoom no iOS */ border-radius: 14px !important; }
+  textarea.input    { min-height: 80px !important; }
+  select.input      { min-height: 48px !important; }
+}
+
+/* ── 8. Modais — sempre bottom sheet em mobile ── */
+@media (max-width: 639px) {
+  .modal-sheet {
+    position: fixed !important;
+    bottom: 0 !important; left: 0 !important; right: 0 !important; top: auto !important;
+    border-radius: 24px 24px 0 0 !important;
+    max-height: 92dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── 9. Top bar mobile — espaçamento seguro ── */
+@media (max-width: 1023px) {
+  .mobile-topbar {
+    height: 52px !important;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ── 10. Bottom nav — espaçamento safe area ── */
+@media (max-width: 1023px) {
+  .mobile-bottomnav {
+    height: calc(60px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* Conteúdo principal precisa de espaço para top+bottom */
+  .main-mobile-pad-top    { height: calc(52px + env(safe-area-inset-top)); }
+  .main-mobile-pad-bottom { height: calc(72px + env(safe-area-inset-bottom)); }
+}
+
+/* ── 11. Kanban — scroll horizontal suave ── */
+@media (max-width: 1023px) {
+  .kanban-scroll {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+  }
+  .kanban-scroll::-webkit-scrollbar { display: none; }
+  .kanban-col {
+    scroll-snap-align: start;
+    width: min(84vw, 300px) !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* ── 12. GradesPage — view automática em mobile ── */
+@media (max-width: 1023px) {
+  /* Split view vira tab view — fluxo embaixo, lista em cima */
+  .grades-split {
+    flex-direction: column !important;
+    overflow: visible !important;
+  }
+  .grades-fluxo {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    max-height: 40dvh;
+    overflow: auto;
+    flex: 0 0 auto !important;
+  }
+  .grades-list {
+    flex: 1 !important;
+    width: 100% !important;
+    overflow-y: auto;
+  }
+}
+
+/* ── 13. CalendarPage — stack vertical em mobile ── */
+@media (max-width: 767px) {
+  .calendar-layout {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 0;
+  }
+  .calendar-grid-area {
+    flex: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .calendar-side {
+    width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border) !important;
+    flex: none !important;
+  }
+  /* Cells menores em mobile */
+  .cal-cell { min-height: 44px !important; }
+}
+
+/* ── 14. Entities grid — 2 colunas em mobile ── */
+@media (max-width: 639px) {
+  .entities-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+}
+@media (max-width: 400px) {
+  .entities-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── 15. Profile — layout compacto ── */
+@media (max-width: 639px) {
+  .profile-card-canvas { border-radius: 14px !important; }
+  .profile-area-select { flex-direction: column !important; }
+}
+
+/* ── 16. Prevenção de zoom indesejado iOS ── */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* ── 17. Fluxogram — scroll horizontal em mobile ── */
+@media (max-width: 1023px) {
+  .fluxo-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding-bottom: 4px;
+  }
+}
+
+/* ── 18. Newsletter / textos longos — wrapping correto ── */
+@media (max-width: 639px) {
+  .nl-body { font-size: 14px !important; line-height: 1.65 !important; word-break: break-word; }
+  .line-clamp-2 { -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+}
+
+/* ── 19. Header pages — flex-col em pequenos ── */
+@media (max-width: 639px) {
+  .page-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .page-header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+}
+
+/* ── 20. Dashboard stats pills — wrap em mobile ── */
+@media (max-width: 639px) {
+  .stat-pills { flex-wrap: wrap !important; gap: 6px !important; }
+  .stat-pill  { font-size: 11px !important; padding: 5px 10px !important; }
+}
+
+/* ── 21. Docentespage — 1 coluna em mobile ── */
+@media (max-width: 639px) {
+  .docentes-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── 22. Touch feedback global ── */
+@media (hover: none) {
+  .card-hover:active   { transform: scale(0.98) !important; transition: transform 0.1s !important; }
+  .btn:active          { transform: scale(0.95) !important; }
+  a:active             { opacity: 0.7; }
+}
+
+/* ── 23. Overflow protection global ── */
+@media (max-width: 1023px) {
+  * { max-width: 100vw; }
+  body, #root { overflow-x: hidden !important; }
+}
+
+/* ── 24. Quick links dashboard — 2 colunas ── */
+@media (max-width: 639px) {
+  .quick-links-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+/* ── 25. Pill / tag components — menor em mobile ── */
+@media (max-width: 639px) {
+  .badge { font-size: 10px !important; padding: 3px 8px !important; }
+}
+
+/* ── 26. Theme picker — bottom sheet em mobile ── */
+@media (max-width: 639px) {
+  .theme-picker-inner {
+    border-radius: 24px 24px 0 0 !important;
+    max-height: 88dvh !important;
+  }
+  .theme-picker-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* ── 27. Animações reduzidas em mobile para perf ── */
+@media (hover: none) and (max-width: 1023px) {
+  .accent-orb { display: none; }
+  [data-theme="dark-hypado"] .sidebar-bg::after { animation: none; }
+  [data-theme="dark-dlc"] h1,
+  [data-theme="dark-dlc"] h2,
+  [data-theme="dark-dlc"] h3 { animation-duration: 8s; }
+  [data-theme="dark-holo"] body::before { animation-duration: 16s; }
+  [data-theme="dark-chrono"] body::after { display: none; }
+}
+
+/* ── 28. Scroll behavior suave ── */
+html { scroll-behavior: smooth; }
+@media (hover: none) {
+  html { -webkit-overflow-scrolling: touch; }
+}
+
+/* ── 29. Kanban header compacto em mobile ── */
+@media (max-width: 639px) {
+  .kanban-header {
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+  .kanban-board-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .kanban-board-tabs::-webkit-scrollbar { display: none; }
+}
+
+/* ── 30. Fix para elementos fora do viewport ── */
+@media (max-width: 639px) {
+  .max-w-5xl,
+  .max-w-6xl,
+  .max-w-7xl { max-width: 100% !important; padding-left: 12px !important; padding-right: 12px !important; }
+}
+

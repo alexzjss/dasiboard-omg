@@ -135,9 +135,9 @@ export default function CalendarPage() {
   const WEEK_DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
   return (
-    <div className="flex flex-col md:flex-row" style={{height:"100%",minHeight:0}}>
+    <div className="flex flex-col md:flex-row calendar-layout" style={{height:"100%",minHeight:0}}>
       {/* ── Calendar grid ─── */}
-      <div className="flex-1 flex flex-col p-3 md:p-5 overflow-hidden" style={{minHeight:0}}>
+      <div className="flex-1 flex flex-col p-3 md:p-5 overflow-hidden calendar-grid-area" style={{minHeight:0}}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="animate-in">
@@ -243,7 +243,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ── Side panel ─── */}
-      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5 cal-side-panel" style={{maxHeight: selected || showForm ? undefined : "auto"}}>
+      <div className="w-full md:w-72 shrink-0 flex flex-col p-4 md:p-5 cal-side-panel calendar-side" style={{maxHeight: selected || showForm ? undefined : "auto"}}>
         {/* Global key delete modal */}
         {showKeyInput && (
           <div className="animate-in space-y-3 mb-4 p-4 rounded-xl"

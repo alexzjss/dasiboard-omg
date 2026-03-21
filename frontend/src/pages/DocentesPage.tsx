@@ -93,7 +93,7 @@ export default function DocentesPage() {
   }, [query])
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 md:p-8 max-w-7xl mx-auto page-mobile">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div
@@ -205,8 +205,8 @@ export default function DocentesPage() {
         </div>
       ) : (
         <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}
+          className="grid gap-4 docentes-grid"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
         >
           {filtered.map((doc, i) => (
             <DocenteCard key={doc.email} doc={doc} index={i} highlight={query.trim() || undefined} />

@@ -6,7 +6,7 @@ import {
   LogOut, Palette, Search,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId } from '@/context/ThemeContext'
+import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import clsx from 'clsx'
 
 const nav = [
@@ -47,6 +47,8 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   // Claros novos
   'light-punkrock':   { bg: '#1a1f8f', accent: '#e60000', card: '#ffffff' },
   'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
+  // Chrono Trigger (usa preview base escuro)
+  'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
 }
 
 // ── Pokéball + Starter picker (Pixel theme only) ─────────────────────────────
@@ -381,7 +383,7 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
 // ── App Layout ────────────────────────────────────────────────────────────────
 export default function AppLayout() {
   const location = useLocation()
-  const { theme, isDark, toggleDarkLight } = useTheme()
+  const { theme, isDark, toggleDarkLight, chronoEra } = useTheme()
   const [showPicker,   setShowPicker]   = useState(false)
   const [showPokeball, setShowPokeball] = useState(false)
   const [starter,      setStarter]      = useState<string>(() =>
@@ -402,7 +404,8 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const isPixel = theme.id === 'dark-pixel'
+  const isPixel  = theme.id === 'dark-pixel'
+  const isChrono = theme.id === 'dark-chrono'
 
   const saveStarter = (id: string) => {
     localStorage.setItem('dasiboard-starter', id)
@@ -418,16 +421,41 @@ export default function AppLayout() {
       {/* Pokéball button — only in Pixel theme */}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
 
+      {/* Chrono era badge — floating, only in Chrono theme */}
+      {isChrono && chronoEra && (
+        <div className="lg:hidden fixed top-14 left-1/2 z-20 -translate-x-1/2 pointer-events-none"
+             style={{ animation: 'animate-in 0.4s ease both' }}>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap"
+               style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)', backdropFilter: 'blur(8px)' }}>
+            <span>{CHRONO_ERA_EMOJI[chronoEra]}</span>
+            <span>{CHRONO_ERA_LABELS[chronoEra]}</span>
+          </div>
+        </div>
+      )}
+
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
         <SidebarContent onOpenPicker={() => setShowPicker(true)} />
+        {/* Chrono era badge on desktop sidebar */}
+        {isChrono && chronoEra && (
+          <div className="px-3 pb-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
+                 style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)' }}>
+              <span style={{ fontSize: 16 }}>{CHRONO_ERA_EMOJI[chronoEra]}</span>
+              <div className="min-w-0">
+                <p className="text-[9px] font-medium truncate" style={{ color: 'var(--text-muted)' }}>Era atual</p>
+                <p className="text-[10px] font-bold truncate">{CHRONO_ERA_LABELS[chronoEra]}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4"
-           style={{ height: 52, backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(12px)' }}>
+      <div className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between mobile-topbar"
+           style={{ backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 8px var(--accent-glow)' }}>
             <GraduationCap size={13} className="text-white" />
           </div>
@@ -438,45 +466,48 @@ export default function AppLayout() {
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={toggleDarkLight}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
                   style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
-            {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <button onClick={() => setShowPicker(true)}
-                  className="h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs transition-all active:scale-90"
+                  className="h-10 px-3 rounded-xl flex items-center gap-1.5 text-xs transition-all active:scale-90"
                   style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)' }}>
-            <Palette size={12} />
-            <span className="hidden xs:inline font-medium">{theme.emoji} {theme.name}</span>
-            <span className="xs:hidden">{theme.emoji}</span>
+            <Palette size={13} />
+            <span className="font-medium">{theme.emoji}</span>
           </button>
         </div>
       </div>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--bg-base)' }}>
-        <div className="lg:hidden" style={{ height: 52 }} />
+      <main className="flex-1 overflow-y-auto overflow-x-hidden page-mobile" style={{ backgroundColor: 'var(--bg-base)' }}>
+        <div className="lg:hidden main-mobile-pad-top" />
         <Outlet />
-        <div className="lg:hidden" style={{ height: 72 }} />
+        <div className="lg:hidden main-mobile-pad-bottom" />
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch relative"
-           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', height: 60, paddingBottom: 'env(safe-area-inset-bottom)', backdropFilter: 'blur(12px)' }}>
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch mobile-bottomnav"
+           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
         {nav.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
-                   className={({ isActive }) => clsx('flex-1 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90', isActive ? 'nav-bottom-active' : 'nav-bottom-inactive')}>
+                   className={({ isActive }) => clsx(
+                     'flex-1 flex flex-col items-center justify-center gap-0.5 transition-all',
+                     'active:scale-90 select-none',
+                     isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
+                   )}>
             {({ isActive }) => (
               <>
-                <div className="relative flex items-center justify-center" style={{ width: 40, height: 24 }}>
+                <div className="relative flex items-center justify-center" style={{ width: 44, height: 26 }}>
                   {isActive && (
                     <div className="absolute inset-0 rounded-xl transition-all"
                          style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
                   )}
-                  <Icon size={isActive ? 15 : 18} className="relative z-10 transition-all"
+                  <Icon size={isActive ? 16 : 19} className="relative z-10 transition-all"
                         style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }} />
                 </div>
                 <span className="text-[9px] font-medium leading-none transition-all"
-                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', opacity: isActive ? 1 : 0.7 }}>
+                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', opacity: isActive ? 1 : 0.65 }}>
                   {label}
                 </span>
               </>

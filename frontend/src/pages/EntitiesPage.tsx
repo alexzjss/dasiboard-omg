@@ -502,7 +502,7 @@ export default function EntitiesPage() {
   })
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+    <div className="p-3 sm:p-4 md:p-8 max-w-6xl mx-auto page-mobile">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div>
@@ -583,7 +583,7 @@ export default function EntitiesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 entities-grid">
           {shown.map((e, i) => (
             <div key={e.id} className="animate-in" style={{ animationDelay: `${i * 30}ms` }}>
               <EntityCard entity={e} onClick={() => setSelected(e)} />

@@ -530,7 +530,7 @@ export default function ProfilePage() {
   const initials = user.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U'
 
   return (
-    <div className="px-4 py-4 sm:px-6 md:px-8 md:py-8 max-w-2xl mx-auto w-full">
+    <div className="px-3 py-4 sm:px-6 md:px-8 md:py-8 max-w-2xl mx-auto w-full page-mobile">
 
       {showBadgePicker && (
         <BadgePicker badges={badges} selected={activeBadgeIds} onSave={saveBadges} onClose={() => setShowBadgePicker(false)} />

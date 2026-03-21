@@ -581,9 +581,9 @@ export default function GradesPage() {
 
       {/* ── Content ── */}
       {view === 'split' ? (
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden grades-split">
           {/* Left: Fluxogram */}
-          <div className="flex-1 overflow-auto" style={{ borderRight: '1px solid var(--border)', minWidth: 0 }}>
+          <div className="flex-1 overflow-auto grades-fluxo" style={{ borderRight: '1px solid var(--border)', minWidth: 0 }}>
             <div className="flex gap-2 p-3 min-w-max items-start">
               {SEMESTERS.map(sem => (
                 <div key={sem} className="flex flex-col gap-1.5" style={{ minWidth: 120, maxWidth: 135 }}>
@@ -618,7 +618,7 @@ export default function GradesPage() {
           </div>
 
           {/* Right: Subject list */}
-          <div className="w-80 xl:w-96 shrink-0 flex flex-col overflow-hidden">
+          <div className="w-80 xl:w-96 shrink-0 flex flex-col overflow-hidden grades-list">
             <div className="flex-1 overflow-y-auto">
               <div className="px-3 py-3 space-y-2">
                 {/* Create button */}

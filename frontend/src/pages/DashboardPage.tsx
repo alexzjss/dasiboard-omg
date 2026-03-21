@@ -217,7 +217,7 @@ export default function DashboardPage() {
   const firstName = user?.full_name?.split(' ')[0] ?? 'aluno'
 
   return (
-    <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl mx-auto w-full">
+    <div className="px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 max-w-5xl mx-auto w-full page-mobile">
       {showCreateNL && (
         <NewsletterCreateModal
           onClose={() => setShowCreateNL(false)}
@@ -418,7 +418,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 animate-in-delay-2">
           <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
              style={{ color: 'var(--text-muted)' }}>Acesso rápido</p>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2 quick-links-grid">
             {[
               { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,  desc: 'Quadros', count: stats.boards, color: 'var(--accent-1)' },
               { to: '/grades',   label: 'Disciplinas', icon: BookOpen,      desc: 'Notas',   count: stats.subjects, color: '#a855f7' },

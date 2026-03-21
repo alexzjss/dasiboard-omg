@@ -214,13 +214,14 @@ function KanbanCard({ card, colAccent, onEdit }: {
 
 // ── Droppable Column ──────────────────────────────────────
 function KanbanColumn({
-  column, onAddCard, onEditCard, isOver, activeId,
+  column, onAddCard, onEditCard, isOver, activeId, className,
 }: {
   column: Column
   onAddCard: (colId: string, data: { title: string; description?: string; priority: string; due_date?: string }) => void
   onEditCard: (c: Card) => void
   isOver: boolean
   activeId: string | null
+  className?: string
 }) {
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -251,7 +252,7 @@ function KanbanColumn({
 
   return (
     <div
-      className="shrink-0 flex flex-col rounded-2xl transition-all"
+      className={`shrink-0 flex flex-col rounded-2xl transition-all${className ? ' ' + className : ''}`}
       style={{width:"min(288px,80vw)",
         background: isOver ? style.bg : 'var(--bg-surface)',
         border: `1px solid ${isOver ? style.accent + '66' : 'var(--border)'}`,
@@ -560,11 +561,11 @@ export default function KanbanPage() {
       )}
 
       {/* Header */}
-      <div className="px-3 py-2 md:px-6 md:py-4 flex items-center gap-2 shrink-0 overflow-hidden"
+      <div className="px-3 py-2 md:px-6 md:py-4 flex items-center gap-2 shrink-0 overflow-hidden kanban-header"
            style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
         <h1 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Kanban</h1>
         <div className="w-px h-5" style={{ background: 'var(--border)' }} />
-        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-hide min-w-0">
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-hide min-w-0 kanban-board-tabs">
           {boards.map((b) => (
             <button key={b.id} onClick={() => setActive(b.id)}
                     className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
@@ -617,7 +618,7 @@ export default function KanbanPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex-1 overflow-x-auto overflow-y-hidden p-3 md:p-4 scrollbar-hide" style={{minHeight:0}}>
+          <div className="flex-1 overflow-x-auto overflow-y-hidden p-3 md:p-4 kanban-scroll" style={{minHeight:0}}>
             <div className="flex gap-3 md:gap-4 h-full items-start pb-2" style={{minWidth:"max-content"}}>
               {currentBoard.columns.map((col) => (
                 <KanbanColumn
@@ -627,6 +628,7 @@ export default function KanbanPage() {
                   activeId={activeCard?.id ?? null}
                   onAddCard={addCard}
                   onEditCard={setEditingCard}
+                  className="kanban-col"
                 />
               ))}
             </div>

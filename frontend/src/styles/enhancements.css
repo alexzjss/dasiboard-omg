@@ -1170,3 +1170,164 @@ main > *:first-child {
     border-bottom: 3px solid #cc0000 !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ⌛  CHRONO TRIGGER — Enhancements por era
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Base Chrono: menu UI estilo SNES ── */
+[data-theme="dark-chrono"] .badge {
+  border-radius: 3px !important;
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+[data-theme="dark-chrono"] .section-header {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+[data-theme="dark-chrono"] .hero-card {
+  border-top: 2px solid var(--accent-1) !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+[data-theme="dark-chrono"] :focus-visible {
+  outline: 2px solid var(--accent-3);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+[data-theme="dark-chrono"] .nav-inactive { color: #4a6080; }
+[data-theme="dark-chrono"] .nav-inactive:hover { color: #88ccff; background: rgba(68,136,204,0.08); }
+
+/* ── PRÉ-HISTÓRIA: fogo e lava ── */
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .section-header {
+  color: #ffaa00;
+  text-shadow: 0 0 10px rgba(255,120,0,0.5);
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .hero-card {
+  border-top-color: #e06000 !important;
+  box-shadow: 0 4px 32px rgba(200,80,0,0.20), inset 0 1px 0 rgba(255,150,0,0.05) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] ::-webkit-scrollbar-thumb { background: #6a3010; }
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] ::-webkit-scrollbar-thumb:hover { background: #e06000; }
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .shimmer {
+  background: linear-gradient(90deg, #221600 0%, #3a2208 40%, #221600 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 1.8s linear infinite;
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .btn-primary {
+  background: linear-gradient(135deg, #e06000, #c05000) !important;
+  box-shadow: 0 2px 12px rgba(224,96,0,0.4), inset 0 1px 0 rgba(255,200,0,0.15) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .input { border-color: #6a3010 !important; }
+[data-theme="dark-chrono"][data-chrono-era="prehistoria"] .input:focus { border-color: #ffaa00 !important; box-shadow: 0 0 0 2px rgba(255,120,0,0.15) !important; }
+
+/* ── ANTIGUIDADE: gelo e magia azul ── */
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .section-header {
+  color: #88ddff;
+  text-shadow: 0 0 10px rgba(68,200,255,0.4);
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .hero-card {
+  border-top-color: #4499cc !important;
+  box-shadow: 0 4px 32px rgba(40,100,200,0.18), inset 0 1px 0 rgba(136,221,255,0.05) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] ::-webkit-scrollbar-thumb { background: #2a4060; }
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] ::-webkit-scrollbar-thumb:hover { background: #4499cc; }
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .shimmer {
+  background: linear-gradient(90deg, #0c1420 0%, #1a2a40 40%, #0c1420 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 2s linear infinite;
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .btn-primary {
+  background: linear-gradient(135deg, #4499cc, #2277aa) !important;
+  box-shadow: 0 2px 12px rgba(68,153,204,0.4), inset 0 1px 0 rgba(136,221,255,0.15) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .input { border-color: #2a4060 !important; }
+[data-theme="dark-chrono"][data-chrono-era="antiguidade"] .input:focus { border-color: #88ddff !important; box-shadow: 0 0 0 2px rgba(68,153,204,0.2) !important; }
+
+/* ── ERA MÉDIA: verde floresta e pedra ── */
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .section-header {
+  color: #aadd66;
+  text-shadow: 0 0 8px rgba(120,200,60,0.4);
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .hero-card {
+  border-top-color: #5a9030 !important;
+  box-shadow: 0 4px 32px rgba(60,100,20,0.15), inset 0 1px 0 rgba(170,221,102,0.04) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] ::-webkit-scrollbar-thumb { background: #2e4020; }
+[data-theme="dark-chrono"][data-chrono-era="era-media"] ::-webkit-scrollbar-thumb:hover { background: #5a9030; }
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .shimmer {
+  background: linear-gradient(90deg, #0e1408 0%, #1c2810 40%, #0e1408 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 1.8s linear infinite;
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .btn-primary {
+  background: linear-gradient(135deg, #5a9030, #427020) !important;
+  box-shadow: 0 2px 12px rgba(90,144,48,0.4), inset 0 1px 0 rgba(200,255,100,0.10) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .input { border-color: #2e4020 !important; }
+[data-theme="dark-chrono"][data-chrono-era="era-media"] .input:focus { border-color: #aadd66 !important; box-shadow: 0 0 0 2px rgba(90,144,48,0.15) !important; }
+
+/* ── FUTURO: ferrugem e apocalipse ── */
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .section-header {
+  color: #dd8844;
+  text-shadow: 0 0 8px rgba(200,80,20,0.4);
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .hero-card {
+  border-top-color: #aa4422 !important;
+  box-shadow: 0 4px 32px rgba(120,40,0,0.20), inset 0 1px 0 rgba(200,100,40,0.04) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] ::-webkit-scrollbar-thumb { background: #3c3020; }
+[data-theme="dark-chrono"][data-chrono-era="futuro"] ::-webkit-scrollbar-thumb:hover { background: #aa4422; }
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .shimmer {
+  background: linear-gradient(90deg, #141008 0%, #22180c 40%, #141008 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 2s linear infinite;
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .btn-primary {
+  background: linear-gradient(135deg, #aa4422, #882200) !important;
+  box-shadow: 0 2px 12px rgba(170,68,34,0.4), inset 0 1px 0 rgba(220,120,60,0.10) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .input { border-color: #3c3020 !important; }
+[data-theme="dark-chrono"][data-chrono-era="futuro"] .input:focus { border-color: #dd8844 !important; box-shadow: 0 0 0 2px rgba(170,68,34,0.15) !important; }
+
+/* ── FIM DOS TEMPOS: ouro e vazio ── */
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .section-header {
+  color: #ffcc44;
+  text-shadow: 0 0 12px rgba(220,160,0,0.6);
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .hero-card {
+  border-top-color: #b88800 !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,200,60,0.04) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] ::-webkit-scrollbar-thumb { background: #2a2830; }
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] ::-webkit-scrollbar-thumb:hover { background: #b88800; }
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .shimmer {
+  background: linear-gradient(90deg, #0a0a10 0%, #141220 40%, #0a0a10 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 2.2s linear infinite;
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .btn-primary {
+  background: linear-gradient(135deg, #b88800, #906600) !important;
+  box-shadow: 0 2px 12px rgba(184,136,0,0.4), inset 0 1px 0 rgba(255,220,80,0.15) !important;
+}
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .input { border-color: #1e1e28 !important; }
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .input:focus { border-color: #ffcc44 !important; box-shadow: 0 0 0 2px rgba(184,136,0,0.18) !important; }
+[data-theme="dark-chrono"][data-chrono-era="fim-dos-tempos"] .nav-inactive { color: #3a3848; }
+
+/* ── Transição suave de era ── */
+[data-theme="dark-chrono"] body,
+[data-theme="dark-chrono"] .card,
+[data-theme="dark-chrono"] .sidebar-bg,
+[data-theme="dark-chrono"] .btn-primary {
+  transition: background-color 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease, color 0.4s ease !important;
+}
+
+/* ── Mobile nav para chrono ── */
+[data-theme="dark-chrono"] .nav-bottom-active {
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
