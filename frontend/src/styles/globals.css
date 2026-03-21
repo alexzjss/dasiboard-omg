@@ -364,6 +364,112 @@
     text-shadow: 0 0 18px rgba(111,190,0,0.5), 0 0 40px rgba(111,190,0,0.2);
   }
 
+  /* ═══════════════════════════════════════════════════════
+     🏝️  LIGHT — Ilha (Destiny Islands · KH · Sol · Mar)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-ilha"] {
+    --bg-base:        #e8f8ff;
+    --bg-surface:     #f5fdff;
+    --bg-elevated:    #ffffff;
+    --bg-card:        #ffffff;
+    --border:         #b8e8f8;
+    --border-light:   #8fd8f0;
+    --text-primary:   #0a2040;
+    --text-secondary: #0a6080;
+    --text-muted:     #70aac0;
+    --accent-1:       #0088cc;
+    --accent-2:       #00aaee;
+    --accent-3:       #ff8c00;
+    --accent-glow:    rgba(0,136,204,0.25);
+    --accent-soft:    rgba(0,170,238,0.12);
+    --gradient-hero:  linear-gradient(180deg, #0066bb 0%, #00aaee 35%, #00ddcc 65%, #ffe066 90%, #ffcc44 100%);
+    --gradient-btn:   linear-gradient(135deg, #0099dd, #0066bb);
+    --noise-opacity:  0.012;
+    --card-blur:      8px;
+    --sidebar-overlay: none;
+    font-family: "DM Sans", sans-serif;
+  }
+  [data-theme="light-ilha"] h1,
+  [data-theme="light-ilha"] h2,
+  [data-theme="light-ilha"] h3,
+  [data-theme="light-ilha"] h4 {
+    font-family: "Syne", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #003366;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     🌫️  DARK — Colina (Silent Hill · Névoa · Cinza morto)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="dark-colina"] {
+    --bg-base:        #1a1a1c;
+    --bg-surface:     #202022;
+    --bg-elevated:    #262628;
+    --bg-card:        #2a2a2c;
+    --border:         #3a3a3c;
+    --border-light:   #4a4a4c;
+    --text-primary:   #c8c0b8;
+    --text-secondary: #8a8480;
+    --text-muted:     #50504c;
+    --accent-1:       #8a7060;
+    --accent-2:       #7a6050;
+    --accent-3:       #b09080;
+    --accent-glow:    rgba(138,112,96,0.20);
+    --accent-soft:    rgba(138,112,96,0.08);
+    --gradient-hero:  linear-gradient(180deg, #2a2826 0%, #1a1a1c 60%, #100c0a 100%);
+    --gradient-btn:   linear-gradient(135deg, #5a4a3a, #3a2a1a);
+    --noise-opacity:  0.08;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+    font-family: "DM Sans", sans-serif;
+  }
+  [data-theme="dark-colina"] h1,
+  [data-theme="dark-colina"] h2,
+  [data-theme="dark-colina"] h3,
+  [data-theme="dark-colina"] h4 {
+    font-family: "DM Sans", sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: #a09080;
+    text-shadow: none;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     🔮  LIGHT — Vidro (Glassmorphism · Liquid Glass · Aero)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-vidro"] {
+    --bg-base:        #ddeeff;
+    --bg-surface:     rgba(255,255,255,0.45);
+    --bg-elevated:    rgba(255,255,255,0.60);
+    --bg-card:        rgba(255,255,255,0.55);
+    --border:         rgba(255,255,255,0.70);
+    --border-light:   rgba(255,255,255,0.85);
+    --text-primary:   #0a1a40;
+    --text-secondary: #2040a0;
+    --text-muted:     #6080c0;
+    --accent-1:       #3b82f6;
+    --accent-2:       #2563eb;
+    --accent-3:       #06b6d4;
+    --accent-glow:    rgba(59,130,246,0.30);
+    --accent-soft:    rgba(59,130,246,0.12);
+    --gradient-hero:  linear-gradient(135deg, rgba(59,130,246,0.8) 0%, rgba(6,182,212,0.6) 50%, rgba(168,85,247,0.5) 100%);
+    --gradient-btn:   linear-gradient(135deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9));
+    --noise-opacity:  0.008;
+    --card-blur:      20px;
+    --sidebar-overlay: none;
+    font-family: "DM Sans", sans-serif;
+  }
+  [data-theme="light-vidro"] h1,
+  [data-theme="light-vidro"] h2,
+  [data-theme="light-vidro"] h3,
+  [data-theme="light-vidro"] h4 {
+    font-family: "Syne", sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #0a1a40;
+  }
+
   /* ── Global body ─────────────────────────────────────── */
   body {
     background-color: var(--bg-base);
@@ -1948,6 +2054,667 @@
 @media (max-width: 1023px) {
   [data-theme="light-720"] main::before { left: 0 !important; }
   [data-theme="light-720"] .sidebar-bg { animation: none; }
+}
+
+/* ────────────────────────────────────────────────────────
+   🏝️  ILHA — Destiny Islands / Kingdom Hearts / FFX
+   Céu azul saturado, areia dourada, água turquesa,
+   luz solar radiante, glassmorphism leve, vibe JRPG PS2
+──────────────────────────────────────────────────────── */
+
+@keyframes ilhaWave {
+  0%,100% { transform: translateX(0) scaleY(1); }
+  50%     { transform: translateX(-8px) scaleY(1.04); }
+}
+@keyframes ilhaSun {
+  0%,100% { opacity: 0.7; transform: scale(1); }
+  50%     { opacity: 1;   transform: scale(1.06); }
+}
+@keyframes ilhaFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-5px); }
+}
+@keyframes ilhaShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Sky gradient — vivid KH cerulean + warm horizon */
+[data-theme="light-ilha"] body {
+  background: linear-gradient(180deg, #0055aa 0%, #0088cc 30%, #00bbee 55%, #77ddee 75%, #e8f8ff 100%);
+  min-height: 100dvh;
+}
+/* Sun glow from top-right + subtle wave texture at bottom */
+[data-theme="light-ilha"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 40% 30% at 82% 8%, rgba(255,220,80,0.55) 0%, rgba(255,160,30,0.10) 50%, transparent 80%),
+    radial-gradient(ellipse 70% 25% at 50% 100%, rgba(255,218,120,0.35) 0%, rgba(200,180,80,0.08) 50%, transparent 100%),
+    radial-gradient(ellipse 100% 20% at 50% 92%, rgba(0,200,220,0.25) 0%, transparent 100%);
+}
+/* Horizontal wave bands at bottom — water shimmer */
+[data-theme="light-ilha"] body::after {
+  content: '';
+  position: fixed; bottom: 0; left: 0; right: 0; height: 30%;
+  pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0,200,220,0.03) 0px, rgba(0,200,220,0.03) 2px,
+    transparent 2px, transparent 8px
+  );
+  animation: ilhaWave 4s ease-in-out infinite;
+}
+
+/* Sidebar — frosted glass + ocean blue gradient */
+[data-theme="light-ilha"] .sidebar-bg {
+  background:
+    linear-gradient(160deg,
+      rgba(255,255,255,0.70) 0%,
+      rgba(200,240,255,0.60) 40%,
+      rgba(160,220,248,0.55) 100%);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-right: 1px solid rgba(255,255,255,0.75);
+  box-shadow: 4px 0 24px rgba(0,100,180,0.12);
+  position: relative; overflow: hidden;
+}
+/* Soft sun glow on sidebar top */
+[data-theme="light-ilha"] .sidebar-bg::before {
+  content: '';
+  position: absolute; top: -20px; right: -20px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,220,80,0.35) 0%, transparent 70%);
+  pointer-events: none;
+  animation: ilhaSun 5s ease-in-out infinite;
+}
+/* Wave watermark at bottom */
+[data-theme="light-ilha"] .sidebar-bg::after {
+  content: '〰〰〰';
+  position: absolute; bottom: 44px; left: 0; right: 0;
+  text-align: center;
+  font-size: 22px; letter-spacing: 4px;
+  color: rgba(0,136,204,0.15);
+  pointer-events: none;
+  animation: ilhaFloat 3s ease-in-out infinite;
+}
+
+/* Cards — KH command menu style: frosted glass panels */
+[data-theme="light-ilha"] .card {
+  background: rgba(255,255,255,0.60);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 16px !important;
+  box-shadow:
+    0 4px 24px rgba(0,100,180,0.12),
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 rgba(0,100,180,0.06) inset;
+  position: relative; overflow: hidden;
+}
+/* Shimmer on card top — like water light reflection */
+[data-theme="light-ilha"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: ilhaShimmer 6s ease-in-out infinite;
+  pointer-events: none;
+}
+[data-theme="light-ilha"] .card-hover:hover {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(0,170,238,0.50);
+  box-shadow: 0 8px 32px rgba(0,136,204,0.20), 0 1px 0 rgba(255,255,255,0.95) inset;
+  transform: translateY(-2px);
+}
+
+/* Nav — active: deep ocean blue pill */
+[data-theme="light-ilha"] .nav-active {
+  background: linear-gradient(90deg, rgba(0,136,204,0.20), rgba(0,170,238,0.12));
+  border-color: #0088cc;
+  color: #003366;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(0,136,204,0.15);
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+[data-theme="light-ilha"] .nav-inactive { color: #005588; }
+[data-theme="light-ilha"] .nav-inactive:hover {
+  background: rgba(0,136,204,0.08);
+  color: #003366;
+}
+
+/* Buttons — ocean blue glossy */
+[data-theme="light-ilha"] .btn-primary {
+  background: linear-gradient(180deg, #00aaee 0%, #0077cc 50%, #0055aa 100%);
+  border: 1px solid rgba(0,170,238,0.6);
+  border-bottom-color: rgba(0,60,120,0.5);
+  border-radius: 20px !important;
+  box-shadow: 0 4px 16px rgba(0,136,204,0.40), inset 0 1px 0 rgba(255,255,255,0.35);
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,40,100,0.4);
+}
+[data-theme="light-ilha"] .btn-primary:hover {
+  filter: brightness(1.08) saturate(1.1);
+  box-shadow: 0 6px 24px rgba(0,136,204,0.55), inset 0 1px 0 rgba(255,255,255,0.4);
+  transform: translateY(-1px);
+}
+[data-theme="light-ilha"] .btn-ghost {
+  border: 1px solid rgba(0,136,204,0.35);
+  color: #0066aa;
+  border-radius: 14px !important;
+  background: rgba(0,136,204,0.06);
+  backdrop-filter: blur(4px);
+}
+[data-theme="light-ilha"] .btn-ghost:hover {
+  background: rgba(0,136,204,0.12);
+  border-color: rgba(0,136,204,0.55);
+}
+
+/* Inputs — frosted glass */
+[data-theme="light-ilha"] .input {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,136,204,0.30);
+  border-radius: 12px !important;
+  color: #0a2040;
+  box-shadow: inset 0 1px 3px rgba(0,100,180,0.08);
+}
+[data-theme="light-ilha"] .input:focus {
+  border-color: #0088cc;
+  box-shadow: 0 0 0 3px rgba(0,136,204,0.18), inset 0 1px 3px rgba(0,100,180,0.06);
+  background: rgba(255,255,255,0.80);
+}
+[data-theme="light-ilha"] .input::placeholder { color: rgba(0,100,160,0.45); }
+
+/* Accent orb — golden sun */
+[data-theme="light-ilha"] .accent-orb {
+  background: radial-gradient(circle at 35% 30%, #ffe066 0%, #ffaa00 45%, rgba(255,140,0,0) 100%);
+  animation: ilhaSun 5s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+/* Scrollbar — ocean */
+[data-theme="light-ilha"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00aaee, #0066bb);
+  border-radius: 4px;
+}
+[data-theme="light-ilha"] ::-webkit-scrollbar-track { background: rgba(0,100,180,0.08); }
+
+/* Main — sunlight top glow */
+[data-theme="light-ilha"] main { position: relative; }
+[data-theme="light-ilha"] main::before {
+  content: '';
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255,200,50,0.4) 10%,
+    #ffcc44 30%, #ffe688 50%, #ffcc44 70%,
+    rgba(255,200,50,0.4) 90%, transparent 100%);
+  box-shadow: 0 0 12px rgba(255,200,50,0.5), 0 0 30px rgba(255,160,30,0.2);
+  pointer-events: none; z-index: 5;
+  animation: ilhaSun 5s ease-in-out infinite;
+}
+[data-theme="light-ilha"] main::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(0,150,220,0.10) 0%, transparent 60%);
+}
+
+@media (max-width: 1023px) {
+  [data-theme="light-ilha"] main::before { left: 0 !important; }
+}
+
+/* ────────────────────────────────────────────────────────
+   🌫️  COLINA — Silent Hill · Névoa permanente · Morte
+   Cores dessaturadas, neblina densa, granulação pesada,
+   quase sem contraste, terror psicológico, paleta morta
+──────────────────────────────────────────────────────── */
+
+@keyframes colinaFog {
+  0%,100% { opacity: 0.55; transform: translateX(0) scaleX(1); }
+  33%     { opacity: 0.70; transform: translateX(10px) scaleX(1.02); }
+  66%     { opacity: 0.50; transform: translateX(-6px) scaleX(0.99); }
+}
+@keyframes colinaFlicker {
+  0%,92%,100% { opacity: 1; }
+  93%          { opacity: 0.88; }
+  95%          { opacity: 1; }
+  97%          { opacity: 0.80; }
+}
+@keyframes colinaPulse {
+  0%,100% { opacity: 0.04; }
+  50%     { opacity: 0.09; }
+}
+
+/* Dead grey base — no color, heavy noise */
+[data-theme="dark-colina"] body {
+  background: #181818;
+}
+/* Dense layered fog — the most important element */
+[data-theme="dark-colina"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 1;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 20%, rgba(160,155,150,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 80%  50% at 20% 70%, rgba(140,135,130,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 40% at 80% 50%, rgba(150,145,140,0.10) 0%, transparent 70%);
+  animation: colinaFog 12s ease-in-out infinite;
+}
+/* Heavy grain overlay — SH2 PS2 dithering feel */
+[data-theme="dark-colina"] body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity: 0.055;
+  animation: colinaFlicker 15s ease-in-out infinite;
+}
+
+/* Sidebar — barely differentiated from bg, very muted */
+[data-theme="dark-colina"] .sidebar-bg {
+  background: linear-gradient(180deg, #222220 0%, #1c1c1a 50%, #181816 100%);
+  border-right: 1px solid rgba(90,85,80,0.25);
+  position: relative; overflow: hidden;
+}
+/* Fog layer on sidebar */
+[data-theme="dark-colina"] .sidebar-bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 100% 50% at 50% 30%, rgba(160,150,140,0.06) 0%, transparent 80%);
+  pointer-events: none;
+  animation: colinaFog 8s 2s ease-in-out infinite;
+}
+/* Static noise texture on sidebar */
+[data-theme="dark-colina"] .sidebar-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+/* Nav — barely visible active state, no color */
+[data-theme="dark-colina"] .nav-active {
+  background: rgba(90,80,70,0.18);
+  border-color: rgba(100,90,80,0.35);
+  color: #c8c0b8;
+  font-weight: 500;
+  text-shadow: none;
+  box-shadow: inset 2px 0 0 rgba(138,112,96,0.4);
+}
+[data-theme="dark-colina"] .nav-inactive { color: rgba(140,130,120,0.6); }
+[data-theme="dark-colina"] .nav-inactive:hover {
+  background: rgba(80,70,60,0.15);
+  color: #a09888;
+}
+
+/* Cards — very low contrast, almost disappear into fog */
+[data-theme="dark-colina"] .card {
+  background: rgba(42,40,38,0.85);
+  border: 1px solid rgba(70,65,60,0.40);
+  border-radius: 4px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  position: relative;
+}
+[data-theme="dark-colina"] .card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(150,140,130,0.04) 0%, transparent 100%);
+  border-radius: inherit; pointer-events: none;
+}
+[data-theme="dark-colina"] .card-hover:hover {
+  border-color: rgba(100,90,80,0.55);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(138,112,96,0.15);
+  animation: colinaFlicker 3s ease-in-out infinite;
+}
+
+/* Buttons — dead brownish-grey */
+[data-theme="dark-colina"] .btn-primary {
+  background: linear-gradient(180deg, #5a4a3a 0%, #3a2a1a 100%);
+  border: 1px solid rgba(100,80,60,0.50);
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  color: #c8c0b0;
+  font-weight: 500;
+  text-shadow: none;
+}
+[data-theme="dark-colina"] .btn-primary:hover {
+  filter: brightness(1.10);
+  animation: colinaFlicker 2s ease-in-out infinite;
+}
+[data-theme="dark-colina"] .btn-ghost {
+  border: 1px solid rgba(80,70,60,0.35);
+  color: #908880;
+  border-radius: 4px !important;
+}
+[data-theme="dark-colina"] .btn-ghost:hover {
+  background: rgba(70,60,50,0.20);
+  color: #b0a898;
+}
+
+/* Inputs */
+[data-theme="dark-colina"] .input {
+  background: rgba(30,28,26,0.90);
+  border: 1px solid rgba(70,65,60,0.40);
+  color: #c0b8b0;
+  border-radius: 4px !important;
+  caret-color: #b09080;
+}
+[data-theme="dark-colina"] .input:focus {
+  border-color: rgba(120,100,80,0.55);
+  box-shadow: 0 0 0 2px rgba(100,80,60,0.12);
+}
+[data-theme="dark-colina"] .input::placeholder { color: rgba(120,110,100,0.45); }
+
+/* Accent orb — almost invisible fog */
+[data-theme="dark-colina"] .accent-orb {
+  background: radial-gradient(circle, rgba(150,140,130,0.2) 0%, transparent 100%);
+  animation: colinaPulse 8s ease-in-out infinite;
+  filter: blur(8px);
+}
+
+/* Scrollbar */
+[data-theme="dark-colina"] ::-webkit-scrollbar-thumb {
+  background: rgba(100,90,80,0.4);
+  border-radius: 2px;
+}
+[data-theme="dark-colina"] ::-webkit-scrollbar-track { background: #181818; }
+
+/* Main — fog strips at top + corner darkness vignette */
+[data-theme="dark-colina"] main { position: relative; }
+[data-theme="dark-colina"] main::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.35) 100%);
+}
+[data-theme="dark-colina"] main::after {
+  content: '';
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(138,112,96,0.3), transparent);
+  pointer-events: none; z-index: 5;
+}
+/* All text slightly desaturated and faded */
+[data-theme="dark-colina"] * {
+  -webkit-font-smoothing: antialiased;
+}
+[data-theme="dark-colina"] .badge {
+  border-radius: 3px !important;
+  opacity: 0.8;
+}
+
+@media (max-width: 1023px) {
+  [data-theme="dark-colina"] main::after { left: 0 !important; }
+}
+
+/* ────────────────────────────────────────────────────────
+   🔮  VIDRO — Apple Liquid Glass · Glassmorphism · Aero
+   Transparência total, blur profundo, reflexos de luz,
+   materiais vítreos, espectros iridescentes, pureza
+──────────────────────────────────────────────────────── */
+
+@keyframes vidroShimmer {
+  0%   { background-position: -200% center; opacity: 0.4; }
+  50%  { opacity: 0.7; }
+  100% { background-position: 200% center;  opacity: 0.4; }
+}
+@keyframes vidroOrb {
+  0%,100% { transform: translate(0, 0) scale(1); }
+  33%     { transform: translate(20px, -15px) scale(1.06); }
+  66%     { transform: translate(-12px, 10px) scale(0.96); }
+}
+@keyframes vidroOrb2 {
+  0%,100% { transform: translate(0, 0) scale(1); }
+  33%     { transform: translate(-18px, 12px) scale(1.04); }
+  66%     { transform: translate(14px, -8px) scale(0.97); }
+}
+@keyframes vidroRefract {
+  0%,100% { opacity: 0.15; transform: rotate(0deg) scale(1); }
+  50%     { opacity: 0.25; transform: rotate(180deg) scale(1.05); }
+}
+
+/* Background — layered colorful orbs like Frutiger Aero */
+[data-theme="light-vidro"] body {
+  background: #c8e8ff;
+}
+/* Floating color orbs — the glassmorphism backdrop */
+[data-theme="light-vidro"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 50% 50% at 20% 25%, rgba(120,180,255,0.80) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 45% at 80% 70%, rgba(180,100,255,0.65) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 60% 20%, rgba(80,220,200,0.55) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 15% 75%, rgba(100,200,120,0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 35% at 85% 15%, rgba(255,180,100,0.40) 0%, transparent 60%);
+  animation: vidroOrb 18s ease-in-out infinite;
+}
+/* Second set of orbs */
+[data-theme="light-vidro"] body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 35% 55% at 70% 35%, rgba(255,140,200,0.40) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 30% 65%, rgba(60,160,255,0.45) 0%, transparent 60%);
+  animation: vidroOrb2 22s 2s ease-in-out infinite;
+}
+
+/* Sidebar — pure liquid glass panel */
+[data-theme="light-vidro"] .sidebar-bg {
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(28px) saturate(1.6) brightness(1.1);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6) brightness(1.1);
+  border-right: 1px solid rgba(255,255,255,0.70);
+  box-shadow:
+    4px 0 24px rgba(100,120,255,0.08),
+    inset -1px 0 0 rgba(255,255,255,0.60);
+  position: relative; overflow: hidden;
+}
+/* Iridescent top highlight — light refraction */
+[data-theme="light-vidro"] .sidebar-bg::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 50%;
+  background: linear-gradient(160deg,
+    rgba(255,255,255,0.45) 0%,
+    rgba(200,230,255,0.20) 40%,
+    transparent 100%);
+  pointer-events: none;
+}
+/* Spectral shine edge on sidebar */
+[data-theme="light-vidro"] .sidebar-bg::after {
+  content: '';
+  position: absolute; top: 20%; left: -2px; width: 3px; height: 60%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(120,200,255,0.6) 20%,
+    rgba(200,130,255,0.6) 50%,
+    rgba(80,220,200,0.5) 80%,
+    transparent 100%);
+  pointer-events: none;
+  animation: vidroRefract 8s ease-in-out infinite;
+}
+
+/* Nav — glass active pill */
+[data-theme="light-vidro"] .nav-active {
+  background: rgba(255,255,255,0.50);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 12px !important;
+  color: #0a1a40;
+  font-weight: 600;
+  box-shadow:
+    0 2px 12px rgba(60,120,255,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.90);
+}
+[data-theme="light-vidro"] .nav-inactive { color: rgba(20,40,100,0.60); }
+[data-theme="light-vidro"] .nav-inactive:hover {
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(8px);
+  color: #0a1a40;
+}
+
+/* Cards — premium liquid glass */
+[data-theme="light-vidro"] .card {
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(20px) saturate(1.5) brightness(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5) brightness(1.05);
+  border: 1px solid rgba(255,255,255,0.72);
+  border-radius: 20px !important;
+  box-shadow:
+    0 4px 24px rgba(80,120,255,0.10),
+    0 1px 0 rgba(255,255,255,0.92) inset,
+    0 -1px 0 rgba(100,120,255,0.05) inset;
+  position: relative; overflow: hidden;
+}
+/* Spectral shimmer across card */
+[data-theme="light-vidro"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,0.30),
+    rgba(200,220,255,0.15),
+    transparent);
+  animation: vidroShimmer 8s ease-in-out infinite;
+  pointer-events: none;
+}
+/* Iridescent top border glow */
+[data-theme="light-vidro"] .card::after {
+  content: '';
+  position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(120,200,255,0.6),
+    rgba(200,130,255,0.6),
+    rgba(80,220,200,0.5),
+    transparent);
+  pointer-events: none;
+}
+[data-theme="light-vidro"] .card-hover:hover {
+  background: rgba(255,255,255,0.58);
+  border-color: rgba(255,255,255,0.85);
+  box-shadow:
+    0 8px 40px rgba(80,120,255,0.18),
+    0 1px 0 rgba(255,255,255,0.95) inset;
+  transform: translateY(-2px) scale(1.005);
+}
+
+/* Buttons — glossy glass pill */
+[data-theme="light-vidro"] .btn-primary {
+  background: rgba(59,130,246,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(120,180,255,0.70);
+  border-radius: 24px !important;
+  box-shadow:
+    0 4px 20px rgba(59,130,246,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.40);
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,30,80,0.3);
+}
+[data-theme="light-vidro"] .btn-primary:hover {
+  background: rgba(59,130,246,0.85);
+  box-shadow: 0 6px 28px rgba(59,130,246,0.50), inset 0 1px 0 rgba(255,255,255,0.50);
+  transform: translateY(-1px);
+}
+[data-theme="light-vidro"] .btn-ghost {
+  border: 1px solid rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
+  color: #1a2a60;
+  border-radius: 18px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+}
+[data-theme="light-vidro"] .btn-ghost:hover {
+  background: rgba(255,255,255,0.40);
+  border-color: rgba(255,255,255,0.80);
+}
+
+/* Inputs — glass field */
+[data-theme="light-vidro"] .input {
+  background: rgba(255,255,255,0.50);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.70);
+  border-radius: 14px !important;
+  color: #0a1a40;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.60), 0 1px 4px rgba(80,100,200,0.06);
+}
+[data-theme="light-vidro"] .input:focus {
+  background: rgba(255,255,255,0.65);
+  border-color: rgba(120,180,255,0.70);
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.70);
+}
+[data-theme="light-vidro"] .input::placeholder { color: rgba(30,60,150,0.40); }
+
+/* Badge */
+[data-theme="light-vidro"] .badge {
+  background: rgba(255,255,255,0.45) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.65) !important;
+  border-radius: 12px !important;
+}
+
+/* Accent orb — spectral sphere */
+[data-theme="light-vidro"] .accent-orb {
+  background: conic-gradient(
+    rgba(120,200,255,0.6) 0deg 90deg,
+    rgba(200,130,255,0.5) 90deg 180deg,
+    rgba(80,220,200,0.5) 180deg 270deg,
+    rgba(255,180,100,0.5) 270deg 360deg
+  );
+  filter: blur(2px);
+  animation: vidroRefract 8s ease-in-out infinite;
+}
+
+/* Scrollbar — glass track */
+[data-theme="light-vidro"] ::-webkit-scrollbar-thumb {
+  background: rgba(100,150,255,0.35);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.50);
+}
+[data-theme="light-vidro"] ::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.15);
+}
+
+/* Main — spectral top border */
+[data-theme="light-vidro"] main { position: relative; }
+[data-theme="light-vidro"] main::before {
+  content: '';
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(120,200,255,0.7) 20%,
+    rgba(200,130,255,0.7) 50%,
+    rgba(80,220,200,0.6) 80%,
+    transparent 100%);
+  pointer-events: none; z-index: 5;
+  animation: vidroRefract 8s ease-in-out infinite;
+}
+/* Subtle depth layer */
+[data-theme="light-vidro"] main::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse 100% 100% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 60%);
+}
+
+@media (max-width: 1023px) {
+  [data-theme="light-vidro"] main::before { left: 0 !important; }
+  [data-theme="light-vidro"] .sidebar-bg {
+    backdrop-filter: blur(20px) saturate(1.4);
+  }
 }
 
 /* ════════════════════════════════════════════════════════
