@@ -126,7 +126,7 @@ function addNoise(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H
 // ── Main card drawing function ─────────────────────────────────────────────────
 function drawCard(
   canvas: HTMLCanvasElement,
-  user: { full_name: string; email: string; nusp?: string; id: string },
+  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
   activeBadges: Badge[],
   area: string,
   language: string,
@@ -195,9 +195,37 @@ function drawCard(
 
   ctx.restore() // ← restore from card clip
 
-  // ── 4. Text — name ──────────────────────────────────
+  // ── 4. Avatar (above name) ──────────────────────────
+  const avatarSize = 56
   const textX = 48
-  const textY = Math.round(H * 0.56)
+  const avatarY = Math.round(H * 0.38)
+
+  if (user.avatar_url) {
+    const img = new Image()
+    img.src = user.avatar_url
+    // Draw avatar as circle
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(textX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2)
+    ctx.clip()
+    ctx.drawImage(img, textX, avatarY, avatarSize, avatarSize)
+    ctx.restore()
+    // Subtle border
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(textX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2)
+    ctx.strokeStyle = inkColor
+    ctx.globalAlpha = 0.12
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.globalAlpha = 1
+    ctx.restore()
+  }
+
+  // ── 5. Text — name ──────────────────────────────────
+  const textY = user.avatar_url
+    ? avatarY + avatarSize + 18
+    : Math.round(H * 0.56)
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -220,11 +248,11 @@ function drawCard(
     if (fnW + spaceW + ctx.measureText(lastName).width < W - textX * 2) {
       ctx.fillText(lastName, textX + fnW + spaceW, textY)
     } else {
-      ctx.fillText(lastName, textX, textY + 58)
+      ctx.fillText(lastName, textX, textY + 52)
     }
   }
 
-  // ── 5. Title ────────────────────────────────────────
+  // ── 6. Title ────────────────────────────────────────
   const titleRng  = seededRng(user.id + '-title')
   const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
   const titleY    = textY + 38
@@ -233,7 +261,7 @@ function drawCard(
   ctx.fillStyle = inkFaint
   ctx.fillText(titleText, textX, titleY)
 
-  // ── 6. USP # and email ──────────────────────────────
+  // ── 7. USP # and email ──────────────────────────────
   const infoY   = titleY + 28
   const nuspStr = user.nusp ? `#${user.nusp}` : ''
   const infoStr = [nuspStr, user.email].filter(Boolean).join('  ·  ')
@@ -244,7 +272,7 @@ function drawCard(
   ctx.fillText(infoStr, textX, infoY)
   ctx.globalAlpha = 1
 
-  // ── 7. Bottom pill: area | language ────────────────
+  // ── 8. Bottom pill: area | language ────────────────
   const bottomY = H - 72
   const aLabel  = area || ''
   const lLabel  = language || ''
@@ -464,10 +492,16 @@ export default function ProfilePage() {
 
   const draw = useCallback(() => {
     if (!canvasRef.current || !user) return
-    try {
-      drawCard(canvasRef.current, user, activeBadges, area, language)
-    } catch (err) {
-      console.error('Card draw error:', err)
+    if (user.avatar_url) {
+      const img = new Image()
+      img.onload = () => {
+        try { drawCard(canvasRef.current!, user, activeBadges, area, language) }
+        catch (err) { console.error('Card draw error:', err) }
+      }
+      img.src = user.avatar_url
+    } else {
+      try { drawCard(canvasRef.current, user, activeBadges, area, language) }
+      catch (err) { console.error('Card draw error:', err) }
     }
   }, [user, activeBadges, area, language])
 
