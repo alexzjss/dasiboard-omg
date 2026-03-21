@@ -49,7 +49,7 @@ export default function DasiLogo({ size = 32, className = '' }: DasiLogoProps) {
       </svg>
 
       <img
-        src="/logo-dasi.png"
+        src="/nova-logo-dasi.png"
         alt="DaSI Logo"
         width={size}
         height={size}
