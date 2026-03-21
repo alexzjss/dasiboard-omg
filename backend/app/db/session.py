@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     hashed_password  VARCHAR(255) NOT NULL,
     full_name        VARCHAR(255) NOT NULL,
     nusp             VARCHAR(20)  UNIQUE,
-    avatar_url       VARCHAR(512),
+    avatar_url       TEXT,
     is_active        BOOLEAN      NOT NULL DEFAULT TRUE,
     is_verified      BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
