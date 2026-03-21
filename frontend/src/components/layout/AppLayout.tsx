@@ -3,19 +3,25 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
-  LogOut, Palette, Search,
+  LogOut, Palette, Search, BookMarked, ChevronDown,
+  Keyboard,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import StudyMode from '@/components/study/StudyMode'
+import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
+import { NotificationBanner } from '@/hooks/usePushNotifications'
+import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal } from '@/hooks/useInteractions'
 import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import clsx from 'clsx'
 
 const nav = [
-  { to: '/',         label: 'Início',      icon: LayoutDashboard, end: true  },
-  { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,    end: false },
-  { to: '/grades',   label: 'Disciplinas', icon: BookOpen,        end: false },
-  { to: '/calendar', label: 'Calendário',  icon: CalendarDays,    end: false },
-  { to: '/entities', label: 'Entidades',   icon: Users,           end: false },
-  { to: '/profile',  label: 'Perfil',      icon: User,            end: false },
+  { to: '/',          label: 'Início',      icon: LayoutDashboard, end: true  },
+  { to: '/kanban',    label: 'Kanban',      icon: KanbanSquare,    end: false },
+  { to: '/grades',    label: 'Disciplinas', icon: BookOpen,        end: false },
+  { to: '/calendar',  label: 'Calendário',  icon: CalendarDays,    end: false },
+  { to: '/entities',  label: 'Entidades',   icon: Users,           end: false },
+  { to: '/docentes',  label: 'Docentes',    icon: BookMarked,      end: false },
+  { to: '/profile',   label: 'Perfil',      icon: User,            end: false },
 ]
 
 // ── Theme preview colors for visual picker ───────────────────────────────────
@@ -355,6 +361,11 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
         ))}
       </nav>
 
+      {/* Study Mode widget */}
+      <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
+        <StudyMode />
+      </div>
+
       {/* User */}
       <div className="p-3 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-all cursor-default"
@@ -383,40 +394,60 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
 // ── App Layout ────────────────────────────────────────────────────────────────
 export default function AppLayout() {
   const location = useLocation()
-  const { theme, isDark, toggleDarkLight, chronoEra } = useTheme()
-  const [showPicker,   setShowPicker]   = useState(false)
-  const [showPokeball, setShowPokeball] = useState(false)
-  const [starter,      setStarter]      = useState<string>(() =>
-    localStorage.getItem('dasiboard-starter') ?? ''
-  )
+  const navigate = useNavigate()
+  const { theme, isDark, toggleDarkLight, cycleTheme, chronoEra } = useTheme()
+  const [showPicker,      setShowPicker]   = useState(false)
+  const [showPokeball,    setShowPokeball] = useState(false)
+  const [showKeyHelp,     setShowKeyHelp]  = useState(false)
+  const [starter,         setStarter]      = useState<string>(() => localStorage.getItem('dasiboard-starter') ?? '')
+  const { show: showOnboarding, markDone: doneOnboarding } = useOnboarding()
 
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+  useSwipeNavigation()
 
-  // ── Keyboard shortcut Ctrl+T / Cmd+T → theme picker ──────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 't') {
-        e.preventDefault()
-        setShowPicker(prev => !prev)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
+  // ── Keyboard shortcuts ────────────────────────────────
+  const shortcuts = [
+    // Navegação de páginas
+    { key: 'g', description: 'Ir para Disciplinas',      group: 'Navegação', action: () => navigate('/grades') },
+    { key: 'k', description: 'Ir para Kanban',           group: 'Navegação', action: () => navigate('/kanban') },
+    { key: 'c', description: 'Ir para Calendário',       group: 'Navegação', action: () => navigate('/calendar') },
+    { key: 'e', description: 'Ir para Entidades',        group: 'Navegação', action: () => navigate('/entities') },
+    { key: 'd', description: 'Ir para Docentes',         group: 'Navegação', action: () => navigate('/docentes') },
+    { key: 'p', description: 'Ir para Perfil',           group: 'Navegação', action: () => navigate('/profile') },
+    { key: 'h', description: 'Ir para Início',           group: 'Navegação', action: () => navigate('/') },
+    // Interface
+    { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
+    { key: '?',             description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
+    { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false); setShowKeyHelp(false) } },
+    { key: 'b',             description: 'Alternar claro/escuro',    group: 'Interface', action: () => toggleDarkLight() },
+    // Temas
+    { key: 'ArrowRight', alt: true, description: 'Próximo tema',     group: 'Temas', action: () => cycleTheme() },
+    { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',    group: 'Temas', action: () => {
+      const pool = isDark ? DARK_THEMES : LIGHT_THEMES
+      const idx  = pool.findIndex(t => t.id === theme.id)
+      const prev = pool[(idx - 1 + pool.length) % pool.length]
+      // setTheme via context would need to be exposed — for now cycleTheme handles next
+    }},
+    // Ações rápidas
+    { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',    group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
+    { key: 'r', ctrl: true, description: 'Recarregar dados da página',       group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
+    { key: 'f', ctrl: true, description: 'Buscar (em páginas com busca)',    group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
+  ]
+
+  useKeyboardShortcuts(shortcuts)
 
   const isPixel  = theme.id === 'dark-pixel'
   const isChrono = theme.id === 'dark-chrono'
-
-  const saveStarter = (id: string) => {
-    localStorage.setItem('dasiboard-starter', id)
-    setStarter(id)
-  }
+  const saveStarter = (id: string) => { localStorage.setItem('dasiboard-starter', id); setStarter(id) }
 
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
 
+      {showOnboarding && <Onboarding onClose={doneOnboarding} />}
       {showPicker && <ThemePicker onClose={() => setShowPicker(false)} />}
+      {showKeyHelp && <KeyboardHelpModal shortcuts={shortcuts} onClose={() => setShowKeyHelp(false)} />}
       {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
+      <NotificationBanner />
 
       {/* Pokéball button — only in Pixel theme */}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}

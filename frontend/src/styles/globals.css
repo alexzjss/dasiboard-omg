@@ -329,27 +329,29 @@
   }
 
   /* ═══════════════════════════════════════════════════════
-     🎮  DARK — 720 (Xbox 360 · Older Brother · Y2K Green)
+     🎮  DARK — 720 (Xbox 360 NXE · New Xbox Experience)
+     Verde lima saturado, branco, cinza metalizado
+     Blades, tiles arredondados, glow de LED verde
   ═══════════════════════════════════════════════════════ */
   [data-theme="light-720"] {
-    --bg-base:        #0a1a00;
-    --bg-surface:     #0f2200;
-    --bg-elevated:    #142800;
-    --bg-card:        #163000;
-    --border:         #1e4400;
-    --border-light:   #2a5c00;
-    --text-primary:   #e8ffcc;
-    --text-secondary: #99ee44;
-    --text-muted:     #3a6600;
+    --bg-base:        #0c1e00;
+    --bg-surface:     #122400;
+    --bg-elevated:    #182c00;
+    --bg-card:        #1e3600;
+    --border:         rgba(111,190,0,0.22);
+    --border-light:   rgba(111,190,0,0.38);
+    --text-primary:   #f0ffcc;
+    --text-secondary: #aaee44;
+    --text-muted:     rgba(111,190,0,0.35);
     --accent-1:       #6fbe00;
     --accent-2:       #52a000;
-    --accent-3:       #aaee44;
-    --accent-glow:    rgba(111,190,0,0.45);
+    --accent-3:       #c8f07a;
+    --accent-glow:    rgba(111,190,0,0.55);
     --accent-soft:    rgba(111,190,0,0.12);
-    --gradient-hero:  linear-gradient(135deg, #6fbe00 0%, #99ee44 40%, #2a5c00 100%);
-    --gradient-btn:   linear-gradient(135deg, #6fbe00, #52a000);
-    --noise-opacity:  0.025;
-    --card-blur:      2px;
+    --gradient-hero:  linear-gradient(160deg, #b2e04a 0%, #6fbe00 30%, #2a5c00 70%, #0c1e00 100%);
+    --gradient-btn:   linear-gradient(180deg, #99dd22 0%, #6fbe00 40%, #3a7800 100%);
+    --noise-opacity:  0.018;
+    --card-blur:      0px;
     --sidebar-overlay: none;
     font-family: "Rajdhani", "DM Sans", sans-serif;
   }
@@ -357,11 +359,12 @@
   [data-theme="light-720"] h2,
   [data-theme="light-720"] h3,
   [data-theme="light-720"] h4 {
-    font-family: "Rajdhani", "Orbitron", sans-serif;
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    text-shadow: 0 0 18px rgba(111,190,0,0.5), 0 0 40px rgba(111,190,0,0.2);
+    color: #c8f07a;
+    text-shadow: 0 0 20px rgba(111,190,0,0.70), 0 0 40px rgba(111,190,0,0.30);
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -1922,156 +1925,163 @@
 }
 
 /* ────────────────────────────────────────────────────────
-   🎮  720 — Xbox 360 Dashboard / Older Brother Core
-   Verde limão glossy, blade tiles perspectiva, orbs,
-   bubbles do NXE dashboard, scan lines, LED strip
+   🎮  720 — Xbox 360 NXE Dashboard (New Xbox Experience)
+   Verde limão saturado, tiles blade em perspectiva,
+   reflexo glossy, orb do Xbox, LED ring verde, bubbles
 ──────────────────────────────────────────────────────── */
 
-@keyframes xbox360Orb {
-  0%   { transform: scale(1) rotate(0deg);    opacity: 0.8; }
-  50%  { transform: scale(1.1) rotate(5deg);  opacity: 1;   }
-  100% { transform: scale(1) rotate(0deg);    opacity: 0.8; }
+@keyframes nxeBlade {
+  0%,100% { transform: perspective(900px) rotateY(-0.6deg) translateZ(0); }
+  50%     { transform: perspective(900px) rotateY(0.6deg)  translateZ(3px); }
 }
-@keyframes xbox360Glow {
-  0%,100% { opacity: 0.7; filter: brightness(1); }
-  50%     { opacity: 1;   filter: brightness(1.15); }
+@keyframes nxeOrb {
+  0%,100% { transform: scale(1);    opacity: 0.88; filter: brightness(1); }
+  50%     { transform: scale(1.08); opacity: 1;    filter: brightness(1.18); }
 }
-@keyframes xbox360Blade {
-  0%,100% { transform: perspective(1200px) rotateY(-0.4deg) translateZ(0); }
-  50%     { transform: perspective(1200px) rotateY(0.4deg) translateZ(2px); }
+@keyframes nxeLed {
+  0%,100% { opacity: 0.7; }
+  50%     { opacity: 1; }
 }
-@keyframes xboxScan {
-  from { background-position: 0 0; }
-  to   { background-position: 0 8px; }
+@keyframes nxeBubble {
+  0%,100% { transform: translateY(0)    scale(1);    opacity: 0.07; }
+  50%     { transform: translateY(-14px) scale(1.04); opacity: 0.13; }
 }
-@keyframes xboxBubble {
-  0%   { transform: translateY(0) scale(1);   opacity: 0.06; }
-  50%  { transform: translateY(-12px) scale(1.05); opacity: 0.10; }
-  100% { transform: translateY(0) scale(1);   opacity: 0.06; }
-}
-@keyframes xboxLedPulse {
-  0%,100% { box-shadow: 0 0 6px #6fbe00, 0 0 12px rgba(111,190,0,0.3); }
-  50%     { box-shadow: 0 0 14px #99ee44, 0 0 30px rgba(111,190,0,0.5); }
+@keyframes nxeTileSlide {
+  /* Blades sliding in from right — used on hero card */
+  from { transform: perspective(800px) rotateY(8deg) translateX(40px); opacity: 0; }
+  to   { transform: perspective(800px) rotateY(0deg) translateX(0);    opacity: 1; }
 }
 
-/* ── Body: silvery green like Xbox 360 dashboard floor ── */
+/* ── Background: piso cinza-esverdeado do NXE ── */
 [data-theme="light-720"] body {
-  background: #0d1a00;
+  background: radial-gradient(ellipse 140% 80% at 60% 110%, #1a3c00 0%, #0c1e00 50%, #060e00 100%);
 }
-/* Background: NXE-style radial bubbles + subtle circle pattern */
+/* Reflexo de chão — como o piso do dashboard 360 */
 [data-theme="light-720"] body::before {
   content: '';
-  position: fixed; inset: 0;
-  pointer-events: none; z-index: 0;
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background:
-    radial-gradient(circle 280px at 10% 60%,  rgba(111,190,0,0.10) 0%, transparent 70%),
-    radial-gradient(circle 200px at 90% 20%,  rgba(170,238,68,0.07) 0%, transparent 70%),
-    radial-gradient(circle 150px at 50% 90%,  rgba(82,160,0,0.08) 0%, transparent 70%),
-    radial-gradient(circle 350px at 75% 50%,  rgba(60,120,0,0.05) 0%, transparent 80%),
-    radial-gradient(ellipse 100% 60% at 50% 100%, rgba(0,40,0,0.8) 0%, transparent 100%);
+    /* Glow central do avatar/tile principal */
+    radial-gradient(ellipse 55% 40% at 58% 48%, rgba(111,190,0,0.14) 0%, transparent 65%),
+    /* Reflexo de chão suave */
+    radial-gradient(ellipse 120% 30% at 50% 100%, rgba(111,190,0,0.10) 0%, rgba(40,80,0,0.05) 60%, transparent 100%),
+    /* Glow de fundo lateral */
+    radial-gradient(ellipse 40% 60% at 5% 50%, rgba(80,160,0,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 50% at 95% 30%, rgba(111,190,0,0.05) 0%, transparent 70%);
+  animation: nxeBubble 10s ease-in-out infinite;
 }
-/* Circle bubble texture from Xbox 360 bg */
+/* Bolhas circulares do background NXE */
 [data-theme="light-720"] body::after {
   content: '';
-  position: fixed; inset: 0;
-  pointer-events: none; z-index: 0;
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image:
-    radial-gradient(circle 28px at center, rgba(111,190,0,0.06) 0%, rgba(111,190,0,0) 100%),
-    radial-gradient(circle 16px at center, rgba(111,190,0,0.04) 0%, rgba(111,190,0,0) 100%);
-  background-size: 80px 80px, 48px 48px;
-  background-position: 0 0, 24px 24px;
-  animation: xboxBubble 6s ease-in-out infinite;
+    radial-gradient(circle 36px at center, rgba(111,190,0,0.07) 0%, transparent 100%),
+    radial-gradient(circle 20px at center, rgba(170,238,68,0.05) 0%, transparent 100%),
+    radial-gradient(circle 12px at center, rgba(111,190,0,0.04) 0%, transparent 100%);
+  background-size: 96px 96px, 60px 60px, 38px 38px;
+  background-position: 0 0, 28px 20px, 14px 44px;
+  animation: nxeBubble 7s 2s ease-in-out infinite;
 }
 
-/* ── Sidebar: blade panel — green gradient + glass sheen ── */
+/* ── Sidebar: blade panel NXE verde escuro ── */
 [data-theme="light-720"] .sidebar-bg {
-  background: linear-gradient(160deg,
-    #2a5200 0%, #1e3d00 18%,
-    #152c00 40%, #0d1a00 65%,
-    #0a1400 100%);
-  border-right: 1px solid rgba(111,190,0,0.35);
+  background: linear-gradient(165deg,
+    #2c5800 0%, #1e3e00 20%,
+    #162c00 45%, #0e1e00 70%,
+    #0a1600 100%);
+  border-right: 1px solid rgba(111,190,0,0.30);
   position: relative; overflow: hidden;
-  animation: xbox360Blade 10s ease-in-out infinite;
+  animation: nxeBlade 12s ease-in-out infinite;
 }
-/* Top glass sheen */
+/* Reflexo glossy no topo da sidebar */
 [data-theme="light-720"] .sidebar-bg::before {
   content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 45%;
+  position: absolute; top: 0; left: 0; right: 0; height: 50%;
   background: linear-gradient(180deg,
-    rgba(170,238,68,0.10) 0%,
-    rgba(111,190,0,0.04) 60%,
+    rgba(178,224,74,0.12) 0%,
+    rgba(111,190,0,0.05) 55%,
     transparent 100%);
   pointer-events: none; z-index: 1;
 }
-/* Xbox circle logo orb at bottom */
+/* Orb Xbox (círculo verde) no rodapé da sidebar */
 [data-theme="light-720"] .sidebar-bg::after {
   content: '';
-  position: absolute; bottom: 52px; left: 50%;
+  position: absolute; bottom: 56px; left: 50%;
   transform: translateX(-50%);
-  width: 44px; height: 44px; border-radius: 50%;
-  background:
-    radial-gradient(circle at 38% 32%, rgba(200,255,120,0.8) 0%, rgba(111,190,0,1) 30%, rgba(50,100,0,1) 100%);
-  box-shadow: 0 0 18px rgba(111,190,0,0.7), 0 0 36px rgba(111,190,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3);
-  pointer-events: none; z-index: 2;
-  animation: xbox360Orb 5s ease-in-out infinite, xboxLedPulse 3s ease-in-out infinite;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%,
+    rgba(220,255,140,0.95) 0%,
+    rgba(111,190,0,1) 28%,
+    rgba(40,90,0,1) 68%,
+    rgba(10,30,0,1) 100%);
+  box-shadow:
+    0 0 0 3px rgba(111,190,0,0.3),
+    0 0 20px rgba(111,190,0,0.7),
+    0 0 40px rgba(111,190,0,0.35),
+    inset 0 2px 3px rgba(255,255,255,0.35),
+    inset 0 -2px 3px rgba(0,0,0,0.5);
+  pointer-events: none; z-index: 3;
+  animation: nxeOrb 4s ease-in-out infinite, nxeLed 2.5s ease-in-out infinite;
 }
 
-/* ── Nav: blade hover + active like NXE blade tabs ── */
+/* ── Nav: blade tabs NXE ── */
 [data-theme="light-720"] .nav-active {
   background: linear-gradient(90deg,
-    rgba(111,190,0,0.30) 0%,
-    rgba(82,160,0,0.20) 60%,
-    rgba(50,100,0,0.10) 100%);
-  border-left: 3px solid #6fbe00;
+    rgba(111,190,0,0.32) 0%,
+    rgba(82,160,0,0.18) 60%,
+    rgba(40,90,0,0.08) 100%);
+  border-left: 3px solid #6fbe00 !important;
   border-color: transparent;
   color: #c8f07a;
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(111,190,0,0.8), 0 0 24px rgba(111,190,0,0.3);
-  box-shadow: inset 3px 0 0 #6fbe00, inset 0 1px 0 rgba(170,238,68,0.15);
-  animation: xbox360Glow 3s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(111,190,0,0.9), 0 0 22px rgba(111,190,0,0.4);
+  box-shadow: inset 0 1px 0 rgba(200,240,122,0.10), 0 0 12px rgba(111,190,0,0.08);
+  animation: nxeLed 3s ease-in-out infinite;
 }
-[data-theme="light-720"] .nav-inactive {
-  color: rgba(170,220,100,0.55);
-  font-weight: 500;
-}
+[data-theme="light-720"] .nav-inactive { color: rgba(170,220,100,0.50); font-weight: 500; }
 [data-theme="light-720"] .nav-inactive:hover {
   background: rgba(111,190,0,0.10);
-  color: rgba(200,255,120,0.8);
-  box-shadow: inset 2px 0 0 rgba(111,190,0,0.4);
+  color: rgba(200,255,120,0.75);
+  box-shadow: inset 2px 0 0 rgba(111,190,0,0.35);
 }
+/* Texto na sidebar em verde claro */
+[data-theme="light-720"] .sidebar-bg .font-display { color: rgba(220,255,160,0.95) !important; }
+[data-theme="light-720"] .sidebar-bg p,
+[data-theme="light-720"] .sidebar-bg .text-muted   { color: rgba(111,190,0,0.45) !important; }
 
-/* ── Cards: Xbox blade tiles — glossy green panels ── */
+/* ── Cards: tiles blade do NXE ── */
 [data-theme="light-720"] .card {
-  background: linear-gradient(145deg,
-    rgba(30,60,0,0.95) 0%,
-    rgba(20,40,0,0.90) 50%,
-    rgba(13,26,0,0.85) 100%);
-  border: 1px solid rgba(111,190,0,0.25);
-  border-radius: 6px !important;
+  background: linear-gradient(150deg,
+    rgba(34,68,0,0.96) 0%,
+    rgba(22,48,0,0.92) 50%,
+    rgba(14,30,0,0.88) 100%);
+  border: 1px solid rgba(111,190,0,0.20);
+  border-top: 1px solid rgba(178,224,74,0.22);
+  border-radius: 8px !important;
   box-shadow:
-    0 4px 24px rgba(0,0,0,0.6),
-    0 1px 0 rgba(170,238,68,0.12),
-    inset 0 1px 0 rgba(170,238,68,0.08),
-    inset 0 -1px 0 rgba(0,0,0,0.3);
+    0 4px 28px rgba(0,0,0,0.55),
+    0 1px 0 rgba(200,240,122,0.10),
+    inset 0 1px 0 rgba(178,224,74,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.25);
   position: relative; overflow: hidden;
 }
-/* Glossy top reflection — like Xbox blade glass */
+/* Reflexo glossy no topo do tile */
 [data-theme="light-720"] .card::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
-  height: 35%;
+  height: 42%;
   background: linear-gradient(180deg,
-    rgba(170,238,68,0.09) 0%,
-    rgba(111,190,0,0.03) 70%,
+    rgba(178,224,74,0.10) 0%,
+    rgba(111,190,0,0.04) 65%,
     transparent 100%);
   border-radius: inherit;
   pointer-events: none;
 }
-/* Orb bubble decoration in bottom right */
+/* Orb bubble no canto inferior direito */
 [data-theme="light-720"] .card::after {
   content: '';
-  position: absolute; bottom: -24px; right: -24px;
-  width: 72px; height: 72px; border-radius: 50%;
+  position: absolute; bottom: -28px; right: -28px;
+  width: 80px; height: 80px; border-radius: 50%;
   background: radial-gradient(circle,
     rgba(111,190,0,0.10) 0%,
     rgba(111,190,0,0.04) 50%,
@@ -2079,115 +2089,164 @@
   pointer-events: none;
 }
 [data-theme="light-720"] .card-hover:hover {
-  border-color: rgba(111,190,0,0.55);
+  border-color: rgba(111,190,0,0.50);
+  border-top-color: rgba(200,240,122,0.45);
   box-shadow:
-    0 8px 36px rgba(0,0,0,0.7),
-    0 0 0 1px rgba(111,190,0,0.4),
-    0 2px 0 rgba(170,238,68,0.2),
-    inset 0 1px 0 rgba(170,238,68,0.15);
-  transform: translateY(-1px);
+    0 8px 40px rgba(0,0,0,0.65),
+    0 0 0 1px rgba(111,190,0,0.35),
+    0 2px 0 rgba(200,240,122,0.18),
+    inset 0 1px 0 rgba(200,240,122,0.12);
+  transform: translateY(-2px);
+}
+/* Hero card — blade principal com slide animation */
+[data-theme="light-720"] .hero-card {
+  animation: nxeTileSlide 0.5s cubic-bezier(0.22,1,0.36,1) both !important;
 }
 
-/* ── Buttons: glossy green Xbox pill ── */
+/* ── Buttons: pill glossy verde Xbox ── */
 [data-theme="light-720"] .btn-primary {
   background: linear-gradient(180deg,
-    #99dd22 0%,
-    #6fbe00 30%,
-    #52a000 70%,
-    #3a7800 100%);
-  border: 1px solid rgba(170,238,68,0.6);
-  border-bottom-color: rgba(30,80,0,0.8);
-  border-radius: 24px !important;
+    #b2e04a 0%,
+    #6fbe00 25%,
+    #52a000 65%,
+    #3a7800 100%) !important;
+  border: 1px solid rgba(200,240,122,0.55);
+  border-bottom-color: rgba(20,60,0,0.85);
+  border-radius: 26px !important;
   box-shadow:
-    0 4px 20px rgba(111,190,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.25),
-    inset 0 -1px 0 rgba(0,0,0,0.3);
+    0 4px 22px rgba(111,190,0,0.50),
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    inset 0 -2px 0 rgba(0,0,0,0.25) !important;
   color: #fff;
+  font-family: "Rajdhani", sans-serif;
   font-weight: 700;
+  letter-spacing: 0.04em;
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 [data-theme="light-720"] .btn-primary:hover {
-  filter: brightness(1.12) saturate(1.1);
-  box-shadow:
-    0 6px 28px rgba(111,190,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.3);
+  filter: brightness(1.14) saturate(1.12);
+  box-shadow: 0 6px 30px rgba(111,190,0,0.65), inset 0 1px 0 rgba(255,255,255,0.32);
   transform: translateY(-1px);
 }
 [data-theme="light-720"] .btn-ghost {
-  border: 1px solid rgba(111,190,0,0.35);
-  color: #99ee44;
-  border-radius: 16px !important;
-  background: rgba(111,190,0,0.06);
+  border: 1px solid rgba(111,190,0,0.32);
+  color: #aaee44;
+  border-radius: 18px !important;
+  background: rgba(111,190,0,0.07);
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 [data-theme="light-720"] .btn-ghost:hover {
-  border-color: rgba(111,190,0,0.6);
-  background: rgba(111,190,0,0.12);
+  border-color: rgba(111,190,0,0.55);
+  background: rgba(111,190,0,0.13);
   color: #c8f07a;
 }
 
 /* ── Inputs ── */
 [data-theme="light-720"] .input {
-  background: rgba(20,40,0,0.85);
-  border: 1px solid rgba(111,190,0,0.25);
-  color: #c8f07a;
-  border-radius: 6px !important;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+  background: rgba(14,30,0,0.88) !important;
+  border: 1px solid rgba(111,190,0,0.22) !important;
+  color: #c8f07a !important;
+  border-radius: 8px !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(111,190,0,0.06) !important;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.02em;
 }
 [data-theme="light-720"] .input:focus {
-  border-color: #6fbe00;
-  box-shadow: 0 0 0 2px rgba(111,190,0,0.18), inset 0 1px 4px rgba(0,0,0,0.3);
+  border-color: rgba(111,190,0,0.60) !important;
+  box-shadow: 0 0 0 2px rgba(111,190,0,0.18), inset 0 1px 4px rgba(0,0,0,0.3) !important;
 }
-[data-theme="light-720"] .input::placeholder { color: rgba(111,190,0,0.35); }
+[data-theme="light-720"] .input::placeholder { color: rgba(111,190,0,0.30); }
+
+/* ── Label e badges ── */
+[data-theme="light-720"] .label {
+  color: rgba(111,190,0,0.65);
+  font-family: "Rajdhani", sans-serif;
+  letter-spacing: 0.08em;
+}
+[data-theme="light-720"] .badge {
+  border-radius: 4px !important;
+  font-family: "Rajdhani", sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
 /* ── Accent orb ── */
 [data-theme="light-720"] .accent-orb {
-  background: radial-gradient(circle at 35% 32%,
-    rgba(200,255,120,0.9) 0%,
-    rgba(111,190,0,0.8) 35%,
-    rgba(40,80,0,0.4) 100%);
-  box-shadow: 0 0 40px rgba(111,190,0,0.5), 0 0 80px rgba(111,190,0,0.2);
-  animation: xbox360Orb 5s ease-in-out infinite;
+  background: radial-gradient(circle at 35% 30%,
+    rgba(210,255,130,0.90) 0%,
+    rgba(111,190,0,0.80) 32%,
+    rgba(40,80,0,0.40) 100%);
+  box-shadow: 0 0 40px rgba(111,190,0,0.55), 0 0 80px rgba(111,190,0,0.22);
+  animation: nxeOrb 5s ease-in-out infinite;
 }
 
-/* ── Scrollbar ── */
+/* ── Scrollbar verde ── */
 [data-theme="light-720"] ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #88cc00, #52a000);
   border-radius: 4px;
   box-shadow: 0 0 6px rgba(111,190,0,0.5);
 }
-[data-theme="light-720"] ::-webkit-scrollbar-track { background: #0d1a00; }
+[data-theme="light-720"] ::-webkit-scrollbar-track { background: #0a1400; }
 
-/* ── Main area: LED strip top + bubble glow ── */
+/* ── LED strip no topo do conteúdo principal ── */
 [data-theme="light-720"] main { position: relative; }
 [data-theme="light-720"] main::before {
   content: '';
   position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(111,190,0,0.2) 5%,
-    #6fbe00 20%, #aaee44 50%, #6fbe00 80%,
-    rgba(111,190,0,0.2) 95%, transparent 100%);
-  box-shadow: 0 0 8px rgba(111,190,0,0.6), 0 0 20px rgba(111,190,0,0.3);
+    transparent 0%,
+    rgba(111,190,0,0.15) 5%,
+    #6fbe00 25%, #aaee44 50%, #6fbe00 75%,
+    rgba(111,190,0,0.15) 95%, transparent 100%);
+  box-shadow: 0 0 10px rgba(111,190,0,0.7), 0 0 22px rgba(111,190,0,0.35);
   pointer-events: none; z-index: 5;
-  animation: xboxLedPulse 3s ease-in-out infinite;
+  animation: nxeLed 2.5s ease-in-out infinite;
 }
+/* Glow bubble no canto inferior direito */
 [data-theme="light-720"] main::after {
   content: '';
-  position: fixed; bottom: -60px; right: -40px;
-  width: 280px; height: 280px; border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(111,190,0,0.06) 0%, transparent 70%);
+  position: fixed; bottom: -80px; right: -50px;
+  width: 320px; height: 320px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(111,190,0,0.07) 0%, transparent 70%);
   pointer-events: none; z-index: 0;
-  animation: xboxBubble 8s 1s ease-in-out infinite;
+  animation: nxeBubble 8s 1.5s ease-in-out infinite;
 }
 
-/* ── Typography: heavy sans, uppercase like Xbox UI ── */
-[data-theme="light-720"] .font-display { letter-spacing: 0.02em; }
+/* ── Section headers Xbox style ── */
+[data-theme="light-720"] .section-header {
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6fbe00;
+  text-shadow: 0 0 10px rgba(111,190,0,0.5);
+}
+
+/* ── Focus ring ── */
+[data-theme="light-720"] :focus-visible {
+  outline: 2px solid #6fbe00;
+  outline-offset: 2px;
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(111,190,0,0.4);
+}
+
+/* ── shimmer Xbox ── */
+[data-theme="light-720"] .shimmer {
+  background: linear-gradient(90deg, #142800 0%, #203c00 40%, #142800 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 1.8s linear infinite;
+}
 
 /* Mobile */
 @media (max-width: 1023px) {
   [data-theme="light-720"] main::before { left: 0 !important; }
-  [data-theme="light-720"] .sidebar-bg { animation: none; }
+  [data-theme="light-720"] .sidebar-bg { animation: none !important; }
+  [data-theme="light-720"] body::after { animation: none; }
 }
 
 /* ────────────────────────────────────────────────────────
