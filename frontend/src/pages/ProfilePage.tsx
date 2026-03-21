@@ -226,9 +226,7 @@ function drawCard(
   }
 
   // ── 5. Text — name ──────────────────────────────────
-  const textY = user.avatar_url
-    ? avatarY + avatarSize + 28
-    : Math.round(H * 0.56)
+  const textY = Math.round(H * 0.56)
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
