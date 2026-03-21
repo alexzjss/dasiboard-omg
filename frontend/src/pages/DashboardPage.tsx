@@ -1,35 +1,201 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { KanbanSquare, BookOpen, CalendarDays, TrendingUp, Clock, ArrowRight, Globe, RefreshCw } from 'lucide-react'
+import {
+  KanbanSquare, BookOpen, CalendarDays, TrendingUp, Clock,
+  Globe, RefreshCw, Newspaper, ChevronRight, ChevronDown,
+  Send, X, Users, KeyRound, Eye, Plus, Trash2,
+  Sparkles, GraduationCap, Star,
+} from 'lucide-react'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import api from '@/utils/api'
 import { useAuthStore } from '@/store/authStore'
+import toast from 'react-hot-toast'
 
 interface Stats { boards: number; subjects: number; events: number; avgGrade: number | null }
+interface Newsletter { id: string; title: string; body: string; author: string; created_at: string }
 
 const TYPE_LABELS: Record<string, string> = {
   exam: 'Prova', deadline: 'Deadline', academic: 'Acadêmico',
-  personal: 'Pessoal', work: 'Trabalho',
+  personal: 'Pessoal', work: 'Trabalho', entity: 'Entidade',
+}
+const TYPE_COLORS: Record<string, string> = {
+  exam: '#ef4444', deadline: '#f59e0b', academic: '#4d67f5',
+  personal: '#10b981', work: '#ec4899', entity: '#a855f7',
 }
 
+// ── Newsletter Create Modal ───────────────────────────────────────────────────
+function NewsletterCreateModal({ onClose, onCreated }: {
+  onClose: () => void; onCreated: (n: Newsletter) => void
+}) {
+  const [title,  setTitle]  = useState('')
+  const [body,   setBody]   = useState('')
+  const [author, setAuthor] = useState('')
+  const [key,    setKey]    = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const submit = async () => {
+    if (!title.trim() || !body.trim() || !key.trim()) {
+      toast.error('Preencha todos os campos obrigatórios'); return
+    }
+    setLoading(true)
+    try {
+      const { data } = await api.post('/newsletter/', {
+        title: title.trim(), body: body.trim(),
+        author: author.trim() || undefined, key: key.trim(),
+      })
+      onCreated(data)
+      toast.success('Newsletter publicada!')
+      onClose()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail === 'Chave inválida'
+        ? 'Chave inválida — verifique a chave do servidor' : 'Erro ao publicar')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
+         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-y-auto animate-in"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '92dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
+        </div>
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h3 className="font-display font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <Newspaper size={16} style={{ color: 'var(--accent-3)' }} /> Nova Newsletter
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+            <X size={15} />
+          </button>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <div>
+            <label className="label">Título *</label>
+            <input className="input text-sm" placeholder="Ex: Semana de SI 2025"
+                   value={title} onChange={e => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Conteúdo *</label>
+            <textarea className="input text-sm resize-none" rows={6}
+                      placeholder="Escreva o conteúdo da newsletter..."
+                      value={body} onChange={e => setBody(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Autor <span className="normal-case" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
+            <input className="input text-sm" placeholder="Ex: DASI"
+                   value={author} onChange={e => setAuthor(e.target.value)} />
+          </div>
+          <div>
+            <label className="label flex items-center gap-1"><KeyRound size={11} /> Chave de acesso *</label>
+            <input className="input text-sm" type="password"
+                   placeholder="Chave secreta do servidor"
+                   value={key} onChange={e => setKey(e.target.value)}
+                   onKeyDown={e => e.key === 'Enter' && submit()} />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button className="btn-primary flex-1 justify-center" onClick={submit} disabled={loading}>
+              <Send size={13} /> {loading ? 'Publicando...' : 'Publicar'}
+            </button>
+            <button className="btn-ghost" onClick={onClose}>Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Newsletter Archive Modal ──────────────────────────────────────────────────
+function NewsletterArchiveModal({ newsletters, onClose }: {
+  newsletters: Newsletter[]; onClose: () => void
+}) {
+  const [expanded, setExpanded] = useState<string | null>(newsletters[0]?.id ?? null)
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
+         onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-y-auto animate-in"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '90dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
+        </div>
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h3 className="font-display font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <Newspaper size={16} style={{ color: 'var(--accent-3)' }} />
+            Newsletters <span className="font-normal text-xs" style={{ color: 'var(--text-muted)' }}>({newsletters.length})</span>
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+            <X size={15} />
+          </button>
+        </div>
+        <div className="px-4 py-3 space-y-2 pb-8">
+          {newsletters.length === 0 && (
+            <p className="text-sm text-center py-10" style={{ color: 'var(--text-muted)' }}>
+              Nenhuma newsletter ainda.
+            </p>
+          )}
+          {newsletters.map(n => (
+            <div key={n.id} className="rounded-2xl overflow-hidden transition-all"
+                 style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)' }}>
+              <button className="w-full flex items-center justify-between px-4 py-3.5 text-left gap-3"
+                      onClick={() => setExpanded(expanded === n.id ? null : n.id)}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                          style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)' }}>
+                      {n.author}
+                    </span>
+                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      {format(parseISO(n.created_at), "d 'de' MMM 'de' yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{n.title}</p>
+                </div>
+                {expanded === n.id
+                  ? <ChevronDown size={15} style={{ color: 'var(--text-muted)' }} />
+                  : <ChevronRight size={15} style={{ color: 'var(--text-muted)' }} />}
+              </button>
+              {expanded === n.id && (
+                <div className="px-4 pb-4" style={{ borderTop: '1px solid var(--border)' }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap pt-3"
+                     style={{ color: 'var(--text-primary)' }}>{n.body}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const user    = useAuthStore((s) => s.user)
+  const user     = useAuthStore((s) => s.user)
   const location = useLocation()
-  const [stats, setStats]     = useState<Stats>({ boards: 0, subjects: 0, events: 0, avgGrade: null })
-  const [events, setEvents]   = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const [stats,       setStats]      = useState<Stats>({ boards: 0, subjects: 0, events: 0, avgGrade: null })
+  const [events,      setEvents]     = useState<any[]>([])
+  const [newsletters, setNewsletters] = useState<Newsletter[]>([])
+  const [latestNL,    setLatestNL]   = useState<Newsletter | null>(null)
+  const [loading,     setLoading]    = useState(true)
+  const [refreshing,  setRefreshing] = useState(false)
+  const [showCreateNL,  setShowCreateNL]  = useState(false)
+  const [showArchiveNL, setShowArchiveNL] = useState(false)
+  const [nlExpanded,    setNlExpanded]    = useState(false)
   const now = new Date()
 
   const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true)
-    else setRefreshing(true)
+    if (!silent) setLoading(true); else setRefreshing(true)
     try {
-      const [boards, subjects, evts] = await Promise.all([
+      const [boards, subjects, evts, nlLatest, nlAll] = await Promise.all([
         api.get('/kanban/boards'),
         api.get('/grades/subjects'),
         api.get('/events/', { params: { start: now.toISOString() } }),
+        api.get('/newsletter/latest').catch(() => ({ data: null })),
+        api.get('/newsletter/').catch(() => ({ data: [] })),
       ])
       const allGrades = subjects.data.flatMap((s: any) => s.grades)
       const avg = allGrades.length
@@ -37,237 +203,315 @@ export default function DashboardPage() {
         : null
       setStats({ boards: boards.data.length, subjects: subjects.data.length, events: evts.data.length, avgGrade: avg })
       setEvents(evts.data.slice(0, 6))
-    } catch {/* ignore */}
+      setLatestNL(nlLatest.data)
+      setNewsletters(nlAll.data)
+    } catch { /* ignore */ }
     finally { setLoading(false); setRefreshing(false) }
   }, [])
 
-  // Reload every time user navigates to dashboard
   useEffect(() => { load() }, [location.pathname])
 
   const hour = now.getHours()
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+  const greeting = hour < 5 ? 'Boa noite' : hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const firstName = user?.full_name?.split(' ')[0] ?? 'aluno'
 
-  const cards = [
-    { label: 'Quadros Kanban', value: stats.boards,   icon: KanbanSquare, to: '/kanban',   key: 'boards'   },
-    { label: 'Disciplinas',    value: stats.subjects,  icon: BookOpen,     to: '/grades',   key: 'subjects' },
-    { label: 'Próx. eventos',  value: stats.events,    icon: CalendarDays, to: '/calendar', key: 'events'   },
-    {
-      label: 'Média geral',
-      value: stats.avgGrade !== null ? stats.avgGrade.toFixed(1) : '—',
-      icon: TrendingUp, to: '/grades', key: 'avg',
-      highlight: stats.avgGrade !== null ? (stats.avgGrade >= 5 ? 'ok' : 'warn') : 'neutral',
-    },
-  ]
-
-  const skeletonCard = (
-    <div className="card">
-      <div className="shimmer w-9 h-9 rounded-xl mb-3" />
-      <div className="shimmer h-7 w-12 rounded mb-2" />
-      <div className="shimmer h-3 w-20 rounded" />
-    </div>
-  )
-
   return (
-    <div className="px-4 py-4 md:px-8 md:py-8 max-w-5xl mx-auto w-full">
+    <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl mx-auto w-full">
+      {showCreateNL && (
+        <NewsletterCreateModal
+          onClose={() => setShowCreateNL(false)}
+          onCreated={(n) => { setLatestNL(n); setNewsletters(p => [n, ...p]) }}
+        />
+      )}
+      {showArchiveNL && (
+        <NewsletterArchiveModal
+          newsletters={newsletters}
+          onClose={() => setShowArchiveNL(false)}
+        />
+      )}
 
-      {/* ── Hero header ──────────────────────────── */}
-      <div className="relative mb-4 md:mb-8 overflow-hidden rounded-2xl p-4 md:p-7 animate-in"
+      {/* ── HERO ────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl mb-4 animate-in"
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
              boxShadow: '0 4px 40px var(--accent-glow)',
            }}>
-        {/* Decorative orbs */}
-        <div className="accent-orb" style={{ width: 200, height: 200, top: -80, right: -80, opacity: 0.15 }} />
-        <div className="accent-orb" style={{ width: 100, height: 100, bottom: -30, left: 20, opacity: 0.08, animationDelay: '3s' }} />
-
-        <div className="relative z-10 flex items-end justify-between">
-          <div>
-            <p className="text-sm font-medium mb-1 capitalize animate-in-delay-1"
-               style={{ color: 'var(--text-muted)' }}>
-              {format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </p>
-            <h1 className="font-display text-xl md:text-3xl font-bold animate-in-delay-2"
-                style={{ color: 'var(--text-primary)' }}>
-              {greeting}, {firstName} 👋
-            </h1>
-            <p className="text-sm mt-1 animate-in-delay-3" style={{ color: 'var(--text-secondary)' }}>
-              Sistemas de Informação · EACH · USP
-            </p>
+        <div className="accent-orb" style={{ width: 260, height: 260, top: -110, right: -80, opacity: 0.12 }} />
+        <div className="accent-orb" style={{ width: 120, height: 120, bottom: -40, left: 20, opacity: 0.06, animationDelay: '3s' }} />
+        <div className="relative z-10 p-5 md:p-7">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <p className="text-xs font-medium mb-1 capitalize" style={{ color: 'var(--text-muted)' }}>
+                {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
+              </p>
+              <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {greeting}, {firstName} 👋
+              </h1>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                Sistemas de Informação · EACH · USP
+              </p>
+            </div>
+            <button onClick={() => load(true)} title="Atualizar"
+                    className={`btn-ghost p-2 shrink-0 ${refreshing ? 'animate-spin' : ''}`}
+                    disabled={refreshing}>
+              <RefreshCw size={15} />
+            </button>
           </div>
-          <button
-            onClick={() => load(true)}
-            title="Atualizar"
-            className={`btn-ghost p-2 ${refreshing ? 'animate-spin' : ''}`}
-            disabled={refreshing}
-          >
-            <RefreshCw size={15} />
-          </button>
+
+          {/* Stat pills */}
+          {!loading && (
+            <div className="flex gap-2 flex-wrap">
+              {stats.avgGrade !== null && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                     style={{
+                       background: stats.avgGrade >= 5 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                       color: stats.avgGrade >= 5 ? '#22c55e' : '#ef4444',
+                       border: `1px solid ${stats.avgGrade >= 5 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                     }}>
+                  <TrendingUp size={11} /> {stats.avgGrade.toFixed(1)} média geral
+                </div>
+              )}
+              {stats.subjects > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                     style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }}>
+                  <BookOpen size={11} /> {stats.subjects} disciplina{stats.subjects !== 1 ? 's' : ''}
+                </div>
+              )}
+              {stats.events > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                     style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
+                  <Clock size={11} /> {stats.events} evento{stats.events !== 1 ? 's' : ''} próximo{stats.events !== 1 ? 's' : ''}
+                </div>
+              )}
+              {stats.boards > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                     style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                  <KanbanSquare size={11} /> {stats.boards} quadro{stats.boards !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Stat cards ──────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-        {loading
-          ? [0,1,2,3].map((i) => <div key={i}>{skeletonCard}</div>)
-          : cards.map(({ label, value, icon: Icon, to, key, highlight }, i) => (
-            <Link
-              key={key}
-              to={to}
-              className="card-hover group flex flex-col"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
-                   style={{ background: 'var(--accent-soft)', border: '1px solid var(--border-light)' }}>
-                <Icon size={18} style={{ color: 'var(--accent-3)' }} />
+      {/* ── NEWSLETTER (full featured) ───────────────────── */}
+      <div className="mb-4 animate-in-delay-1">
+        {loading ? (
+          <div className="card shimmer h-28 rounded-2xl" />
+        ) : latestNL ? (
+          <div className="rounded-2xl overflow-hidden"
+               style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+            {/* Header row */}
+            <div className="flex items-center justify-between gap-3 px-5 py-3.5"
+                 style={{ background: 'linear-gradient(90deg, var(--accent-soft), transparent)', borderBottom: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                     style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }}>
+                  <Newspaper size={14} style={{ color: 'var(--accent-3)' }} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest"
+                          style={{ color: 'var(--accent-3)' }}>Newsletter</span>
+                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      {formatDistanceToNow(parseISO(latestNL.created_at), { addSuffix: true, locale: ptBR })}
+                    </span>
+                  </div>
+                  <button className="text-sm font-bold text-left hover:opacity-80 transition-opacity"
+                          style={{ color: 'var(--text-primary)' }}
+                          onClick={() => setNlExpanded(v => !v)}>
+                    {latestNL.title}
+                  </button>
+                </div>
               </div>
-              <p className="font-display text-2xl font-bold count-up"
-                 style={{ color: highlight === 'warn' ? '#f87171' : 'var(--text-primary)' }}>
-                {value}
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
-              <div className="mt-auto pt-3 flex items-center gap-1 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-all"
-                   style={{ color: 'var(--accent-3)' }}>
-                Ver detalhes <ArrowRight size={10} />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => setShowArchiveNL(true)}
+                        className="btn-ghost text-xs py-1.5 px-2.5 flex items-center gap-1"
+                        title="Ver todas">
+                  <Eye size={11} /> <span className="hidden sm:inline">Histórico</span>
+                </button>
+                <button onClick={() => setShowCreateNL(true)}
+                        className="btn-primary text-xs py-1.5 px-2.5 flex items-center gap-1">
+                  <Plus size={11} /> <span className="hidden sm:inline">Nova</span>
+                </button>
+                <button onClick={() => setNlExpanded(v => !v)} className="p-1"
+                        style={{ color: 'var(--text-muted)' }}>
+                  {nlExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
               </div>
-            </Link>
-          ))
-        }
+            </div>
+
+            {/* Body — collapsed preview or expanded */}
+            <div className="px-5 py-3">
+              {nlExpanded ? (
+                <div className="animate-in">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
+                    {latestNL.body}
+                  </p>
+                  <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
+                    por {latestNL.author} · {format(parseISO(latestNL.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm line-clamp-2 cursor-pointer" style={{ color: 'var(--text-secondary)' }}
+                   onClick={() => setNlExpanded(true)}>
+                  {latestNL.body}
+                </p>
+              )}
+            </div>
+
+            {/* Past newsletters preview strip */}
+            {newsletters.length > 1 && (
+              <div className="px-5 pb-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                {newsletters.slice(1, 4).map(n => (
+                  <button key={n.id}
+                          className="shrink-0 text-left px-3 py-2 rounded-xl transition-all hover:scale-[1.01]"
+                          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', minWidth: 160, maxWidth: 200 }}
+                          onClick={() => setShowArchiveNL(true)}>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      {format(parseISO(n.created_at), "d MMM", { locale: ptBR })}
+                    </p>
+                    <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{n.title}</p>
+                  </button>
+                ))}
+                {newsletters.length > 4 && (
+                  <button onClick={() => setShowArchiveNL(true)}
+                          className="shrink-0 text-xs px-3 py-2 rounded-xl"
+                          style={{ color: 'var(--accent-3)', background: 'var(--accent-soft)' }}>
+                    +{newsletters.length - 4} mais
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl flex items-center justify-between gap-4 p-5"
+               style={{ border: '1px dashed var(--border-light)', background: 'var(--bg-card)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                   style={{ background: 'var(--bg-elevated)' }}>
+                <Newspaper size={18} style={{ color: 'var(--text-muted)' }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Nenhuma newsletter ainda
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Publique comunicados para todos os usuários
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setShowCreateNL(true)}
+                    className="btn-primary text-xs py-2 px-4 shrink-0 flex items-center gap-1.5">
+              <Send size={12} /> Publicar
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ── Main content 2-col ──────────────────── */}
+      {/* ── MAIN GRID ────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-        {/* Upcoming events — wide */}
-        <div className="lg:col-span-3 card animate-in-delay-3">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold flex items-center gap-2"
-                style={{ color: 'var(--text-primary)' }}>
-              <Clock size={16} style={{ color: 'var(--accent-3)' }} />
-              Próximos eventos
-            </h2>
-            <Link to="/calendar" className="text-xs font-medium transition-colors"
-                  style={{ color: 'var(--accent-3)' }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.7')}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}>
-              Ver todos →
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="space-y-2">
-              {[0,1,2].map((i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
-                  <div className="shimmer w-2 h-2 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="shimmer h-3 w-40 rounded" />
-                    <div className="shimmer h-2.5 w-24 rounded" />
-                  </div>
+        {/* Quick links — 2 cols on lg */}
+        <div className="lg:col-span-2 animate-in-delay-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
+             style={{ color: 'var(--text-muted)' }}>Acesso rápido</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,  desc: 'Quadros', count: stats.boards, color: 'var(--accent-1)' },
+              { to: '/grades',   label: 'Disciplinas', icon: BookOpen,      desc: 'Notas',   count: stats.subjects, color: '#a855f7' },
+              { to: '/calendar', label: 'Calendário',  icon: CalendarDays,  desc: 'Eventos', count: stats.events,  color: '#f59e0b' },
+              { to: '/entities', label: 'Entidades',   icon: Users,         desc: 'Grupos',  count: null, color: '#10b981' },
+              { to: '/grades',   label: 'Fluxograma',  icon: GraduationCap, desc: 'Grade',   count: null, color: '#06b6d4' },
+              { to: '/profile',  label: 'Perfil',      icon: Star,          desc: 'Conta',   count: null, color: '#ec4899' },
+            ].map(({ to, label, icon: Icon, desc, count, color }) => (
+              <Link key={label + to} to={to}
+                    className="card-hover flex flex-col p-4 gap-2.5 group transition-all"
+                    style={{ background: 'var(--bg-elevated)' }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                     style={{ background: color + '18', border: `1px solid ${color}33` }}>
+                  <Icon size={16} style={{ color }} />
                 </div>
-              ))}
-            </div>
-          ) : events.length === 0 ? (
-            <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-              <CalendarDays size={32} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Nenhum evento próximo</p>
-              <Link to="/calendar" className="text-xs mt-2 inline-block" style={{ color: 'var(--accent-3)' }}>
-                + Criar evento
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {events.map((ev: any, i: number) => (
-                <div
-                  key={ev.id}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-all cursor-default group"
-                  style={{ animationDelay: `${i * 40}ms` }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ev.color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate flex items-center gap-1.5"
-                       style={{ color: 'var(--text-primary)' }}>
-                      {ev.is_global && <Globe size={10} style={{ color: 'var(--accent-3)' }} />}
-                      {ev.title}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {format(new Date(ev.start_at), "d MMM · HH:mm", { locale: ptBR })}
-                      {' · '}
-                      <span style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-                        {formatDistanceToNow(new Date(ev.start_at), { locale: ptBR, addSuffix: true })}
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{label}</p>
+                    {count !== null && count > 0 && (
+                      <span className="font-display font-bold text-base leading-none" style={{ color }}>
+                        {count}
                       </span>
-                    </p>
+                    )}
                   </div>
-                  <span className="badge text-[10px] shrink-0"
-                        style={{ background: ev.color + '22', color: ev.color, border: `1px solid ${ev.color}44` }}>
-                    {TYPE_LABELS[ev.event_type] ?? ev.event_type}
-                  </span>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
                 </div>
-              ))}
-            </div>
-          )}
+              </Link>
+            ))}
+          </div>
         </div>
 
-        {/* Quick access — narrow */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="card animate-in-delay-4 flex-1">
-            <h2 className="font-display font-bold text-sm mb-4 flex items-center gap-2"
-                style={{ color: 'var(--text-primary)' }}>
-              Acesso rápido
-            </h2>
-            <div className="space-y-2">
-              {[
-                { to: '/kanban',   label: 'Quadros Kanban',  icon: KanbanSquare,  desc: 'Organizar tarefas'   },
-                { to: '/grades',   label: 'Disciplinas',       icon: BookOpen,      desc: 'Ver disciplinas'     },
-                { to: '/calendar', label: 'Calendário',       icon: CalendarDays,  desc: 'Eventos e provas'    },
-              ].map(({ to, label, icon: Icon, desc }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-all group"
-                  style={{ border: '1px solid var(--border)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent-1)'
-                    e.currentTarget.style.backgroundColor = 'var(--accent-soft)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border)'
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
-                       style={{ background: 'var(--accent-soft)' }}>
-                    <Icon size={15} style={{ color: 'var(--accent-3)' }} />
+        {/* Events list — 3 cols on lg */}
+        <div className="lg:col-span-3 animate-in-delay-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
+             style={{ color: 'var(--text-muted)' }}>Próximos eventos</p>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            {loading ? (
+              <div className="p-4 space-y-3">
+                {[0,1,2].map(i => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="shimmer w-3 h-3 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="shimmer h-3.5 w-40 rounded" />
+                      <div className="shimmer h-2.5 w-24 rounded" />
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{label}</p>
-                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{desc}</p>
-                  </div>
-                  <ArrowRight size={13} className="shrink-0 opacity-0 group-hover:opacity-100 transition-all"
-                              style={{ color: 'var(--accent-3)' }} />
+                ))}
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-10 px-4" style={{ color: 'var(--text-muted)' }}>
+                <CalendarDays size={28} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Nenhum evento próximo</p>
+                <Link to="/calendar" className="text-xs mt-1 inline-block" style={{ color: 'var(--accent-3)' }}>
+                  + Criar evento
                 </Link>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                {events.map((ev: any, i: number) => {
+                  const color = TYPE_COLORS[ev.event_type] ?? 'var(--accent-1)'
+                  return (
+                    <div key={ev.id}
+                         className="flex items-center gap-3 px-4 py-3 transition-colors"
+                         style={{ borderBottom: i < events.length - 1 ? '1px solid var(--border)' : 'none' }}
+                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
+                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate flex items-center gap-1.5"
+                           style={{ color: 'var(--text-primary)' }}>
+                          {ev.is_global && <Globe size={10} style={{ color: 'var(--accent-3)' }} />}
+                          {ev.title}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {format(parseISO(ev.start_at), "d MMM · HH:mm", { locale: ptBR })}
+                          {' · '}
+                          {formatDistanceToNow(parseISO(ev.start_at), { locale: ptBR, addSuffix: true })}
+                        </p>
+                      </div>
+                      <span className="badge text-[10px] shrink-0"
+                            style={{ background: color + '22', color, border: `1px solid ${color}44` }}>
+                        {TYPE_LABELS[ev.event_type] ?? ev.event_type}
+                      </span>
+                    </div>
+                  )
+                })}
+                <div className="px-4 py-3 text-right" style={{ borderTop: '1px solid var(--border)' }}>
+                  <Link to="/calendar" className="text-xs font-medium" style={{ color: 'var(--accent-3)' }}>
+                    Ver calendário completo →
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
-
-          {/* Mini stat card */}
-          {!loading && stats.avgGrade !== null && (
-            <div className="card animate-in-delay-5 text-center"
-                 style={{ background: stats.avgGrade >= 5
-                   ? 'linear-gradient(135deg, rgba(34,197,94,0.08), var(--bg-card))'
-                   : 'linear-gradient(135deg, rgba(239,68,68,0.08), var(--bg-card))' }}>
-              <p className="text-xs mb-1 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Média geral</p>
-              <p className="font-display text-4xl font-bold"
-                 style={{ color: stats.avgGrade >= 5 ? '#22c55e' : '#ef4444' }}>
-                {stats.avgGrade.toFixed(1)}
-              </p>
-              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                {stats.avgGrade >= 7 ? '🎉 Ótimo!' : stats.avgGrade >= 5 ? '✅ Aprovado' : '⚠️ Atenção'}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
