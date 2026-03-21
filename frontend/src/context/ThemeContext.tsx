@@ -3,14 +3,15 @@ import { createContext, useContext, useEffect, useState } from 'react'
 export type ThemeId =
   | 'dark-roxo'
   | 'dark-hypado'
-  | 'dark-aranha'
   | 'dark-minas'
   | 'dark-dlc'
   | 'dark-shell'
+  | 'light-aranha'
   | 'light-roxo'
   | 'light-sintetizado'
   | 'light-grace'
   | 'light-lab'
+  | 'light-720'
 
 export interface ThemeMeta {
   id: ThemeId
@@ -24,15 +25,17 @@ export const THEMES: ThemeMeta[] = [
   // Dark
   { id: 'dark-roxo',        name: 'Dark',        dark: true,  emoji: '🔮', description: 'Roxo profundo' },
   { id: 'dark-hypado',      name: 'Hypado',       dark: true,  emoji: '🌆', description: 'Vaporwave · Roxo & Laranja' },
-  { id: 'dark-aranha',      name: 'Aranha',       dark: true,  emoji: '🕷️', description: 'Ultimate Spider-Man' },
+
   { id: 'dark-minas',       name: 'Minas',        dark: true,  emoji: '🦕', description: 'Dinos & Máquinas' },
   { id: 'dark-dlc',         name: 'DLC',          dark: true,  emoji: '🎮', description: 'RGB Gaming' },
   { id: 'dark-shell',       name: 'Shell',        dark: true,  emoji: '💀', description: 'CLI · Matrix' },
   // Light
   { id: 'light-roxo',       name: 'Light',        dark: false, emoji: '☀️', description: 'Roxo suave' },
+  { id: 'light-aranha',      name: 'Aranha',       dark: false, emoji: '🕷️', description: 'HQ · Vermelho & Azul' },
   { id: 'light-sintetizado',name: 'Sintetizado',  dark: false, emoji: '💠', description: 'Azul limpo' },
   { id: 'light-grace',      name: 'Grace',        dark: false, emoji: '🦉', description: 'Bege · Coruja' },
-  { id: 'light-lab',        name: 'Laboratório',  dark: false, emoji: '🔬', description: 'Rosa lab' },
+  { id: 'light-lab',        name: 'Laboratório',  dark: false, emoji: '🖥️', description: 'Web Dev · Y2K Pink' },
+  { id: 'light-720',        name: '720',           dark: true,  emoji: '🎮', description: 'Xbox 360 · Older Brother' },
 ]
 
 const DARK_THEMES  = THEMES.filter(t => t.dark)
