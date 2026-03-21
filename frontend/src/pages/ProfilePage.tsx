@@ -196,9 +196,9 @@ function drawCard(
   ctx.restore() // ← restore from card clip
 
   // ── 4. Avatar (above name) ──────────────────────────
-  const avatarSize = 80
+  const avatarSize = 96
   const textX = 48
-  const avatarY = Math.round(H * 0.30)
+  const avatarY = Math.round(H * 0.22)
 
   if (user.avatar_url) {
     const img = new Image()
@@ -213,13 +213,13 @@ function drawCard(
     ctx.clip()
     ctx.drawImage(img, textX, avatarY, avatarSize, avatarSize)
     ctx.restore()
-    // Subtle border — slightly larger than clip
+    // Border using blob color for visual harmony with the colored region
     ctx.save()
     ctx.beginPath()
-    ctx.arc(cx, cy, r + 1.5, 0, Math.PI * 2)
-    ctx.strokeStyle = inkColor
-    ctx.globalAlpha = 0.18
-    ctx.lineWidth = 3
+    ctx.arc(cx, cy, r + 2.5, 0, Math.PI * 2)
+    ctx.strokeStyle = blobMain
+    ctx.globalAlpha = 0.55
+    ctx.lineWidth = 4
     ctx.stroke()
     ctx.globalAlpha = 1
     ctx.restore()
