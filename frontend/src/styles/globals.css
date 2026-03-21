@@ -470,6 +470,140 @@
     color: #0a1a40;
   }
 
+  /* ═══════════════════════════════════════════════════════
+     📐  LIGHT — Blueprint (Plantas Técnicas · Azul)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-blueprint"] {
+    --bg-base:        #0a2540;
+    --bg-surface:     #0d2d4a;
+    --bg-elevated:    #10355a;
+    --bg-card:        #123d6a;
+    --border:         #1e5080;
+    --border-light:   #2a6090;
+    --text-primary:   #e8f4ff;
+    --text-secondary: #88c8ff;
+    --text-muted:     #3a6888;
+    --accent-1:       #4499ff;
+    --accent-2:       #2277dd;
+    --accent-3:       #88ddff;
+    --accent-glow:    rgba(68,153,255,0.30);
+    --accent-soft:    rgba(68,153,255,0.12);
+    --gradient-hero:  linear-gradient(135deg, #4499ff 0%, #88ddff 60%, #0a2540 100%);
+    --gradient-btn:   linear-gradient(135deg, #4499ff, #2277dd);
+    --noise-opacity:  0.020;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+    font-family: "JetBrains Mono", "DM Sans", monospace;
+  }
+  [data-theme="light-blueprint"] h1,
+  [data-theme="light-blueprint"] h2,
+  [data-theme="light-blueprint"] h3,
+  [data-theme="light-blueprint"] h4 {
+    font-family: "Orbitron", "Syne", sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #88ddff;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     🍦  LIGHT — Vanilla (Bege elegante · Minimalista)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-vanilla"] {
+    --bg-base:        #faf7f2;
+    --bg-surface:     #f5f0e8;
+    --bg-elevated:    #ede8df;
+    --bg-card:        #ffffff;
+    --border:         #e0d8cc;
+    --border-light:   #d0c8bc;
+    --text-primary:   #1a1410;
+    --text-secondary: #6a5a4a;
+    --text-muted:     #b0a090;
+    --accent-1:       #c8a060;
+    --accent-2:       #a87840;
+    --accent-3:       #d4aa70;
+    --accent-glow:    rgba(200,160,96,0.18);
+    --accent-soft:    rgba(200,160,96,0.10);
+    --gradient-hero:  linear-gradient(135deg, #c8a060 0%, #e8d0a0 50%, #faf7f2 100%);
+    --gradient-btn:   linear-gradient(135deg, #c8a060, #a87840);
+    --noise-opacity:  0.018;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+    font-family: "DM Sans", sans-serif;
+  }
+  [data-theme="light-vanilla"] h1,
+  [data-theme="light-vanilla"] h2,
+  [data-theme="light-vanilla"] h3,
+  [data-theme="light-vanilla"] h4 {
+    font-family: "Syne", sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: #3a2a1a;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     🎮  DARK — Pixel (SNES · NES · GBA · Pixel Art)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="dark-pixel"] {
+    --bg-base:        #000000;
+    --bg-surface:     #080808;
+    --bg-elevated:    #101010;
+    --bg-card:        #181818;
+    --border:         #282828;
+    --border-light:   #383838;
+    --text-primary:   #f8f8f8;
+    --text-secondary: #c8c8ff;
+    --text-muted:     #484848;
+    --accent-1:       #ff4444;
+    --accent-2:       #cc2222;
+    --accent-3:       #ffcc00;
+    --accent-glow:    rgba(255,68,68,0.35);
+    --accent-soft:    rgba(255,204,0,0.12);
+    --gradient-hero:  linear-gradient(135deg, #ff4444 0%, #ffcc00 50%, #4488ff 100%);
+    --gradient-btn:   linear-gradient(135deg, #ff4444, #cc2222);
+    --noise-opacity:  0.0;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+    font-family: "Press Start 2P", "JetBrains Mono", monospace;
+    image-rendering: pixelated;
+  }
+  [data-theme="dark-pixel"] h1,
+  [data-theme="dark-pixel"] h2,
+  [data-theme="dark-pixel"] h3,
+  [data-theme="dark-pixel"] h4 {
+    font-family: "Press Start 2P", monospace;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    image-rendering: pixelated;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     ✨  LIGHT — Lite (Ultra leve · Sem efeitos · Performance)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-lite"] {
+    --bg-base:        #f8f9fa;
+    --bg-surface:     #ffffff;
+    --bg-elevated:    #f1f3f5;
+    --bg-card:        #ffffff;
+    --border:         #e0e0e0;
+    --border-light:   #cccccc;
+    --text-primary:   #1a1a1a;
+    --text-secondary: #555555;
+    --text-muted:     #999999;
+    --accent-1:       #4444ff;
+    --accent-2:       #2222cc;
+    --accent-3:       #6666ff;
+    --accent-glow:    rgba(68,68,255,0.10);
+    --accent-soft:    rgba(68,68,255,0.07);
+    --gradient-hero:  linear-gradient(135deg, #4444ff 0%, #8888ff 100%);
+    --gradient-btn:   linear-gradient(135deg, #4444ff, #2222cc);
+    --noise-opacity:  0.0;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+    font-family: "DM Sans", sans-serif;
+  }
+
   /* ── Global body ─────────────────────────────────────── */
   body {
     background-color: var(--bg-base);
@@ -2807,6 +2941,471 @@
     -webkit-backdrop-filter: blur(30px) saturate(1.6);
   }
 }
+
+/* ────────────────────────────────────────────────────────
+   📐  BLUEPRINT — Plantas técnicas azul cobalto
+   Grid de engenharia, linhas brancas, anotações mono
+──────────────────────────────────────────────────────── */
+@keyframes blueprintScan {
+  from { background-position: 0 0; }
+  to   { background-position: 0 60px; }
+}
+@keyframes blueprintPulse {
+  0%,100% { opacity: 0.6; }
+  50%     { opacity: 1; }
+}
+
+[data-theme="light-blueprint"] body { background: #0a2540; }
+/* Full-page engineering grid */
+[data-theme="light-blueprint"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(68,153,255,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(68,153,255,0.12) 1px, transparent 1px),
+    linear-gradient(rgba(68,153,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(68,153,255,0.05) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px, 12px 12px, 12px 12px;
+  animation: blueprintScan 8s linear infinite;
+}
+/* Corner crosshair markers */
+[data-theme="light-blueprint"] body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 50%, rgba(68,153,255,0.05) 0%, transparent 70%);
+}
+
+[data-theme="light-blueprint"] .sidebar-bg {
+  background: linear-gradient(180deg, #0d2d4a 0%, #0a2540 100%);
+  border-right: 1px solid rgba(68,153,255,0.35);
+  position: relative; overflow: hidden;
+}
+[data-theme="light-blueprint"] .sidebar-bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(68,153,255,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(68,153,255,0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+/* Title block watermark */
+[data-theme="light-blueprint"] .sidebar-bg::after {
+  content: 'SI·EACH·USP';
+  position: absolute; bottom: 42px; left: 0; right: 0;
+  text-align: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px; letter-spacing: 4px;
+  color: rgba(68,153,255,0.20);
+  pointer-events: none;
+}
+
+[data-theme="light-blueprint"] .nav-active {
+  background: rgba(68,153,255,0.15);
+  border: 1px solid rgba(68,153,255,0.45);
+  color: #88ddff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  animation: blueprintPulse 4s ease-in-out infinite;
+}
+[data-theme="light-blueprint"] .nav-inactive { color: rgba(68,153,255,0.50); font-size: 12px; font-family: "JetBrains Mono", monospace; }
+[data-theme="light-blueprint"] .nav-inactive:hover { background: rgba(68,153,255,0.08); color: #88ddff; }
+
+[data-theme="light-blueprint"] .card {
+  background: rgba(18,61,106,0.90);
+  border: 1px solid rgba(68,153,255,0.30);
+  border-radius: 2px !important;
+  box-shadow: 0 0 0 0.5px rgba(68,153,255,0.15), 4px 4px 0 rgba(0,0,0,0.3);
+  position: relative;
+}
+/* Technical annotation marks on cards */
+[data-theme="light-blueprint"] .card::before {
+  content: '';
+  position: absolute; top: -4px; left: -4px;
+  width: 8px; height: 8px;
+  border-top: 1.5px solid rgba(68,153,255,0.6);
+  border-left: 1.5px solid rgba(68,153,255,0.6);
+  pointer-events: none;
+}
+[data-theme="light-blueprint"] .card::after {
+  content: '';
+  position: absolute; bottom: -4px; right: -4px;
+  width: 8px; height: 8px;
+  border-bottom: 1.5px solid rgba(68,153,255,0.6);
+  border-right: 1.5px solid rgba(68,153,255,0.6);
+  pointer-events: none;
+}
+[data-theme="light-blueprint"] .card-hover:hover {
+  border-color: rgba(68,153,255,0.65);
+  box-shadow: 0 0 16px rgba(68,153,255,0.25), 4px 4px 0 rgba(0,0,0,0.4);
+}
+
+[data-theme="light-blueprint"] .btn-primary {
+  background: rgba(68,153,255,0.20);
+  border: 1px solid rgba(68,153,255,0.60);
+  border-radius: 2px !important;
+  color: #88ddff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 0 12px rgba(68,153,255,0.20);
+}
+[data-theme="light-blueprint"] .btn-primary:hover {
+  background: rgba(68,153,255,0.30);
+  box-shadow: 0 0 20px rgba(68,153,255,0.35);
+}
+[data-theme="light-blueprint"] .btn-ghost {
+  border: 1px solid rgba(68,153,255,0.30);
+  color: rgba(68,153,255,0.70);
+  border-radius: 2px !important;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+}
+[data-theme="light-blueprint"] .input {
+  background: rgba(10,37,64,0.80);
+  border: 1px solid rgba(68,153,255,0.30);
+  border-radius: 2px !important;
+  color: #e8f4ff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+}
+[data-theme="light-blueprint"] .input:focus {
+  border-color: rgba(68,153,255,0.70);
+  box-shadow: 0 0 0 2px rgba(68,153,255,0.12);
+}
+[data-theme="light-blueprint"] .accent-orb {
+  background: radial-gradient(circle, rgba(68,153,255,0.5) 0%, transparent 100%);
+  animation: blueprintPulse 4s ease-in-out infinite;
+}
+[data-theme="light-blueprint"] ::-webkit-scrollbar-thumb { background: rgba(68,153,255,0.35); border-radius: 0; }
+[data-theme="light-blueprint"] ::-webkit-scrollbar-track { background: #0a2540; }
+
+[data-theme="light-blueprint"] main { position: relative; }
+[data-theme="light-blueprint"] main::before {
+  content: '';
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #4499ff, #88ddff, #4499ff, transparent);
+  box-shadow: 0 0 10px rgba(68,153,255,0.6);
+  pointer-events: none; z-index: 5;
+  animation: blueprintPulse 4s ease-in-out infinite;
+}
+@media (max-width: 1023px) { [data-theme="light-blueprint"] main::before { left: 0 !important; } }
+
+/* ────────────────────────────────────────────────────────
+   🍦  VANILLA — Bege, papel, elegância minimalista
+──────────────────────────────────────────────────────── */
+[data-theme="light-vanilla"] body { background: #faf7f2; }
+[data-theme="light-vanilla"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(200,160,96,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(180,140,80,0.06) 0%, transparent 70%);
+}
+
+[data-theme="light-vanilla"] .sidebar-bg {
+  background: linear-gradient(180deg, #f5f0e8 0%, #ede8df 100%);
+  border-right: 1px solid #e0d8cc;
+  position: relative;
+}
+[data-theme="light-vanilla"] .sidebar-bg::before {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,160,96,0.4), transparent);
+}
+[data-theme="light-vanilla"] .sidebar-bg::after {
+  content: '—';
+  position: absolute; bottom: 44px; left: 0; right: 0;
+  text-align: center; font-size: 20px; letter-spacing: 8px;
+  color: rgba(200,160,96,0.18); pointer-events: none;
+}
+
+[data-theme="light-vanilla"] .nav-active {
+  background: rgba(200,160,96,0.12);
+  border-left: 2px solid #c8a060;
+  border-color: transparent;
+  color: #6a4a20;
+  font-weight: 600;
+}
+[data-theme="light-vanilla"] .nav-inactive { color: rgba(100,80,60,0.55); }
+[data-theme="light-vanilla"] .nav-inactive:hover { background: rgba(200,160,96,0.07); color: #3a2a1a; }
+
+[data-theme="light-vanilla"] .card {
+  background: #ffffff;
+  border: 1px solid #e0d8cc;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05), 0 0 0 0 transparent;
+}
+[data-theme="light-vanilla"] .card-hover:hover {
+  border-color: #c8a060;
+  box-shadow: 0 4px 20px rgba(200,160,96,0.15);
+  transform: translateY(-1px);
+}
+
+[data-theme="light-vanilla"] .btn-primary {
+  background: #c8a060;
+  border: none;
+  border-radius: 6px !important;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(200,160,96,0.30);
+}
+[data-theme="light-vanilla"] .btn-primary:hover { background: #b89050; box-shadow: 0 4px 16px rgba(200,160,96,0.40); }
+[data-theme="light-vanilla"] .btn-ghost { border: 1px solid #e0d8cc; color: #6a5a4a; border-radius: 6px !important; }
+[data-theme="light-vanilla"] .btn-ghost:hover { background: #f5f0e8; }
+[data-theme="light-vanilla"] .input { border: 1px solid #e0d8cc; border-radius: 6px !important; background: #faf7f2; color: #1a1410; }
+[data-theme="light-vanilla"] .input:focus { border-color: #c8a060; box-shadow: 0 0 0 2px rgba(200,160,96,0.12); }
+[data-theme="light-vanilla"] .accent-orb { background: radial-gradient(circle, #e8d090 0%, rgba(200,160,96,0) 100%); opacity: 0.5; }
+[data-theme="light-vanilla"] ::-webkit-scrollbar-thumb { background: #d4b880; border-radius: 4px; }
+[data-theme="light-vanilla"] ::-webkit-scrollbar-track { background: #f5f0e8; }
+
+[data-theme="light-vanilla"] main { position: relative; }
+[data-theme="light-vanilla"] main::before {
+  content: '';
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, #c8a060, #e8d090, #c8a060, transparent);
+  pointer-events: none; z-index: 5;
+}
+@media (max-width: 1023px) { [data-theme="light-vanilla"] main::before { left: 0 !important; } }
+
+/* ────────────────────────────────────────────────────────
+   🎮  PIXEL — SNES/NES/GBA pixel art retro gaming
+──────────────────────────────────────────────────────── */
+@keyframes pixelBlink {
+  0%,49% { opacity: 1; }
+  50%,100%{ opacity: 0; }
+}
+@keyframes pixelScroll {
+  from { background-position: 0 0; }
+  to   { background-position: 0 -64px; }
+}
+@keyframes pixelStars {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-200px); }
+}
+
+[data-theme="dark-pixel"] * { image-rendering: pixelated; }
+[data-theme="dark-pixel"] body { background: #000000; }
+
+/* SNES-style starfield / purple sky */
+[data-theme="dark-pixel"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(circle 1px at 10% 20%, #ffffff 0%, transparent 100%),
+    radial-gradient(circle 1px at 30% 8%,  #ffffff 0%, transparent 100%),
+    radial-gradient(circle 1px at 55% 15%, #ffffff 0%, transparent 100%),
+    radial-gradient(circle 1px at 70% 5%,  #ffffff 0%, transparent 100%),
+    radial-gradient(circle 1px at 88% 25%, #ffffff 0%, transparent 100%),
+    radial-gradient(circle 1px at 45% 3%,  #ffffff 0%, transparent 100%),
+    radial-gradient(ellipse 100% 40% at 50% 0%, rgba(60,20,80,0.6) 0%, transparent 100%),
+    linear-gradient(180deg, #1a0030 0%, #000000 60%);
+}
+/* Checkerboard / tiled floor pattern */
+[data-theme="dark-pixel"] body::after {
+  content: '';
+  position: fixed; bottom: 0; left: 0; right: 0; height: 40%;
+  pointer-events: none; z-index: 0;
+  background-image:
+    repeating-conic-gradient(rgba(50,20,80,0.15) 0% 25%, transparent 0% 50%);
+  background-size: 16px 16px;
+}
+
+/* Sidebar — NES/SNES HUD panel */
+[data-theme="dark-pixel"] .sidebar-bg {
+  background: #181818;
+  border-right: 4px solid #282828;
+  position: relative; overflow: hidden;
+  image-rendering: pixelated;
+}
+/* 8-bit dashed border on right */
+[data-theme="dark-pixel"] .sidebar-bg::before {
+  content: '';
+  position: absolute; top: 0; right: -4px; bottom: 0; width: 4px;
+  background: repeating-linear-gradient(
+    180deg,
+    #ff4444 0px, #ff4444 4px,
+    #000000 4px, #000000 8px
+  );
+  pointer-events: none;
+}
+/* Blinking cursor at bottom */
+[data-theme="dark-pixel"] .sidebar-bg::after {
+  content: '▶';
+  position: absolute; bottom: 44px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px; color: #ffcc00;
+  font-family: "Press Start 2P", monospace;
+  animation: pixelBlink 1s step-end infinite;
+  pointer-events: none;
+}
+
+/* Nav — SNES command menu style */
+[data-theme="dark-pixel"] .nav-active {
+  background: #0000cc;
+  border: 2px solid #8888ff;
+  border-radius: 0 !important;
+  color: #ffffff;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  box-shadow: inset -2px -2px 0 rgba(0,0,0,0.5), inset 2px 2px 0 rgba(255,255,255,0.2);
+}
+[data-theme="dark-pixel"] .nav-inactive {
+  color: rgba(200,200,200,0.6);
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  border-radius: 0 !important;
+}
+[data-theme="dark-pixel"] .nav-inactive:hover {
+  background: rgba(0,0,204,0.3);
+  color: #8888ff;
+}
+
+/* Cards — retro UI boxes */
+[data-theme="dark-pixel"] .card {
+  background: #181818;
+  border: 2px solid #484848;
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 #000000, inset 1px 1px 0 rgba(255,255,255,0.08);
+  position: relative;
+}
+/* Pixel corner decorations */
+[data-theme="dark-pixel"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #ff4444 0%, #ffcc00 33%, #44ff44 66%, #4488ff 100%);
+  pointer-events: none;
+}
+[data-theme="dark-pixel"] .card-hover:hover {
+  border-color: #ffcc00;
+  box-shadow: 4px 4px 0 #000000, 0 0 0 1px #ffcc00;
+}
+
+/* Buttons — NES style */
+[data-theme="dark-pixel"] .btn-primary {
+  background: #cc0000;
+  border: 2px solid #ff4444;
+  border-bottom-color: #880000;
+  border-right-color: #880000;
+  border-radius: 0 !important;
+  color: #ffffff;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 #000000;
+}
+[data-theme="dark-pixel"] .btn-primary:hover {
+  background: #ee0000;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000000;
+}
+[data-theme="dark-pixel"] .btn-ghost {
+  border: 2px solid #484848;
+  border-radius: 0 !important;
+  color: #aaaaaa;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+}
+[data-theme="dark-pixel"] .btn-ghost:hover { border-color: #ffcc00; color: #ffcc00; }
+
+[data-theme="dark-pixel"] .input {
+  background: #000000;
+  border: 2px solid #484848;
+  border-radius: 0 !important;
+  color: #f8f8f8;
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  caret-color: #ffcc00;
+}
+[data-theme="dark-pixel"] .input:focus { border-color: #ffcc00; }
+
+[data-theme="dark-pixel"] .badge { border-radius: 0 !important; font-family: "Press Start 2P", monospace; font-size: 7px; }
+[data-theme="dark-pixel"] .card { border-radius: 0 !important; }
+
+[data-theme="dark-pixel"] .accent-orb {
+  background: conic-gradient(#ff4444, #ffcc00, #44ff44, #4488ff, #ff44ff, #ff4444);
+  border-radius: 0;
+  animation: orbPulse 1s step-end infinite;
+  image-rendering: pixelated;
+}
+[data-theme="dark-pixel"] ::-webkit-scrollbar-thumb { background: #ff4444; border-radius: 0; border: 2px solid #000; }
+[data-theme="dark-pixel"] ::-webkit-scrollbar-track { background: #181818; }
+
+[data-theme="dark-pixel"] main { position: relative; }
+[data-theme="dark-pixel"] main::before {
+  content: '';
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 4px;
+  background: repeating-linear-gradient(
+    90deg, #ff4444 0px, #ff4444 8px,
+    #ffcc00 8px, #ffcc00 16px,
+    #44ff44 16px, #44ff44 24px,
+    #4488ff 24px, #4488ff 32px
+  );
+  pointer-events: none; z-index: 5;
+  image-rendering: pixelated;
+}
+[data-theme="dark-pixel"] main::after { display: none; }
+@media (max-width: 1023px) { [data-theme="dark-pixel"] main::before { left: 0 !important; } }
+
+/* ────────────────────────────────────────────────────────
+   ✨  LITE — Ultra leve, zero efeitos, performance máxima
+──────────────────────────────────────────────────────── */
+[data-theme="light-lite"] body { background: #f8f9fa; }
+[data-theme="light-lite"] body::before,
+[data-theme="light-lite"] body::after { display: none; }
+
+[data-theme="light-lite"] .sidebar-bg {
+  background: #ffffff;
+  border-right: 1px solid #e0e0e0;
+}
+[data-theme="light-lite"] .sidebar-bg::before,
+[data-theme="light-lite"] .sidebar-bg::after { display: none; }
+
+[data-theme="light-lite"] .nav-active {
+  background: rgba(68,68,255,0.08);
+  border-left: 3px solid #4444ff;
+  border-color: transparent;
+  color: #2222cc;
+  font-weight: 600;
+}
+[data-theme="light-lite"] .nav-inactive { color: #888888; }
+[data-theme="light-lite"] .nav-inactive:hover { background: #f1f3f5; color: #333333; }
+
+[data-theme="light-lite"] .card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+[data-theme="light-lite"] .card::before, [data-theme="light-lite"] .card::after { display: none; }
+[data-theme="light-lite"] .card-hover:hover { border-color: #4444ff; box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
+
+[data-theme="light-lite"] .btn-primary {
+  background: #4444ff;
+  border: none;
+  border-radius: 6px !important;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: none;
+}
+[data-theme="light-lite"] .btn-primary:hover { background: #3333ee; }
+[data-theme="light-lite"] .btn-ghost { border: 1px solid #e0e0e0; color: #555555; border-radius: 6px !important; }
+[data-theme="light-lite"] .btn-ghost:hover { background: #f1f3f5; }
+[data-theme="light-lite"] .input { border: 1px solid #e0e0e0; border-radius: 6px !important; background: #ffffff; color: #1a1a1a; box-shadow: none; }
+[data-theme="light-lite"] .input:focus { border-color: #4444ff; box-shadow: 0 0 0 2px rgba(68,68,255,0.12); }
+
+[data-theme="light-lite"] .accent-orb { display: none; }
+[data-theme="light-lite"] * { animation: none !important; transition: color 0.1s, background-color 0.1s, border-color 0.1s !important; }
+[data-theme="light-lite"] main::before, [data-theme="light-lite"] main::after { display: none; }
+[data-theme="light-lite"] .shimmer { animation: shimmer 1.5s infinite !important; }
+
 
 /* ════════════════════════════════════════════════════════
    ANIMATIONS
