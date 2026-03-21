@@ -15,7 +15,8 @@ import { NotificationBanner } from '@/hooks/usePushNotifications'
 import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal, KeyboardHelpButton } from '@/hooks/useInteractions'
 import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
-import DLCCanvas from '@/components/DLCCanvas'
+import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
+import { useFocusMode, FocusModeBar } from '@/components/FocusMode'
 import clsx from 'clsx'
 
 const nav = [
@@ -57,6 +58,7 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   // Claros novos
   'light-punkrock':   { bg: '#1a1f8f', accent: '#e60000', card: '#ffffff' },
   'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
+  'light-portatil':   { bg: '#9bbc0f', accent: '#306230', card: '#8bac0f' },
   // Chrono Trigger (usa preview base escuro)
   'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
 }
@@ -302,7 +304,11 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
 }
 
 // ── Sidebar inner ─────────────────────────────────────────────────────────────
-function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
+function SidebarContent({ onOpenPicker, onToggleFocus, focusActive }: {
+  onOpenPicker: () => void
+  onToggleFocus: () => void
+  focusActive: boolean
+}) {
   const { user, logout } = useAuthStore()
   const { theme, isDark, toggleDarkLight } = useTheme()
   const navigate = useNavigate()
@@ -384,8 +390,30 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
         ))}
       </nav>
 
-      {/* Study Mode widget */}
+      {/* Study Mode widget + Focus Mode + DLC Lofi — grouped */}
       <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
+        {/* Focus Mode quick toggle */}
+        <div className="px-3 pt-2 pb-1">
+          <button
+            onClick={onToggleFocus}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: focusActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+              border: `1px solid ${focusActive ? 'var(--accent-1)' : 'var(--border)'}`,
+              color: focusActive ? 'var(--accent-3)' : 'var(--text-muted)',
+            }}
+            title="Modo Foco — oculta sidebar e nav (Ctrl+Shift+F)"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+            <span className="flex-1 text-left">{focusActive ? 'Sair do foco' : 'Modo Foco'}</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⇧F</span>
+          </button>
+        </div>
+        {/* DLC Lofi player */}
+        <DLCLofiPlayer />
+        {/* Pomodoro / Study mode */}
         <StudyMode />
       </div>
 
@@ -472,6 +500,7 @@ export default function AppLayout() {
     { key: 'r', ctrl: true, description: 'Recarregar dados da página',      group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
     { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',        group: 'Ações', action: () => setSearchOpen(v => !v) },
     { key: 'p', ctrl: true, shift: true, description: 'Modo apresentação', group: 'Interface', action: () => presentation.toggle() },
+    { key: 'f', ctrl: true, shift: true, description: 'Modo Foco (oculta sidebar/nav)', group: 'Interface', action: () => focusMode.toggle() },
     { key: 'f', ctrl: true, description: 'Focar busca na página',           group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
     // Por página
     { key: 'ArrowRight', description: 'Próxima página (navegação)',  group: 'Navegação rápida', action: () => {
@@ -489,6 +518,7 @@ export default function AppLayout() {
   const isPixel  = theme.id === 'dark-pixel'
   const isChrono = theme.id === 'dark-chrono'
   const saveStarter = (id: string) => { localStorage.setItem('dasiboard-starter', id); setStarter(id) }
+  const focusMode = useFocusMode()
 
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
@@ -510,7 +540,8 @@ export default function AppLayout() {
       {/* Floating keyboard help button — keyboard users only */}
       <KeyboardHelpButton onClick={() => setShowKeyHelp(k => !k)} />
 
-      {/* Pokéball button — only in Pixel theme */}
+      {/* Focus mode bar — replaces topbar when active */}
+      {focusMode.active && <FocusModeBar onExit={focusMode.exit} />}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
 
       {/* Chrono era badge — floating, only in Chrono theme */}
@@ -527,7 +558,7 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} />
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">

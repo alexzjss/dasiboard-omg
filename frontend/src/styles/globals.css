@@ -5415,3 +5415,343 @@ html { scroll-behavior: smooth; }
   }
   .accent-orb { display: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎮  LIGHT — Portátil  (Game Boy Classic · Verde acinzentado)
+   Paleta original DMG: #9bbc0f / #8bac0f / #306230 / #0f380f
+   Pixel font, scanlines de LCD, borda física do console
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="light-portatil"] {
+  /* Game Boy DMG 4-shade palette */
+  --gb-lightest: #9bbc0f;
+  --gb-light:    #8bac0f;
+  --gb-dark:     #306230;
+  --gb-darkest:  #0f380f;
+
+  --bg-base:        #9bbc0f;
+  --bg-surface:     #8bac0f;
+  --bg-elevated:    #8bac0f;
+  --bg-card:        #9bbc0f;
+  --border:         #306230;
+  --border-light:   #306230;
+  --text-primary:   #0f380f;
+  --text-secondary: #306230;
+  --text-muted:     #306230;
+  --accent-1:       #0f380f;
+  --accent-2:       #306230;
+  --accent-3:       #0f380f;
+  --accent-glow:    rgba(15,56,15,0.35);
+  --accent-soft:    rgba(15,56,15,0.15);
+  --gradient-hero:  linear-gradient(135deg, #0f380f 0%, #306230 50%, #8bac0f 100%);
+  --gradient-btn:   linear-gradient(135deg, #0f380f, #306230);
+  --noise-opacity:  0;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "Press Start 2P", "JetBrains Mono", monospace;
+  image-rendering: pixelated;
+}
+
+/* All headings — pixel font */
+[data-theme="light-portatil"] h1,
+[data-theme="light-portatil"] h2,
+[data-theme="light-portatil"] h3,
+[data-theme="light-portatil"] h4 {
+  font-family: "Press Start 2P", monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #0f380f;
+  text-shadow: 2px 2px 0 rgba(15,56,15,0.3);
+  line-height: 1.6;
+}
+[data-theme="light-portatil"] h1 { font-size: clamp(0.85rem, 2vw, 1.1rem); }
+[data-theme="light-portatil"] h2 { font-size: 0.8rem; }
+[data-theme="light-portatil"] h3 { font-size: 0.7rem; }
+
+/* LCD scanlines overlay */
+[data-theme="light-portatil"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(15,56,15,0.04) 2px,
+    rgba(15,56,15,0.04) 3px
+  );
+  image-rendering: pixelated;
+}
+
+/* Pixel-grid texture on background */
+[data-theme="light-portatil"] body::after {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(15,56,15,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,56,15,0.06) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+/* Cards — DMG screen border style */
+[data-theme="light-portatil"] .card {
+  background: #8bac0f;
+  border: 3px solid #0f380f !important;
+  border-radius: 2px !important;
+  box-shadow: 3px 3px 0 #0f380f !important;
+  image-rendering: pixelated;
+}
+[data-theme="light-portatil"] .card-hover:hover {
+  background: #9bbc0f;
+  box-shadow: 4px 4px 0 #0f380f !important;
+  transform: translate(-1px, -1px) !important;
+}
+
+/* Sidebar — Game Boy body dark plastic */
+[data-theme="light-portatil"] .sidebar-bg {
+  background: linear-gradient(180deg, #0f380f 0%, #1a4a1a 100%);
+  border-right: 3px solid #0f380f;
+}
+
+/* Sidebar text overrides for dark sidebar */
+[data-theme="light-portatil"] .sidebar-bg * {
+  font-family: "Press Start 2P", monospace !important;
+}
+
+/* Nav links on dark sidebar */
+[data-theme="light-portatil"] .nav-active {
+  background: rgba(139,172,15,0.3) !important;
+  border: 2px solid #8bac0f !important;
+  border-radius: 2px !important;
+  color: #9bbc0f !important;
+}
+[data-theme="light-portatil"] .nav-inactive {
+  color: rgba(139,172,15,0.55);
+}
+[data-theme="light-portatil"] .nav-inactive:hover {
+  color: #9bbc0f;
+  background: rgba(139,172,15,0.15);
+}
+
+/* Buttons */
+[data-theme="light-portatil"] .btn-primary {
+  background: #0f380f !important;
+  border: 2px solid #0f380f !important;
+  border-radius: 2px !important;
+  color: #9bbc0f !important;
+  font-family: "Press Start 2P", monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: 3px 3px 0 #306230 !important;
+  text-transform: uppercase;
+}
+[data-theme="light-portatil"] .btn-primary:hover {
+  background: #306230 !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0 #0f380f !important;
+}
+[data-theme="light-portatil"] .btn-primary:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0 #0f380f !important;
+}
+
+[data-theme="light-portatil"] .btn-ghost {
+  color: #0f380f;
+  border: 2px solid #306230 !important;
+  border-radius: 2px !important;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  box-shadow: 2px 2px 0 #306230;
+}
+[data-theme="light-portatil"] .btn-ghost:hover {
+  background: rgba(15,56,15,0.1);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #306230;
+}
+
+/* Inputs */
+[data-theme="light-portatil"] .input {
+  background: #8bac0f !important;
+  border: 2px solid #0f380f !important;
+  border-radius: 2px !important;
+  color: #0f380f !important;
+  font-family: "Press Start 2P", monospace !important;
+  font-size: 9px !important;
+  box-shadow: inset 2px 2px 0 rgba(15,56,15,0.2) !important;
+}
+[data-theme="light-portatil"] .input:focus {
+  background: #9bbc0f !important;
+  border-color: #0f380f !important;
+  box-shadow: inset 2px 2px 0 rgba(15,56,15,0.2), 0 0 0 2px rgba(15,56,15,0.15) !important;
+  outline: none !important;
+}
+[data-theme="light-portatil"] .input::placeholder {
+  color: rgba(15,56,15,0.4) !important;
+}
+
+/* Labels */
+[data-theme="light-portatil"] .label {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: #0f380f;
+  text-transform: uppercase;
+}
+
+/* Badge */
+[data-theme="light-portatil"] .badge {
+  font-family: "Press Start 2P", monospace !important;
+  font-size: 7px !important;
+  border-radius: 2px !important;
+  border: 2px solid currentColor !important;
+  box-shadow: 2px 2px 0 currentColor;
+}
+
+/* Scrollbar — pixel style */
+[data-theme="light-portatil"] ::-webkit-scrollbar { width: 8px; }
+[data-theme="light-portatil"] ::-webkit-scrollbar-track { background: #8bac0f; }
+[data-theme="light-portatil"] ::-webkit-scrollbar-thumb {
+  background: #0f380f;
+  border-radius: 0;
+  border: 2px solid #306230;
+}
+
+/* Mobile bottom nav */
+[data-theme="light-portatil"] .mobile-bottomnav,
+[data-theme="light-portatil"] .mobile-topbar {
+  background-color: #0f380f !important;
+  border-color: #306230 !important;
+}
+[data-theme="light-portatil"] .nav-bottom-active,
+[data-theme="light-portatil"] .nav-bottom-inactive {
+  color: #8bac0f !important;
+}
+[data-theme="light-portatil"] .nav-bottom-active {
+  color: #9bbc0f !important;
+}
+
+/* Sidebar DasiBoard title text on dark bg */
+[data-theme="light-portatil"] .sidebar-bg p,
+[data-theme="light-portatil"] .sidebar-bg span {
+  color: #8bac0f;
+}
+
+/* A-button style accent dot */
+[data-theme="light-portatil"] .sidebar-bg::after {
+  content: 'A';
+  position: absolute;
+  bottom: 90px; right: 16px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #8b0000;
+  border: 2px solid #0f380f;
+  color: #9bbc0f;
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 20px;
+  pointer-events: none;
+  box-shadow: 2px 2px 0 #0f380f;
+}
+
+/* Reduced font sizes on body for pixel font readability */
+[data-theme="light-portatil"] body {
+  font-size: 10px;
+  line-height: 1.8;
+}
+[data-theme="light-portatil"] .text-sm  { font-size: 9px !important; }
+[data-theme="light-portatil"] .text-xs  { font-size: 8px !important; }
+[data-theme="light-portatil"] .text-base { font-size: 10px !important; }
+
+/* Disable blur effects for pixel purity */
+[data-theme="light-portatil"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Shimmer — pixelated version */
+[data-theme="light-portatil"] .shimmer {
+  background: linear-gradient(90deg, #8bac0f 25%, #9bbc0f 50%, #8bac0f 75%) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎯  FOCUS MODE — [data-focus-mode="1"] on <html>
+   Hides sidebar, mobile nav, topbar. Shows minimal 36px focus bar.
+═══════════════════════════════════════════════════════════════════ */
+
+/* Hide desktop sidebar */
+[data-focus-mode="1"] aside {
+  display: none !important;
+}
+
+/* Hide mobile bottom nav */
+[data-focus-mode="1"] nav.mobile-bottomnav,
+[data-focus-mode="1"] nav[class*="mobile"] {
+  display: none !important;
+}
+
+/* Hide mobile top bar */
+[data-focus-mode="1"] .mobile-topbar {
+  display: none !important;
+}
+
+/* Remove sidebar width from main */
+[data-focus-mode="1"] main {
+  margin-left: 0 !important;
+  padding-top: 36px !important; /* Height of FocusModeBar */
+}
+
+/* Remove the Pixel pokéball button in focus mode */
+[data-focus-mode="1"] .pokeball-btn {
+  display: none !important;
+}
+
+/* Remove keyboard help button in focus mode */
+[data-focus-mode="1"] .kbd-help-btn {
+  display: none !important;
+}
+
+/* Main content fills full width */
+[data-focus-mode="1"] .flex.h-\[100dvh\] {
+  /* The sidebar is gone, flex child takes full width */
+}
+
+/* Focus mode — page padding top compensates for the 36px bar */
+[data-focus-mode="1"] .page-mobile {
+  padding-top: 12px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🕹️  DLC — z-index HOTFIX (blank screen fix)
+   The canvas is at z-index:1 (position:fixed).
+   Everything else must be ≥ z-index:2 relative.
+═══════════════════════════════════════════════════════════════════ */
+
+/* Override the v2 block that was setting z-index:1 on sidebar/main/nav
+   — those elements are in the normal flow (not fixed), so z-index
+   stacking context from the fixed canvas at z:1 doesn't apply.
+   The real fix: make the layout wrapper a stacking context above canvas. */
+[data-theme="dark-dlc"] .flex.h-\[100dvh\] {
+  position: relative;
+  z-index: 2;
+}
+
+/* DLC body/before/after are cosmetic — ensure they stay below canvas */
+[data-theme="dark-dlc"] body::before,
+[data-theme="dark-dlc"] body::after {
+  z-index: 0 !important;
+}
+
+/* Main content area background must be slightly opaque so canvas glow
+   shows through edges without making text unreadable */
+[data-theme="dark-dlc"] main {
+  background-color: rgba(8,2,15,0.7) !important;
+}
+
+[data-theme="dark-dlc"] .sidebar-bg {
+  background: linear-gradient(180deg, #120820 0%, #0d0518 35%, #080210 65%, #040108 100%) !important;
+  position: relative;
+  z-index: 2;
+}

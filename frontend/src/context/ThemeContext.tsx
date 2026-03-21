@@ -9,6 +9,7 @@ export type ThemeId =
   | 'light-lab' | 'light-ilha' | 'light-vidro' | 'light-vanilla' | 'light-lite'
   | 'light-punkrock' | 'light-memento'
   | 'dark-chrono'
+  | 'light-portatil'
 
 // Sub-eras do Chrono Trigger que rotacionam por página
 export type ChronoEra = 'prehistoria' | 'antiguidade' | 'era-media' | 'futuro' | 'fim-dos-tempos'
@@ -64,6 +65,7 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-lite',       name: 'Lite',         dark: false, emoji: '✨', description: 'Leve · Sem efeitos',        group: 'base'    },
   { id: 'light-punkrock',   name: 'Punkrock',     dark: false, emoji: '🦸', description: 'Superman · Azul & Vermelho',group: 'super'   },
   { id: 'light-memento',    name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',       group: 'anime'   },
+  { id: 'light-portatil',   name: 'Portátil',     dark: false, emoji: '🎮', description: 'Game Boy · Verde acinzentado', group: 'games' },
 ]
 
 export const DARK_THEMES  = THEMES.filter(t => t.dark)
