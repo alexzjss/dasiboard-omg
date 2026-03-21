@@ -3576,3 +3576,732 @@
 
 /* ── Fix 100vh on mobile (use dvh) ── */
 .h-screen-mobile { height: 100dvh; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ✨  DARK — Holográfico  (iridescente · prisma · aurora boreal)
+   Jogo de cores shifters: ciano, magenta, amarelo, verde-água
+   Blur saturado, gradients sobrepostos, noise granulado
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-holo"] {
+  --bg-base:        #0a0812;
+  --bg-surface:     #0f0c1c;
+  --bg-elevated:    #151025;
+  --bg-card:        #1a1430;
+  --border:         rgba(180,120,255,0.20);
+  --border-light:   rgba(180,120,255,0.40);
+  --text-primary:   #f0eeff;
+  --text-secondary: #c0b0ff;
+  --text-muted:     #5040a0;
+  --accent-1:       #a855f7;
+  --accent-2:       #7c3aed;
+  --accent-3:       #22d3ee;
+  --accent-glow:    rgba(168,85,247,0.45);
+  --accent-soft:    rgba(34,211,238,0.12);
+  --gradient-hero:  linear-gradient(135deg, #ff6ec7 0%, #a855f7 25%, #22d3ee 50%, #4ade80 75%, #fbbf24 100%);
+  --gradient-btn:   linear-gradient(135deg, #a855f7, #22d3ee, #f472b6);
+  --noise-opacity:  0.04;
+  --card-blur:      12px;
+  --sidebar-overlay: none;
+  font-family: "Syne", sans-serif;
+}
+[data-theme="dark-holo"] h1,
+[data-theme="dark-holo"] h2,
+[data-theme="dark-holo"] h3,
+[data-theme="dark-holo"] h4 {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(90deg, #ff6ec7, #a855f7, #22d3ee, #4ade80, #fbbf24, #ff6ec7);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: holoShift 6s linear infinite;
+}
+@keyframes holoShift {
+  from { background-position: 0% center; }
+  to   { background-position: 300% center; }
+}
+
+/* Prisma de fundo animado */
+[data-theme="dark-holo"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 20%, rgba(255,110,199,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 30%, rgba(34,211,238,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 60% at 50% 80%, rgba(74,222,128,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 30% at 30% 60%, rgba(251,191,36,0.07) 0%, transparent 60%);
+  animation: holoPrisma 12s ease-in-out infinite alternate;
+}
+@keyframes holoPrisma {
+  0%   { opacity: 0.6; filter: hue-rotate(0deg); }
+  50%  { opacity: 1;   filter: hue-rotate(30deg); }
+  100% { opacity: 0.7; filter: hue-rotate(-20deg); }
+}
+
+/* Cards holográficos com shimmer */
+[data-theme="dark-holo"] .card {
+  background: rgba(26,20,48,0.75);
+  border: 1px solid rgba(168,85,247,0.25);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    0 4px 32px rgba(168,85,247,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(34,211,238,0.05);
+  position: relative;
+  overflow: hidden;
+}
+[data-theme="dark-holo"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: -100%; right: -100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,110,199,0.6), rgba(34,211,238,0.6), rgba(74,222,128,0.4), transparent);
+  animation: holoSweep 4s ease-in-out infinite;
+}
+@keyframes holoSweep {
+  0%   { left: -100%; opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { left: 200%; opacity: 0; }
+}
+[data-theme="dark-holo"] .card-hover:hover {
+  border-color: rgba(34,211,238,0.5);
+  box-shadow:
+    0 8px 48px rgba(168,85,247,0.30),
+    0 0 0 1px rgba(34,211,238,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  transform: translateY(-3px);
+}
+
+/* Sidebar holo */
+[data-theme="dark-holo"] .sidebar-bg {
+  background: linear-gradient(180deg, rgba(20,16,40,0.98) 0%, rgba(10,8,18,0.98) 100%);
+  border-right: 1px solid rgba(168,85,247,0.2);
+  backdrop-filter: blur(20px);
+}
+[data-theme="dark-holo"] .sidebar-bg::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(135deg,
+    rgba(255,110,199,0.04) 0%,
+    rgba(168,85,247,0.03) 33%,
+    rgba(34,211,238,0.03) 66%,
+    rgba(74,222,128,0.02) 100%);
+  animation: holoPrisma 8s ease-in-out infinite alternate;
+}
+
+/* Nav active holo */
+[data-theme="dark-holo"] .nav-active {
+  background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(34,211,238,0.10));
+  border: 1px solid rgba(168,85,247,0.35);
+  color: #c4b5fd;
+}
+
+/* btn-primary holo */
+[data-theme="dark-holo"] .btn-primary {
+  background: linear-gradient(135deg, #a855f7, #22d3ee, #f472b6) !important;
+  background-size: 200% auto !important;
+  animation: holoBtnShift 3s linear infinite !important;
+  box-shadow: 0 4px 20px rgba(168,85,247,0.4), 0 0 40px rgba(34,211,238,0.2) !important;
+}
+@keyframes holoBtnShift {
+  from { background-position: 0% center; }
+  to   { background-position: 200% center; }
+}
+
+/* Mobile */
+@media (hover: none) {
+  [data-theme="dark-holo"] body::before { animation-duration: 20s; }
+  [data-theme="dark-holo"] .card::before { display: none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   🦸  LIGHT — Punkrock  (Superman · HQ clássica · Azul + Vermelho)
+   All Star Superman, All Seasons, Reeve, Smallville, 2025
+   Tipografia bold de impacto, cores vivas, textura de impresso
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="light-punkrock"] {
+  --bg-base:        #1a1f8f;
+  --bg-surface:     #1e24a0;
+  --bg-elevated:    #2530b8;
+  --bg-card:        #ffffff;
+  --border:         rgba(255,255,255,0.25);
+  --border-light:   rgba(255,255,255,0.45);
+  --text-primary:   #ffffff;
+  --text-secondary: #ffe066;
+  --text-muted:     rgba(255,255,255,0.50);
+  --accent-1:       #e60000;
+  --accent-2:       #cc0000;
+  --accent-3:       #ffe066;
+  --accent-glow:    rgba(230,0,0,0.40);
+  --accent-soft:    rgba(230,0,0,0.15);
+  --gradient-hero:  linear-gradient(135deg, #e60000 0%, #cc0000 40%, #1a1f8f 100%);
+  --gradient-btn:   linear-gradient(135deg, #e60000, #cc0000);
+  --noise-opacity:  0.035;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "DM Sans", sans-serif;
+}
+[data-theme="light-punkrock"] h1,
+[data-theme="light-punkrock"] h2,
+[data-theme="light-punkrock"] h3,
+[data-theme="light-punkrock"] h4 {
+  font-family: "Bangers", "Syne", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #ffe066;
+  text-shadow: 3px 3px 0 rgba(230,0,0,0.8), 5px 5px 0 rgba(0,0,0,0.3);
+}
+
+/* Fundo azul royal com textura halftone sutil */
+[data-theme="light-punkrock"] body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 1;
+}
+
+/* Cards punkrock — papel branco com sombra forte */
+[data-theme="light-punkrock"] .card {
+  background: #ffffff;
+  border: 2px solid rgba(230,0,0,0.20);
+  box-shadow: 4px 4px 0 rgba(230,0,0,0.35), 8px 8px 0 rgba(26,31,143,0.25);
+  color: #1a0000;
+}
+[data-theme="light-punkrock"] .card .text-primary,
+[data-theme="light-punkrock"] .card p,
+[data-theme="light-punkrock"] .card span,
+[data-theme="light-punkrock"] .card h1,
+[data-theme="light-punkrock"] .card h2,
+[data-theme="light-punkrock"] .card h3 {
+  color: #1a0000 !important;
+}
+[data-theme="light-punkrock"] .card h1,
+[data-theme="light-punkrock"] .card h2,
+[data-theme="light-punkrock"] .card h3 {
+  text-shadow: 2px 2px 0 rgba(230,0,0,0.4) !important;
+}
+[data-theme="light-punkrock"] .card-hover:hover {
+  border-color: #e60000;
+  box-shadow: 6px 6px 0 rgba(230,0,0,0.5), 10px 10px 0 rgba(26,31,143,0.3);
+  transform: translate(-2px, -2px);
+}
+
+/* Sidebar azul royal com S estilizado */
+[data-theme="light-punkrock"] .sidebar-bg {
+  background: linear-gradient(180deg, #1e24a0 0%, #1a1f8f 60%, #13178a 100%);
+  border-right: 3px solid #e60000;
+}
+[data-theme="light-punkrock"] .sidebar-bg::before {
+  content: 'S';
+  position: absolute; bottom: 24px; right: 16px;
+  font-family: "Bangers", sans-serif;
+  font-size: 80px; letter-spacing: 0;
+  color: rgba(255,255,255,0.04);
+  pointer-events: none; line-height: 1;
+  text-shadow: 3px 3px 0 rgba(230,0,0,0.05);
+}
+
+/* Nav active */
+[data-theme="light-punkrock"] .nav-active {
+  background: rgba(230,0,0,0.18) !important;
+  border: 2px solid rgba(230,0,0,0.5) !important;
+  color: #ffe066 !important;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+}
+[data-theme="light-punkrock"] .nav-inactive { color: rgba(255,255,255,0.70); }
+[data-theme="light-punkrock"] .nav-inactive:hover {
+  color: #ffe066;
+  background: rgba(255,255,255,0.08);
+}
+
+/* btn-primary punkrock */
+[data-theme="light-punkrock"] .btn-primary {
+  font-family: "Bangers", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.4), 0 0 20px rgba(230,0,0,0.4) !important;
+}
+[data-theme="light-punkrock"] .btn-primary:active {
+  transform: translate(2px, 2px) scale(0.98) !important;
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.4) !important;
+}
+
+/* Input punkrock */
+[data-theme="light-punkrock"] .input {
+  background: rgba(255,255,255,0.92) !important;
+  border: 2px solid rgba(230,0,0,0.25) !important;
+  color: #1a0000 !important;
+}
+[data-theme="light-punkrock"] .input:focus {
+  border-color: #e60000 !important;
+  box-shadow: 0 0 0 3px rgba(230,0,0,0.15), 3px 3px 0 rgba(230,0,0,0.2) !important;
+}
+
+/* Top bar / bottom nav mobile */
+@media (max-width: 1023px) {
+  [data-theme="light-punkrock"] body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background: linear-gradient(180deg,
+      rgba(230,0,0,0.06) 0%,
+      transparent 20%,
+      transparent 80%,
+      rgba(230,0,0,0.06) 100%);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   🦇  DARK — Vingança  (Batman TAS · Noir · Vermelho & Preto)
+   The Animated Series — minimalista, sombrio, elegante
+   Sombras pesadas, linhas afiadas, detalhes carmesim
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-vinganca"] {
+  --bg-base:        #050506;
+  --bg-surface:     #080809;
+  --bg-elevated:    #0d0d0f;
+  --bg-card:        #111114;
+  --border:         #1e1e22;
+  --border-light:   #2a2a30;
+  --text-primary:   #d8d0c8;
+  --text-secondary: #8a7060;
+  --text-muted:     #2e2a28;
+  --accent-1:       #8b0000;
+  --accent-2:       #6b0000;
+  --accent-3:       #cc2200;
+  --accent-glow:    rgba(139,0,0,0.35);
+  --accent-soft:    rgba(139,0,0,0.10);
+  --gradient-hero:  linear-gradient(180deg, #8b0000 0%, #3a0000 40%, #050506 100%);
+  --gradient-btn:   linear-gradient(135deg, #8b0000, #6b0000);
+  --noise-opacity:  0.07;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "DM Sans", sans-serif;
+}
+[data-theme="dark-vinganca"] h1,
+[data-theme="dark-vinganca"] h2,
+[data-theme="dark-vinganca"] h3,
+[data-theme="dark-vinganca"] h4 {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c8b8a8;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+/* Céu noturno sombrio */
+[data-theme="dark-vinganca"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 40% 25% at 50% 0%, rgba(139,0,0,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, rgba(0,0,0,0.6) 0%, transparent 100%);
+  opacity: 1;
+}
+
+/* Linhas de chuva sutil */
+[data-theme="dark-vinganca"] body::after {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: repeating-linear-gradient(
+    175deg,
+    transparent,
+    transparent 60px,
+    rgba(139,0,0,0.025) 60px,
+    rgba(139,0,0,0.025) 61px
+  );
+  opacity: 1;
+}
+
+/* Cards noir */
+[data-theme="dark-vinganca"] .card {
+  background: #111114;
+  border: 1px solid #1e1e22;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    inset 0 -1px 0 rgba(139,0,0,0.04);
+}
+[data-theme="dark-vinganca"] .card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,0,0,0.4), transparent);
+  pointer-events: none;
+}
+[data-theme="dark-vinganca"] .card-hover:hover {
+  border-color: #8b0000;
+  box-shadow: 0 8px 32px rgba(139,0,0,0.25), 0 0 0 1px #8b000055;
+  transform: translateY(-1px);
+}
+
+/* Sidebar — quase preto com fio vermelho */
+[data-theme="dark-vinganca"] .sidebar-bg {
+  background: linear-gradient(180deg, #0a0a0c 0%, #050506 100%);
+  border-right: 1px solid #1e1e22;
+}
+[data-theme="dark-vinganca"] .sidebar-bg::before {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0; width: 2px;
+  background: linear-gradient(180deg, transparent, #8b0000, #8b0000, transparent);
+  opacity: 0.5; pointer-events: none;
+}
+[data-theme="dark-vinganca"] .sidebar-bg::after {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 100% 40% at 50% 0%, rgba(139,0,0,0.06) 0%, transparent 70%);
+}
+
+/* Nav active */
+[data-theme="dark-vinganca"] .nav-active {
+  background: rgba(139,0,0,0.12) !important;
+  border: 1px solid rgba(139,0,0,0.35) !important;
+  color: #cc4422 !important;
+}
+[data-theme="dark-vinganca"] .nav-inactive { color: #5a5050; }
+[data-theme="dark-vinganca"] .nav-inactive:hover {
+  color: #c8b8a8; background: rgba(255,255,255,0.03);
+}
+
+/* btn-primary noir */
+[data-theme="dark-vinganca"] .btn-primary {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 12px rgba(139,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+/* Scrollbar */
+[data-theme="dark-vinganca"] ::-webkit-scrollbar-thumb { background: #8b000055; }
+[data-theme="dark-vinganca"] ::-webkit-scrollbar-thumb:hover { background: #8b0000; }
+
+@media (hover: none) {
+  [data-theme="dark-vinganca"] body::after { display: none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   🤖  DARK — Eva  (Neon Genesis Evangelion · Roxo + Verde Lima)
+   NERV industrial, padrões de alerta, EVA-01 purple & green
+   Tipografia técnica, sinais de alerta, UI de mecha
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-eva"] {
+  --bg-base:        #0d0010;
+  --bg-surface:     #120015;
+  --bg-elevated:    #18001e;
+  --bg-card:        #1e0028;
+  --border:         rgba(139,0,255,0.22);
+  --border-light:   rgba(139,0,255,0.40);
+  --text-primary:   #e8d8ff;
+  --text-secondary: #a855f7;
+  --text-muted:     #4a1a6a;
+  --accent-1:       #8b00ff;
+  --accent-2:       #6600cc;
+  --accent-3:       #aaff00;
+  --accent-glow:    rgba(139,0,255,0.40);
+  --accent-soft:    rgba(170,255,0,0.10);
+  --gradient-hero:  linear-gradient(135deg, #8b00ff 0%, #5500cc 40%, #0d0010 100%);
+  --gradient-btn:   linear-gradient(135deg, #8b00ff, #6600cc);
+  --noise-opacity:  0.04;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "JetBrains Mono", monospace;
+}
+[data-theme="dark-eva"] h1,
+[data-theme="dark-eva"] h2,
+[data-theme="dark-eva"] h3,
+[data-theme="dark-eva"] h4 {
+  font-family: "Orbitron", "JetBrains Mono", monospace;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #aaff00;
+  text-shadow: 0 0 12px rgba(170,255,0,0.6), 0 0 30px rgba(170,255,0,0.3);
+}
+
+/* Fundo Eva — roxo escuro com alerta diagonal */
+[data-theme="dark-eva"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 50%, rgba(139,0,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(170,255,0,0.05) 0%, transparent 50%);
+  animation: evaBg 10s ease-in-out infinite alternate;
+}
+@keyframes evaBg {
+  0%   { filter: hue-rotate(0deg);  opacity: 0.8; }
+  100% { filter: hue-rotate(15deg); opacity: 1; }
+}
+
+/* Stripes de perigo no topo e bottom (como Eva interface) */
+[data-theme="dark-eva"] body::after {
+  content: '';
+  position: fixed; left: 0; right: 0; top: 0; height: 4px;
+  pointer-events: none; z-index: 9000;
+  background: repeating-linear-gradient(
+    90deg,
+    #aaff00 0px, #aaff00 12px,
+    #1e0028 12px, #1e0028 24px
+  );
+  opacity: 0.7;
+}
+
+/* Cards Eva */
+[data-theme="dark-eva"] .card {
+  background: rgba(30,0,40,0.92);
+  border: 1px solid rgba(139,0,255,0.25);
+  border-top: 2px solid rgba(170,255,0,0.4);
+  box-shadow: 0 4px 24px rgba(139,0,255,0.15), inset 0 1px 0 rgba(170,255,0,0.06);
+  position: relative;
+}
+[data-theme="dark-eva"] .card::after {
+  content: 'NERV';
+  position: absolute; bottom: 8px; right: 12px;
+  font-family: "Orbitron", monospace;
+  font-size: 8px; letter-spacing: 0.3em;
+  color: rgba(170,255,0,0.12); pointer-events: none;
+  text-transform: uppercase;
+}
+[data-theme="dark-eva"] .card-hover:hover {
+  border-color: rgba(170,255,0,0.5);
+  border-top-color: #aaff00;
+  box-shadow: 0 8px 32px rgba(139,0,255,0.25), 0 0 0 1px rgba(170,255,0,0.2);
+  transform: translateY(-2px);
+}
+
+/* Sidebar Eva */
+[data-theme="dark-eva"] .sidebar-bg {
+  background: linear-gradient(180deg, #180020 0%, #0d0010 100%);
+  border-right: 1px solid rgba(139,0,255,0.3);
+  border-right-width: 2px;
+}
+[data-theme="dark-eva"] .sidebar-bg::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 28px,
+    rgba(139,0,255,0.04) 28px,
+    rgba(139,0,255,0.04) 29px
+  );
+}
+[data-theme="dark-eva"] .sidebar-bg::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; right: 0; width: 2px;
+  background: linear-gradient(180deg, transparent, #aaff0060, transparent);
+  pointer-events: none;
+}
+
+/* Nav Eva */
+[data-theme="dark-eva"] .nav-active {
+  background: rgba(170,255,0,0.08) !important;
+  border: 1px solid rgba(170,255,0,0.35) !important;
+  color: #aaff00 !important;
+  text-shadow: 0 0 8px rgba(170,255,0,0.4);
+}
+[data-theme="dark-eva"] .nav-inactive { color: #6040a0; }
+[data-theme="dark-eva"] .nav-inactive:hover {
+  color: #aaff00; background: rgba(170,255,0,0.06);
+}
+
+/* btn Eva */
+[data-theme="dark-eva"] .btn-primary {
+  background: linear-gradient(135deg, #8b00ff, #6600cc) !important;
+  border: 1px solid rgba(170,255,0,0.4) !important;
+  font-family: "Orbitron", monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase;
+  box-shadow: 0 0 16px rgba(139,0,255,0.4), 0 0 4px rgba(170,255,0,0.3) !important;
+}
+[data-theme="dark-eva"] .btn-ghost { color: #a855f7; font-family: "Orbitron", monospace; font-size: 10px; letter-spacing: 0.1em; }
+[data-theme="dark-eva"] .input {
+  border-color: rgba(139,0,255,0.3) !important;
+  font-family: "JetBrains Mono", monospace;
+}
+[data-theme="dark-eva"] .input:focus { border-color: #aaff00 !important; box-shadow: 0 0 0 2px rgba(170,255,0,0.15) !important; }
+
+/* Scrollbar Eva */
+[data-theme="dark-eva"] ::-webkit-scrollbar { width: 4px; }
+[data-theme="dark-eva"] ::-webkit-scrollbar-track { background: #0d0010; }
+[data-theme="dark-eva"] ::-webkit-scrollbar-thumb { background: #8b00ff99; }
+[data-theme="dark-eva"] ::-webkit-scrollbar-thumb:hover { background: #aaff00; }
+
+@media (hover: none) {
+  [data-theme="dark-eva"] body::after { display: none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   🃏  LIGHT — Memento  (Persona · Editorial · Cores contrastantes)
+   P3 Reload aesthetic — azul petróleo, preto, branco, vermelho
+   Mix tipográfico irreverente, layout quebrado, bold & italic clash
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="light-memento"] {
+  --bg-base:        #f2f4f8;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #e8ecf2;
+  --bg-card:        #ffffff;
+  --border:         #c8d0de;
+  --border-light:   #a8b4c8;
+  --text-primary:   #0a0e18;
+  --text-secondary: #2040a0;
+  --text-muted:     #8090b0;
+  --accent-1:       #0a3080;
+  --accent-2:       #082060;
+  --accent-3:       #1a50c0;
+  --accent-glow:    rgba(10,48,128,0.20);
+  --accent-soft:    rgba(10,48,128,0.08);
+  --gradient-hero:  linear-gradient(135deg, #0a3080 0%, #1a50c0 50%, #88b0ff 100%);
+  --gradient-btn:   linear-gradient(135deg, #0a3080, #082060);
+  --noise-opacity:  0.025;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "DM Sans", sans-serif;
+}
+
+/* Headings Persona — mix de fontes bold + tracking extremo */
+[data-theme="light-memento"] h1 {
+  font-family: "Syne", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: #0a0e18;
+  position: relative;
+}
+[data-theme="light-memento"] h2,
+[data-theme="light-memento"] h3 {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0a0e18;
+}
+[data-theme="light-memento"] h4 {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 400;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #0a3080;
+}
+
+/* Fundo Memento — sutil quadrado/check */
+[data-theme="light-memento"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(10,48,128,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,48,128,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 1;
+}
+
+/* Faixa diagonal de destaque (como o cartão MP3 de P3) */
+[data-theme="light-memento"] body::after {
+  content: '';
+  position: fixed; top: 0; right: 0;
+  width: 200px; height: 200px;
+  pointer-events: none; z-index: 0;
+  background: linear-gradient(225deg, rgba(10,48,128,0.06) 0%, transparent 60%);
+  border-bottom-left-radius: 100%;
+}
+
+/* Cards Memento — clean com borda esquerda colorida e sombra */
+[data-theme="light-memento"] .card {
+  background: #ffffff;
+  border: 1px solid #c8d0de;
+  border-left: 4px solid #0a3080;
+  box-shadow: 2px 4px 16px rgba(10,48,128,0.10), 0 1px 2px rgba(10,48,128,0.06);
+}
+[data-theme="light-memento"] .card-hover:hover {
+  border-left-color: #cc0000;
+  box-shadow: 4px 6px 24px rgba(10,48,128,0.18);
+  transform: translateY(-2px) translateX(1px);
+}
+
+/* Sidebar Memento */
+[data-theme="light-memento"] .sidebar-bg {
+  background: linear-gradient(180deg, #0a3080 0%, #082060 100%);
+  border-right: none;
+}
+[data-theme="light-memento"] .sidebar-bg::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+/* Faixa vermelha de acento no topo da sidebar */
+[data-theme="light-memento"] .sidebar-bg::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #cc0000, #ff3333, #cc0000);
+  pointer-events: none;
+}
+
+/* Nav active Memento */
+[data-theme="light-memento"] .nav-active {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.35) !important;
+  color: #ffffff !important;
+}
+[data-theme="light-memento"] .nav-inactive { color: rgba(255,255,255,0.55); }
+[data-theme="light-memento"] .nav-inactive:hover {
+  color: #ffffff; background: rgba(255,255,255,0.10);
+}
+
+/* btn-primary Memento — clean azul com hover vermelho */
+[data-theme="light-memento"] .btn-primary {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 2px 3px 0 rgba(10,48,128,0.3) !important;
+}
+[data-theme="light-memento"] .btn-primary:hover {
+  background: linear-gradient(135deg, #cc0000, #aa0000) !important;
+  box-shadow: 2px 3px 0 rgba(180,0,0,0.4) !important;
+}
+[data-theme="light-memento"] .btn-primary:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 0 0 0 rgba(10,48,128,0.3) !important;
+}
+
+/* Input Memento */
+[data-theme="light-memento"] .input {
+  border: 1.5px solid #c8d0de !important;
+  border-radius: 4px !important;
+  font-family: "DM Sans", sans-serif;
+}
+[data-theme="light-memento"] .input:focus {
+  border-color: #0a3080 !important;
+  box-shadow: 3px 3px 0 rgba(10,48,128,0.15) !important;
+}
+
+/* Label Persona — destaque */
+[data-theme="light-memento"] .label {
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.12em;
+  color: #0a3080;
+}
+
+/* Scrollbar */
+[data-theme="light-memento"] ::-webkit-scrollbar { width: 3px; }
+[data-theme="light-memento"] ::-webkit-scrollbar-thumb { background: #0a3080; border-radius: 0; }
+[data-theme="light-memento"] ::-webkit-scrollbar-thumb:hover { background: #cc0000; }
+
+/* Badge accent Memento */
+[data-theme="light-memento"] .badge {
+  border-radius: 2px !important;
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.06em;
+}
+

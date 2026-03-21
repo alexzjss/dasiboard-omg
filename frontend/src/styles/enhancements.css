@@ -958,3 +958,215 @@ main > *:first-child {
   from { background-position: 0% center; }
   to   { background-position: 300% center; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   NOVOS TEMAS — Enhancements específicos
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Holográfico: efeitos extras ── */
+[data-theme="dark-holo"] :focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+[data-theme="dark-holo"] .shimmer {
+  background: linear-gradient(90deg,
+    rgba(168,85,247,0.08) 0%,
+    rgba(34,211,238,0.15) 40%,
+    rgba(74,222,128,0.10) 60%,
+    rgba(168,85,247,0.08) 100%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 2s linear infinite;
+}
+[data-theme="dark-holo"] .badge {
+  background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(34,211,238,0.15)) !important;
+  border: 1px solid rgba(34,211,238,0.3) !important;
+}
+[data-theme="dark-holo"] .hero-card {
+  background: rgba(20,16,44,0.85) !important;
+  border: 1px solid rgba(168,85,247,0.3) !important;
+  backdrop-filter: blur(20px) saturate(200%) !important;
+}
+/* scrollbar holo */
+[data-theme="dark-holo"] ::-webkit-scrollbar { width: 4px; }
+[data-theme="dark-holo"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff6ec7, #a855f7, #22d3ee);
+  border-radius: 99px;
+}
+/* section headers holo */
+[data-theme="dark-holo"] .section-header {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ff6ec7, #a855f7, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Punkrock: efeitos extras ── */
+[data-theme="light-punkrock"] .hero-card {
+  background: #ffffff !important;
+  border: 2px solid rgba(230,0,0,0.3) !important;
+  box-shadow: 5px 5px 0 rgba(230,0,0,0.4), 8px 8px 0 rgba(26,31,143,0.25) !important;
+}
+[data-theme="light-punkrock"] .hero-card h1 {
+  color: #1a0000 !important;
+  text-shadow: 2px 2px 0 rgba(230,0,0,0.5) !important;
+}
+[data-theme="light-punkrock"] .section-header {
+  font-family: "Bangers", sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: #ffe066;
+  text-shadow: 2px 2px 0 rgba(230,0,0,0.6);
+}
+[data-theme="light-punkrock"] :focus-visible {
+  outline: 3px solid #ffe066;
+  outline-offset: 2px;
+}
+[data-theme="light-punkrock"] .shimmer {
+  background: linear-gradient(90deg, #f0f0f0 0%, #fff8cc 40%, #f0f0f0 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 1.8s linear infinite;
+}
+[data-theme="light-punkrock"] .nav-bottom-active {
+  font-family: "Bangers", sans-serif;
+  letter-spacing: 0.08em;
+  color: #ffe066 !important;
+}
+/* Cards dentro do punkrock precisam de texto escuro */
+[data-theme="light-punkrock"] .card,
+[data-theme="light-punkrock"] .card * {
+  --text-primary: #1a0000;
+  --text-secondary: #8b1a00;
+  --text-muted: #b09070;
+}
+
+/* ── Vingança: efeitos extras ── */
+[data-theme="dark-vinganca"] .hero-card {
+  background: #111114 !important;
+  border: 1px solid #1e1e22 !important;
+  border-top: 1px solid #8b000055 !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8) !important;
+}
+[data-theme="dark-vinganca"] .section-header {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8b0000;
+}
+[data-theme="dark-vinganca"] :focus-visible {
+  outline: 2px solid #8b0000;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+[data-theme="dark-vinganca"] .shimmer {
+  background: linear-gradient(90deg, #0d0d0f 0%, #1a1a1e 40%, #0d0d0f 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 2.5s linear infinite;
+}
+[data-theme="dark-vinganca"] .badge {
+  border-radius: 2px !important;
+  border-color: #8b000044 !important;
+}
+[data-theme="dark-vinganca"] .nav-bottom-active {
+  filter: drop-shadow(0 0 4px rgba(139,0,0,0.6));
+}
+/* Kanban columns vingança */
+[data-theme="dark-vinganca"] .card-hover:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 0 1px #8b000040 !important;
+}
+
+/* ── Eva: efeitos extras ── */
+[data-theme="dark-eva"] .hero-card {
+  background: rgba(30,0,40,0.95) !important;
+  border: 1px solid rgba(139,0,255,0.3) !important;
+  border-top: 2px solid rgba(170,255,0,0.5) !important;
+}
+[data-theme="dark-eva"] .hero-card::before {
+  content: '[ NERV SYSTEM ONLINE ]';
+  display: block;
+  font-family: "Orbitron", monospace;
+  font-size: 8px;
+  color: rgba(170,255,0,0.4);
+  letter-spacing: 0.3em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+[data-theme="dark-eva"] .section-header {
+  font-family: "Orbitron", monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: #aaff00;
+  text-shadow: 0 0 8px rgba(170,255,0,0.5);
+  text-transform: uppercase;
+}
+[data-theme="dark-eva"] .section-header::before { content: '▶ '; }
+[data-theme="dark-eva"] .shimmer {
+  background: linear-gradient(90deg, #1e0028 0%, #2d003a 40%, #1e0028 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 2s linear infinite;
+}
+[data-theme="dark-eva"] .badge {
+  border-radius: 0 !important;
+  font-family: "Orbitron", monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  border-color: rgba(170,255,0,0.3) !important;
+}
+[data-theme="dark-eva"] .nav-bottom-active {
+  text-shadow: 0 0 8px rgba(170,255,0,0.6);
+}
+/* Kanban Eva — colunas com cor de alerta */
+[data-theme="dark-eva"] .card::after { display: none; } /* esconde NERV em cards de kanban */
+
+/* ── Memento: efeitos extras ── */
+[data-theme="light-memento"] .hero-card {
+  background: #ffffff !important;
+  border: 1px solid #c8d0de !important;
+  border-left: 5px solid #0a3080 !important;
+  box-shadow: 3px 4px 0 rgba(10,48,128,0.15), 6px 8px 0 rgba(10,48,128,0.06) !important;
+}
+[data-theme="light-memento"] .section-header {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #0a3080;
+  border-bottom: 2px solid #cc0000;
+  padding-bottom: 2px;
+  display: inline-block;
+}
+[data-theme="light-memento"] :focus-visible {
+  outline: 2px solid #0a3080;
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+[data-theme="light-memento"] .shimmer {
+  background: linear-gradient(90deg, #e8ecf2 0%, #f2f4f8 40%, #e8ecf2 80%);
+  background-size: 300% 100%;
+  animation: shimmer-wave 1.8s linear infinite;
+}
+[data-theme="light-memento"] .badge {
+  border-radius: 2px !important;
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.05em;
+  font-size: 9px;
+}
+[data-theme="light-memento"] .card-hover:hover {
+  border-left-color: #cc0000 !important;
+  transform: translateY(-2px) translateX(1px) !important;
+}
+[data-theme="light-memento"] .nav-bottom-active {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+/* Memento top bar mobile */
+@media (max-width: 1023px) {
+  [data-theme="light-memento"] .mobile-topbar {
+    background: #0a3080 !important;
+    border-bottom: 3px solid #cc0000 !important;
+  }
+}

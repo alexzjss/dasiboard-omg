@@ -6,7 +6,7 @@ import {
   LogOut, Palette, Search,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useTheme, THEMES, ThemeId } from '@/context/ThemeContext'
+import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId } from '@/context/ThemeContext'
 import clsx from 'clsx'
 
 const nav = [
@@ -18,19 +18,23 @@ const nav = [
   { to: '/profile',  label: 'Perfil',      icon: User,            end: false },
 ]
 
-const DARK_THEMES  = THEMES.filter(t => t.dark)
-const LIGHT_THEMES = THEMES.filter(t => !t.dark)
-
 // ── Theme preview colors for visual picker ───────────────────────────────────
 const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string }> = {
+  // Escuros base
   'dark-roxo':        { bg: '#0d0a1a', accent: '#a855f7', card: '#1a1430' },
   'dark-hypado':      { bg: '#0a0510', accent: '#ff6600', card: '#1f1028' },
   'dark-minas':       { bg: '#060c0a', accent: '#22c55e', card: '#122018' },
   'dark-dlc':         { bg: '#08020f', accent: '#ff0080', card: '#160625' },
   'dark-shell':       { bg: '#000000', accent: '#00ff41', card: '#060606' },
-  'light-720':        { bg: '#0d1a00', accent: '#6fbe00', card: '#163000' },
   'dark-colina':      { bg: '#181818', accent: '#8a7060', card: '#2a2a2c' },
   'dark-pixel':       { bg: '#000000', accent: '#ffcc00', card: '#181818' },
+  'light-720':        { bg: '#0d1a00', accent: '#6fbe00', card: '#163000' },
+  'light-blueprint':  { bg: '#0a2540', accent: '#4499ff', card: '#123d6a' },
+  // Escuros novos
+  'dark-holo':        { bg: '#0a0812', accent: '#a855f7', card: '#1a1430' },
+  'dark-vinganca':    { bg: '#050506', accent: '#8b0000', card: '#111114' },
+  'dark-eva':         { bg: '#0d0010', accent: '#aaff00', card: '#1e0028' },
+  // Claros base
   'light-roxo':       { bg: '#f8f6ff', accent: '#a855f7', card: '#ffffff' },
   'light-aranha':     { bg: '#f5f0e8', accent: '#e60000', card: '#ffffff' },
   'light-sintetizado':{ bg: '#f0f7ff', accent: '#3b82f6', card: '#ffffff' },
@@ -38,9 +42,11 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'light-lab':        { bg: '#ff69b4', accent: '#aaff00', card: '#ffffff' },
   'light-ilha':       { bg: '#0077cc', accent: '#ffcc33', card: '#ffffff' },
   'light-vidro':      { bg: '#b8d8f8', accent: '#3b82f6', card: 'rgba(255,255,255,0.45)' },
-  'light-blueprint':  { bg: '#0a2540', accent: '#4499ff', card: '#123d6a' },
   'light-vanilla':    { bg: '#faf7f2', accent: '#c8a060', card: '#ffffff' },
   'light-lite':       { bg: '#f8f9fa', accent: '#4444ff', card: '#ffffff' },
+  // Claros novos
+  'light-punkrock':   { bg: '#1a1f8f', accent: '#e60000', card: '#ffffff' },
+  'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
 }
 
 // ── Pokéball + Starter picker (Pixel theme only) ─────────────────────────────

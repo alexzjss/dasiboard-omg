@@ -1,24 +1,33 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
 export type ThemeId =
+  // ── Escuros ─────────────────────────────────────────────
   | 'dark-roxo'
   | 'dark-hypado'
   | 'dark-minas'
   | 'dark-dlc'
   | 'dark-shell'
-  | 'light-aranha'
+  | 'dark-colina'
+  | 'dark-pixel'
+  | 'light-720'        // dark apesar do prefixo (Xbox 360)
+  | 'light-blueprint'  // dark apesar do prefixo (fundo azul escuro)
+  // ── Escuros novos ────────────────────────────────────────
+  | 'dark-holo'
+  | 'dark-vinganca'
+  | 'dark-eva'
+  // ── Claros ──────────────────────────────────────────────
   | 'light-roxo'
+  | 'light-aranha'
   | 'light-sintetizado'
   | 'light-grace'
   | 'light-lab'
-  | 'light-720'
   | 'light-ilha'
-  | 'dark-colina'
   | 'light-vidro'
-  | 'light-blueprint'
   | 'light-vanilla'
-  | 'dark-pixel'
   | 'light-lite'
+  // ── Claros novos ─────────────────────────────────────────
+  | 'light-punkrock'
+  | 'light-memento'
 
 export interface ThemeMeta {
   id: ThemeId
@@ -26,34 +35,52 @@ export interface ThemeMeta {
   dark: boolean
   emoji: string
   description: string
+  group?: string  // agrupamento editorial
 }
 
 export const THEMES: ThemeMeta[] = [
-  // Dark
-  { id: 'dark-roxo',        name: 'Dark',        dark: true,  emoji: '🔮', description: 'Roxo profundo' },
-  { id: 'dark-hypado',      name: 'Hypado',       dark: true,  emoji: '🌆', description: 'Vaporwave · Roxo & Laranja' },
-
-  { id: 'dark-minas',       name: 'Minas',        dark: true,  emoji: '🦕', description: 'Dinos & Máquinas' },
-  { id: 'dark-dlc',         name: 'DLC',          dark: true,  emoji: '🎮', description: 'RGB Gaming' },
-  { id: 'dark-shell',       name: 'Shell',        dark: true,  emoji: '💀', description: 'CLI · Matrix' },
-  // Light
-  { id: 'light-roxo',       name: 'Light',        dark: false, emoji: '☀️', description: 'Roxo suave' },
-  { id: 'light-aranha',      name: 'Aranha',       dark: false, emoji: '🕷️', description: 'HQ · Vermelho & Azul' },
-  { id: 'light-sintetizado',name: 'Sintetizado',  dark: false, emoji: '💠', description: 'Azul limpo' },
-  { id: 'light-grace',      name: 'Grace',        dark: false, emoji: '🦉', description: 'Bege · Coruja' },
-  { id: 'light-lab',        name: 'Laboratório',  dark: false, emoji: '🖥️', description: 'Web Dev · Y2K Pink' },
-  { id: 'light-720',        name: '720',           dark: true,  emoji: '🎮', description: 'Xbox 360 · Older Brother' },
-  { id: 'light-ilha',       name: 'Ilha',         dark: false, emoji: '🏝️', description: 'Destiny Islands · KH · Sol' },
-  { id: 'dark-colina',      name: 'Colina',       dark: true,  emoji: '🌫️', description: 'Silent Hill · Névoa · Cinza' },
-  { id: 'light-vidro',      name: 'Vidro',        dark: false, emoji: '🔮', description: 'Glassmorphism · Liquid Glass' },
-  { id: 'light-blueprint',  name: 'Blueprint',    dark: false, emoji: '📐', description: 'Azulejo técnico · Plantas' },
-  { id: 'light-vanilla',    name: 'Vanilla',      dark: false, emoji: '🍦', description: 'Bege elegante · Minimalista' },
-  { id: 'dark-pixel',       name: 'Pixel',        dark: true,  emoji: '🎮', description: 'SNES · NES · GBA · Pixel Art' },
-  { id: 'light-lite',       name: 'Lite',         dark: false, emoji: '✨', description: 'Leve · Sem efeitos · Rápido' },
+  // ── Escuros ──────────────────────────────────────────────────────
+  { id: 'dark-roxo',       name: 'Dark',        dark: true,  emoji: '🔮', description: 'Roxo profundo',           group: 'base'    },
+  { id: 'dark-hypado',     name: 'Hypado',       dark: true,  emoji: '🌆', description: 'Vaporwave · Synthwave',    group: 'vibes'   },
+  { id: 'dark-minas',      name: 'Minas',        dark: true,  emoji: '🦕', description: 'Dinos & Máquinas',        group: 'vibes'   },
+  { id: 'dark-dlc',        name: 'DLC',          dark: true,  emoji: '🕹️', description: 'RGB Gaming',              group: 'games'   },
+  { id: 'dark-shell',      name: 'Shell',        dark: true,  emoji: '💀', description: 'CLI · Matrix',            group: 'tech'    },
+  { id: 'dark-colina',     name: 'Colina',       dark: true,  emoji: '🌫️', description: 'Silent Hill · Névoa',     group: 'vibes'   },
+  { id: 'dark-pixel',      name: 'Pixel',        dark: true,  emoji: '👾', description: 'SNES · NES · Pixel Art',  group: 'games'   },
+  { id: 'light-720',       name: '720',          dark: true,  emoji: '🎮', description: 'Xbox 360 · Verde',        group: 'games'   },
+  { id: 'light-blueprint', name: 'Blueprint',    dark: true,  emoji: '📐', description: 'Plantas Técnicas',        group: 'tech'    },
+  // Escuros novos
+  { id: 'dark-holo',       name: 'Holográfico',  dark: true,  emoji: '🌈', description: 'Iridescente · Prisma',    group: 'special' },
+  { id: 'dark-vinganca',   name: 'Vingança',     dark: true,  emoji: '🦇', description: 'Batman TAS · Noir',       group: 'super'   },
+  { id: 'dark-eva',        name: 'Eva',          dark: true,  emoji: '🤖', description: 'Evangelion · NERV',       group: 'anime'   },
+  // ── Claros ───────────────────────────────────────────────────────
+  { id: 'light-roxo',      name: 'Light',        dark: false, emoji: '☀️', description: 'Roxo suave',              group: 'base'    },
+  { id: 'light-aranha',    name: 'Aranha',       dark: false, emoji: '🕷️', description: 'HQ · Vermelho & Azul',   group: 'super'   },
+  { id: 'light-sintetizado',name:'Sintetizado',  dark: false, emoji: '💠', description: 'Azul limpo',              group: 'base'    },
+  { id: 'light-grace',     name: 'Grace',        dark: false, emoji: '🦉', description: 'Bege editorial · Coruja', group: 'vibes'   },
+  { id: 'light-lab',       name: 'Laboratório',  dark: false, emoji: '🖥️', description: 'Y2K Pink · Lime',        group: 'tech'    },
+  { id: 'light-ilha',      name: 'Ilha',         dark: false, emoji: '🏝️', description: 'Kingdom Hearts · Sol',   group: 'games'   },
+  { id: 'light-vidro',     name: 'Vidro',        dark: false, emoji: '🔮', description: 'Glassmorphism',           group: 'special' },
+  { id: 'light-vanilla',   name: 'Vanilla',      dark: false, emoji: '🍦', description: 'Bege elegante · Minimal', group: 'base'    },
+  { id: 'light-lite',      name: 'Lite',         dark: false, emoji: '✨', description: 'Leve · Sem efeitos',      group: 'base'    },
+  // Claros novos
+  { id: 'light-punkrock',  name: 'Punkrock',     dark: false, emoji: '🦸', description: 'Superman · Azul & Vermelho', group: 'super' },
+  { id: 'light-memento',   name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',     group: 'anime'   },
 ]
 
-const DARK_THEMES  = THEMES.filter(t => t.dark)
-const LIGHT_THEMES = THEMES.filter(t => !t.dark)
+export const DARK_THEMES  = THEMES.filter(t => t.dark)
+export const LIGHT_THEMES = THEMES.filter(t => !t.dark)
+
+// Agrupamentos para o picker
+export const THEME_GROUPS: Record<string, string> = {
+  base:    'Essenciais',
+  vibes:   'Atmosfera',
+  tech:    'Tech',
+  games:   'Games',
+  super:   'Super-heróis',
+  anime:   'Anime',
+  special: 'Especial',
+}
 
 interface ThemeCtx {
   theme: ThemeMeta
