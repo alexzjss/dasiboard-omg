@@ -428,6 +428,7 @@ export default function ProfilePage() {
   const [activeBadgeIds, setActiveBadgeIds] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('dasiboard-badges') ?? '[]') } catch { return [] }
   })
+  const [starter, setStarterState] = useState<string>(() => localStorage.getItem('dasiboard-starter') ?? '')
   const [showBadgePicker, setShowBadgePicker] = useState(false)
   const [avatarLoading,   setAvatarLoading]   = useState(false)
 
@@ -520,7 +521,8 @@ export default function ProfilePage() {
 
   const saveBadges = (ids: string[]) => { localStorage.setItem('dasiboard-badges', JSON.stringify(ids)); setActiveBadgeIds(ids) }
   const saveArea   = (v: string)     => { localStorage.setItem('dasiboard-area', v); setAreaState(v) }
-  const saveLang   = (v: string)     => { localStorage.setItem('dasiboard-lang', v); setLanguageState(v) }
+  const saveLang    = (v: string)     => { localStorage.setItem('dasiboard-lang', v); setLanguageState(v) }
+  const saveStarter = (v: string)     => { localStorage.setItem('dasiboard-starter', v); setStarterState(v) }
 
   if (!user) return null
 
@@ -601,6 +603,30 @@ export default function ProfilePage() {
           </p>
         )}
       </div>
+
+      {/* ── Inicial Pokémon ─────────────────────────── */}
+      {starter && (
+        <div className="card mb-4 animate-in-delay-1">
+          <h3 className="font-display font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+            🎮 Inicial Pokémon
+          </h3>
+          <div className="flex items-center gap-4">
+            <span style={{ fontSize: 40, lineHeight: 1 }}>
+              {starter === 'bulbasaur' ? '🌿' : starter === 'charmander' ? '🔥' : '💧'}
+            </span>
+            <div>
+              <p className="font-display font-bold capitalize" style={{ color: 'var(--text-primary)' }}>{starter}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {starter === 'bulbasaur' ? 'Planta / Veneno · Nº 001' : starter === 'charmander' ? 'Fogo · Nº 004' : 'Água · Nº 007'}
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Inicial da 1ª geração — escolhido no tema Pixel</p>
+            </div>
+            <button className="ml-auto btn-ghost text-xs py-1.5 px-2.5" onClick={() => saveStarter('')}>
+              Remover
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Badges ──────────────────────────────────── */}
       <div className="card mb-4 animate-in-delay-2">
