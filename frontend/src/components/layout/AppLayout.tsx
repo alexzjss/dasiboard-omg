@@ -12,8 +12,10 @@ import { usePresentationMode, PresentationControls, PresentationButton } from '@
 import { GlobalSearch, useGlobalSearch } from '@/components/GlobalSearch'
 import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
 import { NotificationBanner } from '@/hooks/usePushNotifications'
-import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal } from '@/hooks/useInteractions'
+import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal, KeyboardHelpButton } from '@/hooks/useInteractions'
 import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
+import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
+import DLCCanvas from '@/components/DLCCanvas'
 import clsx from 'clsx'
 
 const nav = [
@@ -416,7 +418,7 @@ function SidebarContent({ onOpenPicker }: { onOpenPicker: () => void }) {
 export default function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { theme, isDark, toggleDarkLight, cycleTheme, chronoEra } = useTheme()
+  const { theme, isDark, toggleDarkLight, cycleTheme, setTheme, chronoEra } = useTheme()
   const [showPicker,      setShowPicker]   = useState(false)
   const [showPokeball,    setShowPokeball] = useState(false)
   const [showKeyHelp,     setShowKeyHelp]  = useState(false)
@@ -452,26 +454,34 @@ export default function AppLayout() {
     { key: 'd', description: 'Ir para Docentes',         group: 'Navegação', action: () => navigate('/docentes') },
     { key: 'p', description: 'Ir para Perfil',           group: 'Navegação', action: () => navigate('/profile') },
     { key: 'h', description: 'Ir para Início',           group: 'Navegação', action: () => navigate('/') },
-    // Interface
+    // Interface — NOTE: 'b' removed to avoid breaking Konami code (↑↑↓↓←→←→BA)
     { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
     { key: '?',             description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
     { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false); setShowKeyHelp(false) } },
-    { key: 'b',             description: 'Alternar claro/escuro',    group: 'Interface', action: () => toggleDarkLight() },
-    // Temas
-    { key: 'ArrowRight', alt: true, description: 'Próximo tema',     group: 'Temas', action: () => cycleTheme() },
-    { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',    group: 'Temas', action: () => {
+    // Claro/escuro via Alt+B para não conflitar com Konami 'b'
+    { key: 'b', alt: true,  description: 'Alternar claro/escuro',    group: 'Interface', action: () => toggleDarkLight() },
+    // Temas — ciclar com Alt+← / Alt+→
+    { key: 'ArrowRight', alt: true, description: 'Próximo tema',    group: 'Temas', action: () => cycleTheme() },
+    { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => {
       const pool = isDark ? DARK_THEMES : LIGHT_THEMES
       const idx  = pool.findIndex(t => t.id === theme.id)
-      const prev = pool[(idx - 1 + pool.length) % pool.length]
-      // setTheme via context would need to be exposed — for now cycleTheme handles next
+      setTheme(pool[(idx - 1 + pool.length) % pool.length].id as ThemeId)
     }},
     // Ações rápidas
-    { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',    group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
-    { key: 'r', ctrl: true, description: 'Recarregar dados da página',       group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
-    // Busca e apresentação
-    { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',            group: 'Ações', action: () => setSearchOpen(v => !v) },
-    { key: 'p', ctrl: true, shift: true, description: 'Modo de apresentação',  group: 'Interface', action: () => presentation.toggle() },
-    { key: 'f', ctrl: true, description: 'Buscar (em páginas com busca)',    group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
+    { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',   group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
+    { key: 'r', ctrl: true, description: 'Recarregar dados da página',      group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
+    { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',        group: 'Ações', action: () => setSearchOpen(v => !v) },
+    { key: 'p', ctrl: true, shift: true, description: 'Modo apresentação', group: 'Interface', action: () => presentation.toggle() },
+    { key: 'f', ctrl: true, description: 'Focar busca na página',           group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
+    // Por página
+    { key: 'ArrowRight', description: 'Próxima página (navegação)',  group: 'Navegação rápida', action: () => {
+      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile']
+      const idx = routes.indexOf(location.pathname); if (idx < routes.length - 1) navigate(routes[idx + 1])
+    }},
+    { key: 'ArrowLeft',  description: 'Página anterior (navegação)', group: 'Navegação rápida', action: () => {
+      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile']
+      const idx = routes.indexOf(location.pathname); if (idx > 0) navigate(routes[idx - 1])
+    }},
   ]
 
   useKeyboardShortcuts(shortcuts)
@@ -483,6 +493,11 @@ export default function AppLayout() {
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
 
+      {/* Theme system — cursor & canvas effects */}
+      <ThemeCursorStyle />
+      <GlowCursor />
+      <DLCCanvas />
+
       {showOnboarding && <Onboarding onClose={doneOnboarding} />}
       {showPicker && <ThemePicker onClose={() => setShowPicker(false)} />}
       {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
@@ -491,6 +506,9 @@ export default function AppLayout() {
       {showKeyHelp && <KeyboardHelpModal shortcuts={shortcuts} onClose={() => setShowKeyHelp(false)} />}
       {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
       <NotificationBanner />
+
+      {/* Floating keyboard help button — keyboard users only */}
+      <KeyboardHelpButton onClick={() => setShowKeyHelp(k => !k)} />
 
       {/* Pokéball button — only in Pixel theme */}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}

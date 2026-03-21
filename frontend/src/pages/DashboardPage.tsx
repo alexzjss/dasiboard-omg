@@ -1,16 +1,18 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   KanbanSquare, BookOpen, CalendarDays, TrendingUp, Clock,
   Globe, RefreshCw, Newspaper, ChevronRight, ChevronDown,
   Send, X, Users, KeyRound, Eye, Plus, Trash2,
-  Sparkles, GraduationCap, Star,
+  Sparkles, GraduationCap, Star, GripVertical, Settings2, RotateCcw,
 } from 'lucide-react'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import api from '@/utils/api'
 import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
+import { useDashboardWidgets, WIDGET_DEFS, WidgetId } from '@/hooks/useDashboardWidgets'
+import { EvaCountdown, NervHUD } from '@/components/EvaTimer'
 
 interface Stats { boards: number; subjects: number; events: number; avgGrade: number | null }
 interface Newsletter { id: string; title: string; body: string; author: string; created_at: string }
@@ -185,7 +187,13 @@ export default function DashboardPage() {
   const [showCreateNL,  setShowCreateNL]  = useState(false)
   const [showArchiveNL, setShowArchiveNL] = useState(false)
   const [nlExpanded,    setNlExpanded]    = useState(false)
+  const [showCustomize, setShowCustomize] = useState(false)
   const now = new Date()
+
+  // Widget drag-and-drop
+  const widgets = useDashboardWidgets()
+  // Drag state for visual feedback
+  const [dragOver, setDragOver] = useState<WidgetId | null>(null)
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true); else setRefreshing(true)
@@ -231,8 +239,96 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* ── HERO ────────────────────────────────────────── */}
-      <div className="hero-card relative overflow-hidden rounded-2xl mb-4 animate-in"
+      {/* ── WIDGET CUSTOMIZE BAR ─────────────────────────── */}
+      <div className="flex items-center justify-end mb-2 gap-2">
+        <button
+          onClick={() => setShowCustomize(v => !v)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-95"
+          style={{
+            background: showCustomize ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+            border: `1px solid ${showCustomize ? 'var(--accent-1)' : 'var(--border)'}`,
+            color: showCustomize ? 'var(--accent-3)' : 'var(--text-muted)',
+          }}
+          title="Personalizar widgets da home"
+        >
+          <Settings2 size={12} />
+          <span className="hidden sm:inline">Personalizar</span>
+        </button>
+      </div>
+
+      {showCustomize && (
+        <div className="mb-4 rounded-2xl p-4 animate-in"
+             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent-3)' }}>
+              Widgets · Arraste para reordenar
+            </p>
+            <button onClick={widgets.resetLayout}
+                    className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all hover:opacity-80"
+                    style={{ color: 'var(--text-muted)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+                    title="Resetar layout">
+              <RotateCcw size={10} /> Resetar
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {widgets.order.map(id => {
+              const def = WIDGET_DEFS.find(w => w.id === id)!
+              const isVisible = widgets.visible.has(id)
+              return (
+                <div
+                  key={id}
+                  draggable
+                  onDragStart={() => widgets.onDragStart(id)}
+                  onDragOver={e => { e.preventDefault(); setDragOver(id) }}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={() => { widgets.onDrop(id); setDragOver(null) }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-grab active:cursor-grabbing transition-all select-none"
+                  style={{
+                    background: dragOver === id ? 'var(--accent-soft)' : isVisible ? 'var(--bg-elevated)' : 'var(--bg-base)',
+                    border: `1px solid ${dragOver === id ? 'var(--accent-1)' : isVisible ? 'var(--border-light)' : 'var(--border)'}`,
+                    opacity: isVisible ? 1 : 0.45,
+                    transform: dragOver === id ? 'scale(1.04)' : 'scale(1)',
+                    boxShadow: dragOver === id ? '0 4px 16px var(--accent-glow)' : 'none',
+                  }}
+                >
+                  <GripVertical size={12} style={{ color: 'var(--text-muted)' }} />
+                  <span style={{ fontSize: 14 }}>{def.icon}</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{def.label}</span>
+                  <button
+                    onClick={() => widgets.toggleVisible(id)}
+                    className="ml-1 w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                    style={{
+                      background: isVisible ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                      border: `1px solid ${isVisible ? 'var(--accent-1)' : 'var(--border)'}`,
+                      color: isVisible ? 'var(--accent-3)' : 'var(--text-muted)',
+                      fontSize: 9,
+                    }}
+                    title={isVisible ? 'Ocultar widget' : 'Mostrar widget'}
+                    aria-label={isVisible ? `Ocultar ${def.label}` : `Mostrar ${def.label}`}
+                  >
+                    {isVisible ? '✓' : '×'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          <p className="text-[10px] mt-3" style={{ color: 'var(--text-muted)' }}>
+            Layout salvo automaticamente · Resetar restaura a ordem padrão
+          </p>
+        </div>
+      )}
+      {/* ── WIDGETS (ordered, visibility-controlled) ────── */}
+      {widgets.order.map(widgetId => {
+        if (!widgets.visible.has(widgetId)) return null
+
+        // GREETING / HERO widget
+        if (widgetId === 'greeting') return (
+      <div key="greeting"
+           className="hero-card relative overflow-hidden rounded-2xl mb-4 animate-in"
+           draggable
+           onDragStart={() => widgets.onDragStart('greeting')}
+           onDragOver={e => widgets.onDragOver(e, 'greeting')}
+           onDrop={() => widgets.onDrop('greeting')}
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
@@ -259,17 +355,11 @@ export default function DashboardPage() {
               <RefreshCw size={15} />
             </button>
           </div>
-
-          {/* Stat pills */}
           {!loading && (
             <div className="flex gap-2 flex-wrap">
               {stats.avgGrade !== null && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-                     style={{
-                       background: stats.avgGrade >= 5 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                       color: stats.avgGrade >= 5 ? '#22c55e' : '#ef4444',
-                       border: `1px solid ${stats.avgGrade >= 5 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                     }}>
+                     style={{ background: stats.avgGrade >= 5 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: stats.avgGrade >= 5 ? '#22c55e' : '#ef4444', border: `1px solid ${stats.avgGrade >= 5 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
                   <TrendingUp size={11} /> {stats.avgGrade.toFixed(1)} média geral
                 </div>
               )}
@@ -295,15 +385,23 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+        )
 
-      {/* ── NEWSLETTER (full featured) ───────────────────── */}
-      <div className="mb-4 animate-in-delay-1">
-        {loading ? (
-          <div className="card shimmer h-28 rounded-2xl" />
-        ) : latestNL ? (
+        // STATS widget (thin stat pills row — alternative to inline stats above)
+        if (widgetId === 'stats') return null // stats are embedded in greeting; skip standalone
+
+        // NEWSLETTER widget
+        if (widgetId === 'newsletter') return (
+        <div key="newsletter" className="mb-4 animate-in-delay-1"
+             draggable
+             onDragStart={() => widgets.onDragStart('newsletter')}
+             onDragOver={e => widgets.onDragOver(e, 'newsletter')}
+             onDrop={() => widgets.onDrop('newsletter')}>
+          {loading ? (
+            <div className="card shimmer h-28 rounded-2xl" />
+          ) : latestNL ? (
           <div className="rounded-2xl overflow-hidden"
                style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-            {/* Header row */}
             <div className="flex items-center justify-between gap-3 px-5 py-3.5"
                  style={{ background: 'linear-gradient(90deg, var(--accent-soft), transparent)', borderBottom: '1px solid var(--border)' }}>
               <div className="flex items-center gap-2.5">
@@ -408,17 +506,20 @@ export default function DashboardPage() {
               <Send size={12} /> Publicar
             </button>
           </div>
-        )}
-      </div>
+          )}
+        </div>
+        ) // end newsletter widget
 
-      {/* ── MAIN GRID ────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        {/* Quick links — 2 cols on lg */}
-        <div className="lg:col-span-2 animate-in-delay-2">
+        // QUICKLINKS widget
+        if (widgetId === 'quicklinks') return (
+        <div key="quicklinks" className="animate-in-delay-2"
+             draggable
+             onDragStart={() => widgets.onDragStart('quicklinks')}
+             onDragOver={e => widgets.onDragOver(e, 'quicklinks')}
+             onDrop={() => widgets.onDrop('quicklinks')}>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
              style={{ color: 'var(--text-muted)' }}>Acesso rápido</p>
-          <div className="grid grid-cols-2 gap-2 quick-links-grid">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 quick-links-grid">
             {[
               { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,  desc: 'Quadros', count: stats.boards, color: 'var(--accent-1)' },
               { to: '/grades',   label: 'Disciplinas', icon: BookOpen,      desc: 'Notas',   count: stats.subjects, color: '#a855f7' },
@@ -449,9 +550,15 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+        ) // end quicklinks widget
 
-        {/* Events list — 3 cols on lg */}
-        <div className="lg:col-span-3 animate-in-delay-3">
+        // EVENTS widget
+        if (widgetId === 'events') return (
+        <div key="events" className="animate-in-delay-3"
+             draggable
+             onDragStart={() => widgets.onDragStart('events')}
+             onDragOver={e => widgets.onDragOver(e, 'events')}
+             onDrop={() => widgets.onDrop('events')}>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
              style={{ color: 'var(--text-muted)' }}>Próximos eventos</p>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -497,6 +604,7 @@ export default function DashboardPage() {
                           {' · '}
                           {formatDistanceToNow(parseISO(ev.start_at), { locale: ptBR, addSuffix: true })}
                         </p>
+                        <EvaCountdown targetDate={ev.start_at} />
                       </div>
                       <span className="badge text-[10px] shrink-0"
                             style={{ background: color + '22', color, border: `1px solid ${color}44` }}>
@@ -514,7 +622,13 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </div>
+        ) // end events widget
+
+        return null
+      })}
+
+      {/* NERV HUD — Eva theme only */}
+      <NervHUD events={events} />
     </div>
   )
 }

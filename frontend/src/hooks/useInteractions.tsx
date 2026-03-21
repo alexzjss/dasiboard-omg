@@ -63,6 +63,8 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
+      // Ignore contentEditable
+      if ((e.target as HTMLElement).isContentEditable) return
 
       for (const s of shortcuts) {
         const ctrlMatch  = (s.ctrl  ?? false) === (e.ctrlKey  || e.metaKey)
@@ -99,8 +101,15 @@ export function KeyboardHelpModal({ shortcuts, onClose }: {
     return acc
   }, [])
 
+  // Close on Escape
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
          onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-lg rounded-2xl overflow-hidden animate-in"
@@ -111,7 +120,8 @@ export function KeyboardHelpModal({ shortcuts, onClose }: {
             Atalhos de teclado
           </h2>
           <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+                  style={{ background: 'var(--border)', color: 'var(--text-muted)' }}
+                  aria-label="Fechar">
             <X size={15} />
           </button>
         </div>
@@ -157,5 +167,47 @@ function KbdKey({ children }: { children: React.ReactNode }) {
     }}>
       {children}
     </kbd>
+  )
+}
+
+// ── Floating keyboard help button ─────────────────────────
+export function KeyboardHelpButton({ onClick }: { onClick: () => void }) {
+  // Only show on non-touch devices
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
+    setShow(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setShow(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  if (!show) return null
+
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Ver atalhos de teclado"
+      title="Atalhos de teclado (?)"
+      className="fixed z-40 transition-all hover:scale-110 active:scale-95"
+      style={{
+        bottom: 20,
+        right: 20,
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border-light)',
+        color: 'var(--text-muted)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      <Keyboard size={15} />
+    </button>
   )
 }

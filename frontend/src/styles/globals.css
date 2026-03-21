@@ -5158,3 +5158,260 @@ html { scroll-behavior: smooth; }
   .max-w-7xl { max-width: 100% !important; padding-left: 12px !important; padding-right: 12px !important; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   🆕  FEATURE ADDITIONS — v2
+   Drag-and-drop widget, cursor themes, Eva improvements,
+   Memento TV static, DLC canvas layer, keyboard help btn
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Widget drag-and-drop ── */
+.widget-drag-handle {
+  cursor: grab;
+}
+.widget-drag-handle:active {
+  cursor: grabbing;
+}
+[draggable="true"] {
+  -webkit-user-drag: element;
+}
+
+/* ── Keyboard help floating button ── */
+.kbd-help-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 40;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: transform 0.15s, opacity 0.15s;
+  cursor: pointer;
+}
+.kbd-help-btn:hover {
+  transform: scale(1.1);
+  color: var(--accent-3);
+  border-color: var(--accent-1);
+}
+@media (hover: none) {
+  .kbd-help-btn { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🤖  Eva — HEX GRID IMPROVED + WARNING BARS ANIMATED
+═══════════════════════════════════════════════════════════════════ */
+
+/* Replace the hex background with a proper SVG pattern */
+[data-theme="dark-eva"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='69'%3E%3Cpolygon points='30,2 58,17 58,52 30,67 2,52 2,17' fill='none' stroke='rgba(139%2C0%2C255%2C0.10)' stroke-width='1'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 70% 50% at 15% 50%, rgba(139,0,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 30%, rgba(170,255,0,0.04) 0%, transparent 50%);
+  background-size: 60px 69px, cover, cover;
+}
+
+/* Animated danger stripes — top and bottom simultaneously */
+[data-theme="dark-eva"] body::after {
+  content: '';
+  position: fixed; left: 0; right: 0; pointer-events: none; z-index: 9000;
+  top: 0; height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #aaff00 0px, #aaff00 14px,
+    #1e0028 14px, #1e0028 28px
+  );
+  animation: evaStripes 1s steps(1) infinite;
+}
+@keyframes evaStripes {
+  0%   { opacity: 0.8; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 0.8; }
+}
+
+/* Eva bottom stripe too */
+[data-theme="dark-eva"] main::after {
+  content: '';
+  position: fixed; left: 0; right: 0; bottom: 0; height: 4px;
+  pointer-events: none; z-index: 9000;
+  background: repeating-linear-gradient(
+    90deg,
+    #aaff00 0px, #aaff00 14px,
+    #1e0028 14px, #1e0028 28px
+  );
+  opacity: 0.5;
+}
+
+/* Eva — NERV countdown timer widget label */
+[data-theme="dark-eva"] .badge {
+  font-family: "Orbitron", monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+}
+
+/* Eva — Sidebar NERV ID badge at bottom */
+[data-theme="dark-eva"] .sidebar-bg::before {
+  content: 'NERV / SI · EACH · USP';
+  position: absolute;
+  bottom: 80px; left: 0; right: 0;
+  text-align: center;
+  font-family: "Orbitron", monospace;
+  font-size: 7px;
+  letter-spacing: 0.3em;
+  color: rgba(170,255,0,0.10);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Eva countdown on events */
+[data-theme="dark-eva"] .event-card,
+[data-theme="dark-eva"] [class*="event"] .badge {
+  font-family: "Orbitron", monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🃏  Memento — TV STATIC IMPROVED + DIAGONAL MENUS
+═══════════════════════════════════════════════════════════════════ */
+
+/* TV Static noise — animated with CSS */
+[data-theme="light-memento"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E"),
+    linear-gradient(rgba(10,48,128,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,48,128,0.03) 1px, transparent 1px);
+  background-size: 300px 300px, 28px 28px, 28px 28px;
+  animation: mementoStatic 0.08s steps(1) infinite;
+}
+@keyframes mementoStatic {
+  0%   { background-position: 0 0,   0 0,   0 0; }
+  25%  { background-position: 40px 20px, 0 0, 0 0; }
+  50%  { background-position: -20px 50px, 0 0, 0 0; }
+  75%  { background-position: 80px -10px, 0 0, 0 0; }
+  100% { background-position: 0 0,   0 0,   0 0; }
+}
+/* Subtle — don't run on low-power / reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="light-memento"] body::before {
+    animation: none;
+    background-image:
+      linear-gradient(rgba(10,48,128,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(10,48,128,0.04) 1px, transparent 1px);
+  }
+}
+
+/* Diagonal accent stripes overlay — Persona P3 style */
+[data-theme="light-memento"] body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(
+    -12deg,
+    transparent 0px,
+    transparent 48px,
+    rgba(10,48,128,0.025) 48px,
+    rgba(10,48,128,0.025) 50px
+  );
+}
+
+/* Memento nav — skewed/diagonal active pill */
+[data-theme="light-memento"] .nav-active {
+  background: rgba(255,255,255,0.18) !important;
+  border: 1px solid rgba(255,255,255,0.40) !important;
+  color: #ffffff !important;
+  transform: skewX(-4deg) !important;
+  border-radius: 6px !important;
+}
+[data-theme="light-memento"] .nav-active * {
+  transform: skewX(4deg);
+  display: inline-block;
+}
+
+/* Memento card — skewed hover, red accent flash */
+[data-theme="light-memento"] .card-hover:hover {
+  border-left-color: #cc0000 !important;
+  box-shadow: 4px 6px 24px rgba(10,48,128,0.18) !important;
+  transform: translateY(-2px) skewX(-1deg) !important;
+}
+
+/* Memento page title — dramatic oversized */
+[data-theme="light-memento"] h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.05em !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🕹️  DLC — Canvas layer coexists (z-index management)
+═══════════════════════════════════════════════════════════════════ */
+
+/* The DLC canvas is z-index 0, content above it */
+[data-theme="dark-dlc"] .sidebar-bg,
+[data-theme="dark-dlc"] main,
+[data-theme="dark-dlc"] nav {
+  position: relative;
+  z-index: 1;
+}
+/* Make DLC body bg transparent so canvas shows through */
+[data-theme="dark-dlc"] body::before,
+[data-theme="dark-dlc"] body::after {
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🖱️  Custom cursor themes — ensure cursor applies to children
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-pixel"] *:not(input):not(textarea):not(select) {
+  cursor: inherit;
+}
+[data-theme="light-blueprint"] *:not(input):not(textarea):not(select):not(button):not(a) {
+  cursor: inherit;
+}
+[data-theme="dark-eva"] *:not(input):not(textarea):not(select) {
+  cursor: inherit;
+}
+/* Pointer still works on interactive elements */
+[data-theme="dark-pixel"] button,
+[data-theme="dark-pixel"] a,
+[data-theme="dark-pixel"] [role="button"],
+[data-theme="light-blueprint"] button,
+[data-theme="light-blueprint"] a,
+[data-theme="dark-eva"] button,
+[data-theme="dark-eva"] a {
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   📱  Mobile accessibility — larger touch targets
+═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+  .nav-active,
+  .nav-inactive {
+    min-height: 44px;
+  }
+  .btn-primary,
+  .btn-ghost {
+    min-height: 44px;
+  }
+}
+
+/* ── prefers-reduced-motion global fix ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .accent-orb { display: none !important; }
+}
