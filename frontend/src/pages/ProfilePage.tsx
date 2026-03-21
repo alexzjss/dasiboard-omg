@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/store/authStore'
-import { useRef, useEffect, useCallback, useState } from 'react'
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -403,12 +403,22 @@ export default function ProfilePage() {
     })
   }, [])
 
-  const badges = buildBadges({ hasBoards, hasLanguage: !!language, hasPassedSubject, memberSlugs })
-  const activeBadges = badges.filter(b => activeBadgeIds.includes(b.id) && b.unlocked)
+  const badges = useMemo(
+    () => buildBadges({ hasBoards, hasLanguage: !!language, hasPassedSubject, memberSlugs }),
+    [hasBoards, language, hasPassedSubject, memberSlugs]
+  )
+  const activeBadges = useMemo(
+    () => badges.filter(b => activeBadgeIds.includes(b.id) && b.unlocked),
+    [badges, activeBadgeIds]
+  )
 
   const draw = useCallback(() => {
     if (!canvasRef.current || !user) return
-    drawCard(canvasRef.current, user, activeBadges, area, language)
+    try {
+      drawCard(canvasRef.current, user, activeBadges, area, language)
+    } catch (err) {
+      console.error('Card draw error:', err)
+    }
   }, [user, activeBadges, area, language])
 
   useEffect(() => { draw() }, [draw])
