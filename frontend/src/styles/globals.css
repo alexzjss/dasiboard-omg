@@ -5354,19 +5354,6 @@ html { scroll-behavior: smooth; }
    🕹️  DLC — Canvas layer coexists (z-index management)
 ═══════════════════════════════════════════════════════════════════ */
 
-/* The DLC canvas is z-index 0, content above it */
-[data-theme="dark-dlc"] .sidebar-bg,
-[data-theme="dark-dlc"] main,
-[data-theme="dark-dlc"] nav {
-  position: relative;
-  z-index: 1;
-}
-/* Make DLC body bg transparent so canvas shows through */
-[data-theme="dark-dlc"] body::before,
-[data-theme="dark-dlc"] body::after {
-  z-index: 0;
-}
-
 /* ═══════════════════════════════════════════════════════════════════
    🖱️  Custom cursor themes — ensure cursor applies to children
 ═══════════════════════════════════════════════════════════════════ */
@@ -5724,34 +5711,58 @@ html { scroll-behavior: smooth; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   🕹️  DLC — z-index HOTFIX (blank screen fix)
-   The canvas is at z-index:1 (position:fixed).
-   Everything else must be ≥ z-index:2 relative.
+   🕹️  DLC — BLANK SCREEN FIX (definitive)
+   Root cause: any position:relative + z-index on a parent element
+   creates a stacking context that hides siblings at lower z-index.
+   Solution: NO position/z-index on layout elements for DLC.
+   All visual effects come from body::before/after (fixed, z:0) and
+   the animated CSS below. The canvas component returns null.
 ═══════════════════════════════════════════════════════════════════ */
 
-/* Override the v2 block that was setting z-index:1 on sidebar/main/nav
-   — those elements are in the normal flow (not fixed), so z-index
-   stacking context from the fixed canvas at z:1 doesn't apply.
-   The real fix: make the layout wrapper a stacking context above canvas. */
-[data-theme="dark-dlc"] .flex.h-\[100dvh\] {
-  position: relative;
-  z-index: 2;
+/* 1. Reset any position/z-index added by previous sessions */
+[data-theme="dark-dlc"] main,
+[data-theme="dark-dlc"] aside,
+[data-theme="dark-dlc"] nav {
+  position: static !important;
+  z-index: auto !important;
 }
 
-/* DLC body/before/after are cosmetic — ensure they stay below canvas */
-[data-theme="dark-dlc"] body::before,
+/* 2. Keep the layout wrapper normal (no stacking context) */
+[data-theme="dark-dlc"] .flex.h-\[100dvh\] {
+  position: static !important;
+  z-index: auto !important;
+}
+
+/* 3. Re-declare main as relative ONLY for its own ::before/::after,
+      but without a z-index (so it doesn't create a stacking context) */
+[data-theme="dark-dlc"] main {
+  position: relative !important;
+  background-color: transparent !important;
+}
+
+/* 4. sidebar needs relative for its decorations, no z-index */
+[data-theme="dark-dlc"] .sidebar-bg {
+  position: relative !important;
+  z-index: auto !important;
+}
+
+/* 5. Animated CSS laser beams — replaces the canvas approach entirely.
+      Uses body::before (already defined above) + new animated lines. */
+
+/* Laser beam A — diagonal sweep */
+[data-theme="dark-dlc"] body::before {
+  /* Keep existing gradient but ensure z-index is never set to something
+     that would create a stacking context problem */
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
 [data-theme="dark-dlc"] body::after {
   z-index: 0 !important;
+  pointer-events: none !important;
 }
 
-/* Main content area background must be slightly opaque so canvas glow
-   shows through edges without making text unreadable */
-[data-theme="dark-dlc"] main {
-  background-color: rgba(8,2,15,0.7) !important;
-}
-
-[data-theme="dark-dlc"] .sidebar-bg {
-  background: linear-gradient(180deg, #120820 0%, #0d0518 35%, #080210 65%, #040108 100%) !important;
-  position: relative;
-  z-index: 2;
+/* Re-add the animated laser line (was removed by conflict) */
+[data-theme="dark-dlc"] .sidebar-bg::before {
+  z-index: 3 !important;  /* stays within sidebar stacking context */
 }
