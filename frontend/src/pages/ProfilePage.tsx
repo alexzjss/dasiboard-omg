@@ -568,7 +568,7 @@ function drawLandscapeCard(
   const leftW = Math.round(W * 0.38)
 
   // Draw pattern in left zone
-  drawCardBackground(ctx, leftW, H, H, style, hue, sat, lit, rngBg, null)
+  drawCardBackground(ctx, leftW, H, H, style, hue, sat, lit, rngBg, entityBg)
   addGrain(ctx, seededRng(user.id+'-grainv3'), leftW, H, 0.018, 1500)
 
   // Right zone: always pure white
@@ -610,22 +610,22 @@ function drawLandscapeCard(
   ctx.textAlign='left'; ctx.textBaseline='alphabetic'
 
   // Header line — "CARTÃO DE ESTUDANTE"
-  ctx.font='600 9px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.8
-  ctx.fillText('CARTÃO DE ESTUDANTE', rx, 36); ctx.globalAlpha=1
+  ctx.font='600 10px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.8
+  ctx.fillText('CARTÃO DE ESTUDANTE', rx, 38); ctx.globalAlpha=1
 
   // Full name large
-  ctx.font='700 28px sans-serif'; ctx.fillStyle=inkC
+  ctx.font='700 32px sans-serif'; ctx.fillStyle=inkC
   const fullName = user.full_name
-  ctx.fillText(fullName.length>22 ? fullName.slice(0,20)+'…' : fullName, rx, 72)
+  ctx.fillText(fullName.length>22 ? fullName.slice(0,20)+'…' : fullName, rx, 78)
 
   // Title
   const trng = seededRng(user.id+'-title')
-  ctx.font='400 13px sans-serif'; ctx.fillStyle=inkF
-  ctx.fillText(TITLES[Math.floor(trng()*TITLES.length)], rx, 94)
+  ctx.font='400 14px sans-serif'; ctx.fillStyle=inkF
+  ctx.fillText(TITLES[Math.floor(trng()*TITLES.length)], rx, 100)
 
   // Divider
   ctx.strokeStyle='rgba(0,0,0,0.08)'
-  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(rx,108); ctx.lineTo(W-36,108); ctx.stroke()
+  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(rx,116); ctx.lineTo(W-36,116); ctx.stroke()
 
   // Fields grid
   const fields: [string,string][] = [
@@ -635,21 +635,21 @@ function drawLandscapeCard(
     area ? ['ÁREA', area] : ['TURMA', '—'],
   ]
   fields.forEach(([label,val],i) => {
-    const fy = 132 + i*50
-    ctx.font='500 8px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.7; ctx.fillText(label, rx, fy)
-    ctx.globalAlpha=1; ctx.font='600 14px sans-serif'; ctx.fillStyle=inkC
-    ctx.fillText(val.length>24?val.slice(0,22)+'…':val, rx, fy+17)
+    const fy = 140 + i*52
+    ctx.font='500 9px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.7; ctx.fillText(label, rx, fy)
+    ctx.globalAlpha=1; ctx.font='600 16px sans-serif'; ctx.fillStyle=inkC
+    ctx.fillText(val.length>24?val.slice(0,22)+'…':val, rx, fy+19)
   })
 
   // Language badge if set
   if (language) {
     ctx.font='600 10px sans-serif'
     const lw = ctx.measureText(language).width + 16
-    roundRect(ctx, rx, 350, lw, 24, 12)
+    roundRect(ctx, rx, 362, lw, 26, 13)
     ctx.fillStyle=acC; ctx.globalAlpha=0.15; ctx.fill()
     ctx.strokeStyle=acC; ctx.globalAlpha=0.45; ctx.lineWidth=1; ctx.stroke()
     ctx.fillStyle=acC; ctx.globalAlpha=1; ctx.textAlign='center'
-    ctx.fillText(language, rx+lw/2, 366); ctx.textAlign='left'
+    ctx.fillText(language, rx+lw/2, 379); ctx.textAlign='left'
   }
 
   // Achievement emojis — bottom right
@@ -660,10 +660,10 @@ function drawLandscapeCard(
     ctx.textAlign='left'
   }
 
-  // QR decorative
-  const qrSize = 64
-  const qrX = W - 36 - qrSize, qrY = H - 36 - qrSize
-  drawDecorativeQR(ctx, qrX, qrY, qrSize, 'rgba(0,0,0,0.35)', seededRng(user.id+'-qr'))
+  // QR decorative — same seed as portrait for consistency
+  const qrSize = 72
+  const qrX = W - 40 - qrSize, qrY = H - 40 - qrSize
+  drawDecorativeQR(ctx, qrX, qrY, qrSize, acC.replace(')',',0.55)').replace('hsl','hsla'), seededRng(user.id+'-qr'))
 
   // ID watermark
   ctx.font='400 8px monospace'; ctx.fillStyle='rgba(0,0,0,0.20)'; ctx.globalAlpha=1; ctx.textAlign='right'
