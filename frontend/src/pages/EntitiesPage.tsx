@@ -39,6 +39,94 @@ interface Entity {
   member_count: number; is_member: boolean
 }
 
+interface EntityMember {
+  id: string; full_name: string; avatar_url?: string
+}
+
+// ── Members Modal ──────────────────────────────────────────────────────────────
+function MembersModal({ entity, onClose }: { entity: Entity; onClose: () => void }) {
+  const [members, setMembers] = useState<EntityMember[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get(`/entities/${entity.slug}/members`)
+      .then(({ data }) => setMembers(data))
+      .catch(() => toast.error('Erro ao carregar membros'))
+      .finally(() => setLoading(false))
+  }, [entity.slug])
+
+  const initials = (name: string) =>
+    name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
+         onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl flex flex-col"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '75dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        {/* Handle */}
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
+        </div>
+        {/* Header */}
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0"
+             style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">👥</span>
+            <div>
+              <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+                Membros
+              </h3>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                {entity.name} · {entity.member_count} membro{entity.member_count !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
+            <X size={15} />
+          </button>
+        </div>
+        {/* List */}
+        <div className="overflow-y-auto flex-1 px-3 py-3 space-y-1.5">
+          {loading ? (
+            [0,1,2,3].map(i => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
+                   style={{ background: 'var(--bg-elevated)' }}>
+                <div className="shimmer w-10 h-10 rounded-full shrink-0" />
+                <div className="shimmer h-4 w-32 rounded" />
+              </div>
+            ))
+          ) : members.length === 0 ? (
+            <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
+              <Users size={28} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Nenhum membro ainda</p>
+            </div>
+          ) : (
+            members.map(m => (
+              <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl transition-all"
+                   style={{ background: 'var(--bg-elevated)' }}
+                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--border)')}
+                   onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}>
+                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+                     style={{ background: entity.color + '33', border: `1px solid ${entity.color}44` }}>
+                  {m.avatar_url
+                    ? <img src={m.avatar_url} alt={m.full_name} className="w-full h-full object-cover" />
+                    : <span className="text-xs font-bold" style={{ color: entity.color }}>{initials(m.full_name)}</span>
+                  }
+                </div>
+                <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                  {m.full_name}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface EntityEvent {
   id: string; title: string; description?: string; event_type: string
   start_at: string; end_at?: string; all_day: boolean; color: string
@@ -210,8 +298,9 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
   const [entity, setEntity] = useState(initial)
   const [events, setEvents] = useState<EntityEvent[]>([])
   const [loadingEvents, setLoadingEvents] = useState(true)
-  const [showJoin, setShowJoin]   = useState(false)
-  const [showEvent, setShowEvent] = useState(false)
+  const [showJoin, setShowJoin]       = useState(false)
+  const [showEvent, setShowEvent]     = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
 
   useEffect(() => {
     api.get(`/entities/${entity.slug}/events`)
@@ -244,6 +333,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
     <div className="flex-1 overflow-auto">
       {showJoin && <JoinModal entity={entity} onClose={() => setShowJoin(false)} onJoined={handleJoined} />}
       {showEvent && <EventModal entity={entity} onClose={() => setShowEvent(false)} onCreated={(ev) => setEvents((p) => [...p, ev])} />}
+      {showMembers && <MembersModal entity={entity} onClose={() => setShowMembers(false)} />}
 
       {/* Hero */}
       <div className="relative overflow-hidden"
@@ -274,7 +364,11 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
               </div>
               <h1 className="font-display text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{entity.name}</h1>
               <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <span className="flex items-center gap-1"><Users size={11} /> {entity.member_count} membros</span>
+                <button onClick={() => setShowMembers(true)}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all hover:opacity-80"
+                        style={{ background: entity.color + '18', color: entity.color, border: `1px solid ${entity.color}33` }}>
+                  <span>👥</span> {entity.member_count} membros
+                </button>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap sm:shrink-0">
