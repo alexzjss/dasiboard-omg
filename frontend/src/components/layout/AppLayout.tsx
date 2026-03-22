@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, KanbanSquare, BookOpen,
+  LayoutDashboard, Rss, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Users, X,
   LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings,
 } from 'lucide-react'
@@ -21,6 +21,7 @@ import { ColorBlindFilters, ColorBlindButton, useColorBlindMode } from '@/compon
 import { useLiteMode, LiteModeButton } from '@/components/LiteMode'
 import { ExpBar } from '@/components/ExpCounter'
 import { OfflineBanner, PWAInstallBanner } from '@/components/OfflineBanner'
+import { usePanicMode, PanicBanner, PanicActiveBar } from '@/components/PanicMode'
 import { useChronoPortalSound } from '@/hooks/useChronoPortal'
 import { BlueprintRuler } from '@/components/BlueprintRuler'
 import { ShellPrompt } from '@/components/ShellPrompt'
@@ -39,6 +40,7 @@ const nav = [
   { to: '/entities',  label: 'Entidades',     icon: Users,           end: false },
   { to: '/turma',     label: 'Turma',         icon: GraduationCap,   end: false },
   { to: '/room',      label: 'Salas',         icon: Monitor,         end: false },
+  { to: '/feed',      label: 'Feed',          icon: Rss,             end: false },
   { to: '/docentes',  label: 'Docentes',      icon: BookMarked,      end: false },
   { to: '/profile',   label: 'Perfil',        icon: User,            end: false },
   { to: '/settings',  label: 'Configurações', icon: Settings,        end: false },
@@ -607,7 +609,7 @@ export default function AppLayout() {
   }, [theme.id])
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
+    <div className="flex h-[100dvh] overflow-hidden" style={{ paddingTop: (panicAlert || panicOn) ? 40 : 0 }} style={{ backgroundColor: 'var(--bg-base)' }}>
 
       {/* ── Overlays & portals — display:contents keeps them outside flex flow ── */}
       <div style={{ display: 'contents' }}>
@@ -620,6 +622,8 @@ export default function AppLayout() {
         <EasterEggRenderer active={activeEgg} onClose={closeAnyEgg} />
         {presentation.active && <PresentationControls fontSize={presentation.fontSize} setFontSize={presentation.setFontSize} onExit={presentation.exit} />}
         {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
+        {panicAlert && <PanicBanner exams={exams} onActivate={activatePanic} onDismiss={dismissPanic} />}
+        {panicOn && <PanicActiveBar exams={exams} onDeactivate={deactivatePanic} />}
         <NotificationBanner />
         <ColorBlindFilters />
         <OfflineBanner />

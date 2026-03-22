@@ -75,6 +75,9 @@ export const buildAchievements = (opts: {
   hasAvatar: boolean; hasNusp: boolean; eventCount: number
   subjectCount: number; gradeCount: number; loginCount: number
   easterEggFound: boolean
+  hasCreatedRoom?: boolean
+  hasSharedNote?: boolean
+  entityCount?: number
 }): Achievement[] => [
 
   // ── PERFIL ─────────────────────────────────────────────────────────────────
@@ -185,6 +188,14 @@ export const buildAchievements = (opts: {
     desc: 'Menos é mais',                           hint: 'Use um tema claro',          color: '#6b7280', unlocked: true },
   { id: 'darkside',     emoji: '🌑', label: 'Lado Sombrio',    rarity: 'common',    category: 'profile',
     desc: 'Do lado escuro da força',                hint: 'Use um tema escuro',         color: '#1e1e2e', unlocked: true },
+
+  // ── SOCIAL ─────────────────────────────────────────────────────────────────
+  { id: 'numero_1',   emoji: '🥇', label: 'Número 1',      rarity: 'rare',      category: 'social',
+    desc: 'Criou a primeira sala de estudo',    hint: 'Crie uma sala em /room',   color: '#f59e0b', unlocked: !!(opts.hasCreatedRoom) },
+  { id: 'cola',       emoji: '📎', label: 'Cola',           rarity: 'common',    category: 'social',
+    desc: 'Compartilhou uma nota com colegas',  hint: 'Compartilhe uma nota',     color: '#22c55e', unlocked: !!(opts.hasSharedNote) },
+  { id: 'explorador', emoji: '🧭', label: 'Explorador',    rarity: 'epic',      category: 'social',
+    desc: 'Membro de 3 ou mais entidades',      hint: 'Entre em 3 entidades',     color: '#a855f7', unlocked: (opts.entityCount ?? 0) >= 3 },
 ]
 
 // ── Canvas utilities ─────────────────────────────────────────────────────────
@@ -1402,12 +1413,18 @@ export default function ProfilePage() {
     })
   },[])
 
+  // Social achievement data from localStorage
+  const hasCreatedRoom = !!localStorage.getItem('dasiboard-room-created')
+  const hasSharedNote  = !!localStorage.getItem('dasiboard-note-shared')
+  const entityCount    = (() => { try { return JSON.parse(localStorage.getItem('dasiboard-entity-count') ?? '0') } catch { return 0 } })()
+
   const achievements=useMemo(()=>buildAchievements({
     hasBoards, hasMultipleBoards:hasMultiBoards, hasLanguage:!!language,
     hasArea:!!area, hasPassedSubject, hasFailedSubject, hasAvatar:!!user?.avatar_url,
     hasNusp:!!user?.nusp, eventCount, subjectCount, gradeCount,
     loginCount:1, easterEggFound,
-  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound])
+    hasCreatedRoom, hasSharedNote, entityCount,
+  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound,hasCreatedRoom,hasSharedNote,entityCount])
 
   // Auto-persist newly unlocked achievements to server
   useEffect(() => {

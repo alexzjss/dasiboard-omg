@@ -81,11 +81,14 @@ async function exportAllData() {
 
     const data = {
       exportedAt: new Date().toISOString(),
-      version: '1.0',
-      grades:    grades.status   === 'fulfilled' ? grades.value.data   : [],
-      kanban:    kanban.status   === 'fulfilled' ? kanban.value.data   : [],
-      events:    events.status   === 'fulfilled' ? events.value.data   : [],
-      entities:  entities.status === 'fulfilled' ? entities.value.data : [],
+      version: '2.0',
+      // Server data (full)
+      subjects_full: grades.status   === 'fulfilled' ? grades.value.data   : [],
+      kanban:        kanban.status   === 'fulfilled' ? kanban.value.data   : [],
+      events:        events.status   === 'fulfilled' ? events.value.data   : [],
+      entities:      entities.status === 'fulfilled' ? entities.value.data : [],
+      // Legacy key for backwards compat
+      grades:        grades.status   === 'fulfilled' ? grades.value.data   : [],
       // Local data
       notes:          JSON.parse(localStorage.getItem('dasiboard-notes') ?? '[]'),
       achievements:   JSON.parse(localStorage.getItem('dasiboard-achievements') ?? '[]'),
@@ -124,6 +127,24 @@ function importData(file: File, onDone: () => void) {
       if (data.area)         localStorage.setItem('dasiboard-area',          data.area)
       if (data.language)     localStorage.setItem('dasiboard-lang',          data.language)
       if (data.theme)        localStorage.setItem('dasiboard-theme',          data.theme)
+
+      // Restore server-side data (fire-and-forget, best-effort)
+      const restorePromises: Promise<any>[] = []
+      if (Array.isArray(data.subjects_full) && data.subjects_full.length > 0) {
+        // Subjects are restored individually
+        data.subjects_full.forEach((s: any) => {
+          restorePromises.push(
+            api.post('/grades/subjects', {
+              code: s.code, name: s.name, professor: s.professor,
+              semester: s.semester, color: s.color,
+              total_classes: s.total_classes, attended: s.attended,
+            }).catch(() => {})
+          )
+        })
+      }
+      if (restorePromises.length > 0) {
+        await Promise.allSettled(restorePromises)
+      }
 
       toast.success(`Backup restaurado! (${new Date(data.exportedAt).toLocaleDateString('pt-BR')})`)
       onDone()
@@ -243,7 +264,7 @@ function PrivacySection() {
 
 
 export default function SettingsPage() {
-  const { settings, update }   = useSettings()
+  const { settings, update, setPending, commit } = useSettings()
   const { locale, setLang }    = useLocale()
   const { dndUntil, activateDnd, deactivateDnd, clearAll } = useNotifications()
   const { theme }              = useTheme()
@@ -325,13 +346,15 @@ export default function SettingsPage() {
       {activeSection === 'appearance' && (
         <div className="animate-in space-y-4">
           <Section icon={Type} title="Tipografia">
-            <Row label="Tamanho da fonte" hint={`${settings.fontSize}px`}>
+            <Row label="Tamanho da fonte" hint={`${settings.fontSize}px — solte para aplicar`}>
               <div className="flex items-center gap-2">
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>A</span>
                 <input
                   type="range" min={12} max={20} step={1}
                   value={settings.fontSize}
-                  onChange={e => update('fontSize', Number(e.target.value))}
+                  onChange={e => setPending('fontSize', Number(e.target.value))}
+                  onMouseUp={commit}
+                  onTouchEnd={commit}
                   className="w-28 accent-[var(--accent-3)]"
                 />
                 <span className="text-sm font-bold" style={{ color: 'var(--text-muted)' }}>A</span>

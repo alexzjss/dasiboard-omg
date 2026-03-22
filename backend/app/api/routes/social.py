@@ -467,3 +467,206 @@ def room_online_users(code: str, db: RealDictCursor = Depends(get_db), user=Depe
         (str(room["id"]),),
     )
     return db.fetchall()
+
+
+# ══════════════════════════════════════════════════════
+# FOLLOWS
+# ══════════════════════════════════════════════════════
+
+@router.post("/follow/{nusp}", status_code=201)
+def follow_user(
+    nusp: str,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    db.execute("SELECT id FROM users WHERE nusp = %s AND is_active = TRUE", (nusp,))
+    target = db.fetchone()
+    if not target:
+        raise HTTPException(404, "Usuário não encontrado")
+    if str(target["id"]) == str(user["id"]):
+        raise HTTPException(400, "Você não pode seguir a si mesmo")
+
+    db.execute(
+        "INSERT INTO user_follows (follower_id, followed_id) VALUES (%s, %s) ON CONFLICT DO NOTHING RETURNING *",
+        (str(user["id"]), str(target["id"])),
+    )
+    result = db.fetchone()
+
+    # Emit activity
+    db.execute(
+        "SELECT full_name, nusp, avatar_url FROM users WHERE id = %s",
+        (str(user["id"]),),
+    )
+    actor = db.fetchone()
+    db.execute(
+        "INSERT INTO activity_feed (actor_id, kind, payload) VALUES (%s, %s, %s)",
+        (str(user["id"]), "followed",
+         __import__("json").dumps({"target_nusp": nusp, "actor_name": actor["full_name"] if actor else ""})),
+    )
+    return {"ok": True, "following": bool(result)}
+
+
+@router.delete("/follow/{nusp}", status_code=200)
+def unfollow_user(
+    nusp: str,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    db.execute("SELECT id FROM users WHERE nusp = %s", (nusp,))
+    target = db.fetchone()
+    if not target:
+        raise HTTPException(404, "Usuário não encontrado")
+    db.execute(
+        "DELETE FROM user_follows WHERE follower_id = %s AND followed_id = %s",
+        (str(user["id"]), str(target["id"])),
+    )
+    return {"ok": True, "following": False}
+
+
+@router.get("/follow/status/{nusp}")
+def follow_status(
+    nusp: str,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    db.execute("SELECT id FROM users WHERE nusp = %s", (nusp,))
+    target = db.fetchone()
+    if not target:
+        return {"following": False, "followers": 0, "following_count": 0}
+
+    db.execute(
+        "SELECT EXISTS(SELECT 1 FROM user_follows WHERE follower_id=%s AND followed_id=%s) AS following",
+        (str(user["id"]), str(target["id"])),
+    )
+    row = db.fetchone()
+    db.execute("SELECT COUNT(*) AS c FROM user_follows WHERE followed_id = %s", (str(target["id"]),))
+    followers = db.fetchone()["c"]
+    db.execute("SELECT COUNT(*) AS c FROM user_follows WHERE follower_id = %s", (str(target["id"]),))
+    following_count = db.fetchone()["c"]
+    return {
+        "following": row["following"],
+        "followers": followers,
+        "following_count": following_count,
+    }
+
+
+# ══════════════════════════════════════════════════════
+# ACTIVITY FEED
+# ══════════════════════════════════════════════════════
+
+@router.post("/activity", status_code=201)
+def post_activity(
+    body: dict,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Emit an activity event from the frontend."""
+    import json
+    kind    = str(body.get("kind", ""))[:30]
+    payload = body.get("payload", {})
+    if not kind:
+        raise HTTPException(400, "kind obrigatório")
+    db.execute(
+        "INSERT INTO activity_feed (actor_id, kind, payload) VALUES (%s, %s, %s) RETURNING id",
+        (str(user["id"]), kind, json.dumps(payload)),
+    )
+    return {"ok": True}
+
+
+@router.get("/feed")
+def get_feed(
+    mode: str = "following",   # 'following' | 'all'
+    limit: int = 40,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    mode=following → activities from users I follow + my own
+    mode=all       → all public activities (for discovery)
+    """
+    import json as _json
+    limit = min(limit, 100)
+    uid = str(user["id"])
+
+    if mode == "following":
+        db.execute(
+            """
+            SELECT af.id, af.kind, af.payload, af.created_at,
+                   u.id AS actor_id, u.full_name AS actor_name,
+                   u.nusp AS actor_nusp, u.avatar_url AS actor_avatar,
+                   u.public_profile AS actor_public
+            FROM activity_feed af
+            JOIN users u ON u.id = af.actor_id
+            WHERE af.actor_id = %s
+               OR af.actor_id IN (
+                   SELECT followed_id FROM user_follows WHERE follower_id = %s
+               )
+            ORDER BY af.created_at DESC
+            LIMIT %s
+            """,
+            (uid, uid, limit),
+        )
+    else:
+        db.execute(
+            """
+            SELECT af.id, af.kind, af.payload, af.created_at,
+                   u.id AS actor_id, u.full_name AS actor_name,
+                   u.nusp AS actor_nusp, u.avatar_url AS actor_avatar,
+                   u.public_profile AS actor_public
+            FROM activity_feed af
+            JOIN users u ON u.id = af.actor_id
+            WHERE u.public_profile = TRUE
+            ORDER BY af.created_at DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+
+    rows = db.fetchall()
+    result = []
+    for row in rows:
+        r = dict(row)
+        if isinstance(r.get("payload"), str):
+            r["payload"] = _json.loads(r["payload"])
+        result.append(r)
+    return result
+
+
+# ══════════════════════════════════════════════════════
+# MENTIONS IN EVENTS
+# ══════════════════════════════════════════════════════
+
+class MentionBody(BaseModel):
+    nusps: List[str]
+    event_id: str
+    event_title: str
+
+
+@router.post("/mentions")
+def create_mentions(
+    body: MentionBody,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """Store mentions and emit notifications for each mentioned user."""
+    actor_name = user.get("full_name", "Alguém")
+    notified = []
+    for nusp in body.nusps[:10]:  # max 10 mentions per event
+        nusp = nusp.strip()
+        if not nusp:
+            continue
+        # Store mention
+        db.execute(
+            "INSERT INTO event_mentions (event_id, mentioned_nusp) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (body.event_id, nusp),
+        )
+        notified.append(nusp)
+
+    # Activity feed entry
+    import json as _j
+    db.execute(
+        "INSERT INTO activity_feed (actor_id, kind, payload) VALUES (%s, %s, %s)",
+        (str(user["id"]), "event_mention",
+         _j.dumps({"event_id": body.event_id, "event_title": body.event_title, "nusps": notified})),
+    )
+    return {"ok": True, "notified": notified}

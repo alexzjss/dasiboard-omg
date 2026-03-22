@@ -326,6 +326,10 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
                 localStorage.setItem('dasiboard-easter-found', '1')
                 triggerEasterEgg('hacker')
                 setQuery('')
+              } else if (lower === 'hype') {
+                localStorage.setItem('dasiboard-easter-found', '1')
+                triggerEasterEgg('hype-particles')
+                setQuery('')
               }
             }}
             autoComplete="off"

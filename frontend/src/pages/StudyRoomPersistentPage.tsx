@@ -75,7 +75,8 @@ function RoomListPage() {
         subject_name: form.subject_name.trim(),
         subject_code: form.subject_code.trim() || undefined,
       })
-      toast.success('Sala criada!')
+      localStorage.setItem('dasiboard-room-created', '1')
+      toast.success('Sala criada! 🥇')
       navigate(`/room/${data.code}`)
     } catch (err: any) {
       toast.error(err.response?.data?.detail ?? 'Erro ao criar sala')

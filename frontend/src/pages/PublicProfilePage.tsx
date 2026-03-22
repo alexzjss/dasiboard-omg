@@ -1,8 +1,9 @@
 // ── Perfil Público — /u/[nusp] ────────────────────────────────────────────────
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { GraduationCap, Trophy, BookOpen, ArrowLeft, Share2 } from 'lucide-react'
+import { GraduationCap, Trophy, BookOpen, ArrowLeft, Share2, UserPlus, UserMinus, Users } from 'lucide-react'
 import api from '@/utils/api'
+import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
 import { buildAchievements } from './ProfilePage'
 
@@ -21,11 +22,20 @@ export default function PublicProfilePage() {
   const { nusp } = useParams<{ nusp: string }>()
   const [user, setUser] = useState<PublicUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [notFound,  setNotFound]  = useState(false)
+  const { user: me } = useAuthStore()
+  const [followStatus, setFollowStatus] = useState<{ following: boolean; followers: number; following_count: number } | null>(null)
+  const [followLoading, setFollowLoading] = useState(false)
   useEffect(() => {
     if (!nusp) return
     api.get(`/social/u/${nusp}`)
-      .then(({ data }) => setUser(data))
+      .then(({ data }) => {
+        setUser(data)
+        // Load follow status if logged in and not own profile
+        if (me?.nusp !== nusp) {
+          api.get(`/social/follow/status/${nusp}`).then(r => setFollowStatus(r.data)).catch(() => {})
+        }
+      })
       .catch(err => {
         if (err.response?.status === 404) setNotFound(true)
         else toast.error('Erro ao carregar perfil')
@@ -36,6 +46,24 @@ export default function PublicProfilePage() {
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href)
     toast.success('Link copiado!')
+  }
+
+  const toggleFollow = async () => {
+    if (!nusp || !followStatus) return
+    setFollowLoading(true)
+    try {
+      if (followStatus.following) {
+        await api.delete(`/social/follow/${nusp}`)
+        setFollowStatus(s => s ? { ...s, following: false, followers: s.followers - 1 } : s)
+        toast.success('Deixou de seguir')
+      } else {
+        await api.post(`/social/follow/${nusp}`)
+        setFollowStatus(s => s ? { ...s, following: true, followers: s.followers + 1 } : s)
+        toast.success('Seguindo! 👋')
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail ?? 'Erro ao atualizar')
+    } finally { setFollowLoading(false) }
   }
 
   if (loading) return (
@@ -91,9 +119,19 @@ export default function PublicProfilePage() {
         <Link to="/" className="btn-ghost text-sm gap-2 py-1.5 px-3">
           <ArrowLeft size={14} /> Início
         </Link>
-        <button onClick={copyLink} className="btn-ghost text-sm gap-2 py-1.5 px-3">
-          <Share2 size={14} /> Compartilhar
-        </button>
+        <div className="flex items-center gap-2">
+          {followStatus !== null && me?.nusp !== nusp && (
+            <button onClick={toggleFollow} disabled={followLoading}
+                    className={followStatus.following ? 'btn-ghost text-sm gap-2 py-1.5 px-3' : 'btn-primary text-sm gap-2 py-1.5 px-3'}>
+              {followStatus.following
+                ? <><UserMinus size={14}/> Seguindo</>
+                : <><UserPlus size={14}/> Seguir</>}
+            </button>
+          )}
+          <button onClick={copyLink} className="btn-ghost text-sm gap-2 py-1.5 px-3">
+            <Share2 size={14} /> Compartilhar
+          </button>
+        </div>
       </div>
 
       {/* Hero card */}
@@ -126,7 +164,17 @@ export default function PublicProfilePage() {
                 Nº USP {user.nusp}
               </span>
             )}
-            {user.entry_year && (
+            {followStatus && (
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                  <Users size={11} /> <strong style={{ color: 'var(--text-primary)' }}>{followStatus.followers}</strong> seguidores
+                </span>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>{followStatus.following_count}</strong> seguindo
+                </span>
+              </div>
+            )}
+          {user.entry_year && (
               <span className="text-xs px-2.5 py-1 rounded-full font-medium"
                     style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
                 🎓 Turma {user.entry_year}

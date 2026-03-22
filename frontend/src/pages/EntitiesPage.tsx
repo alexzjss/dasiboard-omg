@@ -89,7 +89,9 @@ function EventModal({ entity, onClose, onCreated }: {
     title: '', description: '', event_type: 'entity', start_at: '', end_at: '',
     all_day: false, color: entity.color, location: '', members_only: false,
   })
-  const [saving, setSaving] = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [mentionInput, setMentionInput] = useState('')
+  const [mentions,   setMentions]   = useState<string[]>([])
 
   const submit = async () => {
     if (!form.title || !form.start_at) { toast.error('Título e data são obrigatórios'); return }
@@ -100,6 +102,25 @@ function EventModal({ entity, onClose, onCreated }: {
         location: form.location || undefined,
       })
       onCreated(data)
+      // Post mentions
+      if (mentions.length > 0) {
+        api.post('/social/mentions', {
+          nusps: mentions,
+          event_id: data.id,
+          event_title: form.title,
+        }).catch(() => {})
+        // Emit bell notifications via emitNotification (local, for current user)
+        mentions.forEach(nusp => {
+          emitNotification({
+            kind: 'entity_mention',
+            title: `📌 Você foi marcado no evento "${form.title}"`,
+            body: `na entidade ${entity.short_name}`,
+            emoji: '📌',
+            href: '/calendar',
+            entityColor: entity.color,
+          })
+        })
+      }
       onClose()
       toast.success('Evento criado!')
     } catch (err: any) {
@@ -144,6 +165,44 @@ function EventModal({ entity, onClose, onCreated }: {
           <input className="input text-sm" placeholder="Local (opcional)" value={form.location}
                  onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
         </div>
+        {/* Mentions */}
+        <div>
+          <label className="label flex items-center gap-1">
+            <span>👋</span> Mencionar membros <span className="normal-case text-[10px]" style={{ color: 'var(--text-muted)' }}>(opcional, Nº USP)</span>
+          </label>
+          <div className="flex gap-2">
+            <input className="input text-sm flex-1" placeholder="Nº USP do membro"
+                   value={mentionInput}
+                   onChange={e => setMentionInput(e.target.value.replace(/[^0-9]/g, ''))}
+                   onKeyDown={e => {
+                     if (e.key === 'Enter' && mentionInput.trim()) {
+                       e.preventDefault()
+                       if (!mentions.includes(mentionInput.trim())) {
+                         setMentions(m => [...m, mentionInput.trim()])
+                       }
+                       setMentionInput('')
+                     }
+                   }} />
+            <button type="button" onClick={() => {
+              if (mentionInput.trim() && !mentions.includes(mentionInput.trim())) {
+                setMentions(m => [...m, mentionInput.trim()])
+              }
+              setMentionInput('')
+            }} className="btn-primary text-sm px-3 shrink-0">+</button>
+          </div>
+          {mentions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {mentions.map(nusp => (
+                <span key={nusp} className="flex items-center gap-1 text-xs px-2 py-1 rounded-full"
+                      style={{ background: entity.color + '18', color: entity.color, border: `1px solid ${entity.color}33` }}>
+                  #{nusp}
+                  <button onClick={() => setMentions(m => m.filter(n => n !== nusp))}
+                          className="opacity-70 hover:opacity-100" style={{ lineHeight: 1 }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         <label className="flex items-center gap-2 cursor-pointer select-none group">
           <div className="w-9 h-5 rounded-full transition-all relative"
                style={{ background: form.members_only ? entity.color : 'var(--border)' }}
@@ -181,6 +240,11 @@ function JoinModal({ entity, onClose, onJoined }: {
     setLoading(true)
     try {
       await api.post(`/entities/${entity.slug}/join`, { key })
+      // Track entity count for 'explorador' achievement
+      try {
+        const cnt = parseInt(localStorage.getItem('dasiboard-entity-count') ?? '0', 10)
+        localStorage.setItem('dasiboard-entity-count', String(cnt + 1))
+      } catch {}
       toast.success(`Bem-vindo(a) ao ${entity.short_name}! 🎉`)
       onJoined()
       onClose()

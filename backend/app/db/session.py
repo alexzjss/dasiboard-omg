@@ -324,6 +324,41 @@ CREATE INDEX IF NOT EXISTS idx_room_invites_nusp ON study_room_invites (invited_
 ALTER TABLE events        ADD COLUMN IF NOT EXISTS is_global BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE global_events ADD COLUMN IF NOT EXISTS is_global BOOLEAN NOT NULL DEFAULT TRUE;
 
+
+-- ── User follows ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS user_follows (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    follower_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    followed_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(follower_id, followed_id),
+    CHECK(follower_id != followed_id)
+);
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON user_follows (follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_followed ON user_follows (followed_id);
+
+-- ── Activity feed ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS activity_feed (
+    id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_id   UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind       VARCHAR(30) NOT NULL,
+    payload    JSONB       NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_activity_actor   ON activity_feed (actor_id);
+CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_feed (created_at DESC);
+
+-- ── Mentions in events ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS event_mentions (
+    id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id       UUID        NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    mentioned_nusp VARCHAR(20) NOT NULL,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(event_id, mentioned_nusp)
+);
+CREATE INDEX IF NOT EXISTS idx_event_mentions_event ON event_mentions (event_id);
+CREATE INDEX IF NOT EXISTS idx_event_mentions_nusp  ON event_mentions (mentioned_nusp);
+
 """
 
 

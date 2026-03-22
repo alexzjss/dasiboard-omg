@@ -33,6 +33,7 @@ export function useSettings() {
   // Apply on mount
   useEffect(() => { applySettings(loadSettings()) }, [])
 
+  // updateImmediate — applies CSS immediately (for non-slider settings like density, reducedMotion)
   const update = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => {
       const next = { ...prev, [key]: value }
@@ -42,5 +43,19 @@ export function useSettings() {
     })
   }, [])
 
-  return { settings, update }
+  // updatePending — only updates React state; call commit() to persist + apply CSS
+  // Used for the font-size slider so CSS only changes on mouseup/touchend
+  const setPending = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
+  }, [])
+
+  const commit = useCallback(() => {
+    setSettings(prev => {
+      localStorage.setItem(KEY, JSON.stringify(prev))
+      applySettings(prev)
+      return prev
+    })
+  }, [])
+
+  return { settings, update, setPending, commit }
 }

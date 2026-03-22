@@ -1,3 +1,4 @@
+import React from 'react'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { NotesPanel } from '@/components/NotesEditor'
 import ReviewMode from '@/components/ReviewMode'
@@ -116,57 +117,116 @@ function weightedAvg(grades: Grade[]): number | null {
 function AttendanceWidget({ subject, onUpdate }: {
   subject: Subject; onUpdate: (id: string, total: number, att: number) => void
 }) {
-  const absent   = subject.total_classes - subject.attended
-  const maxAbs   = Math.floor(subject.total_classes * 0.3)
-  const pct      = subject.total_classes > 0 ? (absent / subject.total_classes) * 100 : 0
+  // absent = faltas, which starts at 0. attended = presenças.
+  const absent    = subject.total_classes - subject.attended
+  const maxAbs    = Math.floor(subject.total_classes * 0.3)
+  const pct       = subject.total_classes > 0 ? (absent / subject.total_classes) * 100 : 0
   const remaining = Math.max(0, maxAbs - absent)
-  const ff       = pct >= 30
-  const danger   = pct >= 20
-  const color    = ff ? '#ef4444' : danger ? '#f59e0b' : '#22c55e'
-  const circ     = 2 * Math.PI * 14
-  const dash     = circ - (Math.min(pct, 100) / 100) * circ
+  const ff        = absent > maxAbs && subject.total_classes > 0
+  const danger    = pct >= 20 && !ff
+  const color     = ff ? '#ef4444' : danger ? '#f59e0b' : '#22c55e'
+  const circ      = 2 * Math.PI * 18
+  const dash      = circ - (Math.min(pct, 100) / 100) * circ
 
-  // +1 falta = attended-1 (attended tracks present, absent = total - attended)
-  const addFault   = () => { if (subject.attended > 0) onUpdate(subject.id, subject.total_classes, subject.attended - 1) }
-  const removeFault= () => { if (absent > 0)           onUpdate(subject.id, subject.total_classes, subject.attended + 1) }
+  // Local draft so rapid clicking doesn't wait for API
+  const [draft, setDraft] = React.useState(absent)
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Sync draft when subject changes from outside
+  React.useEffect(() => { setDraft(absent) }, [absent])
+
+  const setAbsent = (newAbsent: number) => {
+    const clamped = Math.max(0, Math.min(newAbsent, subject.total_classes))
+    setDraft(clamped)
+    // Debounce API call by 600ms — fires on last click in a burst
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      const newAttended = subject.total_classes - clamped
+      onUpdate(subject.id, subject.total_classes, newAttended)
+    }, 600)
+  }
+
+  const draftPct   = subject.total_classes > 0 ? (draft / subject.total_classes) * 100 : 0
+  const draftFF    = draft > maxAbs && subject.total_classes > 0
+  const draftDanger = draftPct >= 20 && !draftFF
+  const draftColor  = draftFF ? '#ef4444' : draftDanger ? '#f59e0b' : '#22c55e'
+  const draftDash   = circ - (Math.min(draftPct, 100) / 100) * circ
+  const draftRemain = Math.max(0, maxAbs - draft)
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <div className="flex items-center gap-2">
-        <svg width="36" height="36" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border)" strokeWidth="3" />
-          <circle cx="18" cy="18" r="14" fill="none" stroke={color} strokeWidth="3"
-                  strokeDasharray={circ} strokeDashoffset={dash}
-                  strokeLinecap="round" transform="rotate(-90 18 18)" />
-          <text x="18" y="22" textAnchor="middle" fontSize="8" fontWeight="bold" fill={color}>{absent}</text>
-        </svg>
-        <div>
-          <p className="text-[10px] font-semibold" style={{ color }}>
-            {ff ? '⚠️ FF' : `${absent} falta${absent !== 1 ? 's' : ''}`}
+    <div className="rounded-2xl p-3 space-y-3"
+         style={{ background: draftFF ? 'rgba(239,68,68,0.05)' : 'var(--bg-elevated)', border: `1px solid ${draftFF ? 'rgba(239,68,68,0.2)' : 'var(--border)'}` }}>
+      <div className="flex items-center gap-4">
+        {/* Ring */}
+        <div className="relative shrink-0" style={{ width: 52, height: 52 }}>
+          <svg width="52" height="52" viewBox="0 0 52 52">
+            <circle cx="26" cy="26" r="18" fill="none" stroke="var(--border)" strokeWidth="4" />
+            <circle cx="26" cy="26" r="18" fill="none" stroke={draftColor} strokeWidth="4"
+                    strokeDasharray={circ} strokeDashoffset={draftDash}
+                    strokeLinecap="round" transform="rotate(-90 26 26)"
+                    style={{ transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease' }} />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-display font-bold text-base leading-none" style={{ color: draftColor }}>{draft}</span>
+            <span className="text-[8px]" style={{ color: 'var(--text-muted)' }}>faltas</span>
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold" style={{ color: draftColor }}>
+            {draftFF ? '⚠️ Reprovado por falta (FF)' : draftDanger ? '⚡ Atenção — risco de FF' : '✓ Frequência OK'}
           </p>
-          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-            {remaining > 0 ? `${remaining} restante${remaining !== 1 ? 's' : ''}` : 'limite atingido'}
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            {draftFF
+              ? `Limite ultrapassado (máx ${maxAbs} de ${subject.total_classes})`
+              : draftRemain > 0
+              ? `Pode faltar mais ${draftRemain} vez${draftRemain !== 1 ? 'es' : ''}`
+              : 'Limite atingido'}
           </p>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+              <div className="h-full rounded-full transition-all" style={{
+                width: `${Math.min(100, draftPct)}%`,
+                background: draftColor,
+              }} />
+            </div>
+            <span className="text-[10px] font-mono shrink-0" style={{ color: 'var(--text-muted)' }}>
+              {draft}/{maxAbs}
+            </span>
+          </div>
         </div>
       </div>
-      {/* Only show +/- for faltas, not for "presença" */}
-      <div className="flex items-center gap-1.5">
+
+      {/* Controls */}
+      <div className="flex items-center gap-2">
         <button
-          onClick={removeFault} disabled={absent <= 0}
-          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-80 disabled:opacity-30"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          onClick={() => setAbsent(draft - 1)}
+          disabled={draft <= 0}
+          className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg transition-all hover:opacity-80 disabled:opacity-25"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
           title="Remover falta">
-          <Minus size={11}/>
+          <Minus size={14}/>
         </button>
-        <span className="text-xs font-mono px-1" style={{ color: 'var(--text-muted)', minWidth: 40, textAlign: 'center' }}>
-          {absent}/{maxAbs} F
-        </span>
+        {/* Direct input */}
+        <div className="flex-1 relative">
+          <input
+            type="number" min={0} max={subject.total_classes} value={draft}
+            onChange={e => setAbsent(Number(e.target.value))}
+            className="input text-center text-sm font-bold font-mono w-full"
+            style={{ color: draftColor }}
+          />
+        </div>
         <button
-          onClick={addFault} disabled={ff}
-          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-80 disabled:opacity-30"
-          style={{ background: ff ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', border: `1px solid ${ff ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`, color: ff ? '#ef4444' : 'var(--text-muted)' }}
+          onClick={() => setAbsent(draft + 1)}
+          disabled={draft >= subject.total_classes}
+          className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg transition-all hover:opacity-80 disabled:opacity-25"
+          style={{
+            background: draftFF ? 'rgba(239,68,68,0.12)' : 'var(--bg-surface)',
+            border: `1px solid ${draftFF ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`,
+            color: draftFF ? '#ef4444' : 'var(--text-primary)'
+          }}
           title="Registrar falta">
-          <Plus size={11}/>
+          <Plus size={14}/>
         </button>
       </div>
     </div>

@@ -18,6 +18,7 @@ const SettingsPage    = lazy(() => import('@/pages/SettingsPage'))
 const StudyRoomPage            = lazy(() => import('@/pages/StudyRoomPage'))
 const PublicProfilePage        = lazy(() => import('@/pages/PublicProfilePage'))
 const TurmaPage                = lazy(() => import('@/pages/TurmaPage'))
+const FeedPage                 = lazy(() => import('@/pages/FeedPage'))
 const SharedNotePage           = lazy(() => import('@/pages/SharedNotePage'))
 const StudyRoomPersistentPage  = lazy(() => import('@/pages/StudyRoomPersistentPage'))
 
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="room"       element={<Suspense fallback={<PageSkeleton />}><StudyRoomPersistentPage /></Suspense>} />
         <Route path="room/:code" element={<Suspense fallback={<PageSkeleton />}><StudyRoomPersistentPage /></Suspense>} />
         <Route path="turma"      element={<Suspense fallback={<PageSkeleton />}><TurmaPage /></Suspense>} />
+        <Route path="feed"        element={<Suspense fallback={<PageSkeleton />}><FeedPage /></Suspense>} />
         <Route path="turma/:year" element={<Suspense fallback={<PageSkeleton />}><TurmaPage /></Suspense>} />
       </Route>
       {/* Public routes — no auth required */}
