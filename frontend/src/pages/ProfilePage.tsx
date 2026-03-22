@@ -284,45 +284,75 @@ function drawCardBackground(
   // White base inside zone (blobs paint over this)
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
 
-  // 1–2 large exotic organic blobs — each totally unique shape
-  const nBlobs = 1 + Math.floor(rng() * 1.8)
-  for (let bi = 0; bi < nBlobs; bi++) {
-    // Center can be partially off-canvas for more dramatic shapes
-    const blobCx = W     * (-0.05 + rng() * 1.10)
-    const blobCy = zoneH * (-0.25 + rng() * 0.80)
-    // Much bigger radius — fills more of the zone
-    const blobR  = Math.min(W, zoneH) * (0.70 + rng() * 0.60)
-    // More control points = more exotic, irregular shape
-    const n = 9 + Math.floor(rng() * 8)
-    const pts: [number,number][] = []
-    for (let i = 0; i < n; i++) {
-      const angle = (i / n) * Math.PI * 2 - Math.PI / 2
-      // High variance in radius per point = very irregular, amoeba-like
-      const r = blobR * (0.30 + rng() * 1.10)
-      pts.push([blobCx + Math.cos(angle)*r, blobCy + Math.sin(angle)*r])
+  // Single large dominant blob — fills top ~60% of zone, flows organically
+  // Like the reference: dramatic, covers most of the colored area with wavy bottom edge
+
+  // Main blob: anchored to top, flows down with organic wavy bottom
+  // Center is near the top-center of the zone
+  const mainCx = W * (0.35 + rng() * 0.30)   // roughly centered horizontally
+  const mainCy = zoneH * (-0.10 + rng() * 0.20) // near top, slightly off
+  const mainR  = Math.min(W, zoneH) * (0.85 + rng() * 0.40)
+
+  // Build an organic path: top points close together (tight to top edge),
+  // bottom points spread out with wavy, flowing extensions
+  const n = 10 + Math.floor(rng() * 6)
+  const pts: [number,number][] = []
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2
+    const isBottom = Math.sin(angle) > 0  // points going downward
+    // Bottom points get more variance — creates the organic flowing boundary
+    const variance = isBottom ? (0.35 + rng() * 0.85) : (0.75 + rng() * 0.35)
+    const r = mainR * variance
+    pts.push([mainCx + Math.cos(angle)*r, mainCy + Math.sin(angle)*r])
+  }
+
+  ctx.beginPath()
+  for (let i = 0; i < pts.length; i++) {
+    const p0 = pts[(i-1+n)%n], p1 = pts[i]
+    const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
+    const tension = 0.32
+    const cp1x = p1[0]+(p2[0]-p0[0])*tension, cp1y = p1[1]+(p2[1]-p0[1])*tension
+    const cp2x = p2[0]-(p3[0]-p1[0])*tension, cp2y = p2[1]-(p3[1]-p1[1])*tension
+    if (i === 0) ctx.moveTo(p1[0], p1[1])
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+  }
+  ctx.closePath()
+
+  // Radial gradient: bright center top, fades toward organic edges
+  const grad = ctx.createRadialGradient(
+    mainCx - mainR*0.20, mainCy - mainR*0.10, mainR*0.05,
+    mainCx + mainR*0.05, mainCy + mainR*0.05, mainR*1.15
+  )
+  grad.addColorStop(0,    blobMain)
+  grad.addColorStop(0.45, blobShift)
+  grad.addColorStop(1,    `hsla(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%,0)`)
+  ctx.fillStyle = grad
+  ctx.globalAlpha = 1
+  ctx.fill()
+  ctx.globalAlpha = 1
+
+  // Optional secondary small accent blob for depth
+  if (rng() > 0.4) {
+    const ax = W * (0.55 + rng() * 0.50), ay = zoneH * (-0.05 + rng() * 0.30)
+    const ar = Math.min(W, zoneH) * (0.25 + rng() * 0.25)
+    const an = 7 + Math.floor(rng() * 5)
+    const apts: [number,number][] = []
+    for (let i = 0; i < an; i++) {
+      const angle = (i/an)*Math.PI*2 - Math.PI/2
+      apts.push([ax + Math.cos(angle)*ar*(0.5+rng()*0.9), ay + Math.sin(angle)*ar*(0.5+rng()*0.9)])
     }
     ctx.beginPath()
-    for (let i = 0; i < pts.length; i++) {
-      const p0 = pts[(i-1+n)%n], p1 = pts[i]
-      const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
-      // Looser tension = more fluid, organic curves
-      const tension = 0.28 + rng() * 0.18
-      const cp1x = p1[0]+(p2[0]-p0[0])*tension, cp1y = p1[1]+(p2[1]-p0[1])*tension
-      const cp2x = p2[0]-(p3[0]-p1[0])*tension, cp2y = p2[1]-(p3[1]-p1[1])*tension
-      if (i === 0) ctx.moveTo(p1[0], p1[1])
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+    for (let i = 0; i < apts.length; i++) {
+      const p0=apts[(i-1+an)%an],p1=apts[i],p2=apts[(i+1)%an],p3=apts[(i+2)%an]
+      const cp1x=p1[0]+(p2[0]-p0[0])*0.3,cp1y=p1[1]+(p2[1]-p0[1])*0.3
+      const cp2x=p2[0]-(p3[0]-p1[0])*0.3,cp2y=p2[1]-(p3[1]-p1[1])*0.3
+      if(i===0)ctx.moveTo(p1[0],p1[1])
+      ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
     }
     ctx.closePath()
-    // Offset gradient center for more interesting lighting
-    const gox = blobCx - blobR*(0.15 + rng()*0.30)
-    const goy = blobCy - blobR*(0.10 + rng()*0.25)
-    const grad = ctx.createRadialGradient(gox, goy, blobR*0.04, blobCx, blobCy, blobR*1.2)
-    grad.addColorStop(0,    blobMain)
-    grad.addColorStop(0.50, blobShift)
-    grad.addColorStop(1,    `hsla(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%,0)`)
-    ctx.fillStyle = grad
-    ctx.globalAlpha = bi === 0 ? 1 : 0.55
-    ctx.fill(); ctx.globalAlpha = 1
+    const ag = ctx.createRadialGradient(ax,ay,ar*0.05,ax,ay,ar)
+    ag.addColorStop(0, blobMain); ag.addColorStop(1, `hsla(${blobH},${blobS}%,${blobL}%,0)`)
+    ctx.fillStyle = ag; ctx.globalAlpha = 0.50; ctx.fill(); ctx.globalAlpha = 1
   }
   ctx.restore()
 }
