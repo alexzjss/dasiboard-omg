@@ -746,8 +746,15 @@ export default function DashboardPage() {
 
   const latestTag = latestNL?.tag ? NL_TAGS[latestNL.tag] : NL_TAGS['geral']
 
+  const cutoff48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
+  // Show the 48h timeline section while loading (skeleton) or when there are actual upcoming events
+  const showTimeline = loading || events.some(e => {
+    const d = parseISO(e.start_at)
+    return d >= now && d <= cutoff48h
+  })
+
   return (
-    <div className="px-4 py-4 sm:px-5 md:px-8 md:py-6 max-w-6xl mx-auto w-full page-mobile space-y-4 md:space-y-5">
+    <div className="px-4 pt-2 pb-4 sm:px-5 md:px-8 md:pt-3 md:pb-6 max-w-6xl mx-auto w-full page-mobile space-y-4 md:space-y-5">
 
       {showCreateNL && (
         <NewsletterCreateModal
@@ -854,36 +861,41 @@ export default function DashboardPage() {
       {/* ── MAIN GRID: 48h timeline + stats ─────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-5 animate-in-delay-2">
 
-        {/* 48h Timeline — 3 cols */}
-        <div className="lg:col-span-3">
-          <div className="flex items-center justify-between mb-3 px-0.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Próximas 48h</p>
-            <Link to="/calendar" className="text-[10px] font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
-                  style={{ color: 'var(--accent-3)' }}>
-              Ver todos <ArrowRight size={10} />
-            </Link>
-          </div>
-          <div className="card" style={{ padding: '12px 16px' }}>
-            {loading ? (
-              <div className="space-y-3">
-                {[0,1,2].map(i => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="shimmer w-2 h-2 rounded-full shrink-0" />
-                    <div className="flex-1 space-y-1.5">
-                      <div className="shimmer h-3.5 w-40 rounded" />
-                      <div className="shimmer h-2.5 w-24 rounded" />
+        {/* 48h Timeline — 3 cols — hidden when no upcoming events */}
+        {showTimeline && (
+          <div className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-3 px-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Próximas 48h</p>
+              <Link to="/calendar" className="text-[10px] font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--accent-3)' }}>
+                Ver todos <ArrowRight size={10} />
+              </Link>
+            </div>
+            <div className="card" style={{ padding: '12px 16px' }}>
+              {loading ? (
+                <div className="space-y-3">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="shimmer w-2 h-2 rounded-full shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="shimmer h-3.5 w-40 rounded" />
+                        <div className="shimmer h-2.5 w-24 rounded" />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Timeline48h events={events} />
-            )}
+                  ))}
+                </div>
+              ) : (
+                <Timeline48h events={events} />
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Study stats + widgets — 2 cols */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Study stats + widgets — stacks vertically beside timeline (2 cols), or expands
+            to a 3-col grid when the timeline is hidden (no upcoming events) */}
+        <div className={showTimeline
+          ? "lg:col-span-2 space-y-4"
+          : "lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"}>
 
           {/* Semester progress */}
           <SemesterWidget />
