@@ -82,6 +82,12 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
   'light-usp':        { bg: '#f4f7fb', accent: '#004A8F', card: '#ffffff' },
   'light-stardew':    { bg: '#e8d5a3', accent: '#4a7c59', card: '#fdf0cc' },
+  'dark-2077':        { bg: '#000000', accent: '#f5e642', card: '#0a0a0a' },
+  'light-cubo':       { bg: '#c6b37d', accent: '#5d8a22', card: '#d4c090' },
+  'light-cafe':       { bg: '#f5f0e8', accent: '#8b4513', card: '#fefcf7' },
+  'light-sakura':     { bg: '#fef5f7', accent: '#e8758a', card: '#ffffff' },
+  'dark-matrix':      { bg: '#000800', accent: '#00ff41', card: '#010a01' },
+  'dark-crt':         { bg: '#0a0500', accent: '#ff8800', card: '#120800' },
 }
 
 // ── Pokéball + Starter picker (Pixel theme only) ─────────────────────────────
@@ -189,7 +195,7 @@ function PokeballButton({ onClick }: { onClick: () => void }) {
 // ── Visual Theme Picker ───────────────────────────────────────────────────────
 function ThemePicker({ onClose }: { onClose: () => void }) {
   const { theme, setTheme } = useTheme()
-  const [group, setGroup] = useState<'all'|'dark'|'light'>('all')
+  const [filter, setFilter] = useState<'all'|'dark'|'light'|'games'|'vibes'|'tech'|'neon'|'special'|'anime'|'super'>('all')
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -200,27 +206,59 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const allThemes = group === 'dark' ? DARK_THEMES : group === 'light' ? LIGHT_THEMES : THEMES
-  const shown = search.trim()
-    ? allThemes.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search.toLowerCase()))
-    : allThemes
+  const shown = THEMES.filter(t => {
+    const matchFilter =
+      filter === 'all'   ? true :
+      filter === 'dark'  ? t.dark :
+      filter === 'light' ? !t.dark :
+      t.group === filter
+    const matchSearch = !search.trim() ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.description.toLowerCase().includes(search.toLowerCase())
+    return matchFilter && matchSearch
+  })
+
+  const FILTERS = [
+    { key: 'all',     label: '✨ Todos',      emoji: '' },
+    { key: 'dark',    label: '🌙 Escuros',    emoji: '' },
+    { key: 'light',   label: '☀️ Claros',     emoji: '' },
+    { key: 'games',   label: '🕹️ Games',      emoji: '' },
+    { key: 'vibes',   label: '🎨 Atmosfera',  emoji: '' },
+    { key: 'tech',    label: '💻 Tech',        emoji: '' },
+    { key: 'neon',    label: '🌆 Neon & CRT', emoji: '' },
+    { key: 'special', label: '✨ Especial',   emoji: '' },
+    { key: 'anime',   label: '🎌 Anime',      emoji: '' },
+    { key: 'super',   label: '🦸 Herói',      emoji: '' },
+  ] as const
+
+  // Group by category for grouped display
+  const useGrouped = filter === 'all' && !search.trim()
+  const GROUP_ORDER = ['base','games','vibes','neon','tech','special','anime','super']
+  const GROUP_LABELS: Record<string,string> = {
+    base:'Essenciais', games:'Games & Pixel', vibes:'Atmosfera', neon:'Neon & CRT',
+    tech:'Tech', special:'Especial', anime:'Anime', super:'Super-heróis',
+  }
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center"
          style={{ background: 'rgba(0,0,0,0.70)', backdropFilter: 'blur(8px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl flex flex-col animate-in"
            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '92dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
         {/* Handle */}
-        <div className="flex justify-center pt-3 sm:hidden">
+        <div className="flex justify-center pt-3 sm:hidden shrink-0">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
         </div>
 
         {/* Header */}
-        <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0">
           <h3 className="font-display font-bold text-base flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <Palette size={16} style={{ color: 'var(--accent-3)' }} />
             Escolher tema
+            <span className="text-[10px] font-normal px-2 py-0.5 rounded-full"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+              {THEMES.length} temas
+            </span>
           </h3>
           <div className="flex items-center gap-2">
             <span className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono"
@@ -235,92 +273,126 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Search */}
-        <div className="px-5 mb-3">
+        <div className="px-5 mb-3 shrink-0">
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-            <input ref={searchRef} type="text" placeholder="Buscar tema..." value={search}
+            <input ref={searchRef} type="text" placeholder="Buscar por nome ou descrição..." value={search}
                    onChange={e => setSearch(e.target.value)}
                    className="w-full pl-8 pr-3 py-2 rounded-xl text-sm"
                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)', outline: 'none' }} />
           </div>
         </div>
 
-        {/* Dark/Light/All toggle */}
-        <div className="px-5 mb-4 flex gap-1.5">
-          {(['all', 'dark', 'light'] as const).map(g => (
-            <button key={g} onClick={() => setGroup(g)}
-                    className="flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all"
-                    style={{
-                      background: group === g ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                      border: `1px solid ${group === g ? 'var(--accent-1)' : 'var(--border)'}`,
-                      color: group === g ? 'var(--accent-3)' : 'var(--text-muted)',
-                    }}>
-              {g === 'all' ? '✨ Todos' : g === 'dark' ? '🌙 Escuros' : '☀️ Claros'}
-            </button>
-          ))}
+        {/* Filter chips — scrollable row */}
+        <div className="px-5 mb-3 shrink-0">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+            {FILTERS.map(f => (
+              <button key={f.key} onClick={() => setFilter(f.key as any)}
+                      className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
+                      style={{
+                        background: filter === f.key ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                        border: `1px solid ${filter === f.key ? 'var(--accent-1)' : 'var(--border)'}`,
+                        color: filter === f.key ? 'var(--accent-3)' : 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                      }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Theme grid */}
-        <div className="px-4 pb-6 grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto" style={{ maxHeight: '48dvh' }}>
+        {/* Theme grid — grouped or flat */}
+        <div className="flex-1 overflow-y-auto px-4 pb-6">
           {shown.length === 0 && (
-            <div className="col-span-3 sm:col-span-4 text-center py-8" style={{ color: 'var(--text-muted)' }}>
+            <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+              <Palette size={28} className="mx-auto mb-2 opacity-20" />
               <p className="text-sm">Nenhum tema encontrado</p>
             </div>
           )}
-          {shown.map(t => {
-            const preview = THEME_PREVIEWS[t.id] ?? { bg: '#111', accent: '#888', card: '#222' }
-            const isActive = theme.id === t.id
-            return (
-              <button key={t.id}
-                      onClick={() => { setTheme(t.id as ThemeId); onClose() }}
-                      className="group flex flex-col gap-2 rounded-2xl p-2.5 transition-all active:scale-95"
-                      style={{
-                        border: `2px solid ${isActive ? 'var(--accent-1)' : 'var(--border)'}`,
-                        background: isActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                      }}>
-                {/* Mini preview */}
-                <div className="w-full rounded-lg overflow-hidden relative"
-                     style={{ height: 52, background: preview.bg }}>
-                  <div className="absolute left-0 top-0 bottom-0 w-4"
-                       style={{ background: preview.bg, borderRight: `2px solid ${preview.accent}33` }} />
-                  <div className="absolute right-2 top-2 rounded"
-                       style={{ width: 26, height: 16, background: preview.card, border: `1px solid ${preview.accent}33` }} />
-                  <div className="absolute left-5 top-2 rounded"
-                       style={{ width: 12, height: 4, background: preview.accent + '88', borderRadius: 2 }} />
-                  <div className="absolute left-5 top-8 rounded"
-                       style={{ width: 8, height: 4, background: preview.accent + '44', borderRadius: 2 }} />
-                  <div className="absolute right-3 bottom-2 rounded-full"
-                       style={{ width: 7, height: 7, background: preview.accent }} />
-                  {isActive && (
-                    <div className="absolute inset-0 flex items-center justify-center rounded-lg"
-                         style={{ background: `${preview.accent}22` }}>
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                           style={{ background: preview.accent, fontSize: 10 }}>✓</div>
-                    </div>
-                  )}
-                </div>
-                {/* Label */}
-                <div className="text-center">
-                  <span style={{ fontSize: 13, display: 'block' }}>{t.emoji}</span>
-                  <p className="text-[10px] font-semibold mt-0.5 truncate"
-                     style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-primary)' }}>
-                    {t.name}
+
+          {useGrouped ? (
+            GROUP_ORDER.map(gkey => {
+              const groupThemes = THEMES.filter(t => t.group === gkey)
+              if (groupThemes.length === 0) return null
+              return (
+                <div key={gkey} className="mb-5">
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2 px-0.5"
+                     style={{ color: 'var(--text-muted)' }}>
+                    {GROUP_LABELS[gkey]}
                   </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    {groupThemes.map(t => <ThemeCard key={t.id} t={t} isActive={theme.id === t.id} onSelect={() => { setTheme(t.id as ThemeId); onClose() }} />)}
+                  </div>
                 </div>
-              </button>
-            )
-          })}
+              )
+            })
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1">
+              {shown.map(t => <ThemeCard key={t.id} t={t} isActive={theme.id === t.id} onSelect={() => { setTheme(t.id as ThemeId); onClose() }} />)}
+            </div>
+          )}
         </div>
 
-        {/* Footer hint */}
-        <div className="px-5 pb-4 pt-1" style={{ borderTop: '1px solid var(--border)' }}>
-          <p className="text-[10px] text-center" style={{ color: 'var(--text-muted)' }}>
-            {THEMES.length} temas · Use <kbd className="px-1 py-0.5 rounded text-[9px]"
+        {/* Footer */}
+        <div className="px-5 pb-4 pt-2 shrink-0 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            {shown.length} de {THEMES.length} temas
+          </p>
+          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            Use <kbd className="px-1 py-0.5 rounded text-[9px]"
               style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>Ctrl+T</kbd> para abrir
           </p>
         </div>
       </div>
     </div>
+  )
+}
+
+function ThemeCard({ t, isActive, onSelect }: { t: import('@/context/ThemeContext').ThemeMeta; isActive: boolean; onSelect: () => void }) {
+  const preview = THEME_PREVIEWS[t.id] ?? { bg: '#111', accent: '#888', card: '#222' }
+  const isCRT = t.id === 'dark-matrix' || t.id === 'dark-crt'
+  const isNeon = t.id === 'dark-2077'
+  return (
+    <button onClick={onSelect}
+            className="flex flex-col gap-1.5 rounded-2xl p-2 transition-all active:scale-95"
+            style={{
+              border: `2px solid ${isActive ? 'var(--accent-1)' : 'var(--border)'}`,
+              background: isActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+            }}
+            title={t.description}>
+      {/* Mini preview */}
+      <div className="w-full rounded-lg overflow-hidden relative" style={{ height: 48, background: preview.bg }}>
+        {/* Sidebar strip */}
+        <div className="absolute left-0 top-0 bottom-0" style={{ width: 10, background: preview.accent + '30', borderRight: `1px solid ${preview.accent}55` }} />
+        {/* Card */}
+        <div className="absolute rounded" style={{ right: 5, top: 5, width: 22, height: 14, background: preview.card, border: `1px solid ${preview.accent}44` }} />
+        {/* Text lines */}
+        <div className="absolute rounded-full" style={{ left: 14, top: 6, width: 14, height: 3, background: preview.accent + '99' }} />
+        <div className="absolute rounded-full" style={{ left: 14, top: 12, width: 10, height: 2, background: preview.accent + '55' }} />
+        <div className="absolute rounded-full" style={{ left: 14, top: 17, width: 18, height: 2, background: preview.accent + '33' }} />
+        {/* CRT scanlines */}
+        {isCRT && Array.from({length:6}).map((_,i) => (
+          <div key={i} className="absolute left-0 right-0" style={{ top: i*8, height: 1, background: preview.accent + '18', pointerEvents: 'none' }} />
+        ))}
+        {/* Neon glow dot */}
+        {isNeon && <div className="absolute bottom-2 right-3 rounded-full" style={{ width: 6, height: 6, background: preview.accent, boxShadow: `0 0 6px ${preview.accent}` }} />}
+        {/* Active check */}
+        {isActive && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg" style={{ background: `${preview.accent}30` }}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                 style={{ background: preview.accent, boxShadow: `0 0 8px ${preview.accent}88` }}>✓</div>
+          </div>
+        )}
+      </div>
+      {/* Label */}
+      <div className="text-center">
+        <span style={{ fontSize: 12, display: 'block', lineHeight: 1 }}>{t.emoji}</span>
+        <p className="text-[9px] font-bold mt-0.5 truncate leading-tight"
+           style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-primary)' }}>
+          {t.name}
+        </p>
+      </div>
+    </button>
   )
 }
 

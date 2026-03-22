@@ -15,6 +15,12 @@ export type ThemeId =
   | 'light-papiro'
   | 'light-usp'
   | 'light-stardew'
+  | 'dark-2077'
+  | 'light-cubo'
+  | 'light-cafe'
+  | 'light-sakura'
+  | 'dark-matrix'
+  | 'dark-crt'
 
 // Sub-eras do Chrono Trigger que rotacionam por página
 export type ChronoEra = 'prehistoria' | 'antiguidade' | 'era-media' | 'futuro' | 'fim-dos-tempos'
@@ -75,13 +81,19 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-papiro',     name: 'Papiro',       dark: false, emoji: '📋', description: 'Caderno de engenharia · Milimetrado', group: 'tech'    },
   { id: 'light-usp',        name: 'USP Oficial',  dark: false, emoji: '🏛️', description: 'Identidade visual oficial · Azul & Ouro', group: 'special' },
   { id: 'light-stardew',    name: 'Stardew',      dark: false, emoji: '🌾', description: 'Vida no campo pixel · Terroso & Verde', group: 'games'   },
+  { id: 'dark-2077',        name: '2077',          dark: true,  emoji: '🏙️', description: 'Night City · Neon Amarelo',           group: 'neon'    },
+  { id: 'light-cubo',       name: 'Cubo',          dark: false, emoji: '⛏️', description: 'Survival · Slots de inventário',      group: 'games'   },
+  { id: 'light-cafe',       name: 'Café',          dark: false, emoji: '☕', description: 'Livraria · Playfair · Sepia',          group: 'vibes'   },
+  { id: 'light-sakura',     name: 'Sakura',        dark: false, emoji: '🌸', description: 'Primavera japonesa · Rosa pétala',    group: 'vibes'   },
+  { id: 'dark-matrix',      name: 'Matrix',        dark: true,  emoji: '💚', description: 'CRT Verde · Terminal · 80s',          group: 'neon'    },
+  { id: 'dark-crt',         name: 'CRT',           dark: true,  emoji: '🟡', description: 'Monitor Âmbar · IBM · Anos 70',       group: 'neon'    },
 ]
 
 export const DARK_THEMES  = THEMES.filter(t => t.dark)
 export const LIGHT_THEMES = THEMES.filter(t => !t.dark)
 export const THEME_GROUPS: Record<string, string> = {
   base: 'Essenciais', vibes: 'Atmosfera', tech: 'Tech',
-  games: 'Games', super: 'Super-heróis', anime: 'Anime', special: 'Especial',
+  games: 'Games', super: 'Super-heróis', anime: 'Anime', special: 'Especial', neon: 'Neon & CRT',
 }
 
 interface ThemeCtx {
