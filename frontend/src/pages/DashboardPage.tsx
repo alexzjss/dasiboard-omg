@@ -949,7 +949,7 @@ export default function DashboardPage() {
                  style={{ background: 'linear-gradient(90deg, var(--accent-soft), transparent)', borderBottom: nlExpanded ? '1px solid var(--border)' : 'none' }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                     style={{ background: latestTag?.color + '22' ?? 'var(--accent-soft)', border: `1px solid ${latestTag?.color + '44' ?? 'var(--accent-1)'}` }}>
+                     style={{ background: latestTag ? latestTag.color + '22' : 'var(--accent-soft)', border: `1px solid ${latestTag ? latestTag.color + '44' : 'var(--accent-1)'}` }}>
                   <span style={{ fontSize: 13 }}>{latestTag?.emoji ?? '📢'}</span>
                 </div>
                 <div>
