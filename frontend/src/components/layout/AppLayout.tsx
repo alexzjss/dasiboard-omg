@@ -29,6 +29,7 @@ import { PortatilSaveState } from '@/components/PortatilSaveState'
 import { AchievementToast, useAchievementToast, triggerAchievementToast } from '@/components/AchievementToast'
 import { useClockEasterEggs } from '@/hooks/useEasterEggs'
 import clsx from 'clsx'
+import toast from 'react-hot-toast'
 
 const nav = [
   { to: '/',          label: 'Início',        icon: LayoutDashboard, end: true  },
@@ -338,8 +339,9 @@ function DasiLogoClickable({ onEgg }: { onEgg: () => void }) {
   )
 }
 
-function SidebarContent({ onOpenPicker, colorBlind, liteMode }: {
+function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
   onOpenPicker: () => void
+  onLogoEgg: () => void
   colorBlind: ReturnType<typeof useColorBlindMode>
   liteMode: { active: boolean; toggle: () => void }
 }) {
@@ -353,7 +355,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode }: {
       <div className="accent-orb" style={{ width: 120, height: 120, top: -40, left: -40 }} />
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 relative z-10" style={{ borderBottom: '1px solid var(--border)' }}>
-        <DasiLogoClickable onEgg={() => { localStorage.setItem('dasiboard-easter-found','1'); setExternalEgg('dasi-flip') }} />
+        <DasiLogoClickable onEgg={onLogoEgg} />
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
@@ -659,7 +661,8 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} colorBlind={colorBlind} liteMode={liteMode} />
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} colorBlind={colorBlind} liteMode={liteMode}
+                        onLogoEgg={() => { localStorage.setItem('dasiboard-easter-found','1'); setExternalEgg('dasi-flip') }} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">
