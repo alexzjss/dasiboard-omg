@@ -276,65 +276,65 @@ function drawCardBackground(
     ctx.fillRect(0, 0, W, H)
   }
 
-  // Blob color — entity color if set, otherwise random hue
+  // Blob color — entity color (corrected) or user hue
   let blobH = hue, blobS = sat, blobL = lit
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
-    const [eh,es,el] = rgbToHsl(er,eg,eb)
-    blobH = eh; blobS = es * 100; blobL = el * 100
+    const [eh,es,el] = rgbToHsl(er,eg,eb) // already returns h:0-360, s:0-100, l:0-100
+    blobH = eh
+    blobS = Math.max(es, 55)  // ensure vivid saturation
+    blobL = Math.min(Math.max(el, 38), 62)  // clamp lightness so blob is always visible
   }
+  // Slightly lighter/shifted secondary color for gradient depth
   const blobMain  = `hsl(${blobH},${blobS}%,${blobL}%)`
-  const blobShift = `hsl(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%)`
+  const blobLight = `hsl(${blobH},${Math.max(blobS-15,30)}%,${Math.min(blobL+20,80)}%)`
+  const blobShift = `hsl(${(blobH+22)%360},${Math.max(blobS-8,30)}%,${Math.max(blobL-12,22)}%)`
 
   // Clip strictly to colored zone — nothing bleeds into white area
   ctx.save()
   ctx.beginPath(); ctx.rect(0, 0, W, zoneH); ctx.clip()
-
-  // White base inside zone (blobs paint over this)
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
 
-  // Single large dominant blob — fills top ~60% of zone, flows organically
-  // Like the reference: dramatic, covers most of the colored area with wavy bottom edge
+  // ── Organic blob: large, anchored to top, wavy bottom edge ────────────────
+  // Slight random tilt so each card looks different even at same position
+  const tiltAngle = (rng() - 0.5) * 0.4  // -0.2 to +0.2 radians
+  const mainCx = W * (0.30 + rng() * 0.40)
+  const mainCy = zoneH * (-0.08 + rng() * 0.15)
+  const mainR  = Math.min(W, zoneH) * (0.88 + rng() * 0.35)
 
-  // Main blob: anchored to top, flows down with organic wavy bottom
-  // Center is near the top-center of the zone
-  const mainCx = W * (0.35 + rng() * 0.30)   // roughly centered horizontally
-  const mainCy = zoneH * (-0.10 + rng() * 0.20) // near top, slightly off
-  const mainR  = Math.min(W, zoneH) * (0.85 + rng() * 0.40)
-
-  // Build an organic path: top points close together (tight to top edge),
-  // bottom points spread out with wavy, flowing extensions
-  const n = 10 + Math.floor(rng() * 6)
+  const n = 11 + Math.floor(rng() * 5)
   const pts: [number,number][] = []
   for (let i = 0; i < n; i++) {
-    const angle = (i / n) * Math.PI * 2 - Math.PI / 2
-    const isBottom = Math.sin(angle) > 0  // points going downward
-    // Bottom points get more variance — creates the organic flowing boundary
-    const variance = isBottom ? (0.35 + rng() * 0.85) : (0.75 + rng() * 0.35)
+    // Rotate the base angle by tiltAngle for organic inclination
+    const baseAngle = (i / n) * Math.PI * 2 - Math.PI / 2 + tiltAngle
+    const isBottom = Math.sin(baseAngle - tiltAngle) > 0
+    // Bottom: very wavy and irregular; top: tighter to form solid top edge
+    const variance = isBottom
+      ? (0.25 + rng() * 0.95)   // big variance = dramatic organic bottom
+      : (0.80 + rng() * 0.28)   // small variance = solid top
     const r = mainR * variance
-    pts.push([mainCx + Math.cos(angle)*r, mainCy + Math.sin(angle)*r])
+    pts.push([mainCx + Math.cos(baseAngle)*r, mainCy + Math.sin(baseAngle)*r])
   }
 
   ctx.beginPath()
   for (let i = 0; i < pts.length; i++) {
     const p0 = pts[(i-1+n)%n], p1 = pts[i]
     const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
-    const tension = 0.32
-    const cp1x = p1[0]+(p2[0]-p0[0])*tension, cp1y = p1[1]+(p2[1]-p0[1])*tension
-    const cp2x = p2[0]-(p3[0]-p1[0])*tension, cp2y = p2[1]-(p3[1]-p1[1])*tension
+    const t = 0.30 + rng() * 0.10
+    const cp1x = p1[0]+(p2[0]-p0[0])*t, cp1y = p1[1]+(p2[1]-p0[1])*t
+    const cp2x = p2[0]-(p3[0]-p1[0])*t, cp2y = p2[1]-(p3[1]-p1[1])*t
     if (i === 0) ctx.moveTo(p1[0], p1[1])
     ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
   }
   ctx.closePath()
 
-  // Radial gradient: bright center top, fades toward organic edges
-  const grad = ctx.createRadialGradient(
-    mainCx - mainR*0.20, mainCy - mainR*0.10, mainR*0.05,
-    mainCx + mainR*0.05, mainCy + mainR*0.05, mainR*1.15
-  )
-  grad.addColorStop(0,    blobMain)
-  grad.addColorStop(0.45, blobShift)
-  grad.addColorStop(1,    `hsla(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%,0)`)
+  // Gradient: bright highlight near top-left, main color in center, shift at edges
+  const gInnerX = mainCx - mainR*0.30, gInnerY = mainCy - mainR*0.15
+  const grad = ctx.createRadialGradient(gInnerX, gInnerY, mainR*0.05, mainCx, mainCy, mainR*1.10)
+  grad.addColorStop(0,    blobLight)
+  grad.addColorStop(0.30, blobMain)
+  grad.addColorStop(0.70, blobShift)
+  grad.addColorStop(1,    `hsla(${(blobH+22)%360},${Math.max(blobS-8,30)}%,${Math.max(blobL-12,22)}%,0)`)
   ctx.fillStyle = grad
   ctx.globalAlpha = 1
   ctx.fill()
@@ -426,9 +426,10 @@ function drawPortraitInfo(
   entityBg: { color: string; name: string } | null,
   style: CardStyle,
 ) {
-  // White bg always — ink always dark, accent follows blob hue
-  const inkColor  = `hsl(${hue},55%,12%)`
-  const inkFaint  = `hsl(${hue},30%,45%)`
+  // Use entity hue for ink when entity is set, else user hue
+  const inkHue = entityBg ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })() : hue
+  const inkColor  = `hsl(${inkHue},55%,12%)`
+  const inkFaint  = `hsl(${inkHue},30%,45%)`
   const accentClr = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-18,18)}%)`
 
   // ── Avatar — bottom-left of colored zone (always light text on blob) ──────
@@ -600,10 +601,11 @@ function drawLandscapeCard(
     ctx.fillText(parts.slice(1).join(' '), avCx, avCy+avR+38)
   }
 
-  // ── Right zone info — dark ink on white ────────────────────────────────────
+  // ── Right zone info — entity hue for ink when entity set ───────────────────
   const rx    = leftW + 36
-  const inkC  = `hsl(${hue},55%,14%)`
-  const inkF  = `hsl(${hue},28%,46%)`
+  const lInkHue = entityBg ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })() : hue
+  const inkC  = `hsl(${lInkHue},55%,14%)`
+  const inkF  = `hsl(${lInkHue},28%,46%)`
   const acC   = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-16,18)}%)`
   ctx.textAlign='left'; ctx.textBaseline='alphabetic'
 
