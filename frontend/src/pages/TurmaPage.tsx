@@ -40,11 +40,10 @@ function MemberCard({ m, rank }: { m: TurmaMember; rank: number }) {
   const isTop3   = rank < 3
 
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-2xl transition-all hover:scale-[1.01] ${isTop3 ? 'ring-1' : ''}`}
+    <div className="flex items-center gap-3 p-3 rounded-2xl transition-all hover:scale-[1.01]"
          style={{
            background: isTop3 ? `hsl(${[45,220,260][rank]},60%,${['14','12','12'][rank]}%)` : 'var(--bg-elevated)',
-           border: '1px solid var(--border)',
-           ringColor: isTop3 ? ['#f59e0b','#94a3b8','#cd7f32'][rank] : 'transparent',
+           border: `1px solid ${isTop3 ? ['#f59e0b','#94a3b8','#cd7f32'][rank] : 'var(--border)'}`,
          }}>
       {/* Rank */}
       <div className="w-8 text-center shrink-0">
