@@ -256,7 +256,6 @@ function drawDecorativeQR(
 }
 
 // ── PORTRAIT card background — Arc-inspired ──────────────────────────────────
-// Shape vocabulary: each user gets one of 6 elegant abstract shapes
 type BlobShape = 'leaf'|'arch'|'wave'|'corner'|'hill'|'shield'
 
 function drawShape(
@@ -265,51 +264,49 @@ function drawShape(
   shape: BlobShape,
   rng: () => number,
 ) {
-  const pad = W * 0.06  // consistent padding around shape edges
+  const pad = W * 0.06
   ctx.beginPath()
 
   switch (shape) {
     case 'leaf': {
-      // Organic leaf / teardrop — rotated, like Arc "Thomas Yee" card
       const cx = W * (0.38 + rng() * 0.24)
       const cy = zoneH * (0.08 + rng() * 0.08)
       const rx = W  * (0.52 + rng() * 0.18)
       const ry = zoneH * (0.70 + rng() * 0.20)
-      // Two-bezier leaf shape
       ctx.moveTo(cx, cy)
-      ctx.bezierCurveTo(cx + rx, cy,          cx + rx, cy + ry,     cx, cy + ry)
+      ctx.bezierCurveTo(cx + rx, cy, cx + rx, cy + ry, cx, cy + ry)
       ctx.bezierCurveTo(cx - rx * (0.55 + rng()*0.3), cy + ry, cx - rx * (0.55 + rng()*0.3), cy, cx, cy)
+      ctx.closePath()
       break
     }
     case 'arch': {
-      // Stadium / arch — like Arc "Sheldon" card
-      const left   = pad
-      const right  = W - pad
-      const top    = zoneH * (0.06 + rng() * 0.06)
-      const bottom = zoneH * (0.94 + rng() * 0.04)
-      const archH  = (right - left) * (0.42 + rng() * 0.16)
-      const r      = (right - left) / 2
-      ctx.moveTo(left, bottom)
+      const left  = pad
+      const right = W - pad
+      const top   = zoneH * (0.06 + rng() * 0.06)
+      const bot   = zoneH * (0.94 + rng() * 0.04)
+      const archH = (right - left) * (0.42 + rng() * 0.16)
+      const r     = (right - left) / 2
+      ctx.moveTo(left, bot)
       ctx.lineTo(left, top + archH)
       ctx.bezierCurveTo(left, top + archH - archH * 0.55, left + r * 0.45, top, left + r, top)
       ctx.bezierCurveTo(left + r + r * 0.45, top, right, top + archH - archH * 0.55, right, top + archH)
-      ctx.lineTo(right, bottom)
+      ctx.lineTo(right, bot)
       ctx.closePath()
       break
     }
     case 'wave': {
-      // Two-band wave — like Arc "Jason" card
       const band  = zoneH * (0.34 + rng() * 0.10)
       const gap   = zoneH * (0.06 + rng() * 0.06)
       const amp   = zoneH * (0.07 + rng() * 0.05)
       const left  = pad
       const right = W - pad
-      // Top band
-      ctx.moveTo(left, pad)
-      ctx.lineTo(right, pad)
+      // Band 1
+      ctx.moveTo(left, pad * 0.5)
+      ctx.lineTo(right, pad * 0.5)
       ctx.lineTo(right, band)
       ctx.bezierCurveTo(right - W * 0.25, band + amp, left + W * 0.25, band - amp, left, band)
       ctx.closePath()
+      // Band 2
       ctx.moveTo(left, band + gap)
       ctx.bezierCurveTo(left + W * 0.25, band + gap - amp, right - W * 0.25, band + gap + amp, right, band + gap)
       ctx.lineTo(right, band + gap + band * 0.65)
@@ -318,17 +315,16 @@ function drawShape(
       break
     }
     case 'corner': {
-      // Corner splash — blob anchored top-left or top-right
       const fromRight = rng() > 0.5
-      const cx = fromRight ? W + W * 0.05 : -W * 0.05
+      const cx = fromRight ? W * 1.05 : -W * 0.05
       const cy = -zoneH * 0.05
       const r  = W * (0.72 + rng() * 0.28)
       const n  = 10 + Math.floor(rng() * 5)
       const pts: [number, number][] = []
       for (let i = 0; i < n; i++) {
-        const base = (i / n) * Math.PI * 2
+        const base    = (i / n) * Math.PI * 2
         const isOuter = Math.cos(base) * (fromRight ? -1 : 1) > 0 || Math.sin(base) < 0
-        const v = isOuter ? (0.82 + rng() * 0.22) : (0.30 + rng() * 0.55)
+        const v       = isOuter ? (0.82 + rng() * 0.22) : (0.30 + rng() * 0.55)
         pts.push([cx + Math.cos(base) * r * v, cy + Math.sin(base) * r * v])
       }
       for (let i = 0; i < n; i++) {
@@ -336,42 +332,39 @@ function drawShape(
         const t=0.30
         const cp1x=p1[0]+(p2[0]-p0[0])*t, cp1y=p1[1]+(p2[1]-p0[1])*t
         const cp2x=p2[0]-(p3[0]-p1[0])*t, cp2y=p2[1]-(p3[1]-p1[1])*t
-        if(i===0)ctx.moveTo(p1[0],p1[1])
+        if (i===0) ctx.moveTo(p1[0],p1[1])
         ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
       }
       ctx.closePath()
       break
     }
     case 'hill': {
-      // Rolling hills / horizon — wide and landscape-filling
       const hillY = zoneH * (0.30 + rng() * 0.20)
       const amp1  = zoneH * (0.14 + rng() * 0.10)
       const amp2  = zoneH * (0.08 + rng() * 0.08)
       ctx.moveTo(0, zoneH)
       ctx.lineTo(W, zoneH)
       ctx.lineTo(W, hillY + amp2)
-      ctx.bezierCurveTo(W * 0.75, hillY + amp2 - amp2 * 1.2, W * 0.55, hillY - amp1 * 1.5, W * 0.50, hillY - amp1)
-      ctx.bezierCurveTo(W * 0.45, hillY - amp1 * 1.5, W * 0.25, hillY + amp1 * 0.8, 0, hillY + amp2 * 0.5)
+      ctx.bezierCurveTo(W*0.75, hillY+amp2-amp2*1.2, W*0.55, hillY-amp1*1.5, W*0.50, hillY-amp1)
+      ctx.bezierCurveTo(W*0.45, hillY-amp1*1.5, W*0.25, hillY+amp1*0.8, 0, hillY+amp2*0.5)
       ctx.closePath()
       break
     }
     case 'shield': {
-      // Shield / drop — tall centered shape
       const cx    = W / 2 + (rng() - 0.5) * W * 0.15
       const top   = zoneH * (0.03 + rng() * 0.06)
       const bot   = zoneH * (0.90 + rng() * 0.08)
       const halfW = W * (0.34 + rng() * 0.14)
       const rnd   = halfW * (0.55 + rng() * 0.30)
-      const tipY  = bot
       const bodyH = bot - top - rnd
       ctx.moveTo(cx - halfW + rnd, top)
       ctx.lineTo(cx + halfW - rnd, top)
-      ctx.bezierCurveTo(cx + halfW, top, cx + halfW, top + rnd, cx + halfW, top + rnd)
-      ctx.lineTo(cx + halfW, top + bodyH)
-      ctx.bezierCurveTo(cx + halfW, tipY - rnd * 0.3, cx + halfW * 0.4, tipY - rnd * 0.05, cx, tipY)
-      ctx.bezierCurveTo(cx - halfW * 0.4, tipY - rnd * 0.05, cx - halfW, tipY - rnd * 0.3, cx - halfW, top + bodyH)
-      ctx.lineTo(cx - halfW, top + rnd)
-      ctx.bezierCurveTo(cx - halfW, top, cx - halfW + rnd, top, cx - halfW + rnd, top)
+      ctx.bezierCurveTo(cx+halfW, top, cx+halfW, top+rnd, cx+halfW, top+rnd)
+      ctx.lineTo(cx+halfW, top+bodyH)
+      ctx.bezierCurveTo(cx+halfW, bot-rnd*0.3, cx+halfW*0.4, bot-rnd*0.05, cx, bot)
+      ctx.bezierCurveTo(cx-halfW*0.4, bot-rnd*0.05, cx-halfW, bot-rnd*0.3, cx-halfW, top+bodyH)
+      ctx.lineTo(cx-halfW, top+rnd)
+      ctx.bezierCurveTo(cx-halfW, top, cx-halfW+rnd, top, cx-halfW+rnd, top)
       ctx.closePath()
       break
     }
@@ -386,106 +379,95 @@ function drawCardBackground(
   rng: () => number,
   entityBg: { color: string; name: string } | null,
 ) {
-  // ── 1. Card base — always solid warm cream (never transparent) ────────────
+  // ── 1. Always solid cream base — NEVER transparent ────────────────────────
   const cardBase = '#FAFAF5'
   ctx.fillStyle = cardBase
   ctx.fillRect(0, 0, W, H)
 
-  // ── 2. Resolve shape color from user hue (or entity color) ───────────────
-  let blobH = hue, blobS = sat, blobL = lit
-  if (entityBg) {
-    const [er,eg,eb] = hexToRgb(entityBg.color)
-    const [eh,es,el] = rgbToHsl(er,eg,eb)
-    blobH = eh
-    blobS = Math.max(es, 52)
-    blobL = Math.min(Math.max(el, 35), 62)
-  }
-  // Clamp lightness so shape always reads well on cream
+  // ── 2. Shape colors ALWAYS come from user hue — entity only affects border ─
+  // (entity bg is intentionally IGNORED here for color)
+  let blobH = hue, blobS = Math.max(sat, 42), blobL = lit
   blobL = Math.min(Math.max(blobL, 32), 64)
 
-  // ── 3. Determine shape ────────────────────────────────────────────────────
-  // We seed shape choice from the same user id for consistency
-  // (rng here is seededRng(userId+'-bgv3'), shape pick uses userId+'-shape')
-  // The shape picker is called upstream — we receive `_style` which we repurpose
-  // to encode shape. For backward compat we just use rng to pick consistently.
-  const shapeRng = seededRng(String(hue) + String(Math.round(sat)) + String(Math.round(lit)) + 'shp')
+  const hi  = `hsl(${blobH}, ${Math.max(blobS-18, 28)}%, ${Math.min(blobL+26, 82)}%)`
+  const mid = `hsl(${blobH}, ${blobS}%, ${blobL}%)`
+  const low = `hsl(${(blobH+18)%360}, ${Math.min(blobS+8, 88)}%, ${Math.max(blobL-22, 20)}%)`
+
+  // ── 3. Pick shape deterministically from user hue+sat+lit seed ───────────
+  const shapeRng  = seededRng(String(hue) + String(Math.round(sat)) + String(Math.round(lit)) + 'shp')
+  const shapeRng2 = seededRng(String(hue) + String(Math.round(sat)) + 'shp2')
   const shapes: BlobShape[] = ['leaf','arch','wave','corner','hill','shield']
   const shape = shapes[Math.floor(shapeRng() * shapes.length)]
 
-  // ── 4. Build gradient colors (Arc-style: warm highlight → rich midtone → deep edge) ─
-  const hi  = `hsl(${blobH}, ${Math.max(blobS-18,28)}%, ${Math.min(blobL+26,82)}%)`
-  const mid = `hsl(${blobH}, ${blobS}%, ${blobL}%)`
-  const low = `hsl(${(blobH+18)%360}, ${Math.min(blobS+8,88)}%, ${Math.max(blobL-22,20)}%)`
-
-  // ── 5. Clip to shape zone and draw shape ─────────────────────────────────
+  // ── 4. Draw shape inside clipped zone ────────────────────────────────────
   ctx.save()
   ctx.beginPath()
   ctx.rect(0, 0, W, zoneH)
   ctx.clip()
+
+  // Fill cream in zone
   ctx.fillStyle = cardBase
   ctx.fillRect(0, 0, W, zoneH)
 
-  // Draw shape path
-  const shapeRng2 = seededRng(String(hue) + String(Math.round(sat)) + 'shp2')
+  // Draw shape with diagonal gradient
   drawShape(ctx, W, zoneH, shape, shapeRng2)
-
-  // Gradient — diagonal from top-left highlight to bottom-right deep
-  const gx1 = W * 0.15, gy1 = zoneH * 0.05
-  const gx2 = W * 0.85, gy2 = zoneH * 0.95
-  const grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2)
+  const grad = ctx.createLinearGradient(W * 0.10, zoneH * 0.04, W * 0.88, zoneH * 0.96)
   grad.addColorStop(0,    hi)
-  grad.addColorStop(0.45, mid)
+  grad.addColorStop(0.42, mid)
   grad.addColorStop(1,    low)
   ctx.fillStyle = grad
   ctx.fill()
 
-  // Subtle grain on shape (not on whole card - more Arc-like)
-  const grainRng = seededRng(String(hue) + 'grain')
-  const imgData  = ctx.createImageData(W, Math.ceil(zoneH))
-  const d = imgData.data
-  for (let i = 0; i < d.length; i += 4) {
-    const v = (grainRng() - 0.5) * 22
-    d[i]=d[i+1]=d[i+2] = 128 + v
-    d[i+3] = 8 + grainRng() * 8
+  // ── 5. Grain — pixel-by-pixel BUT clipped by the shape path ──────────────
+  // We can't use putImageData (ignores clip) so we use tiny fillRect dots
+  const grainRng = seededRng(String(hue) + 'grain2')
+  const grainCount = 1800
+  ctx.globalAlpha = 0.055
+  for (let i = 0; i < grainCount; i++) {
+    const gx = grainRng() * W
+    const gy = grainRng() * zoneH
+    const gv = grainRng()
+    ctx.fillStyle = gv > 0.5 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)'
+    ctx.fillRect(gx, gy, 1.5, 1.5)
   }
-  ctx.putImageData(imgData, 0, 0)
-
-  // Soft inner highlight sheen (top area of shape)
-  const sheenX = W * (0.25 + shapeRng() * 0.25)
-  const sheenY = zoneH * 0.08
-  const sheenR = W * (0.38 + shapeRng() * 0.14)
-  drawShape(ctx, W, zoneH, shape, seededRng(String(hue) + String(Math.round(sat)) + 'shp2'))
-  const sheen = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, sheenR)
-  sheen.addColorStop(0, 'rgba(255,255,255,0.28)')
-  sheen.addColorStop(0.5, 'rgba(255,255,255,0.08)')
-  sheen.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = sheen
-  ctx.globalAlpha = 0.7
-  ctx.fill()
   ctx.globalAlpha = 1
 
-  ctx.restore()
+  // ── 6. Sheen highlight — re-draw shape then radial gradient overlay ───────
+  drawShape(ctx, W, zoneH, shape, seededRng(String(hue) + String(Math.round(sat)) + 'shp2'))
+  const sheenX = W * (0.15 + shapeRng() * 0.30)
+  const sheenY = zoneH * 0.06
+  const sheenR = W * (0.40 + shapeRng() * 0.15)
+  const sheen  = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, sheenR)
+  sheen.addColorStop(0,   'rgba(255,255,255,0.30)')
+  sheen.addColorStop(0.5, 'rgba(255,255,255,0.07)')
+  sheen.addColorStop(1,   'rgba(255,255,255,0)')
+  ctx.fillStyle    = sheen
+  ctx.globalAlpha  = 1
+  ctx.fill()
 
-  // ── 6. Entity border effect — glowing frame on card edges only ──────────
+  ctx.restore()  // end clip zone
+
+  // ── 7. Entity border — glowing frame on card edges ONLY ──────────────────
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
-    // Outer glow
-    const glowGrad = ctx.createLinearGradient(0, 0, W, H)
-    glowGrad.addColorStop(0, `rgba(${er},${eg},${eb},0.22)`)
-    glowGrad.addColorStop(0.5, `rgba(${er},${eg},${eb},0.10)`)
-    glowGrad.addColorStop(1, `rgba(${er},${eg},${eb},0.28)`)
-    ctx.strokeStyle = glowGrad
-    ctx.lineWidth = 5
+    const glow = ctx.createLinearGradient(0, 0, W, H)
+    glow.addColorStop(0,   `rgba(${er},${eg},${eb},0.70)`)
+    glow.addColorStop(0.5, `rgba(${er},${eg},${eb},0.40)`)
+    glow.addColorStop(1,   `rgba(${er},${eg},${eb},0.70)`)
+    // Thick outer glow
+    ctx.strokeStyle = glow
+    ctx.lineWidth   = 6
     ctx.globalAlpha = 1
-    roundRect(ctx, 2.5, 2.5, W-5, H-5, 30)
+    roundRect(ctx, 3, 3, W-6, H-6, 30)
     ctx.stroke()
-    // Inner fine line
-    ctx.strokeStyle = `rgba(${er},${eg},${eb},0.55)`
-    ctx.lineWidth = 1.5
-    roundRect(ctx, 4, 4, W-8, H-8, 29)
+    // Crisp inner accent line
+    ctx.strokeStyle = `rgba(${er},${eg},${eb},0.65)`
+    ctx.lineWidth   = 1.5
+    roundRect(ctx, 5, 5, W-10, H-10, 28)
     ctx.stroke()
   }
 }
+
 function drawCardEffect(ctx: CanvasRenderingContext2D, W: number, H: number, zoneH: number, effect: CardEffect, hue: number, rng: () => number) {
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
   switch(effect) {
@@ -547,157 +529,178 @@ function drawPortraitInfo(
   entityBg: { color: string; name: string } | null,
   style: CardStyle,
 ) {
-  // ── Color palette for info zone (always on cream base) ───────────────────
-  const inkHue = entityBg
-    ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })()
-    : hue
-  const ink      = `hsl(${inkHue}, 62%, 14%)`      // primary text — very dark, slight hue
-  const inkFaint = `hsl(${inkHue}, 28%, 46%)`       // secondary text
-  const accentC  = entityBg
-    ? entityBg.color
-    : `hsl(${hue}, ${Math.max(sat,55)}%, ${Math.max(lit-10,28)}%)`
+  // ── Colors — ALWAYS based on user hue, never on entity ───────────────────
+  const ink      = `hsl(${hue}, 55%, 12%)`
+  const inkMid   = `hsl(${hue}, 30%, 40%)`
+  const inkFaint = `hsl(${hue}, 20%, 58%)`
+  const accent   = `hsl(${hue}, ${Math.max(sat,52)}%, ${Math.max(lit-8,26)}%)`
 
-  // ── Layout constants ──────────────────────────────────────────────────────
-  const padX    = W * 0.085
-  const padXR   = W - padX
-  const infoTop = zoneH + H * 0.045    // start of info zone
+  // ── Layout grid ───────────────────────────────────────────────────────────
+  const padX   = W * 0.085          // left margin
+  const padR   = W - padX           // right margin x
+  const gap    = H * 0.018          // vertical rhythm unit
 
-  // ── Name — large, bold, humanist ─────────────────────────────────────────
+  // Info zone starts just below the shape zone
+  const nameY   = zoneH + gap * 3.2  // baseline of first name
+
+  // ── Name block ────────────────────────────────────────────────────────────
   const nameParts = user.full_name.trim().split(/\s+/)
   const firstName = nameParts[0] ?? ''
   const lastName  = nameParts.slice(1).join(' ')
 
   ctx.textAlign    = 'left'
   ctx.textBaseline = 'alphabetic'
+  ctx.globalAlpha  = 1
 
-  // First name — very large
-  ctx.font      = `700 ${Math.round(W * 0.115)}px sans-serif`
+  // First name — large bold
+  let fnSize = Math.round(W * 0.113)
+  ctx.font = `700 ${fnSize}px sans-serif`
+  while (ctx.measureText(firstName).width > W - padX * 2 && fnSize > 28) {
+    fnSize -= 2
+    ctx.font = `700 ${fnSize}px sans-serif`
+  }
   ctx.fillStyle = ink
-  ctx.globalAlpha = 1
-  const fnW = ctx.measureText(firstName).width
-  // Scale down if too wide
-  if (fnW > W - padX * 2) {
-    const scale = (W - padX * 2) / fnW
-    ctx.font = `700 ${Math.round(W * 0.115 * scale)}px sans-serif`
-  }
-  ctx.fillText(firstName, padX, infoTop + H * 0.072)
+  ctx.fillText(firstName, padX, nameY)
 
-  // Last name — lighter weight, slightly smaller
+  // Last name — regular weight, clearly below first name
+  const lastNameY = nameY + fnSize * 0.82
   if (lastName) {
-    ctx.font      = `400 ${Math.round(W * 0.072)}px sans-serif`
-    ctx.fillStyle = inkFaint
-    const lnW = ctx.measureText(lastName).width
-    if (lnW > W - padX * 2) {
-      const scale = (W - padX * 2) / lnW
-      ctx.font = `400 ${Math.round(W * 0.072 * scale)}px sans-serif`
+    let lnSize = Math.round(W * 0.068)
+    ctx.font = `400 ${lnSize}px sans-serif`
+    while (ctx.measureText(lastName).width > W - padX * 2 && lnSize > 20) {
+      lnSize -= 2
+      ctx.font = `400 ${lnSize}px sans-serif`
     }
-    ctx.fillText(lastName, padX, infoTop + H * 0.072 + H * 0.068)
+    ctx.fillStyle = inkMid
+    ctx.fillText(lastName, padX, lastNameY)
   }
 
-  // ── Title / tagline — monospace, spaced ──────────────────────────────────
-  const trng  = seededRng(user.id + '-title')
-  const title = TITLES[Math.floor(trng() * TITLES.length)]
-  const titleY = infoTop + H * 0.072 + (lastName ? H * 0.068 : 0) + H * 0.048
-  ctx.font      = `500 ${Math.round(W * 0.038)}px monospace`
+  // ── Title / tagline — monospace uppercase, below name block ──────────────
+  const trng   = seededRng(user.id + '-title')
+  const title  = TITLES[Math.floor(trng() * TITLES.length)]
+  const titleY = (lastName ? lastNameY : nameY) + gap * 3.0
+  const titleSize = Math.round(W * 0.036)
+  ctx.font      = `500 ${titleSize}px monospace`
   ctx.fillStyle = inkFaint
-  ctx.globalAlpha = 0.8
+  ctx.globalAlpha = 0.85
   ctx.fillText(title.toUpperCase(), padX, titleY)
   ctx.globalAlpha = 1
 
-  // ── Bottom metadata strip ─────────────────────────────────────────────────
-  const stripY = H - H * 0.095
-  const stripH = H * 0.075
+  // ── Bottom strip — two rows, clearly separated ────────────────────────────
+  // Row 1 (tag row): ARC-style tag + achievements  — at H * 0.858
+  // Row 2 (meta row): language / area info + EACH label — at H * 0.920
+  // ID watermark — at very bottom H * 0.965
 
-  // Left: area badge (ARC-style tag with hatch pattern)
-  const tagLabel = area || 'SI'
-  ctx.font = `600 ${Math.round(W * 0.038)}px monospace`
-  const tagW = ctx.measureText(tagLabel).width + W * 0.072
-  const tagH = stripH * 0.72
-  const tagY = stripY + (stripH - tagH) / 2
-  const tagX = padX
+  const row1Y = H * 0.862   // tag strip baseline-ish
+  const row2Y = H * 0.926   // secondary info
+  const idY   = H * 0.966   // ID watermark
 
-  // Tag box
-  ctx.strokeStyle = accentC
-  ctx.lineWidth   = Math.round(W * 0.0022)
+  const tagH  = H * 0.048
+  const tagY  = row1Y - tagH * 0.75
+
+  // ── ARC tag (left side of row 1) ─────────────────────────────────────────
+  const tagLabel  = area || 'SI · EACH'
+  const tagSize   = Math.round(W * 0.034)
+  ctx.font        = `600 ${tagSize}px monospace`
+  const labelW    = ctx.measureText(tagLabel).width
+  const divLabel  = user.nusp ?? String(new Date().getFullYear())
+  const divW      = ctx.measureText(divLabel).width
+  const hatchSpan = tagH * 0.55   // width of the diagonal hatch block
+  const tagPadH   = tagH * 0.22   // horizontal padding inside tag
+  const tagTotalW = tagPadH + labelW + hatchSpan + divW + tagPadH
+
+  // Outer rounded rect
+  ctx.strokeStyle = accent
+  ctx.lineWidth   = Math.max(1.5, W * 0.0022)
   ctx.globalAlpha = 1
-  roundRect(ctx, tagX, tagY, tagW, tagH, tagH * 0.35)
+  roundRect(ctx, padX, tagY, tagTotalW, tagH, tagH * 0.38)
   ctx.stroke()
 
-  // Hatch divider inside tag (like Arc cards)
-  const divX = tagX + tagW * 0.44
-  const hatchW = tagW * 0.12
+  // Hatch block (divider between label and date/nusp)
+  const hatchX = padX + tagPadH + labelW
   ctx.save()
   ctx.beginPath()
-  roundRect(ctx, tagX, tagY, tagW, tagH, tagH * 0.35)
+  roundRect(ctx, padX, tagY, tagTotalW, tagH, tagH * 0.38)
   ctx.clip()
-  ctx.fillStyle   = accentC
-  ctx.globalAlpha = 0.18
-  ctx.fillRect(divX, tagY, hatchW, tagH)
-  // Hatch lines
-  ctx.strokeStyle = accentC
-  ctx.lineWidth   = Math.round(W * 0.0016)
-  ctx.globalAlpha = 0.45
-  const hatchSpacing = hatchW / 3
-  for (let hx = divX - tagH; hx < divX + hatchW + tagH; hx += hatchSpacing) {
+  // Background fill for hatch zone
+  ctx.fillStyle   = accent
+  ctx.globalAlpha = 0.15
+  ctx.fillRect(hatchX, tagY, hatchSpan, tagH)
+  // Diagonal lines
+  ctx.strokeStyle = accent
+  ctx.lineWidth   = Math.max(1, W * 0.0014)
+  ctx.globalAlpha = 0.50
+  const hSpacing  = hatchSpan / 4
+  for (let hx = hatchX - tagH; hx < hatchX + hatchSpan + tagH; hx += hSpacing) {
     ctx.beginPath()
-    ctx.moveTo(hx, tagY)
-    ctx.lineTo(hx + tagH, tagY + tagH)
+    ctx.moveTo(hx,         tagY)
+    ctx.lineTo(hx + tagH,  tagY + tagH)
     ctx.stroke()
   }
   ctx.restore()
 
-  // Tag text: left part (area/SI)
-  ctx.font      = `600 ${Math.round(W * 0.036)}px monospace`
-  ctx.fillStyle = accentC
-  ctx.globalAlpha = 1
-  ctx.textAlign    = 'center'
+  // Tag text — left label
   ctx.textBaseline = 'middle'
-  ctx.fillText(tagLabel, tagX + tagW * 0.22, tagY + tagH / 2)
+  ctx.textAlign    = 'left'
+  ctx.font         = `600 ${tagSize}px monospace`
+  ctx.fillStyle    = accent
+  ctx.globalAlpha  = 1
+  ctx.fillText(tagLabel, padX + tagPadH, tagY + tagH / 2)
 
-  // Tag text: right part (nusp or date)
-  const rightLabel = user.nusp ?? new Date().getFullYear().toString()
-  ctx.font         = `500 ${Math.round(W * 0.034)}px monospace`
-  ctx.fillText(rightLabel, tagX + tagW * 0.72, tagY + tagH / 2)
+  // Tag text — right value (nusp / year)
+  ctx.font      = `500 ${tagSize}px monospace`
+  ctx.textAlign = 'left'
+  ctx.fillText(divLabel, hatchX + hatchSpan + tagPadH * 0.6, tagY + tagH / 2)
+
   ctx.textAlign    = 'left'
   ctx.textBaseline = 'alphabetic'
 
-  // Right: achievements strip or institution label
-  const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 4)
+  // ── Achievements (right side of row 1) ───────────────────────────────────
+  const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 5)
   if (displayA.length > 0) {
-    ctx.font = `${Math.round(W * 0.055)}px serif`
-    ctx.globalAlpha = 1
-    ctx.textAlign = 'right'
+    const emojiSize = Math.round(W * 0.052)
+    ctx.font         = `${emojiSize}px serif`
     ctx.textBaseline = 'middle'
-    let bx = padXR
+    ctx.textAlign    = 'right'
+    ctx.globalAlpha  = 1
+    let ax = padR
     for (const ach of [...displayA].reverse()) {
-      ctx.fillText(ach.emoji, bx, stripY + stripH / 2)
-      bx -= W * 0.065
+      ctx.fillText(ach.emoji, ax, tagY + tagH / 2)
+      ax -= emojiSize * 1.25
     }
     ctx.textAlign    = 'left'
     ctx.textBaseline = 'alphabetic'
-  } else {
-    // Institution text
-    ctx.font      = `700 ${Math.round(W * 0.034)}px sans-serif`
-    ctx.fillStyle = ink
-    ctx.globalAlpha = 0.55
-    ctx.textAlign    = 'right'
-    ctx.textBaseline = 'middle'
-    ctx.fillText('EACH · USP', padXR, stripY + stripH * 0.38)
-    ctx.font         = `400 ${Math.round(W * 0.028)}px monospace`
-    ctx.fillStyle    = inkFaint
-    ctx.fillText('SI', padXR, stripY + stripH * 0.72)
-    ctx.textAlign    = 'left'
-    ctx.textBaseline = 'alphabetic'
-    ctx.globalAlpha  = 1
   }
+
+  // ── Row 2: language badge (left) + institution (right) ───────────────────
+  const metaSize = Math.round(W * 0.030)
+
+  if (language) {
+    ctx.font      = `500 ${metaSize}px monospace`
+    ctx.fillStyle = inkFaint
+    ctx.globalAlpha = 0.75
+    ctx.textBaseline = 'alphabetic'
+    ctx.fillText(language.toUpperCase(), padX, row2Y)
+    ctx.globalAlpha = 1
+  }
+
+  // Institution — right-aligned
+  ctx.font         = `600 ${Math.round(W * 0.032)}px sans-serif`
+  ctx.fillStyle    = ink
+  ctx.globalAlpha  = 0.45
+  ctx.textAlign    = 'right'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText('EACH · USP', padR, row2Y)
+  ctx.textAlign    = 'left'
+  ctx.globalAlpha  = 1
 
   // ── ID watermark ─────────────────────────────────────────────────────────
   ctx.font         = `400 ${Math.round(W * 0.022)}px monospace`
   ctx.fillStyle    = ink
-  ctx.globalAlpha  = 0.10
+  ctx.globalAlpha  = 0.09
   ctx.textBaseline = 'alphabetic'
-  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), padX, H - W * 0.028)
-  ctx.globalAlpha = 1
+  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), padX, idY)
+  ctx.globalAlpha  = 1
 }
 
 

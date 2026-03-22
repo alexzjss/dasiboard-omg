@@ -1338,12 +1338,12 @@ main > *:first-child {
    DASIBOARD UI REFRESH 2026 — Polimento Final
 ═══════════════════════════════════════════════════════ */
 
-/* ── Desktop layout: sidebar fixa com scroll interno ── */
+/* ── Desktop layout: sidebar uses flex column, fills container ── */
 @media (min-width: 1024px) {
   .sidebar-bg {
-    height: 100dvh;
-    position: sticky;
-    top: 0;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
 
