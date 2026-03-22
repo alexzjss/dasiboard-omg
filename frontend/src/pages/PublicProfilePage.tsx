@@ -105,11 +105,11 @@ export default function PublicProfilePage() {
           <div className="flex items-end gap-4 -mt-10 mb-4">
             {user.avatar_url ? (
               <img src={user.avatar_url} alt={user.full_name}
-                   className="w-20 h-20 rounded-2xl object-cover ring-4"
-                   style={{ ringColor: 'var(--bg-card)' }} />
+                   className="w-20 h-20 rounded-2xl object-cover"
+                   style={{ outline: '4px solid var(--bg-card)', outlineOffset: 0 }} />
             ) : (
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold font-display ring-4"
-                   style={{ background: 'var(--gradient-btn)', color: '#fff', ringColor: 'var(--bg-card)' }}>
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold font-display"
+                   style={{ background: 'var(--gradient-btn)', color: '#fff', outline: '4px solid var(--bg-card)', outlineOffset: 0 }}>
                 {initials}
               </div>
             )}

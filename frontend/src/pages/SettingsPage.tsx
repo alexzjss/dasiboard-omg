@@ -14,7 +14,6 @@ import { useNotifications, setDnd, getDndUntil } from '@/hooks/useNotifications'
 import { useLocale, Locale } from '@/hooks/useI18n'
 import { useTheme } from '@/context/ThemeContext'
 import { requestPushPermission } from '@/hooks/usePushNotifications'
-import api from '@/utils/api'
 
 // ── Section component ─────────────────────────────────────────────────────────
 function Section({ icon: Icon, title, children }: {

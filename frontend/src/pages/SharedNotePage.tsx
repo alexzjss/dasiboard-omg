@@ -108,7 +108,7 @@ export default function SharedNotePage() {
 
         {/* Content */}
         <div className="prose-sm" style={{ color: 'var(--text-primary)', lineHeight: 1.7 }}>
-          <MiniMarkdown content={note.content} />
+          <MiniMarkdown text={note.content} />
         </div>
       </div>
 
