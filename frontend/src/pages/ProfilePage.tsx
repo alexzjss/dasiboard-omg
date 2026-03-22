@@ -255,147 +255,236 @@ function drawDecorativeQR(
   ctx.restore()
 }
 
-// ── PORTRAIT card background ──────────────────────────────────────────────────
+// ── PORTRAIT card background — Arc-inspired ──────────────────────────────────
+// Shape vocabulary: each user gets one of 6 elegant abstract shapes
+type BlobShape = 'leaf'|'arch'|'wave'|'corner'|'hill'|'shield'
+
+function drawShape(
+  ctx: CanvasRenderingContext2D,
+  W: number, zoneH: number,
+  shape: BlobShape,
+  rng: () => number,
+) {
+  const pad = W * 0.06  // consistent padding around shape edges
+  ctx.beginPath()
+
+  switch (shape) {
+    case 'leaf': {
+      // Organic leaf / teardrop — rotated, like Arc "Thomas Yee" card
+      const cx = W * (0.38 + rng() * 0.24)
+      const cy = zoneH * (0.08 + rng() * 0.08)
+      const rx = W  * (0.52 + rng() * 0.18)
+      const ry = zoneH * (0.70 + rng() * 0.20)
+      // Two-bezier leaf shape
+      ctx.moveTo(cx, cy)
+      ctx.bezierCurveTo(cx + rx, cy,          cx + rx, cy + ry,     cx, cy + ry)
+      ctx.bezierCurveTo(cx - rx * (0.55 + rng()*0.3), cy + ry, cx - rx * (0.55 + rng()*0.3), cy, cx, cy)
+      break
+    }
+    case 'arch': {
+      // Stadium / arch — like Arc "Sheldon" card
+      const left   = pad
+      const right  = W - pad
+      const top    = zoneH * (0.06 + rng() * 0.06)
+      const bottom = zoneH * (0.94 + rng() * 0.04)
+      const archH  = (right - left) * (0.42 + rng() * 0.16)
+      const r      = (right - left) / 2
+      ctx.moveTo(left, bottom)
+      ctx.lineTo(left, top + archH)
+      ctx.bezierCurveTo(left, top + archH - archH * 0.55, left + r * 0.45, top, left + r, top)
+      ctx.bezierCurveTo(left + r + r * 0.45, top, right, top + archH - archH * 0.55, right, top + archH)
+      ctx.lineTo(right, bottom)
+      ctx.closePath()
+      break
+    }
+    case 'wave': {
+      // Two-band wave — like Arc "Jason" card
+      const band  = zoneH * (0.34 + rng() * 0.10)
+      const gap   = zoneH * (0.06 + rng() * 0.06)
+      const amp   = zoneH * (0.07 + rng() * 0.05)
+      const left  = pad
+      const right = W - pad
+      // Top band
+      ctx.moveTo(left, pad)
+      ctx.lineTo(right, pad)
+      ctx.lineTo(right, band)
+      ctx.bezierCurveTo(right - W * 0.25, band + amp, left + W * 0.25, band - amp, left, band)
+      ctx.closePath()
+      ctx.moveTo(left, band + gap)
+      ctx.bezierCurveTo(left + W * 0.25, band + gap - amp, right - W * 0.25, band + gap + amp, right, band + gap)
+      ctx.lineTo(right, band + gap + band * 0.65)
+      ctx.bezierCurveTo(right - W * 0.25, band + gap + band * 0.65 + amp * 0.5, left + W * 0.25, band + gap + band * 0.65 - amp * 0.5, left, band + gap + band * 0.65)
+      ctx.closePath()
+      break
+    }
+    case 'corner': {
+      // Corner splash — blob anchored top-left or top-right
+      const fromRight = rng() > 0.5
+      const cx = fromRight ? W + W * 0.05 : -W * 0.05
+      const cy = -zoneH * 0.05
+      const r  = W * (0.72 + rng() * 0.28)
+      const n  = 10 + Math.floor(rng() * 5)
+      const pts: [number, number][] = []
+      for (let i = 0; i < n; i++) {
+        const base = (i / n) * Math.PI * 2
+        const isOuter = Math.cos(base) * (fromRight ? -1 : 1) > 0 || Math.sin(base) < 0
+        const v = isOuter ? (0.82 + rng() * 0.22) : (0.30 + rng() * 0.55)
+        pts.push([cx + Math.cos(base) * r * v, cy + Math.sin(base) * r * v])
+      }
+      for (let i = 0; i < n; i++) {
+        const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n]
+        const t=0.30
+        const cp1x=p1[0]+(p2[0]-p0[0])*t, cp1y=p1[1]+(p2[1]-p0[1])*t
+        const cp2x=p2[0]-(p3[0]-p1[0])*t, cp2y=p2[1]-(p3[1]-p1[1])*t
+        if(i===0)ctx.moveTo(p1[0],p1[1])
+        ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
+      }
+      ctx.closePath()
+      break
+    }
+    case 'hill': {
+      // Rolling hills / horizon — wide and landscape-filling
+      const hillY = zoneH * (0.30 + rng() * 0.20)
+      const amp1  = zoneH * (0.14 + rng() * 0.10)
+      const amp2  = zoneH * (0.08 + rng() * 0.08)
+      ctx.moveTo(0, zoneH)
+      ctx.lineTo(W, zoneH)
+      ctx.lineTo(W, hillY + amp2)
+      ctx.bezierCurveTo(W * 0.75, hillY + amp2 - amp2 * 1.2, W * 0.55, hillY - amp1 * 1.5, W * 0.50, hillY - amp1)
+      ctx.bezierCurveTo(W * 0.45, hillY - amp1 * 1.5, W * 0.25, hillY + amp1 * 0.8, 0, hillY + amp2 * 0.5)
+      ctx.closePath()
+      break
+    }
+    case 'shield': {
+      // Shield / drop — tall centered shape
+      const cx    = W / 2 + (rng() - 0.5) * W * 0.15
+      const top   = zoneH * (0.03 + rng() * 0.06)
+      const bot   = zoneH * (0.90 + rng() * 0.08)
+      const halfW = W * (0.34 + rng() * 0.14)
+      const rnd   = halfW * (0.55 + rng() * 0.30)
+      const tipY  = bot
+      const bodyH = bot - top - rnd
+      ctx.moveTo(cx - halfW + rnd, top)
+      ctx.lineTo(cx + halfW - rnd, top)
+      ctx.bezierCurveTo(cx + halfW, top, cx + halfW, top + rnd, cx + halfW, top + rnd)
+      ctx.lineTo(cx + halfW, top + bodyH)
+      ctx.bezierCurveTo(cx + halfW, tipY - rnd * 0.3, cx + halfW * 0.4, tipY - rnd * 0.05, cx, tipY)
+      ctx.bezierCurveTo(cx - halfW * 0.4, tipY - rnd * 0.05, cx - halfW, tipY - rnd * 0.3, cx - halfW, top + bodyH)
+      ctx.lineTo(cx - halfW, top + rnd)
+      ctx.bezierCurveTo(cx - halfW, top, cx - halfW + rnd, top, cx - halfW + rnd, top)
+      ctx.closePath()
+      break
+    }
+  }
+}
+
 function drawCardBackground(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, zoneH: number,
-  _style: CardStyle, hue: number, sat: number, lit: number,
+  _style: CardStyle,
+  hue: number, sat: number, lit: number,
   rng: () => number,
   entityBg: { color: string; name: string } | null,
 ) {
-  // White base
-  if (entityBg) {
-    const [er,eg,eb] = hexToRgb(entityBg.color)
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = `rgba(${er},${eg},${eb},0.035)`
-    ctx.fillRect(0, 0, W, H)
-  } else {
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, W, H)
-  }
+  // ── 1. Card base — always solid warm cream (never transparent) ────────────
+  const cardBase = '#FAFAF5'
+  ctx.fillStyle = cardBase
+  ctx.fillRect(0, 0, W, H)
 
-  // Blob color
+  // ── 2. Resolve shape color from user hue (or entity color) ───────────────
   let blobH = hue, blobS = sat, blobL = lit
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
     const [eh,es,el] = rgbToHsl(er,eg,eb)
     blobH = eh
-    blobS = Math.max(es, 58)
-    blobL = Math.min(Math.max(el, 38), 60)
+    blobS = Math.max(es, 52)
+    blobL = Math.min(Math.max(el, 35), 62)
   }
+  // Clamp lightness so shape always reads well on cream
+  blobL = Math.min(Math.max(blobL, 32), 64)
 
-  const blobMain  = `hsl(${blobH},${blobS}%,${blobL}%)`
-  const blobLight = `hsl(${blobH},${Math.max(blobS-10,35)}%,${Math.min(blobL+24,82)}%)`
-  const blobShift = `hsl(${(blobH+28)%360},${Math.max(blobS-5,40)}%,${Math.max(blobL-16,22)}%)`
-  const blobDeep  = `hsl(${(blobH+14)%360},${Math.min(blobS+10,90)}%,${Math.max(blobL-22,18)}%)`
+  // ── 3. Determine shape ────────────────────────────────────────────────────
+  // We seed shape choice from the same user id for consistency
+  // (rng here is seededRng(userId+'-bgv3'), shape pick uses userId+'-shape')
+  // The shape picker is called upstream — we receive `_style` which we repurpose
+  // to encode shape. For backward compat we just use rng to pick consistently.
+  const shapeRng = seededRng(String(hue) + String(Math.round(sat)) + String(Math.round(lit)) + 'shp')
+  const shapes: BlobShape[] = ['leaf','arch','wave','corner','hill','shield']
+  const shape = shapes[Math.floor(shapeRng() * shapes.length)]
 
-  // Helper: smooth organic blob
-  function drawBlob(
-    cx: number, cy: number, baseR: number, nPts: number, tilt: number,
-    topRange: [number, number], botRange: [number, number], smooth: number,
-  ) {
-    const pts: [number,number][] = []
-    for (let i = 0; i < nPts; i++) {
-      const base = (i / nPts) * Math.PI * 2 - Math.PI / 2 + tilt
-      const isBot = Math.sin(base - tilt) > 0
-      const [vMin, vMax] = isBot ? botRange : topRange
-      const wobble = isBot ? (rng() - 0.5) * 0.18 : 0
-      pts.push([
-        cx + Math.cos(base + wobble) * baseR * (vMin + rng() * (vMax - vMin)),
-        cy + Math.sin(base + wobble) * baseR * (vMin + rng() * (vMax - vMin)),
-      ])
-    }
-    const n = pts.length
-    ctx.beginPath()
-    for (let i = 0; i < n; i++) {
-      const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n]
-      const t = smooth + rng() * 0.06
-      const cp1x=p1[0]+(p2[0]-p0[0])*t, cp1y=p1[1]+(p2[1]-p0[1])*t
-      const cp2x=p2[0]-(p3[0]-p1[0])*t, cp2y=p2[1]-(p3[1]-p1[1])*t
-      if (i===0) ctx.moveTo(p1[0],p1[1])
-      ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
-    }
-    ctx.closePath()
-  }
+  // ── 4. Build gradient colors (Arc-style: warm highlight → rich midtone → deep edge) ─
+  const hi  = `hsl(${blobH}, ${Math.max(blobS-18,28)}%, ${Math.min(blobL+26,82)}%)`
+  const mid = `hsl(${blobH}, ${blobS}%, ${blobL}%)`
+  const low = `hsl(${(blobH+18)%360}, ${Math.min(blobS+8,88)}%, ${Math.max(blobL-22,20)}%)`
 
+  // ── 5. Clip to shape zone and draw shape ─────────────────────────────────
   ctx.save()
-  ctx.beginPath(); ctx.rect(0, 0, W, zoneH); ctx.clip()
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
+  ctx.beginPath()
+  ctx.rect(0, 0, W, zoneH)
+  ctx.clip()
+  ctx.fillStyle = cardBase
+  ctx.fillRect(0, 0, W, zoneH)
 
-  // Main blob
-  const tiltAngle = (rng() - 0.5) * 0.5
-  const mainCx = W * (0.22 + rng() * 0.56)
-  const mainCy = zoneH * (-0.12 + rng() * 0.12)
-  const mainR  = Math.min(W, zoneH) * (0.96 + rng() * 0.40)
-  const nPts   = 12 + Math.floor(rng() * 6)
+  // Draw shape path
+  const shapeRng2 = seededRng(String(hue) + String(Math.round(sat)) + 'shp2')
+  drawShape(ctx, W, zoneH, shape, shapeRng2)
 
-  drawBlob(mainCx, mainCy, mainR, nPts, tiltAngle, [0.82, 0.98], [0.28, 1.05], 0.28)
-
-  const gx = mainCx - mainR * (0.20 + rng() * 0.20)
-  const gy = mainCy - mainR * (0.08 + rng() * 0.14)
-  const grad = ctx.createRadialGradient(gx, gy, mainR * 0.03, mainCx, mainCy, mainR * 1.15)
-  grad.addColorStop(0,    blobLight)
-  grad.addColorStop(0.22, blobMain)
-  grad.addColorStop(0.58, blobShift)
-  grad.addColorStop(0.85, blobDeep)
-  grad.addColorStop(1, `hsla(${(blobH+28)%360},${Math.max(blobS-5,30)}%,${Math.max(blobL-22,16)}%,0)`)
+  // Gradient — diagonal from top-left highlight to bottom-right deep
+  const gx1 = W * 0.15, gy1 = zoneH * 0.05
+  const gx2 = W * 0.85, gy2 = zoneH * 0.95
+  const grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2)
+  grad.addColorStop(0,    hi)
+  grad.addColorStop(0.45, mid)
+  grad.addColorStop(1,    low)
   ctx.fillStyle = grad
-  ctx.globalAlpha = 1
   ctx.fill()
 
-  // Gloss sheen
-  const sheenX = mainCx - mainR * (0.35 + rng() * 0.15)
-  const sheenY = mainCy - mainR * 0.12
-  const sheenR = mainR * (0.45 + rng() * 0.20)
-  drawBlob(mainCx, mainCy, mainR, nPts, tiltAngle, [0.82, 0.98], [0.28, 1.05], 0.28)
-  const sheenG = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, sheenR)
-  sheenG.addColorStop(0, `rgba(255,255,255,${0.22 + rng() * 0.16})`)
-  sheenG.addColorStop(0.5, `rgba(255,255,255,${0.05 + rng() * 0.06})`)
-  sheenG.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = sheenG
-  ctx.globalAlpha = 0.55
+  // Subtle grain on shape (not on whole card - more Arc-like)
+  const grainRng = seededRng(String(hue) + 'grain')
+  const imgData  = ctx.createImageData(W, Math.ceil(zoneH))
+  const d = imgData.data
+  for (let i = 0; i < d.length; i += 4) {
+    const v = (grainRng() - 0.5) * 22
+    d[i]=d[i+1]=d[i+2] = 128 + v
+    d[i+3] = 8 + grainRng() * 8
+  }
+  ctx.putImageData(imgData, 0, 0)
+
+  // Soft inner highlight sheen (top area of shape)
+  const sheenX = W * (0.25 + shapeRng() * 0.25)
+  const sheenY = zoneH * 0.08
+  const sheenR = W * (0.38 + shapeRng() * 0.14)
+  drawShape(ctx, W, zoneH, shape, seededRng(String(hue) + String(Math.round(sat)) + 'shp2'))
+  const sheen = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, sheenR)
+  sheen.addColorStop(0, 'rgba(255,255,255,0.28)')
+  sheen.addColorStop(0.5, 'rgba(255,255,255,0.08)')
+  sheen.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = sheen
+  ctx.globalAlpha = 0.7
   ctx.fill()
   ctx.globalAlpha = 1
-
-  // Secondary accent blobs
-  const numSecondary = rng() > 0.3 ? (rng() > 0.6 ? 2 : 1) : 0
-  for (let si = 0; si < numSecondary; si++) {
-    const ax = W  * (0.45 + rng() * 0.65)
-    const ay = zoneH * (-0.08 + rng() * 0.38)
-    const ar = Math.min(W, zoneH) * (0.20 + rng() * 0.28)
-    const an = 7 + Math.floor(rng() * 5)
-    drawBlob(ax, ay, ar, an, rng() * Math.PI * 2, [0.65, 1.05], [0.55, 1.10], 0.30)
-    const aHue = (blobH + 20 + si * 35 + rng() * 30) % 360
-    const ag = ctx.createRadialGradient(ax, ay, ar * 0.02, ax, ay, ar * 1.05)
-    ag.addColorStop(0, `hsla(${aHue},${Math.min(blobS+8,95)}%,${Math.min(blobL+15,78)}%,${0.55 + rng() * 0.25})`)
-    ag.addColorStop(0.6, `hsla(${aHue},${blobS}%,${blobL}%,${0.18 + rng() * 0.14})`)
-    ag.addColorStop(1, `hsla(${aHue},${blobS}%,${blobL}%,0)`)
-    ctx.fillStyle = ag
-    ctx.globalAlpha = 0.62 - si * 0.12
-    ctx.fill()
-    ctx.globalAlpha = 1
-  }
-
-  // Grain texture
-  if (rng() > 0.25) {
-    const imgData = ctx.createImageData(W, Math.ceil(zoneH))
-    const d = imgData.data
-    for (let i = 0; i < d.length; i += 4) {
-      const v = (rng() - 0.5) * 28
-      d[i]=d[i+1]=d[i+2] = 128 + v
-      d[i+3] = 12 + rng() * 10
-    }
-    ctx.putImageData(imgData, 0, 0)
-  }
-
-  // Subtle edge glow
-  drawBlob(mainCx, mainCy, mainR, nPts, tiltAngle, [0.82, 0.98], [0.28, 1.05], 0.28)
-  ctx.strokeStyle = `hsla(${blobH},${Math.max(blobS-10,30)}%,${Math.min(blobL+30,88)}%,0.28)`
-  ctx.lineWidth = 1.5
-  ctx.stroke()
 
   ctx.restore()
+
+  // ── 6. Entity border effect — glowing frame on card edges only ──────────
+  if (entityBg) {
+    const [er,eg,eb] = hexToRgb(entityBg.color)
+    // Outer glow
+    const glowGrad = ctx.createLinearGradient(0, 0, W, H)
+    glowGrad.addColorStop(0, `rgba(${er},${eg},${eb},0.22)`)
+    glowGrad.addColorStop(0.5, `rgba(${er},${eg},${eb},0.10)`)
+    glowGrad.addColorStop(1, `rgba(${er},${eg},${eb},0.28)`)
+    ctx.strokeStyle = glowGrad
+    ctx.lineWidth = 5
+    ctx.globalAlpha = 1
+    roundRect(ctx, 2.5, 2.5, W-5, H-5, 30)
+    ctx.stroke()
+    // Inner fine line
+    ctx.strokeStyle = `rgba(${er},${eg},${eb},0.55)`
+    ctx.lineWidth = 1.5
+    roundRect(ctx, 4, 4, W-8, H-8, 29)
+    ctx.stroke()
+  }
 }
 function drawCardEffect(ctx: CanvasRenderingContext2D, W: number, H: number, zoneH: number, effect: CardEffect, hue: number, rng: () => number) {
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
@@ -458,116 +547,159 @@ function drawPortraitInfo(
   entityBg: { color: string; name: string } | null,
   style: CardStyle,
 ) {
-  // Use entity hue for ink when entity is set, else user hue
-  const inkHue = entityBg ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })() : hue
-  const inkColor  = `hsl(${inkHue},55%,12%)`
-  const inkFaint  = `hsl(${inkHue},30%,45%)`
-  const accentClr = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-18,18)}%)`
+  // ── Color palette for info zone (always on cream base) ───────────────────
+  const inkHue = entityBg
+    ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })()
+    : hue
+  const ink      = `hsl(${inkHue}, 62%, 14%)`      // primary text — very dark, slight hue
+  const inkFaint = `hsl(${inkHue}, 28%, 46%)`       // secondary text
+  const accentC  = entityBg
+    ? entityBg.color
+    : `hsl(${hue}, ${Math.max(sat,55)}%, ${Math.max(lit-10,28)}%)`
 
-  // ── Avatar — bottom-left of colored zone (always light text on blob) ──────
-  const avR  = 54
-  const avCx = 52 + avR
-  const avCy = zoneH - avR - 28
-  const [r1,g1,b1] = hslToRgb(hue, sat, lit)
-  const borderClr = entityBg ? entityBg.color : `rgb(${r1},${g1},${b1})`
-  const initials  = user.full_name.trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase()
-  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClr, true)
+  // ── Layout constants ──────────────────────────────────────────────────────
+  const padX    = W * 0.085
+  const padXR   = W - padX
+  const infoTop = zoneH + H * 0.045    // start of info zone
 
-  // ── NUSP watermark — bottom-right of colored zone ─────────────────────────
-  ctx.font = '400 9px monospace'
-  ctx.fillStyle = 'rgba(255,255,255,0.40)'
-  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'
-  if (user.nusp) ctx.fillText(`#${user.nusp}`, W-44, zoneH - 18)
-  ctx.textAlign = 'left'
+  // ── Name — large, bold, humanist ─────────────────────────────────────────
+  const nameParts = user.full_name.trim().split(/\s+/)
+  const firstName = nameParts[0] ?? ''
+  const lastName  = nameParts.slice(1).join(' ')
 
-  // ── Info section — reorganized ─────────────────────────────────────────────
-  // Layout:
-  //   [zoneH .. zoneH+nameHeight]  →  Name (large, bold/thin split)
-  //   [below name]                 →  Title (italic, faint)
-  //   [below title]                →  Email · NUSP (mono, faint)
-  //   [bottom strip left]          →  area|lang pill
-  //   [bottom strip right]         →  achievement emojis (up to 4)
-  //   [very bottom]                →  ID watermark (tiny)
+  ctx.textAlign    = 'left'
+  ctx.textBaseline = 'alphabetic'
 
-  const padX  = 44
-  const nameY = zoneH + 68  // start of name, with breathing room
-
-  const parts     = user.full_name.trim().split(/\s+/)
-  const firstName = parts[0] ?? ''
-  const lastName  = parts.slice(1).join(' ')
-
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
-  ctx.font      = '800 50px sans-serif'
-  ctx.fillStyle = inkColor
-  ctx.fillText(firstName, padX, nameY)
+  // First name — very large
+  ctx.font      = `700 ${Math.round(W * 0.115)}px sans-serif`
+  ctx.fillStyle = ink
+  ctx.globalAlpha = 1
   const fnW = ctx.measureText(firstName).width
+  // Scale down if too wide
+  if (fnW > W - padX * 2) {
+    const scale = (W - padX * 2) / fnW
+    ctx.font = `700 ${Math.round(W * 0.115 * scale)}px sans-serif`
+  }
+  ctx.fillText(firstName, padX, infoTop + H * 0.072)
 
+  // Last name — lighter weight, slightly smaller
   if (lastName) {
-    ctx.font      = '300 50px sans-serif'
+    ctx.font      = `400 ${Math.round(W * 0.072)}px sans-serif`
     ctx.fillStyle = inkFaint
-    const spW = ctx.measureText(' ').width
-    if (fnW + spW + ctx.measureText(lastName).width < W - padX*2)
-      ctx.fillText(lastName, padX + fnW + spW, nameY)
-    else
-      ctx.fillText(lastName, padX, nameY + 55)
+    const lnW = ctx.measureText(lastName).width
+    if (lnW > W - padX * 2) {
+      const scale = (W - padX * 2) / lnW
+      ctx.font = `400 ${Math.round(W * 0.072 * scale)}px sans-serif`
+    }
+    ctx.fillText(lastName, padX, infoTop + H * 0.072 + H * 0.068)
   }
 
-  // Title — seeded per user
-  const trng    = seededRng(user.id+'-title')
-  const titleTx = TITLES[Math.floor(trng()*TITLES.length)]
-  ctx.font      = '400 16px sans-serif'
+  // ── Title / tagline — monospace, spaced ──────────────────────────────────
+  const trng  = seededRng(user.id + '-title')
+  const title = TITLES[Math.floor(trng() * TITLES.length)]
+  const titleY = infoTop + H * 0.072 + (lastName ? H * 0.068 : 0) + H * 0.048
+  ctx.font      = `500 ${Math.round(W * 0.038)}px monospace`
   ctx.fillStyle = inkFaint
-  ctx.fillText(titleTx, padX, nameY + 44)
-
-  // Email · NUSP info line
-  ctx.font = '400 11px monospace'; ctx.fillStyle = inkFaint; ctx.globalAlpha = 0.55
-  const nuspStr = user.nusp ? `#${user.nusp}` : ''
-  ctx.fillText([nuspStr, user.email].filter(Boolean).join('  ·  '), padX, nameY + 72)
+  ctx.globalAlpha = 0.8
+  ctx.fillText(title.toUpperCase(), padX, titleY)
   ctx.globalAlpha = 1
 
-  // ── Bottom row: pill + achievements ───────────────────────────────────────
-  const bottomY = H - 62
-  const aLabel  = area || '', lLabel = language || ''
+  // ── Bottom metadata strip ─────────────────────────────────────────────────
+  const stripY = H - H * 0.095
+  const stripH = H * 0.075
 
-  if (aLabel || lLabel) {
-    const pillH = 36
-    ctx.font = '600 12px sans-serif'
-    const aW   = aLabel ? ctx.measureText(aLabel).width + 20 : 0
-    const lW   = lLabel ? ctx.measureText(lLabel).width + 20 : 0
-    const sepW = aLabel && lLabel ? 10 : 0
+  // Left: area badge (ARC-style tag with hatch pattern)
+  const tagLabel = area || 'SI'
+  ctx.font = `600 ${Math.round(W * 0.038)}px monospace`
+  const tagW = ctx.measureText(tagLabel).width + W * 0.072
+  const tagH = stripH * 0.72
+  const tagY = stripY + (stripH - tagH) / 2
+  const tagX = padX
 
-    ctx.strokeStyle = accentClr; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5
-    roundRect(ctx, padX, bottomY, aW+sepW+lW, pillH, pillH/2); ctx.stroke(); ctx.globalAlpha = 1
+  // Tag box
+  ctx.strokeStyle = accentC
+  ctx.lineWidth   = Math.round(W * 0.0022)
+  ctx.globalAlpha = 1
+  roundRect(ctx, tagX, tagY, tagW, tagH, tagH * 0.35)
+  ctx.stroke()
 
-    if (aLabel && lLabel) {
-      ctx.save(); ctx.beginPath(); roundRect(ctx, padX+aW, bottomY+4, sepW, pillH-8, 2); ctx.clip()
-      ctx.fillStyle=accentClr; ctx.globalAlpha=0.10; ctx.fillRect(padX+aW,bottomY+4,sepW,pillH-8)
-      ctx.globalAlpha=0.28; ctx.strokeStyle=accentClr; ctx.lineWidth=1
-      for(let sx=-pillH;sx<sepW+pillH;sx+=4){ctx.beginPath();ctx.moveTo(padX+aW+sx,bottomY+4);ctx.lineTo(padX+aW+sx+pillH,bottomY+4+pillH);ctx.stroke()}
-      ctx.globalAlpha=1; ctx.restore()
-    }
-    ctx.fillStyle=accentClr; ctx.textAlign='center'
-    if (aLabel) ctx.fillText(aLabel, padX+aW/2, bottomY+pillH/2+4)
-    if (lLabel) ctx.fillText(lLabel, padX+aW+sepW+lW/2, bottomY+pillH/2+4)
-    ctx.textAlign='left'
+  // Hatch divider inside tag (like Arc cards)
+  const divX = tagX + tagW * 0.44
+  const hatchW = tagW * 0.12
+  ctx.save()
+  ctx.beginPath()
+  roundRect(ctx, tagX, tagY, tagW, tagH, tagH * 0.35)
+  ctx.clip()
+  ctx.fillStyle   = accentC
+  ctx.globalAlpha = 0.18
+  ctx.fillRect(divX, tagY, hatchW, tagH)
+  // Hatch lines
+  ctx.strokeStyle = accentC
+  ctx.lineWidth   = Math.round(W * 0.0016)
+  ctx.globalAlpha = 0.45
+  const hatchSpacing = hatchW / 3
+  for (let hx = divX - tagH; hx < divX + hatchW + tagH; hx += hatchSpacing) {
+    ctx.beginPath()
+    ctx.moveTo(hx, tagY)
+    ctx.lineTo(hx + tagH, tagY + tagH)
+    ctx.stroke()
   }
+  ctx.restore()
 
-  // Achievements — right side, up to 4
-  const displayA = activeAchievements.filter(a=>a.unlocked).slice(0,4)
+  // Tag text: left part (area/SI)
+  ctx.font      = `600 ${Math.round(W * 0.036)}px monospace`
+  ctx.fillStyle = accentC
+  ctx.globalAlpha = 1
+  ctx.textAlign    = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(tagLabel, tagX + tagW * 0.22, tagY + tagH / 2)
+
+  // Tag text: right part (nusp or date)
+  const rightLabel = user.nusp ?? new Date().getFullYear().toString()
+  ctx.font         = `500 ${Math.round(W * 0.034)}px monospace`
+  ctx.fillText(rightLabel, tagX + tagW * 0.72, tagY + tagH / 2)
+  ctx.textAlign    = 'left'
+  ctx.textBaseline = 'alphabetic'
+
+  // Right: achievements strip or institution label
+  const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 4)
   if (displayA.length > 0) {
-    ctx.textAlign='right'; ctx.font='24px serif'
-    let bx = W - padX
+    ctx.font = `${Math.round(W * 0.055)}px serif`
+    ctx.globalAlpha = 1
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    let bx = padXR
     for (const ach of [...displayA].reverse()) {
-      ctx.globalAlpha=1; ctx.fillText(ach.emoji, bx, bottomY+26); bx -= 28
+      ctx.fillText(ach.emoji, bx, stripY + stripH / 2)
+      bx -= W * 0.065
     }
-    ctx.textAlign='left'; ctx.globalAlpha=1
+    ctx.textAlign    = 'left'
+    ctx.textBaseline = 'alphabetic'
+  } else {
+    // Institution text
+    ctx.font      = `700 ${Math.round(W * 0.034)}px sans-serif`
+    ctx.fillStyle = ink
+    ctx.globalAlpha = 0.55
+    ctx.textAlign    = 'right'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('EACH · USP', padXR, stripY + stripH * 0.38)
+    ctx.font         = `400 ${Math.round(W * 0.028)}px monospace`
+    ctx.fillStyle    = inkFaint
+    ctx.fillText('SI', padXR, stripY + stripH * 0.72)
+    ctx.textAlign    = 'left'
+    ctx.textBaseline = 'alphabetic'
+    ctx.globalAlpha  = 1
   }
 
-  // ID watermark
-  ctx.font='400 8px monospace'; ctx.fillStyle=inkColor; ctx.globalAlpha=0.14
-  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), padX, H-20)
-  ctx.globalAlpha=1
+  // ── ID watermark ─────────────────────────────────────────────────────────
+  ctx.font         = `400 ${Math.round(W * 0.022)}px monospace`
+  ctx.fillStyle    = ink
+  ctx.globalAlpha  = 0.10
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), padX, H - W * 0.028)
+  ctx.globalAlpha = 1
 }
+
 
 // ── LANDSCAPE card (1.59:1 — carteirinha horizontal) ─────────────────────────
 function drawLandscapeCard(
@@ -728,17 +860,15 @@ function drawPortraitCard(
   const rngScheme = seededRng(user.id+'-scheme-vals')
   const { sat, lit } = applyColorScheme(hue, scheme, rngScheme)
   const style  = pickCardStyle(user.id)
-  const effect = pickCardEffect(user.id)
   const rngBg  = seededRng(user.id+'-bgv3')
   const zoneH  = H * 0.57
 
   ctx.clearRect(0,0,W,H)
   ctx.save(); roundRect(ctx,0,0,W,H,32); ctx.clip()
   drawCardBackground(ctx,W,H,zoneH,style,hue,sat,lit,rngBg,entityBg)
-  addGrain(ctx,seededRng(user.id+'-grainv3'),W,zoneH,0.018,2000)
   drawPortraitInfo(ctx,W,H,zoneH,user,avatarImg,activeAchievements,area,language,hue,sat,lit,entityBg,style)
-  ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1.5; ctx.globalAlpha=1
-  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,32); ctx.stroke()
+  ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1; ctx.globalAlpha=1
+  roundRect(ctx,0.5,0.5,W-1,H-1,32); ctx.stroke()
   ctx.restore()
 }
 

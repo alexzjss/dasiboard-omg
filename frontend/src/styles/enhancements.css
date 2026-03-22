@@ -411,9 +411,11 @@
   z-index: 29;
 }
 
-/* ── Sidebar resize handle area ── */
-.sidebar-bg {
-  min-width: var(--sidebar-w);
+/* ── Sidebar width — desktop only ── */
+@media (min-width: 1024px) {
+  .sidebar-bg {
+    min-width: var(--sidebar-w);
+  }
 }
 
 /* ── Better card padding on desktop ── */

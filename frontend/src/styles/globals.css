@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --sidebar-w: 240px;
+    --sidebar-w: 0px;
     --topbar-h: 60px;
     --font-display: 'Syne', sans-serif;
     --font-body:    'DM Sans', sans-serif;
@@ -6952,5 +6952,5 @@ html { font-size: var(--app-font-size); }
 }
 
 /* ── Theme-specific sidebar widths ───────────────────────────────── */
-:root { --sidebar-w: 236px; }
+@media (min-width: 1024px) { :root { --sidebar-w: 236px; } }
 
