@@ -907,7 +907,7 @@ export default function ProfilePage() {
             <div className="card p-4">
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{color:'var(--text-muted)'}}>Recordes de flashcard</p>
               <div className="space-y-1.5">
-                {Object.entries(studyStats.highScores).sort(([,a],[,b])=>(b as number)-(a as number)).slice(0,5).map(([sub,hs])=>{ const score=hs as number; return (
+                {(Object.entries(studyStats.highScores) as [string,number][]).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([sub,score])=>{ return (
                   <div key={sub} className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
                       <div className="h-full rounded-full" style={{width:`${score}%`,background:score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444'}}/>
