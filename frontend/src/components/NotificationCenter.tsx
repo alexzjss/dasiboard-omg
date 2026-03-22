@@ -112,7 +112,7 @@ function DndPicker({ dndUntil, onActivate, onDeactivate }: {
 }
 
 // ── Main NotificationCenter ───────────────────────────────────────────────────
-export function NotificationCenter() {
+export function NotificationCenter({ align = "right" }: { align?: "left" | "right" }) {
   const [open, setOpen] = useState(false)
   const ref             = useRef<HTMLDivElement>(null)
   const navigate        = useNavigate()
@@ -163,7 +163,7 @@ export function NotificationCenter() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 rounded-2xl overflow-hidden z-[80]"
+        <div className={`absolute ${align === "left" ? "left-0" : "right-0"} top-full mt-2 rounded-2xl overflow-hidden z-[80]`}
              style={{
                width: 340,
                maxHeight: '72dvh',
