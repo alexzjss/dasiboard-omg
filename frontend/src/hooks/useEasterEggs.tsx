@@ -578,9 +578,10 @@ function BreakoutGame({ onClose }: { onClose: () => void }) {
 }
 
 // ── Main Easter Egg hook ──────────────────────────────────────────────────────
+// ── Theme-specific easter egg sequences ──────────────────────────────────────
+// Arrow keys are now free because page nav uses Ctrl+Arrow.
+// Konami ↑↑↓↓←→←→BA works because shortcuts require Ctrl for arrows.
 const THEME_SEQUENCES: Record<string, { seq: string[]; name: string }> = {
-  // NOTE: Konami code — 'b' only comes after 'a', never conflicts with 'B' shortcut
-  // because we removed 'B' as a standalone shortcut.
   'dark-pixel':      { seq: ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'], name: 'breakout' },
   'dark-hypado':     { seq: ['ArrowUp','ArrowUp','ArrowUp'], name: 'vapor' },
   'dark-shell':      { seq: ['m','a','t','r','i','x'], name: 'matrix' },
@@ -594,7 +595,162 @@ const THEME_SEQUENCES: Record<string, { seq: string[]; name: string }> = {
   'light-memento':   { seq: ['p','e','r','s','o','n','a'], name: 'persona' },
 }
 
-export type EasterEggId = 'konami'|'vapor'|'matrix'|'silent'|'xbox'|'rgb'|'blueprint'|'ilha'|'vidro'|'nerv'|'persona'|'breakout'|null
+
+// ── Hacker Terminal screen ────────────────────────────────────────────────────
+function HackerScreen({ onClose }: { onClose: () => void }) {
+  const [lines, setLines] = useState<string[]>([
+    'root@each:~$ whoami',
+    'root — Sistemas de Informação EACH-USP',
+    'root@each:~$ ls /disciplinas',
+    'ACH2001  ACH2002  ACH2003  ACH2004  ACH2005',
+    'ACH2006  ACH2007  ACH2008  ACH2009  ACH2010',
+    'root@each:~$ cat /etc/motto',
+    '"Computação a serviço da sociedade"',
+    'root@each:~$ hack usp',
+    '[!] Iniciando sequência de infiltração...',
+    '[!] Conectando ao mainframe da Reitoria...',
+    '[✓] Acesso concedido. Bem-vindo ao sistema.',
+    '[✓] Segredo encontrado: você tem +99 créditos.',
+    'root@each:~$ _',
+  ])
+  const [input, setInput] = useState('')
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { endRef.current?.scrollIntoView() }, [lines])
+
+  const handleCmd = (cmd: string) => {
+    const trimmed = cmd.trim().toLowerCase()
+    const responses: Record<string, string[]> = {
+      'ls':        ['DaSIboard  kanban  grades  calendar  entities  profile'],
+      'whoami':    ['estudante@si.each.usp.br'],
+      'pwd':       ['/home/estudante/dasiboard'],
+      'date':      [new Date().toString()],
+      'clear':     [],
+      'exit':      ['Saindo...'],
+      'hack usp':  ['[!] Não foi dessa vez. Tente `hack matrix`'],
+      'hack matrix':['[✓] Whoa — você encontrou o nível secreto. Parabéns!'],
+      'help':      ['ls  whoami  pwd  date  clear  exit  hack <alvo>'],
+      'sudo':      ['[sudo] senha para estudante: *** — Permissão negada.'],
+    }
+    const out = responses[trimmed]
+    if (trimmed === 'clear') { setLines(['root@each:~$ _']); return }
+    if (trimmed === 'exit') { onClose(); return }
+    const newLines = [
+      ...lines.slice(0,-1),
+      `root@each:~$ ${cmd}`,
+      ...(out ?? [`bash: ${cmd}: command not found`]),
+      'root@each:~$ _',
+    ]
+    setLines(newLines)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[999] flex flex-col"
+         style={{ background: '#0a0f0a', fontFamily: '"JetBrains Mono", monospace' }}>
+      {/* Terminal header */}
+      <div className="flex items-center gap-2 px-4 py-2.5 shrink-0"
+           style={{ background: '#1a241a', borderBottom: '1px solid #00ff4133' }}>
+        <div className="flex gap-1.5">
+          <button onClick={onClose} className="w-3 h-3 rounded-full" style={{ background: '#ff5f57' }}/>
+          <div className="w-3 h-3 rounded-full" style={{ background: '#febc2e' }}/>
+          <div className="w-3 h-3 rounded-full" style={{ background: '#28c840' }}/>
+        </div>
+        <p style={{ color: '#00ff41', fontSize: 12, marginLeft: 8, opacity: 0.8 }}>
+          Terminal — root@each — 80×24
+        </p>
+      </div>
+      {/* Output */}
+      <div className="flex-1 overflow-y-auto px-5 py-4" style={{ color: '#00ff41', fontSize: 13, lineHeight: 2 }}>
+        {lines.map((l, i) => (
+          <p key={i} style={{ opacity: l.startsWith('[!]') ? 0.7 : l.startsWith('[✓]') ? 1 : 0.85,
+            color: l.startsWith('[✓]') ? '#44ff88' : l.startsWith('[!]') ? '#ffcc00' : '#00ff41' }}>
+            {l}
+          </p>
+        ))}
+        <div ref={endRef}/>
+      </div>
+      {/* Input */}
+      <div className="flex items-center gap-2 px-5 py-3 shrink-0" style={{ borderTop: '1px solid #00ff4133' }}>
+        <span style={{ color: '#00ff41', fontSize: 13 }}>root@each:~$</span>
+        <input
+          autoFocus
+          className="flex-1 bg-transparent outline-none text-sm"
+          style={{ color: '#00ff41', fontFamily: '"JetBrains Mono", monospace', caretColor: '#00ff41' }}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') { handleCmd(input); setInput('') }
+            if (e.key === 'Escape') onClose()
+          }}
+          placeholder="digite um comando..."
+          spellCheck={false}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── DASI Flip card ────────────────────────────────────────────────────────────
+function DasiFlipScreen({ onClose }: { onClose: () => void }) {
+  const [flipped, setFlipped] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setFlipped(true), 400)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center"
+         style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
+         onClick={onClose}>
+      <div style={{ perspective: 1200, width: 280, height: 380 }}>
+        <div style={{
+          position: 'relative', width: '100%', height: '100%',
+          transformStyle: 'preserve-3d',
+          transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          transition: 'transform 0.8s cubic-bezier(0.4,0,0.2,1)',
+        }}>
+          {/* Front */}
+          <div style={{
+            position: 'absolute', inset: 0, backfaceVisibility: 'hidden',
+            borderRadius: 20, background: 'linear-gradient(135deg,#4c1d95,#7c3aed)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', padding: 32,
+            boxShadow: '0 24px 64px rgba(124,58,237,0.5)',
+          }}>
+            <div style={{ fontSize: 80 }}>🦅</div>
+            <p style={{ color: 'white', fontSize: 14, fontWeight: 700, marginTop: 16, letterSpacing: 4,
+                        fontFamily: '"Syne", sans-serif', textTransform: 'uppercase', opacity: 0.6 }}>
+              DaSIboard
+            </p>
+          </div>
+          {/* Back */}
+          <div style={{
+            position: 'absolute', inset: 0, backfaceVisibility: 'hidden',
+            borderRadius: 20, background: 'linear-gradient(135deg,#1e1b4b,#312e81)',
+            transform: 'rotateY(180deg)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', padding: 32, textAlign: 'center',
+            boxShadow: '0 24px 64px rgba(49,46,129,0.6)',
+            border: '2px solid rgba(167,139,250,0.4)',
+          }}>
+            <div style={{ fontSize: 48 }}>🥚</div>
+            <p style={{ color: '#c4b5fd', fontSize: 18, fontWeight: 800, marginTop: 16,
+                        fontFamily: '"Syne", sans-serif' }}>
+              Easter Egg #1
+            </p>
+            <p style={{ color: 'rgba(196,181,253,0.7)', fontSize: 12, marginTop: 8, lineHeight: 1.6 }}>
+              Você encontrou o ovo escondido da Águia 🦅
+            </p>
+            <p style={{ color: 'rgba(167,139,250,0.4)', fontSize: 10, marginTop: 20, letterSpacing: 3 }}>
+              CLIQUE PARA FECHAR
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export type EasterEggId = 'konami'|'vapor'|'matrix'|'silent'|'xbox'|'rgb'|'blueprint'|'ilha'|'vidro'|'nerv'|'persona'|'breakout'|'hacker'|'dasi-flip'|null
 
 // ── Persona / Memento screen ──────────────────────────────────────────────────
 function PersonaScreen({ onClose }: { onClose: () => void }) {
@@ -700,19 +856,21 @@ export function useEasterEggs() {
 export function EasterEggRenderer({ active, onClose }: { active: EasterEggId; onClose: () => void }) {
   if (!active) return null
   switch (active) {
-    case 'konami':   return <KonamiScreen onClose={onClose} />
-    case 'vapor':    return <VaporScreen onClose={onClose} />
-    case 'matrix':   return <MatrixScreen onClose={onClose} />
-    case 'silent':   return <SilentHillScreen onClose={onClose} />
-    case 'xbox':     return <XboxScreen onClose={onClose} />
-    case 'rgb':      return <RGBGlitchScreen onClose={onClose} />
-    case 'blueprint':return <BlueprintScreen onClose={onClose} />
-    case 'ilha':     return <IlhaScreen onClose={onClose} />
-    case 'vidro':    return <VidroScreen onClose={onClose} />
-    case 'nerv':     return <NervAlertScreen onClose={onClose} />
-    case 'persona':  return <PersonaScreen onClose={onClose} />
+    case 'konami':    return <KonamiScreen onClose={onClose} />
+    case 'vapor':     return <VaporScreen onClose={onClose} />
+    case 'matrix':    return <MatrixScreen onClose={onClose} />
+    case 'silent':    return <SilentHillScreen onClose={onClose} />
+    case 'xbox':      return <XboxScreen onClose={onClose} />
+    case 'rgb':       return <RGBGlitchScreen onClose={onClose} />
+    case 'blueprint': return <BlueprintScreen onClose={onClose} />
+    case 'ilha':      return <IlhaScreen onClose={onClose} />
+    case 'vidro':     return <VidroScreen onClose={onClose} />
+    case 'nerv':      return <NervAlertScreen onClose={onClose} />
+    case 'persona':   return <PersonaScreen onClose={onClose} />
     case 'breakout':  return <BreakoutGame onClose={onClose} />
-    default:         return null
+    case 'hacker':    return <HackerScreen onClose={onClose} />
+    case 'dasi-flip': return <DasiFlipScreen onClose={onClose} />
+    default:          return null
   }
 }
 
@@ -742,4 +900,16 @@ export function useClockEasterEggs(triggerNotif: (msg: string) => void) {
     const t = setInterval(check, 10000)
     return () => clearInterval(t)
   }, [])
+}
+
+// ── External trigger — called from GlobalSearch, DASI logo click ──────────────
+let _eggListeners: Array<(id: EasterEggId) => void> = []
+export function triggerEasterEgg(id: EasterEggId) {
+  _eggListeners.forEach(fn => fn(id))
+}
+export function useExternalEasterEgg(onTrigger: (id: EasterEggId) => void) {
+  useEffect(() => {
+    _eggListeners.push(onTrigger)
+    return () => { _eggListeners = _eggListeners.filter(f => f !== onTrigger) }
+  }, [onTrigger])
 }

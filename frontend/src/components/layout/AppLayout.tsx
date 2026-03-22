@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
-import { useEasterEggs, EasterEggRenderer } from '@/hooks/useEasterEggs'
+import { useEasterEggs, EasterEggRenderer, triggerEasterEgg, useExternalEasterEgg, EasterEggId } from '@/hooks/useEasterEggs'
 import { usePresentationMode, PresentationControls, PresentationButton } from '@/components/PresentationMode'
 import { GlobalSearch, useGlobalSearch } from '@/components/GlobalSearch'
 import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
@@ -17,7 +17,6 @@ import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHR
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
 import { LofiPlayer } from '@/components/LofiPlayer'
-import { useFocusMode, FocusModeBar } from '@/components/FocusMode'
 import { ColorBlindFilters, ColorBlindButton, useColorBlindMode } from '@/components/ColorBlindMode'
 import { useLiteMode, LiteModeButton } from '@/components/LiteMode'
 import { ExpBar } from '@/components/ExpCounter'
@@ -27,7 +26,7 @@ import { BlueprintRuler } from '@/components/BlueprintRuler'
 import { ShellPrompt } from '@/components/ShellPrompt'
 import { EvaSyncBar } from '@/components/EvaSync'
 import { PortatilSaveState } from '@/components/PortatilSaveState'
-import { AchievementToast, useAchievementToast } from '@/components/AchievementToast'
+import { AchievementToast, useAchievementToast, triggerAchievementToast } from '@/components/AchievementToast'
 import { useClockEasterEggs } from '@/hooks/useEasterEggs'
 import clsx from 'clsx'
 
@@ -319,10 +318,28 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
 }
 
 // ── Sidebar inner ─────────────────────────────────────────────────────────────
-function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, liteMode }: {
+
+// ── DASI Logo — 7 rapid clicks triggers easter egg ───────────────────────────
+function DasiLogoClickable({ onEgg }: { onEgg: () => void }) {
+  const clicksRef = useRef(0)
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handle = () => {
+    clicksRef.current++
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (clicksRef.current >= 7) { clicksRef.current = 0; onEgg(); return }
+    timerRef.current = setTimeout(() => { clicksRef.current = 0 }, 1500)
+  }
+  return (
+    <button onClick={handle} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform active:scale-90"
+            style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 12px var(--accent-glow)' }}
+            title="DaSIboard">
+      <GraduationCap size={16} className="text-white" />
+    </button>
+  )
+}
+
+function SidebarContent({ onOpenPicker, colorBlind, liteMode }: {
   onOpenPicker: () => void
-  onToggleFocus: () => void
-  focusActive: boolean
   colorBlind: ReturnType<typeof useColorBlindMode>
   liteMode: { active: boolean; toggle: () => void }
 }) {
@@ -336,15 +353,11 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
       <div className="accent-orb" style={{ width: 120, height: 120, top: -40, left: -40 }} />
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 relative z-10" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-             style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 12px var(--accent-glow)' }}>
-          <GraduationCap size={16} className="text-white" />
-        </div>
+        <DasiLogoClickable onEgg={() => { localStorage.setItem('dasiboard-easter-found','1'); setExternalEgg('dasi-flip') }} />
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
         </div>
-
       </div>
 
       {/* Theme button — visual pill */}
@@ -417,22 +430,7 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
               <span>Apresentar</span>
             </button>
 
-            {/* Modo Foco */}
-            <button
-              onClick={onToggleFocus}
-              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
-              style={{
-                background: focusActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                border: `1px solid ${focusActive ? 'var(--accent-1)' : 'var(--border)'}`,
-                color: focusActive ? 'var(--accent-3)' : 'var(--text-muted)',
-              }}
-              title="Modo Foco — oculta UI (Ctrl+Shift+F)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-              </svg>
-              <span>{focusActive ? 'Sair foco' : 'Foco'}</span>
-            </button>
+
 
             {/* Daltonismo */}
             <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
@@ -490,6 +488,39 @@ export default function AppLayout() {
 
   useSwipeNavigation()
   const { active: easterActive, close: closeEaster } = useEasterEggs()
+  const [externalEgg, setExternalEgg] = useState<EasterEggId>(null)
+  useExternalEasterEgg(setExternalEgg)
+  const activeEgg  = externalEgg ?? easterActive
+  const closeAnyEgg = useCallback(() => { setExternalEgg(null); closeEaster() }, [closeEaster])
+
+  // ── Floor is Lava — every Friday at 13:37 ─────────────────────────────
+  useEffect(() => {
+    const checkLava = () => {
+      const now = new Date()
+      if (now.getDay() !== 5) return // only Friday
+      if (now.getHours() !== 13 || now.getMinutes() !== 37) return
+      const key = 'dasiboard-lava-' + now.toISOString().slice(0, 10)
+      if (localStorage.getItem(key)) return
+      localStorage.setItem(key, '1')
+      if (Notification.permission === 'granted') {
+        new Notification('🌋 O chão é lava!', {
+          body: 'Você tem 30 segundos para abrir o Kanban!', icon: '/logo192.png',
+        })
+      }
+      toast('🌋 O chão é lava! Abra o Kanban em 30s para ganhar a conquista!', { duration: 30000, icon: '🌋' })
+      setTimeout(() => {
+        if (window.location.pathname === '/kanban') {
+          localStorage.setItem('dasiboard-easter-found', '1')
+          triggerAchievementToast({ id:'ninja', emoji:'🥷', label:'Reflexos de Ninja',
+            rarity:'legendary', category:'secret', desc:'Abriu o Kanban no chão de lava',
+            hint:'???', color:'#ef4444', unlocked:true })
+        }
+      }, 30000)
+    }
+    checkLava()
+    const t = setInterval(checkLava, 30000)
+    return () => clearInterval(t)
+  }, [])
   const { open: searchOpen, setOpen: setSearchOpen } = useGlobalSearch()
   const presentation = usePresentationMode()
 
@@ -507,21 +538,20 @@ export default function AppLayout() {
 
   // ── Keyboard shortcuts ────────────────────────────────
   const shortcuts = [
-    // Navegação de páginas
-    { key: 'g', description: 'Ir para Disciplinas',      group: 'Navegação', action: () => navigate('/grades') },
-    { key: 'k', description: 'Ir para Kanban',           group: 'Navegação', action: () => navigate('/kanban') },
-    { key: 'c', description: 'Ir para Calendário',       group: 'Navegação', action: () => navigate('/calendar') },
-    { key: 'e', description: 'Ir para Entidades',        group: 'Navegação', action: () => navigate('/entities') },
-    { key: 'd', description: 'Ir para Docentes',         group: 'Navegação', action: () => navigate('/docentes') },
-    { key: 'p', description: 'Ir para Perfil',           group: 'Navegação', action: () => navigate('/profile') },
-    { key: 'h', description: 'Ir para Início',           group: 'Navegação', action: () => navigate('/') },
-    { key: 's', description: 'Ir para Configurações',    group: 'Navegação', action: () => navigate('/settings') },
-    { key: 'r', description: 'Abrir Study Room',          group: 'Navegação', action: () => navigate('/study') },
-    // Interface — NOTE: 'b' removed to avoid breaking Konami code (↑↑↓↓←→←→BA)
+    // Navegação de páginas — Ctrl+Shift+letra
+    { key: 'g', ctrl: true, shift: true, description: 'Ir para Disciplinas',   group: 'Navegação', action: () => navigate('/grades') },
+    { key: 'k', ctrl: true, shift: true, description: 'Ir para Kanban',        group: 'Navegação', action: () => navigate('/kanban') },
+    { key: 'c', ctrl: true, shift: true, description: 'Ir para Calendário',    group: 'Navegação', action: () => navigate('/calendar') },
+    { key: 'e', ctrl: true, shift: true, description: 'Ir para Entidades',     group: 'Navegação', action: () => navigate('/entities') },
+    { key: 'd', ctrl: true, shift: true, description: 'Ir para Docentes',      group: 'Navegação', action: () => navigate('/docentes') },
+    { key: 'p', ctrl: true, shift: true, description: 'Ir para Perfil',        group: 'Navegação', action: () => navigate('/profile') },
+    { key: 'h', ctrl: true, shift: true, description: 'Ir para Início',        group: 'Navegação', action: () => navigate('/') },
+    { key: 's', ctrl: true, shift: true, description: 'Ir para Configurações', group: 'Navegação', action: () => navigate('/settings') },
+    { key: 'y', ctrl: true, shift: true, description: 'Abrir Study Room',      group: 'Navegação', action: () => navigate('/study') },
+    // Interface
     { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
-    { key: '?',             description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
+    { key: '/', ctrl: true, description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
     { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false); setShowKeyHelp(false) } },
-    // Claro/escuro via Alt+B para não conflitar com Konami 'b'
     // Temas — ciclar com Alt+← / Alt+→
     { key: 'ArrowRight', alt: true, description: 'Próximo tema',    group: 'Temas', action: () => cycleTheme() },
     { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => {
@@ -533,15 +563,14 @@ export default function AppLayout() {
     { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',   group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
     { key: 'r', ctrl: true, description: 'Recarregar dados da página',      group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
     { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',        group: 'Ações', action: () => setSearchOpen(v => !v) },
-    { key: 'p', ctrl: true, shift: true, description: 'Modo apresentação', group: 'Interface', action: () => presentation.toggle() },
-    { key: 'f', ctrl: true, shift: true, description: 'Modo Foco (oculta sidebar/nav)', group: 'Interface', action: () => focusMode.toggle() },
+    { key: 'p', ctrl: true, shift: true, description: 'Modo apresentação',  group: 'Interface', action: () => presentation.toggle() },
     { key: 'f', ctrl: true, description: 'Focar busca na página',           group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
-    // Por página
-    { key: 'ArrowRight', description: 'Próxima página (navegação)',  group: 'Navegação rápida', action: () => {
+    // Navegação por seta com Ctrl (livre da colisão com konami/swipe)
+    { key: 'ArrowRight', ctrl: true, description: 'Próxima página',  group: 'Navegação rápida', action: () => {
       const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile', '/settings']
       const idx = routes.indexOf(location.pathname); if (idx < routes.length - 1) navigate(routes[idx + 1])
     }},
-    { key: 'ArrowLeft',  description: 'Página anterior (navegação)', group: 'Navegação rápida', action: () => {
+    { key: 'ArrowLeft',  ctrl: true, description: 'Página anterior', group: 'Navegação rápida', action: () => {
       const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile', '/settings']
       const idx = routes.indexOf(location.pathname); if (idx > 0) navigate(routes[idx - 1])
     }},
@@ -552,7 +581,6 @@ export default function AppLayout() {
   const isPixel  = theme.id === 'dark-pixel'
   const isChrono = theme.id === 'dark-chrono'
   const saveStarter = (id: string) => { localStorage.setItem('dasiboard-starter', id); setStarter(id) }
-  const focusMode = useFocusMode()
   const colorBlind = useColorBlindMode()
   const liteMode  = useLiteMode()
   useChronoPortalSound()
@@ -598,7 +626,7 @@ export default function AppLayout() {
       {showOnboarding && <Onboarding onClose={doneOnboarding} />}
       {showPicker && <ThemePicker onClose={() => setShowPicker(false)} />}
       {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
-      <EasterEggRenderer active={easterActive} onClose={closeEaster} />
+      <EasterEggRenderer active={activeEgg} onClose={closeAnyEgg} />
       {presentation.active && <PresentationControls fontSize={presentation.fontSize} setFontSize={presentation.setFontSize} onExit={presentation.exit} />}
       {showKeyHelp && <KeyboardHelpModal shortcuts={shortcuts} onClose={() => setShowKeyHelp(false)} />}
       {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
@@ -615,7 +643,6 @@ export default function AppLayout() {
       <ShellPrompt />
       <PortatilSaveState />
       {achPending && <AchievementToast achievement={achPending} onDismiss={achDismiss} />}
-      {focusMode.active && <FocusModeBar onExit={focusMode.exit} />}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
 
       {/* Chrono era badge — floating, only in Chrono theme */}
@@ -632,7 +659,7 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} colorBlind={colorBlind} liteMode={liteMode} />
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} colorBlind={colorBlind} liteMode={liteMode} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">

@@ -33,6 +33,54 @@ const TYPE_LABELS: Record<string, string> = {
   exam: 'Prova', entity: 'Entidade',
 }
 
+// ── Event Reactions — localStorage, per event ────────────────────────────────
+const REACTION_EMOJIS = ['👍','📅','🔥','😱','❤️']
+const REACTIONS_KEY = 'dasiboard-event-reactions'
+
+function loadReactions(): Record<string, Record<string, number>> {
+  try { return JSON.parse(localStorage.getItem(REACTIONS_KEY) ?? '{}') } catch { return {} }
+}
+function useEventReactions(eventId: string) {
+  const [all, setAll] = useState<Record<string, Record<string, number>>>(loadReactions)
+  const counts = all[eventId] ?? {}
+  const react = (emoji: string) => {
+    setAll(prev => {
+      const evData = { ...(prev[eventId] ?? {}) }
+      evData[emoji] = (evData[emoji] ?? 0) + 1
+      const next = { ...prev, [eventId]: evData }
+      localStorage.setItem(REACTIONS_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+  return { counts, react }
+}
+
+function EventReactions({ eventId, color }: { eventId: string; color: string }) {
+  const { counts, react } = useEventReactions(eventId)
+  const total = Object.values(counts).reduce((a, b) => a + b, 0)
+  return (
+    <div className="flex items-center gap-1 mt-2 flex-wrap">
+      {REACTION_EMOJIS.map(emoji => {
+        const n = counts[emoji] ?? 0
+        return (
+          <button key={emoji} onClick={() => react(emoji)}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all hover:scale-110 active:scale-95"
+                  style={{
+                    background: n > 0 ? color + '22' : 'var(--bg-elevated)',
+                    border: `1px solid ${n > 0 ? color + '55' : 'var(--border)'}`,
+                    color: n > 0 ? color : 'var(--text-muted)',
+                  }}>
+            <span style={{ fontSize: 13 }}>{emoji}</span>
+            {n > 0 && <span className="font-semibold" style={{ fontSize: 10 }}>{n}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+
+
 // ── Event creation modal ─────────────────────────────────
 function EventModal({ entity, onClose, onCreated }: {
   entity: Entity; onClose: () => void; onCreated: (ev: EntityEvent) => void
@@ -637,6 +685,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
                           <MapPin size={9} className="inline mr-1" />{ev.location}
                         </p>
                       )}
+                      <EventReactions eventId={ev.id} color={ev.color} />
                     </div>
                   </div>
                 </div>

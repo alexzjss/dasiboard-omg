@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, BookOpen, KanbanSquare, CalendarDays, Users, User, Clock, Hash, ArrowRight, FileText, Brain, Zap } from 'lucide-react'
 import api from '@/utils/api'
+import { triggerEasterEgg } from '@/hooks/useEasterEggs'
 
 // ── Result types ──────────────────────────────────────────────────────────────
 type ResultKind = 'subject'|'card'|'event'|'entity'|'docente'|'nav'|'note'|'flashcard'
@@ -312,7 +313,21 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
             style={{ color: 'var(--text-primary)', caretColor: 'var(--accent-3)' }}
             placeholder="Buscar disciplinas, cards, eventos, docentes..."
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => {
+              const val = e.target.value
+              setQuery(val)
+              // ── Easter egg keywords ──────────────────────────
+              const lower = val.toLowerCase().trim()
+              if (lower === 'matrix') {
+                localStorage.setItem('dasiboard-easter-found', '1')
+                triggerEasterEgg('matrix')
+                setQuery('')
+              } else if (lower === 'sudo') {
+                localStorage.setItem('dasiboard-easter-found', '1')
+                triggerEasterEgg('hacker')
+                setQuery('')
+              }
+            }}
             autoComplete="off"
             spellCheck={false}
           />

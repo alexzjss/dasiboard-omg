@@ -988,6 +988,21 @@ export default function ProfilePage() {
 
   useEffect(()=>{
     setEasterEggFound(!!localStorage.getItem("dasiboard-easter-found"))
+    // Load server-persisted achievements (merge with localStorage)
+    api.get('/users/me/achievements').then(({ data }) => {
+      const serverIds: string[] = data.map((a: { id: string }) => a.id)
+      const localIds: string[] = JSON.parse(localStorage.getItem("dasiboard-achievements") ?? "[]")
+      const merged = Array.from(new Set([...localIds, ...serverIds]))
+      if (merged.length !== localIds.length) {
+        localStorage.setItem("dasiboard-achievements", JSON.stringify(merged))
+        setActiveAchievIds(merged)
+      }
+      // If easter egg found server-side, mark locally too
+      if (serverIds.includes('easter_egg')) {
+        localStorage.setItem('dasiboard-easter-found', '1')
+        setEasterEggFound(true)
+      }
+    }).catch(() => {})
     Promise.all([
       api.get("/entities/").catch(()=>({data:[]})),
       api.get("/kanban/boards").catch(()=>({data:[]})),
@@ -1021,6 +1036,14 @@ export default function ProfilePage() {
     hasNusp:!!user?.nusp, eventCount, subjectCount, gradeCount,
     loginCount:1, easterEggFound,
   }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound])
+
+  // Auto-persist newly unlocked achievements to server
+  useEffect(() => {
+    const unlocked = achievements.filter(a => a.unlocked).map(a => a.id)
+    if (unlocked.length > 0) {
+      api.post('/users/me/achievements', { ids: unlocked }).catch(() => {})
+    }
+  }, [achievements])
 
   const activeAchievements=useMemo(
     ()=>achievements.filter(a=>activeAchievIds.includes(a.id)&&a.unlocked),
@@ -1083,7 +1106,14 @@ export default function ProfilePage() {
     a.href = canvas.toDataURL('image/png', 1.0); a.click()
   }
 
-  const saveAchievements=(ids:string[])=>{localStorage.setItem("dasiboard-achievements",JSON.stringify(ids));setActiveAchievIds(ids)}
+  const saveAchievements=(ids:string[])=>{
+    localStorage.setItem("dasiboard-achievements",JSON.stringify(ids))
+    setActiveAchievIds(ids)
+  }
+  // Sync newly unlocked achievements to server
+  const persistUnlock = (id: string) => {
+    api.post('/users/me/achievements', { ids: [id] }).catch(() => {})
+  }
   const saveEntityBg=(id:string|null)=>{if(id)localStorage.setItem("dasiboard-card-entity",id);else localStorage.removeItem("dasiboard-card-entity");setEntityBgId(id)}
   const saveArea=(v:string)=>{localStorage.setItem("dasiboard-area",v);setAreaState(v)}
   const saveLang=(v:string)=>{localStorage.setItem("dasiboard-lang",v);setLanguageState(v)}

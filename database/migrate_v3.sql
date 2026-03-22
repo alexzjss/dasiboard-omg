@@ -27,3 +27,13 @@ END$$;
 CREATE INDEX IF NOT EXISTS idx_events_owner_start       ON events        (owner_id, start_at);
 CREATE INDEX IF NOT EXISTS idx_global_events_start      ON global_events (start_at);
 CREATE INDEX IF NOT EXISTS idx_events_entity_start      ON events        (entity_id, start_at) WHERE entity_id IS NOT NULL;
+
+-- User achievements persistence (server-side unlock tracking)
+CREATE TABLE IF NOT EXISTS user_achievements (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ach_id     VARCHAR(80) NOT NULL,
+    unlocked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, ach_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id);

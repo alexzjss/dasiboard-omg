@@ -116,22 +116,27 @@ function weightedAvg(grades: Grade[]): number | null {
 function AttendanceWidget({ subject, onUpdate }: {
   subject: Subject; onUpdate: (id: string, total: number, att: number) => void
 }) {
-  const absent = subject.total_classes - subject.attended
-  const maxAbs = Math.floor(subject.total_classes * 0.3)
-  const pct = subject.total_classes > 0 ? (absent / subject.total_classes) * 100 : 0
+  const absent   = subject.total_classes - subject.attended
+  const maxAbs   = Math.floor(subject.total_classes * 0.3)
+  const pct      = subject.total_classes > 0 ? (absent / subject.total_classes) * 100 : 0
   const remaining = Math.max(0, maxAbs - absent)
-  const danger = pct >= 25
-  const ff = pct >= 30
-  const color = ff ? '#ef4444' : danger ? '#f59e0b' : '#22c55e'
-  const circumference = 2 * Math.PI * 14
-  const dashOffset = circumference - (Math.min(pct, 100) / 100) * circumference
+  const ff       = pct >= 30
+  const danger   = pct >= 20
+  const color    = ff ? '#ef4444' : danger ? '#f59e0b' : '#22c55e'
+  const circ     = 2 * Math.PI * 14
+  const dash     = circ - (Math.min(pct, 100) / 100) * circ
+
+  // +1 falta = attended-1 (attended tracks present, absent = total - attended)
+  const addFault   = () => { if (subject.attended > 0) onUpdate(subject.id, subject.total_classes, subject.attended - 1) }
+  const removeFault= () => { if (absent > 0)           onUpdate(subject.id, subject.total_classes, subject.attended + 1) }
+
   return (
     <div className="flex items-center gap-3 flex-wrap">
       <div className="flex items-center gap-2">
         <svg width="36" height="36" viewBox="0 0 36 36">
           <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border)" strokeWidth="3" />
           <circle cx="18" cy="18" r="14" fill="none" stroke={color} strokeWidth="3"
-                  strokeDasharray={circumference} strokeDashoffset={dashOffset}
+                  strokeDasharray={circ} strokeDashoffset={dash}
                   strokeLinecap="round" transform="rotate(-90 18 18)" />
           <text x="18" y="22" textAnchor="middle" fontSize="8" fontWeight="bold" fill={color}>{absent}</text>
         </svg>
@@ -144,10 +149,25 @@ function AttendanceWidget({ subject, onUpdate }: {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <button className="btn-ghost px-2 py-1 text-xs" onClick={() => onUpdate(subject.id, subject.total_classes, subject.attended - 1)} disabled={absent <= 0}><Minus size={10}/></button>
-        <span className="text-xs px-1" style={{ color: 'var(--text-muted)' }}>{subject.attended}/{subject.total_classes}</span>
-        <button className="btn-ghost px-2 py-1 text-xs" onClick={() => onUpdate(subject.id, subject.total_classes, subject.attended + 1)} disabled={subject.attended >= subject.total_classes}><Plus size={10}/></button>
+      {/* Only show +/- for faltas, not for "presença" */}
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={removeFault} disabled={absent <= 0}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-80 disabled:opacity-30"
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          title="Remover falta">
+          <Minus size={11}/>
+        </button>
+        <span className="text-xs font-mono px-1" style={{ color: 'var(--text-muted)', minWidth: 40, textAlign: 'center' }}>
+          {absent}/{maxAbs} F
+        </span>
+        <button
+          onClick={addFault} disabled={ff}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-80 disabled:opacity-30"
+          style={{ background: ff ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', border: `1px solid ${ff ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`, color: ff ? '#ef4444' : 'var(--text-muted)' }}
+          title="Registrar falta">
+          <Plus size={11}/>
+        </button>
       </div>
     </div>
   )
