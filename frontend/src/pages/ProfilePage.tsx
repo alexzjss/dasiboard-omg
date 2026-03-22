@@ -766,7 +766,7 @@ function drawCardInfo(
   scheme: ColorScheme,
 ) {
   // Determine if the pattern zone is dark (needs light text) or light
-  const patternDark = lit < 44 || style === 'neon_glow' || style === 'checkerboard'
+  const patternDark = lit < 44 || style === 'neon_glow' || style === 'holographic'
   const infoDark    = entityBg
     ? (lit < 44) // follow user's overall darkness
     : lit < 44
