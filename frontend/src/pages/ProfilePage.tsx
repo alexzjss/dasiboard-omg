@@ -25,6 +25,87 @@ function seededRng(seed: string) {
   }
 }
 
+
+const TITLES = [
+  'Explorador Incansável','Arquiteto de Sonhos','Nômade Digital',
+  'Construtor do Futuro','Caçador de Bugs','Artesão do Código',
+  'Viajante entre Mundos','Filósofo dos Pixels','Guardião da Stack',
+  'Detetive de Dados','Mago das Abstrações','Pesquisador Curioso',
+  'Estrategista Criativo','Desbravador de APIs','Artista do Terminal',
+  'Navegador de Incertezas','Alquimista Digital','Construtor Obstinado',
+  'Sonhador Pragmático','Engenheiro de Possibilidades','Entusiasta Nato',
+  'Pensador Lateral','Hacker de Soluções','Curador de Conhecimento',
+  'Montador de Sistemas','Visionário Técnico','Explorador de Fronteiras',
+]
+
+export const AREAS = [
+  'Frontend','Backend','Fullstack','Mobile','Data Science',
+  'IA & ML','DevOps','Cybersecurity','Game Dev','Design',
+  'Pesquisa','UX/UI','Cloud','Embedded','Blockchain','QA',
+]
+export const LANGUAGES = [
+  'Python','JavaScript','TypeScript','Java','Kotlin','Swift',
+  'Go','Rust','C','C++','C#','PHP','Ruby','Dart','Scala',
+  'R','MATLAB','Haskell','SQL','Shell','Lua','Zig','Elixir',
+  'Clojure','F#','OCaml','Assembly','VHDL','Prolog',
+]
+
+export interface Achievement {
+  id: string; emoji: string; label: string; desc: string
+  hint: string; color: string
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+  unlocked: boolean
+  category: 'profile' | 'academic' | 'kanban' | 'social' | 'secret' | 'system'
+}
+
+const RARITY_LABEL: Record<string, string> = {
+  common: 'Comum', rare: 'Raro', epic: 'Épico', legendary: 'Lendário',
+}
+const RARITY_COLOR: Record<string, string> = {
+  common: '#6b7280', rare: '#3b82f6', epic: '#a855f7', legendary: '#f59e0b',
+}
+const CATEGORY_LABELS: Record<string, string> = {
+  profile: 'Perfil', academic: 'Acadêmico', kanban: 'Organização',
+  social: 'Comunidade', secret: 'Secretas', system: 'Sistema',
+}
+
+export const buildAchievements = (opts: {
+  hasBoards: boolean; hasMultipleBoards: boolean; hasLanguage: boolean
+  hasArea: boolean; hasPassedSubject: boolean; hasFailedSubject: boolean
+  hasAvatar: boolean; hasNusp: boolean; eventCount: number
+  subjectCount: number; gradeCount: number; loginCount: number
+  easterEggFound: boolean
+}): Achievement[] => [
+  { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',       rarity: 'legendary', category: 'system',
+    desc: 'Membro fundador do DaSIboard',          hint: 'Crie sua conta',          color: '#f59e0b', unlocked: true },
+  { id: 'coder',      emoji: '💻', label: 'Desenvolvedor',  rarity: 'common',    category: 'profile',
+    desc: 'Selecionou uma linguagem principal',     hint: 'Escolha sua linguagem',    color: '#6366f1', unlocked: opts.hasLanguage },
+  { id: 'specialist', emoji: '🎯', label: 'Especialista',   rarity: 'common',    category: 'profile',
+    desc: 'Selecionou uma área de atuação',         hint: 'Escolha sua área',          color: '#06b6d4', unlocked: opts.hasArea },
+  { id: 'face',       emoji: '📸', label: 'Fotogênico',     rarity: 'common',    category: 'profile',
+    desc: 'Adicionou foto de perfil',               hint: 'Faça upload de uma foto',   color: '#ec4899', unlocked: opts.hasAvatar },
+  { id: 'identified', emoji: '🪪', label: 'Identificado',   rarity: 'common',    category: 'profile',
+    desc: 'Adicionou número USP',                   hint: 'Informe seu Nº USP',         color: '#8b5cf6', unlocked: opts.hasNusp },
+  { id: 'eisenhower', emoji: '📋', label: 'Eisenhower',     rarity: 'common',    category: 'kanban',
+    desc: 'Criou o primeiro quadro Kanban',         hint: 'Crie um quadro em Kanban',  color: '#22c55e', unlocked: opts.hasBoards },
+  { id: 'organizer',  emoji: '🗂️', label: 'Organizador',   rarity: 'rare',      category: 'kanban',
+    desc: 'Criou 3 ou mais quadros Kanban',         hint: 'Crie pelo menos 3 quadros', color: '#10b981', unlocked: opts.hasMultipleBoards },
+  { id: 'planner',    emoji: '🗓️', label: 'Planejador',    rarity: 'common',    category: 'kanban',
+    desc: 'Criou 5+ eventos no calendário',         hint: 'Adicione eventos',           color: '#f59e0b', unlocked: opts.eventCount >= 5 },
+  { id: 'night_owl',  emoji: '🦉', label: 'Coruja',         rarity: 'rare',      category: 'academic',
+    desc: 'Aprovado em pelo menos uma disciplina',  hint: 'Registre notas e passe',    color: '#a855f7', unlocked: opts.hasPassedSubject },
+  { id: 'survivor',   emoji: '💀', label: 'Sobrevivente',   rarity: 'rare',      category: 'academic',
+    desc: 'Reprovado e voltou mais forte',          hint: 'Registre uma reprovação',   color: '#ef4444', unlocked: opts.hasFailedSubject },
+  { id: 'scholar',    emoji: '📚', label: 'Estudioso',      rarity: 'epic',      category: 'academic',
+    desc: 'Cadastrou 6+ disciplinas',               hint: 'Adicione 6 matérias',       color: '#6366f1', unlocked: opts.subjectCount >= 6 },
+  { id: 'annotator',  emoji: '✏️', label: 'Anotador',       rarity: 'common',    category: 'academic',
+    desc: 'Registrou 10+ notas',                   hint: 'Adicione notas',             color: '#f97316', unlocked: opts.gradeCount >= 10 },
+  { id: 'easter_egg', emoji: '🥚', label: 'Caçador',        rarity: 'legendary', category: 'secret',
+    desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
+  { id: 'night_coder',emoji: '🌙', label: 'Coder Noturno',  rarity: 'epic',      category: 'secret',
+    desc: 'Usou o app após meia-noite',             hint: '???',                        color: '#6366f1', unlocked: new Date().getHours() >= 0 && new Date().getHours() < 4 },
+]
+
 // ── Canvas utilities ───────────────────────────────────────────────────────────
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
