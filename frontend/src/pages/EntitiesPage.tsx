@@ -474,7 +474,7 @@ function GalleryTab({ entity, isMember }: { entity: Entity; isMember: boolean })
       )}
       {lightbox && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-         role="dialog" aria-modal="true"         role="dialog" aria-modal="true"
+         role="dialog" aria-modal="true"
              style={{ background: 'rgba(0,0,0,0.88)' }}
              onClick={() => setLightbox(null)}>
           <img src={lightbox.url} alt={lightbox.caption} className="max-w-full max-h-full rounded-2xl object-contain" />
