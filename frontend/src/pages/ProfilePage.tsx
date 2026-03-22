@@ -259,194 +259,67 @@ function drawDecorativeQR(
 function drawCardBackground(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, zoneH: number,
-  style: CardStyle, hue: number, sat: number, lit: number,
+  _style: CardStyle, hue: number, sat: number, lit: number,
   rng: () => number,
   entityBg: { color: string; name: string } | null,
 ) {
-  const pal = deriveColors(hue, sat, lit)
-  const { c1,c2,c3,c4,c5 } = pal
-  const isDark = lit < 44
+  // Full card: always pure white
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, W, H)
 
+  // Blob color — follows hue for default, entity color for entity bg
+  let blobH = hue, blobS = sat, blobL = lit
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
     const [eh,es,el] = rgbToHsl(er,eg,eb)
-    ctx.fillStyle = isDark ? `hsl(${eh},${es*0.4}%,12%)` : `hsl(${eh},${es*0.25}%,96%)`
-    ctx.fillRect(0,0,W,H)
-    const ew = ctx.createLinearGradient(0,0,W*0.6,H)
-    ew.addColorStop(0, `rgba(${er},${eg},${eb},0.12)`); ew.addColorStop(1, `rgba(${er},${eg},${eb},0.05)`)
-    ctx.fillStyle = ew; ctx.fillRect(0,0,W,H)
-    const ig = ctx.createLinearGradient(0,zoneH,0,H)
-    ig.addColorStop(0, `rgba(${er},${eg},${eb},0.22)`); ig.addColorStop(1, `rgba(${er},${eg},${eb},0.10)`)
-    ctx.fillStyle = ig; ctx.fillRect(0,zoneH,W,H-zoneH)
-    ctx.fillStyle = `rgba(${er},${eg},${eb},0.7)`; ctx.fillRect(0,H-5,W,5)
-  } else {
-    ctx.fillStyle = isDark ? `hsl(${hue},${Math.round(sat*0.18)}%,8%)` : `hsl(${hue},${Math.round(sat*0.12)}%,97%)`
-    ctx.fillRect(0,0,W,H)
+    blobH = eh; blobS = es * 100; blobL = el * 100
   }
+  const blobMain  = `hsl(${blobH},${blobS}%,${blobL}%)`
+  const blobShift = `hsl(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%)`
 
-  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+  // Clip strictly to colored zone — nothing bleeds into white area
+  ctx.save()
+  ctx.beginPath(); ctx.rect(0, 0, W, zoneH); ctx.clip()
 
-  switch(style) {
-    case 'geometric_rays': {
-      const side=rng()<0.5?-1:1, cx2=side<0?W*-0.06:W*1.06, cy2=H*(-0.08+rng()*0.22)
-      const nr=16+Math.floor(rng()*10), span=Math.PI*(0.50+rng()*0.30)
-      const base=side<0?-0.15:Math.PI-span+0.15, dist=Math.sqrt(W*W+H*H)*1.7
-      for (let i=0;i<nr;i++) {
-        const a1=base+(i/nr)*span, a2=base+((i+1)/nr)*span
-        ctx.beginPath(); ctx.moveTo(cx2,cy2)
-        ctx.lineTo(cx2+Math.cos(a1)*dist, cy2+Math.sin(a1)*dist)
-        ctx.lineTo(cx2+Math.cos(a2)*dist, cy2+Math.sin(a2)*dist); ctx.closePath()
-        const rg=ctx.createLinearGradient(cx2,cy2,cx2+Math.cos((a1+a2)/2)*dist*0.75,cy2+Math.sin((a1+a2)/2)*dist*0.75)
-        rg.addColorStop(0,i%2===0?c1:c2); rg.addColorStop(0.6,i%2===0?c2:c3); rg.addColorStop(1,i%3===0?c4:c3)
-        ctx.globalAlpha=i%2===0?0.9:0.72; ctx.fillStyle=rg; ctx.fill()
-      }
-      ctx.globalAlpha=1; break
+  // White base inside zone (blobs paint over this)
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
+
+  // 1–3 organic amorphous blobs (cardinal-spline)
+  const nBlobs = 1 + Math.floor(rng() * 2)
+  for (let bi = 0; bi < nBlobs; bi++) {
+    const blobCx = W     * (0.10 + rng() * 0.80)
+    const blobCy = zoneH * (-0.15 + rng() * 0.75)
+    const blobR  = Math.min(W, zoneH) * (0.45 + rng() * 0.50)
+    const n = 7 + Math.floor(rng() * 6)
+    const pts: [number,number][] = []
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * Math.PI * 2 - Math.PI / 2
+      const r = blobR * (0.42 + rng() * 0.90)
+      pts.push([blobCx + Math.cos(angle)*r, blobCy + Math.sin(angle)*r])
     }
-    case 'layer_stack': {
-      const nl=8+Math.floor(rng()*5), kind=rng()<0.25?'rect':rng()<0.5?'hex':rng()<0.75?'rounded':'diamond'
-      for (let i=nl-1;i>=0;i--) {
-        const t=i/nl, mg=(1-t)*W*0.40, tm=(1-t)*zoneH*0.35
-        const hh=(hue+i*28)%360, ll=isDark?20+t*45:35+t*42
-        const lg=ctx.createLinearGradient(mg,tm,W-mg,zoneH-tm*0.3)
-        lg.addColorStop(0,`hsl(${hh},${sat}%,${ll}%)`); lg.addColorStop(1,`hsl(${(hh+30)%360},${sat-12}%,${Math.max(ll-22,10)}%)`)
-        ctx.globalAlpha=0.38+t*0.52; ctx.fillStyle=lg
-        if (kind==='rect') { ctx.fillRect(mg,tm,W-mg*2,zoneH-tm) }
-        else if (kind==='rounded') { roundRect(ctx,mg,tm,W-mg*2,zoneH-tm,22); ctx.fill() }
-        else if (kind==='hex') {
-          const hcx=W/2, hcy=tm+(zoneH-tm)/2, rx=(W-mg*2)/2, ry=(zoneH-tm)/2
-          ctx.beginPath(); for(let j=0;j<6;j++){const a=(j/6)*Math.PI*2-Math.PI/6;j===0?ctx.moveTo(hcx+Math.cos(a)*rx,hcy+Math.sin(a)*ry*0.8):ctx.lineTo(hcx+Math.cos(a)*rx,hcy+Math.sin(a)*ry*0.8)}
-          ctx.closePath(); ctx.fill()
-        } else {
-          const dcx=W/2, dcy=tm+(zoneH-tm)/2, dx=(W-mg*2)/2, dy=(zoneH-tm)/2
-          ctx.beginPath(); ctx.moveTo(dcx,dcy-dy); ctx.lineTo(dcx+dx,dcy); ctx.lineTo(dcx,dcy+dy); ctx.lineTo(dcx-dx,dcy); ctx.closePath(); ctx.fill()
-        }
-      }
-      ctx.globalAlpha=1; break
+    ctx.beginPath()
+    for (let i = 0; i < pts.length; i++) {
+      const p0 = pts[(i-1+n)%n], p1 = pts[i]
+      const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
+      const cp1x = p1[0]+(p2[0]-p0[0])/5, cp1y = p1[1]+(p2[1]-p0[1])/5
+      const cp2x = p2[0]-(p3[0]-p1[0])/5, cp2y = p2[1]-(p3[1]-p1[1])/5
+      if (i === 0) ctx.moveTo(p1[0], p1[1])
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
     }
-    case 'wave_lines': {
-      const nw=32+Math.floor(rng()*20), amp=18+rng()*58, frq=0.007+rng()*0.018, ph=rng()*Math.PI*2
-      const dbl=rng()<0.4, frq2=frq*(1.7+rng()*0.8)
-      for (let wi=0;wi<nw;wi++) {
-        const t=wi/nw, y0=t*zoneH, hh=(hue+t*70)%360, ll=isDark?25+t*38:42+t*32
-        ctx.beginPath(); ctx.moveTo(-8,y0)
-        for (let x=0;x<=W+8;x+=2){const w1=Math.sin(x*frq+ph+wi*0.28)*amp,w2=dbl?Math.sin(x*frq2+ph*1.4+wi*0.1)*amp*0.4:0;ctx.lineTo(x,y0+w1+w2)}
-        ctx.lineTo(W+8,zoneH+8); ctx.lineTo(-8,zoneH+8); ctx.closePath()
-        ctx.fillStyle=`hsl(${hh},${sat}%,${ll}%)`; ctx.globalAlpha=0.88; ctx.fill()
-      }
-      ctx.globalAlpha=1; break
-    }
-    case 'holographic': {
-      const ang=rng()*Math.PI/3, grad=ctx.createLinearGradient(0,0,Math.cos(ang)*W,Math.sin(ang)*zoneH)
-      for(let i=0;i<=10;i++){const t=i/10,hh=(hue+t*340)%360;grad.addColorStop(t,`hsl(${hh},${85+rng()*12}%,${isDark?48:62}%)`)}
-      ctx.globalAlpha=0.94; ctx.fillStyle=grad; ctx.fillRect(0,0,W,zoneH)
-      const sw=180+rng()*120, sx=rng()*(W-sw)
-      const shim=ctx.createLinearGradient(sx,0,sx+sw,zoneH)
-      shim.addColorStop(0,'rgba(255,255,255,0)'); shim.addColorStop(0.3,'rgba(255,255,255,0.15)')
-      shim.addColorStop(0.5,'rgba(255,255,255,0.42)'); shim.addColorStop(0.7,'rgba(255,255,255,0.15)'); shim.addColorStop(1,'rgba(255,255,255,0)')
-      ctx.fillStyle=shim; ctx.fillRect(0,0,W,zoneH)
-      const shim2=ctx.createLinearGradient(0,0,W,zoneH*0.4)
-      shim2.addColorStop(0,'rgba(200,100,255,0)'); shim2.addColorStop(0.45,'rgba(200,100,255,0.12)')
-      shim2.addColorStop(0.55,'rgba(100,220,255,0.12)'); shim2.addColorStop(1,'rgba(100,220,255,0)')
-      ctx.fillStyle=shim2; ctx.fillRect(0,0,W,zoneH); ctx.globalAlpha=1; break
-    }
-    case 'boarding_pass': {
-      const grad=ctx.createLinearGradient(rng()*W*0.3,0,W*(0.7+rng()*0.3),zoneH)
-      grad.addColorStop(0,c1); grad.addColorStop(0.38,c2); grad.addColorStop(0.72,c3); grad.addColorStop(1,c4)
-      ctx.fillStyle=grad; ctx.globalAlpha=0.96; ctx.fillRect(0,0,W,zoneH); ctx.globalAlpha=1
-      const perf=zoneH*0.82; ctx.setLineDash([9,7]); ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.lineWidth=1.5
-      ctx.beginPath(); ctx.moveTo(24,perf); ctx.lineTo(W-24,perf); ctx.stroke(); ctx.setLineDash([])
-      const drawBars=(sx:number,ex:number,y:number,h:number)=>{
-        let bx=sx; while(bx<ex){const bw=1+Math.floor(rng()*5); ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(bx,y,bw,h*(0.5+rng()*0.5)); bx+=bw+(rng()<0.3?2:1)}
-      }
-      drawBars(32,W*0.5-20,perf+8,zoneH-perf-8); drawBars(W*0.55,W-32,perf+8,zoneH-perf-8); break
-    }
-    case 'concentric_shapes': {
-      const nr=10+Math.floor(rng()*6), sides=3+Math.floor(rng()*4)
-      const cx2=W*(0.30+rng()*0.40), cy2=zoneH*(0.25+rng()*0.35), maxR=Math.min(W,zoneH)*0.82, rot=rng()*Math.PI*2
-      const bg2=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,maxR*1.1)
-      bg2.addColorStop(0,c1); bg2.addColorStop(0.6,c2); bg2.addColorStop(1,c3)
-      ctx.fillStyle=bg2; ctx.fillRect(0,0,W,zoneH)
-      for(let ri=nr;ri>=0;ri--){
-        const t=ri/nr, r=maxR*t, hh=(hue+ri*18)%360, ll=isDark?18+ri*(52/nr):28+ri*(55/nr)
-        ctx.beginPath()
-        for(let pi=0;pi<sides;pi++){const a=rot+(pi/sides)*Math.PI*2;pi===0?ctx.moveTo(cx2+Math.cos(a)*r,cy2+Math.sin(a)*r):ctx.lineTo(cx2+Math.cos(a)*r,cy2+Math.sin(a)*r)}
-        ctx.closePath(); ctx.strokeStyle=`hsl(${hh},${sat}%,${ll}%)`; ctx.lineWidth=2.5+(1-t)*4; ctx.globalAlpha=0.12+(1-t)*0.55; ctx.stroke()
-      }
-      ctx.globalAlpha=1; break
-    }
-    case 'ink_splatter': {
-      const ns=2+Math.floor(rng()*4)
-      for(let si=0;si<ns;si++){
-        const scx=W*(0.05+rng()*0.90), scy=zoneH*(-0.08+rng()*0.85), sr=Math.min(W,zoneH)*(0.40+rng()*0.60)
-        const n=9+Math.floor(rng()*7), pts:[number,number][]=[]
-        for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2-Math.PI/2,rr=sr*(0.30+rng()*1.05);pts.push([scx+Math.cos(a)*rr,scy+Math.sin(a)*rr])}
-        ctx.beginPath()
-        for(let i=0;i<pts.length;i++){
-          const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n]
-          const cp1x=p1[0]+(p2[0]-p0[0])/5,cp1y=p1[1]+(p2[1]-p0[1])/5
-          const cp2x=p2[0]-(p3[0]-p1[0])/5,cp2y=p2[1]-(p3[1]-p1[1])/5
-          if(i===0)ctx.moveTo(p1[0],p1[1]); ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
-        }
-        ctx.closePath()
-        const hh=(hue+si*35)%360
-        const sg=ctx.createRadialGradient(scx-sr*0.2,scy-sr*0.2,sr*0.03,scx+sr*0.1,scy+sr*0.1,sr*1.05)
-        sg.addColorStop(0,`hsl(${hh},${sat}%,${lit}%)`); sg.addColorStop(0.55,`hsl(${(hh+35)%360},${sat-10}%,${lit-18}%)`); sg.addColorStop(1,'rgba(0,0,0,0)')
-        ctx.fillStyle=sg; ctx.globalAlpha=si===0?0.94:0.62; ctx.fill()
-      }
-      ctx.globalAlpha=1; break
-    }
-    case 'halftone': {
-      const bg2=ctx.createLinearGradient(0,0,W,zoneH); bg2.addColorStop(0,c1); bg2.addColorStop(1,c3)
-      ctx.fillStyle=bg2; ctx.fillRect(0,0,W,zoneH)
-      const spacing=18+Math.floor(rng()*18), maxDot=spacing*0.52
-      ctx.fillStyle=isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.22)'
-      for(let dy=spacing/2;dy<zoneH;dy+=spacing){
-        for(let dx=spacing/2;dx<W;dx+=spacing){
-          const dX=(dx/W-0.5),dY=(dy/zoneH-0.5), dist=Math.sqrt(dX*dX+dY*dY)
-          const r=maxDot*(0.15+dist*1.4); if(r<0.5)continue
-          ctx.beginPath(); ctx.arc(dx,dy,Math.min(r,maxDot),0,Math.PI*2); ctx.fill()
-        }
-      }
-      break
-    }
-    case 'topographic': {
-      const bg2=ctx.createLinearGradient(0,0,W,zoneH); bg2.addColorStop(0,isDark?c3:c5); bg2.addColorStop(1,isDark?`hsl(${hue},${sat*0.4}%,8%)`:c4)
-      ctx.fillStyle=bg2; ctx.fillRect(0,0,W,zoneH)
-      const nl2=12+Math.floor(rng()*10), frq=0.004+rng()*0.010, frq2=frq*(1.3+rng()*0.5)
-      for(let li=0;li<nl2;li++){
-        const t=li/nl2, baseY=t*zoneH, hh=(hue+li*15)%360
-        ctx.beginPath(); ctx.moveTo(0,baseY)
-        for(let x=0;x<=W;x+=4){ctx.lineTo(x,baseY+Math.sin(x*frq+li*1.1)*(35+rng()*25)+Math.sin(x*frq2+li*0.7)*(15+rng()*12))}
-        ctx.strokeStyle=`hsl(${hh},${sat}%,${isDark?45+t*30:30+t*35}%)`
-        ctx.lineWidth=1.5+(1-t)*1.5; ctx.globalAlpha=0.55+(1-t)*0.35; ctx.stroke()
-      }
-      ctx.globalAlpha=1; break
-    }
-    case 'neon_glow': {
-      ctx.fillStyle=`hsl(${hue},${sat*0.15}%,6%)`; ctx.fillRect(0,0,W,zoneH)
-      const norbs=3+Math.floor(rng()*3)
-      for(let oi=0;oi<norbs;oi++){
-        const ox=rng()*W,oy=rng()*zoneH,or=80+rng()*160,hh=(hue+oi*70)%360
-        const og=ctx.createRadialGradient(ox,oy,0,ox,oy,or)
-        og.addColorStop(0,`hsl(${hh},100%,80%)`); og.addColorStop(0.2,`hsl(${hh},90%,55%)`)
-        og.addColorStop(0.6,`hsla(${hh},85%,40%,0.3)`); og.addColorStop(1,`hsla(${hh},80%,30%,0)`)
-        ctx.fillStyle=og; ctx.globalAlpha=0.65+rng()*0.30; ctx.fillRect(0,0,W,zoneH)
-      }
-      const nlines=3+Math.floor(rng()*4)
-      for(let li=0;li<nlines;li++){
-        const ly=rng()*zoneH,hh=(hue+li*45)%360
-        const lg=ctx.createLinearGradient(0,ly,W,ly)
-        lg.addColorStop(0,'rgba(0,0,0,0)'); lg.addColorStop(0.3,`hsl(${hh},100%,75%)`); lg.addColorStop(0.7,`hsl(${hh},100%,75%)`); lg.addColorStop(1,'rgba(0,0,0,0)')
-        ctx.strokeStyle=lg; ctx.lineWidth=1.5; ctx.globalAlpha=0.7; ctx.beginPath(); ctx.moveTo(0,ly); ctx.lineTo(W,ly); ctx.stroke()
-        ctx.lineWidth=6; ctx.globalAlpha=0.15; ctx.stroke()
-      }
-      ctx.globalAlpha=1; break
-    }
-    default: ctx.fillStyle=`hsl(${hue},${sat}%,${lit}%)`; ctx.fillRect(0,0,W,zoneH)
+    ctx.closePath()
+    const grad = ctx.createRadialGradient(
+      blobCx - blobR*0.25, blobCy - blobR*0.20, blobR*0.04,
+      blobCx + blobR*0.06, blobCy + blobR*0.06, blobR*1.1
+    )
+    grad.addColorStop(0,    blobMain)
+    grad.addColorStop(0.55, blobShift)
+    grad.addColorStop(1,    `hsla(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%,0)`)
+    ctx.fillStyle = grad
+    ctx.globalAlpha = bi === 0 ? 1 : 0.60
+    ctx.fill(); ctx.globalAlpha = 1
   }
   ctx.restore()
 }
-
 function drawCardEffect(ctx: CanvasRenderingContext2D, W: number, H: number, zoneH: number, effect: CardEffect, hue: number, rng: () => number) {
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
   switch(effect) {
@@ -508,38 +381,24 @@ function drawPortraitInfo(
   entityBg: { color: string; name: string } | null,
   style: CardStyle,
 ) {
-  const isDark = lit < 44
-  const patternDark = isDark || style === 'neon_glow' || style === 'holographic'
-  const infoDark    = entityBg ? isDark : isDark
+  // White bg always — ink always dark, accent follows blob hue
+  const inkColor  = `hsl(${hue},55%,12%)`
+  const inkFaint  = `hsl(${hue},30%,45%)`
+  const accentClr = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-18,18)}%)`
 
-  const inkColor  = infoDark  ? `hsl(${hue},40%,90%)`  : `hsl(${hue},55%,12%)`
-  const inkFaint  = infoDark  ? `hsl(${hue},25%,72%)`  : `hsl(${hue},30%,45%)`
-  const accentClr = entityBg  ? entityBg.color          : `hsl(${hue},${sat}%,${Math.max(lit-18,18)}%)`
-
-  // ── Avatar — bottom-left corner of pattern zone ───────────────────────────
-  const avR  = 54 // radius
+  // ── Avatar — bottom-left of colored zone (always light text on blob) ──────
+  const avR  = 54
   const avCx = 52 + avR
   const avCy = zoneH - avR - 28
   const [r1,g1,b1] = hslToRgb(hue, sat, lit)
   const borderClr = entityBg ? entityBg.color : `rgb(${r1},${g1},${b1})`
   const initials  = user.full_name.trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase()
-  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClr, patternDark)
+  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClr, true)
 
-  // ── Style watermark — top-right of pattern zone ───────────────────────────
-  const styleCode: Record<CardStyle,string> = {
-    geometric_rays:'GEO', layer_stack:'LAY', wave_lines:'WAV', holographic:'HOL',
-    boarding_pass:'TKT', concentric_shapes:'CON', ink_splatter:'INK',
-    halftone:'DOT', topographic:'TOP', neon_glow:'NEO',
-  }
-  ctx.font = '500 9px monospace'
-  ctx.fillStyle = patternDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.22)'
-  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'
-  ctx.fillText(styleCode[style] ?? '···', W-40, 34)
-
-  // ── NUSP watermark — bottom-right of pattern zone (small) ─────────────────
+  // ── NUSP watermark — bottom-right of colored zone ─────────────────────────
   ctx.font = '400 9px monospace'
-  ctx.fillStyle = patternDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.22)'
-  ctx.textAlign = 'right'
+  ctx.fillStyle = 'rgba(255,255,255,0.40)'
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'
   if (user.nusp) ctx.fillText(`#${user.nusp}`, W-44, zoneH - 18)
   ctx.textAlign = 'left'
 
@@ -667,63 +526,40 @@ function drawLandscapeCard(
   addGrain(ctx, seededRng(user.id+'-grainv3'), leftW, H, 0.038, 3000)
   drawCardEffect(ctx, leftW, H, H, effect, hue, seededRng(user.id+'-efxv3'))
 
-  // Right zone: entity tint or neutral
-  const [er,eg,eb] = entityBg ? hexToRgb(entityBg.color) : hslToRgb(hue, sat*0.12, isDark?12:96)
-  const [eh,es,el] = rgbToHsl(er,eg,eb)
-  const rightBg = entityBg
-    ? (isDark ? `hsl(${eh},${es*0.4}%,12%)` : `hsl(${eh},${es*0.25}%,96%)`)
-    : (isDark ? `hsl(${hue},${sat*0.15}%,10%)` : `hsl(${hue},${sat*0.08}%,97%)`)
-  ctx.fillStyle = rightBg; ctx.fillRect(leftW, 0, W-leftW, H)
-  if (entityBg) {
-    const eg2 = ctx.createLinearGradient(leftW,0,W,H)
-    eg2.addColorStop(0, `rgba(${er},${eg},${eb},0.14)`); eg2.addColorStop(1, `rgba(${er},${eg},${eb},0.06)`)
-    ctx.fillStyle=eg2; ctx.fillRect(leftW,0,W-leftW,H)
-    // Entity color bar on right edge
-    ctx.fillStyle=`rgba(${er},${eg},${eb},0.7)`; ctx.fillRect(W-5,0,5,H)
-  }
+  // Right zone: always pure white
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(leftW, 0, W-leftW, H)
 
-  // Separator line
-  ctx.strokeStyle=isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.08)'
+  // Separator
+  ctx.strokeStyle='rgba(0,0,0,0.08)'
   ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(leftW,20); ctx.lineTo(leftW,H-20); ctx.stroke()
 
-  // Avatar — centered in left zone
+  // Avatar — centered in left (colored) zone — always light text on blob
   const avR  = 72
   const avCx = Math.round(leftW/2)
   const avCy = Math.round(H*0.42)
   const initials = user.full_name.trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase()
   const [r1,g1,b1] = hslToRgb(hue, sat, lit)
-  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, `rgb(${r1},${g1},${b1})`, isDark || style==='neon_glow')
+  const borderClrL = entityBg ? entityBg.color : `rgb(${r1},${g1},${b1})`
+  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClrL, true)
 
-  // Institution label above avatar
-  const patDark = isDark || style==='neon_glow' || style==='holographic'
+  // Institution label — white on blob
   ctx.font='500 9px monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'
-  ctx.fillStyle=patDark?'rgba(255,255,255,0.55)':'rgba(0,0,0,0.45)'
+  ctx.fillStyle='rgba(255,255,255,0.65)'
   ctx.fillText('EACH · USP', avCx, avCy-avR-12)
 
-  // Name below avatar in left zone
+  // Name below avatar — white on blob
   const parts = user.full_name.trim().split(/\s+/)
-  ctx.font='700 15px sans-serif'
-  ctx.fillStyle=patDark?'rgba(255,255,255,0.88)':'rgba(0,0,0,0.78)'
+  ctx.font='700 15px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.92)'
   ctx.fillText(parts[0]??'', avCx, avCy+avR+22)
   if (parts.length>1) {
-    ctx.font='400 12px sans-serif'
-    ctx.fillStyle=patDark?'rgba(255,255,255,0.55)':'rgba(0,0,0,0.45)'
+    ctx.font='400 12px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.60)'
     ctx.fillText(parts.slice(1).join(' '), avCx, avCy+avR+38)
   }
 
-  // Style code bottom of left zone
-  const styleCode: Record<CardStyle,string> = {
-    geometric_rays:'GEO', layer_stack:'LAY', wave_lines:'WAV', holographic:'HOL',
-    boarding_pass:'TKT', concentric_shapes:'CON', ink_splatter:'INK',
-    halftone:'DOT', topographic:'TOP', neon_glow:'NEO',
-  }
-  ctx.font='400 8px monospace'; ctx.fillStyle=patDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.18)'
-  ctx.fillText(styleCode[style]??'···', avCx, H-16)
-
-  // ── Right zone info ─────────────────────────────────────────────────────────
+  // ── Right zone info — dark ink on white ────────────────────────────────────
   const rx    = leftW + 36
-  const inkC  = isDark ? `hsl(${hue},38%,88%)` : `hsl(${hue},55%,14%)`
-  const inkF  = isDark ? `hsl(${hue},22%,64%)` : `hsl(${hue},28%,46%)`
+  const inkC  = `hsl(${hue},55%,14%)`
+  const inkF  = `hsl(${hue},28%,46%)`
   const acC   = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-16,18)}%)`
   ctx.textAlign='left'; ctx.textBaseline='alphabetic'
 
@@ -742,7 +578,7 @@ function drawLandscapeCard(
   ctx.fillText(TITLES[Math.floor(trng()*TITLES.length)], rx, 94)
 
   // Divider
-  ctx.strokeStyle=isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.10)'
+  ctx.strokeStyle='rgba(0,0,0,0.08)'
   ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(rx,108); ctx.lineTo(W-36,108); ctx.stroke()
 
   // Fields grid
@@ -781,10 +617,10 @@ function drawLandscapeCard(
   // QR decorative
   const qrSize = 64
   const qrX = W - 36 - qrSize, qrY = H - 36 - qrSize
-  drawDecorativeQR(ctx, qrX, qrY, qrSize, isDark?'rgba(255,255,255,0.45)':'rgba(0,0,0,0.35)', seededRng(user.id+'-qr'))
+  drawDecorativeQR(ctx, qrX, qrY, qrSize, 'rgba(0,0,0,0.35)', seededRng(user.id+'-qr'))
 
   // ID watermark
-  ctx.font='400 8px monospace'; ctx.fillStyle=inkC; ctx.globalAlpha=0.14; ctx.textAlign='right'
+  ctx.font='400 8px monospace'; ctx.fillStyle='rgba(0,0,0,0.20)'; ctx.globalAlpha=1; ctx.textAlign='right'
   ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), W-36, H-14)
   ctx.globalAlpha=1; ctx.textAlign='left'
 
