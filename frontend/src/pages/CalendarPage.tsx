@@ -12,6 +12,7 @@ import {
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import clsx from 'clsx'
+import { useEventReminders, requestPushPermission } from '@/hooks/usePushNotifications'
 
 interface Event {
   id: string; title: string; description?: string
@@ -64,6 +65,12 @@ export default function CalendarPage() {
   }
 
   useEffect(() => { load() }, [current])
+
+  // Auto-schedule push notifications for future events
+  const { schedule } = useEventReminders()
+  useEffect(() => {
+    if (events.length > 0) schedule(events)
+  }, [events, schedule])
 
   const filtered = events.filter((e) => {
     if (filterType !== 'all' && e.event_type !== filterType) return false

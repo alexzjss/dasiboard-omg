@@ -1,4 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { NotesPanel } from '@/components/NotesEditor'
+import ReviewMode from '@/components/ReviewMode'
+import { useNotes } from '@/hooks/useNotes'
 import {
   Plus, Trash2, BookOpen, TrendingUp, ChevronDown, ChevronRight,
   Award, AlertTriangle, X, Minus, Save, CheckCircle2, Clock, Lock,
@@ -307,13 +310,14 @@ function FluxoPopup({ def, fluxoStates, subject, onSave, onClose }: {
 }
 
 // ─────────────────────── Subject Card ────────────────────────────────────────
-function SubjectCard({ subject, fluxoDef, fluxoStates, onDelete, onAddGrade, onDeleteGrade, onUpdateAttendance, onOpenFluxo }: {
+function SubjectCard({ subject, fluxoDef, fluxoStates, onDelete, onAddGrade, onDeleteGrade, onUpdateAttendance, onOpenFluxo, onStartReview }: {
   subject: Subject; fluxoDef?: SubjectDef; fluxoStates: Record<string, FluxoState>
   onDelete: () => void
   onAddGrade: (id: string, g: Partial<Grade>) => void
   onDeleteGrade: (sid: string, gid: string) => void
   onUpdateAttendance: (id: string, total: number, att: number) => void
   onOpenFluxo: (def: SubjectDef) => void
+  onStartReview?: (subjectId: string, subjectName: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const [adding, setAdding] = useState(false)

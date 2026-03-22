@@ -24,6 +24,10 @@ import { ExpBar } from '@/components/ExpCounter'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { useChronoPortalSound } from '@/hooks/useChronoPortal'
 import { BlueprintRuler } from '@/components/BlueprintRuler'
+import { ShellPrompt } from '@/components/ShellPrompt'
+import { EvaSyncBar } from '@/components/EvaSync'
+import { PortatilSaveState } from '@/components/PortatilSaveState'
+import { AchievementToast, useAchievementToast } from '@/components/AchievementToast'
 import clsx from 'clsx'
 
 const nav = [
@@ -434,6 +438,8 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
         </div>
         {/* Lo-fi player — shown for DLC, Pixel, 720, Portátil */}
         <LofiPlayer />
+        {/* Eva sync rate bar */}
+        <EvaSyncBar />
         {/* Pomodoro / Study mode */}
         <StudyMode />
       </div>
@@ -544,6 +550,7 @@ export default function AppLayout() {
   const colorBlind = useColorBlindMode()
   const liteMode  = useLiteMode()
   useChronoPortalSound()
+  const { pending: achPending, dismiss: achDismiss } = useAchievementToast()
 
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
@@ -569,6 +576,9 @@ export default function AppLayout() {
       <ColorBlindFilters />
       <OfflineBanner />
       <BlueprintRuler />
+      <ShellPrompt />
+      <PortatilSaveState />
+      {achPending && <AchievementToast achievement={achPending} onDismiss={achDismiss} />}
       {focusMode.active && <FocusModeBar onExit={focusMode.exit} />}
       {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
 

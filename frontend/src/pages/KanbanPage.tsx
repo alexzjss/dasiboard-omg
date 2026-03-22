@@ -10,7 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Plus, Trash2, GripVertical, AlertCircle, Clock, ChevronDown,
-  Calendar, Flag, Edit2, X, Check,
+  Calendar, Flag, Edit2, X, Check, SquareCheck,
 } from 'lucide-react'
 import { format, isPast, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -18,10 +18,15 @@ import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import clsx from 'clsx'
 
+interface ChecklistItem {
+  id: string; text: string; done: boolean
+}
 interface Card {
   id: string; title: string; description?: string
   priority: string; due_date?: string; position: number; column_id: string
   created_at: string
+  assignee?: string
+  checklist?: ChecklistItem[]
 }
 interface Column { id: string; title: string; position: number; cards: Card[] }
 interface Board  { id: string; title: string; color: string; columns: Column[] }
@@ -46,18 +51,34 @@ function CardModal({
   onSave: (cardId: string, data: Partial<Card>) => Promise<void>
   onDelete: (cardId: string) => Promise<void>
 }) {
-  const [title, setTitle] = useState(card?.title ?? '')
-  const [desc, setDesc]   = useState(card?.description ?? '')
-  const [priority, setPri] = useState(card?.priority ?? 'medium')
-  const [due, setDue]     = useState(card?.due_date ? card.due_date.slice(0, 16) : '')
-  const [saving, setSaving] = useState(false)
+  const [title, setTitle]       = useState(card?.title ?? '')
+  const [desc, setDesc]         = useState(card?.description ?? '')
+  const [priority, setPri]      = useState(card?.priority ?? 'medium')
+  const [due, setDue]           = useState(card?.due_date ? card.due_date.slice(0, 16) : '')
+  const [assignee, setAssignee] = useState(card?.assignee ?? '')
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(card?.checklist ?? [])
+  const [newItem, setNewItem]   = useState('')
+  const [saving, setSaving]     = useState(false)
 
   if (!card) return null
+
+  const addItem = () => {
+    if (!newItem.trim()) return
+    setChecklist(p => [...p, { id: crypto.randomUUID(), text: newItem.trim(), done: false }])
+    setNewItem('')
+  }
+  const toggleItem = (id: string) => setChecklist(p => p.map(i => i.id === id ? {...i, done: !i.done} : i))
+  const removeItem = (id: string) => setChecklist(p => p.filter(i => i.id !== id))
+  const doneCount = checklist.filter(i => i.done).length
 
   const handleSave = async () => {
     if (!title.trim()) return
     setSaving(true)
-    await onSave(card.id, { title: title.trim(), description: desc || undefined, priority, due_date: due || undefined })
+    await onSave(card.id, {
+      title: title.trim(), description: desc || undefined, priority,
+      due_date: due || undefined, assignee: assignee || undefined,
+      checklist: checklist.length ? checklist : undefined,
+    })
     setSaving(false)
     onClose()
   }
@@ -115,6 +136,59 @@ function CardModal({
           </div>
         </div>
 
+        {/* Assignee */}
+        <div>
+          <label className="label">Responsável</label>
+          <input className="input text-sm" placeholder="Nome ou @usuário…" value={assignee}
+                 onChange={(e) => setAssignee(e.target.value)} />
+        </div>
+
+        {/* Checklist */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="label" style={{margin:0}}>Sub-tarefas</label>
+            {checklist.length > 0 && (
+              <span className="text-[10px] font-semibold" style={{color:'var(--accent-3)'}}>
+                {doneCount}/{checklist.length}
+              </span>
+            )}
+          </div>
+          {/* Progress bar */}
+          {checklist.length > 0 && (
+            <div className="mb-2 h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
+              <div className="h-full rounded-full transition-all" style={{width:`${(doneCount/checklist.length)*100}%`,background:'var(--gradient-btn)'}}/>
+            </div>
+          )}
+          <div className="space-y-1.5 mb-2">
+            {checklist.map(item => (
+              <div key={item.id} className="flex items-center gap-2 group">
+                <button type="button" onClick={() => toggleItem(item.id)}
+                        className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all"
+                        style={{
+                          background: item.done ? 'var(--accent-1)' : 'var(--bg-elevated)',
+                          border: `1px solid ${item.done ? 'var(--accent-1)' : 'var(--border-light)'}`,
+                        }}>
+                  {item.done && <Check size={10} color="white"/>}
+                </button>
+                <span className="flex-1 text-sm" style={{color:'var(--text-primary)',textDecoration:item.done?'line-through':'none',opacity:item.done?0.5:1}}>
+                  {item.text}
+                </span>
+                <button type="button" onClick={() => removeItem(item.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{color:'var(--text-muted)'}}>
+                  <X size={12}/>
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input className="input text-sm flex-1" placeholder="Adicionar sub-tarefa…" value={newItem}
+                   onChange={(e) => setNewItem(e.target.value)}
+                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addItem() } }} />
+            <button type="button" onClick={addItem} className="btn-ghost px-3" disabled={!newItem.trim()}>
+              <Plus size={14}/>
+            </button>
+          </div>
+        </div>
+
         <div className="flex gap-2 pt-1">
           <button className="btn-primary flex-1 justify-center" onClick={handleSave} disabled={saving}>
             <Check size={15} /> {saving ? 'Salvando…' : 'Salvar'}
@@ -138,6 +212,8 @@ function KanbanCard({ card, colAccent, onEdit }: {
   const prioConfig = PRIORITY[card.priority as keyof typeof PRIORITY] ?? PRIORITY.medium
   const dueDate = card.due_date ? new Date(card.due_date) : null
   const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate)
+  const checklistTotal = card.checklist?.length ?? 0
+  const checklistDone  = card.checklist?.filter(i => i.done).length ?? 0
   const isDueToday = dueDate && isToday(dueDate)
 
   return (

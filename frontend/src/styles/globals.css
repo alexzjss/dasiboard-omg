@@ -6141,3 +6141,56 @@ html { scroll-behavior: smooth; }
 [data-lite="1"] .mobile-topbar {
   border-bottom: 2px solid var(--accent-1) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎮  720 — Xbox achievement progress bar animation
+═══════════════════════════════════════════════════════════════════ */
+@keyframes xboxProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   💀  SHELL — top padding for the typewriter prompt bar (24px)
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-shell"] .flex.h-\[100dvh\] {
+  padding-top: 24px;
+}
+[data-theme="dark-shell"] aside {
+  padding-top: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   📋  KANBAN — checklist progress bar
+═══════════════════════════════════════════════════════════════════ */
+.kanban-checklist-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 4px;
+}
+.kanban-checklist-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--gradient-btn);
+  transition: width 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🧠  REVIEW MODE — flip card 3D
+═══════════════════════════════════════════════════════════════════ */
+.flip-card-container {
+  perspective: 1000px;
+}
+.flip-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+.flip-card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
