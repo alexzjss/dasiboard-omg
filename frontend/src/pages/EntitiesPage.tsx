@@ -8,6 +8,28 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
+import { getEntityIcon } from '@/utils/entityIcons'
+
+// ── Entity Icon component — real logo or fallback emoji ──
+function EntityIcon({ entity, size = 40, rounded = 'rounded-xl', textSize = 'text-xl' }: {
+  entity: Entity; size?: number; rounded?: string; textSize?: string
+}) {
+  const icon = getEntityIcon(entity.slug)
+  if (icon) {
+    return (
+      <div className={`${rounded} overflow-hidden shrink-0 flex items-center justify-center`}
+           style={{ width: size, height: size, background: entity.color + '18', border: `1px solid ${entity.color}33` }}>
+        <img src={icon} alt={entity.short_name} className="w-full h-full object-contain" style={{ imageRendering: 'auto' }} />
+      </div>
+    )
+  }
+  return (
+    <div className={`${rounded} flex items-center justify-center ${textSize} shrink-0`}
+         style={{ width: size, height: size, background: entity.color + '22', border: `1px solid ${entity.color}33` }}>
+      {entity.icon_emoji}
+    </div>
+  )
+}
 
 interface Entity {
   id: string; slug: string; name: string; short_name: string; description: string
@@ -235,10 +257,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
             <ArrowLeft size={16} /> Voltar
           </button>
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-5">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0"
-                 style={{ background: entity.color + '22', border: `1px solid ${entity.color}44` }}>
-              {entity.icon_emoji}
-            </div>
+            <EntityIcon entity={entity} size={72} rounded="rounded-2xl" textSize="text-3xl" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -414,10 +433,7 @@ function EntityCard({ entity, onClick }: { entity: Entity; onClick: () => void }
             className="card-hover text-left group flex flex-col gap-3 w-full"
             style={{ borderTop: `3px solid ${entity.color}` }}>
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-             style={{ background: entity.color + '22', border: `1px solid ${entity.color}33` }}>
-          {entity.icon_emoji}
-        </div>
+        <EntityIcon entity={entity} size={44} rounded="rounded-xl" textSize="text-xl" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"

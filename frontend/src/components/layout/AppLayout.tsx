@@ -318,10 +318,8 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
 }
 
 // ── Sidebar inner ─────────────────────────────────────────────────────────────
-function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, liteMode }: {
+function SidebarContent({ onOpenPicker, colorBlind, liteMode }: {
   onOpenPicker: () => void
-  onToggleFocus: () => void
-  focusActive: boolean
   colorBlind: ReturnType<typeof useColorBlindMode>
   liteMode: { active: boolean; toggle: () => void }
 }) {
@@ -343,7 +341,6 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
           <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
         </div>
-
       </div>
 
       {/* Theme button — visual pill */}
@@ -351,7 +348,6 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
         <button onClick={onOpenPicker}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)' }}>
-          {/* Mini preview swatch */}
           <div className="flex gap-0.5 shrink-0">
             {[THEME_PREVIEWS[theme.id]?.bg ?? '#111',
               THEME_PREVIEWS[theme.id]?.accent ?? '#888',
@@ -370,7 +366,6 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
 
       <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.4 }} />
 
-      {/* Search + Presentation shortcuts */}
       {/* Search */}
       <div className="px-3 pt-2">
         <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
@@ -395,51 +390,28 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, 
         ))}
       </nav>
 
-      {/* Tools panel: Presentation + Focus + ColorBlind + Lite — 2×2 grid */}
+      {/* Tools panel — 3 buttons in a row */}
       <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="px-3 pt-2 pb-1">
           <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5 px-0.5" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>Ferramentas</p>
-          {/* 2×2 grid of tool toggles */}
-          <div className="grid grid-cols-2 gap-1.5 mb-1">
+          <div className="grid grid-cols-3 gap-1.5 mb-1">
             {/* Apresentação */}
             <button
               onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
-              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
-              style={{
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
-              }}
+              className="flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
               title="Modo Apresentação (Ctrl+Shift+P)"
             >
               <Monitor size={14} />
               <span>Apresentar</span>
             </button>
-
-            {/* Modo Foco */}
-            <button
-              onClick={onToggleFocus}
-              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
-              style={{
-                background: focusActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                border: `1px solid ${focusActive ? 'var(--accent-1)' : 'var(--border)'}`,
-                color: focusActive ? 'var(--accent-3)' : 'var(--text-muted)',
-              }}
-              title="Modo Foco — oculta UI (Ctrl+Shift+F)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-              </svg>
-              <span>{focusActive ? 'Sair foco' : 'Foco'}</span>
-            </button>
-
             {/* Daltonismo */}
             <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
             {/* Lite Mode */}
             <LiteModeButton active={liteMode.active} onToggle={liteMode.toggle} />
           </div>
         </div>
-        {/* Lo-fi player — shown for DLC, Pixel, 720, Portátil */}
+        {/* Lo-fi player */}
         <LofiPlayer />
         {/* Eva sync rate bar */}
         <EvaSyncBar />
@@ -531,7 +503,6 @@ export default function AppLayout() {
     { key: 'r', ctrl: true, description: 'Recarregar dados da página',      group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
     { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',        group: 'Ações', action: () => setSearchOpen(v => !v) },
     { key: 'p', ctrl: true, shift: true, description: 'Modo apresentação', group: 'Interface', action: () => presentation.toggle() },
-    { key: 'f', ctrl: true, shift: true, description: 'Modo Foco (oculta sidebar/nav)', group: 'Interface', action: () => focusMode.toggle() },
     { key: 'f', ctrl: true, description: 'Focar busca na página',           group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
     // Por página
     { key: 'ArrowRight', description: 'Próxima página (navegação)',  group: 'Navegação rápida', action: () => {
@@ -628,7 +599,7 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} colorBlind={colorBlind} liteMode={liteMode} />
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} colorBlind={colorBlind} liteMode={liteMode} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">

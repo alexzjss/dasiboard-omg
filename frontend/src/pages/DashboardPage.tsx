@@ -1,18 +1,19 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   KanbanSquare, BookOpen, CalendarDays, TrendingUp, Clock,
   Globe, RefreshCw, Newspaper, ChevronRight, ChevronDown,
   Send, X, Users, KeyRound, Eye, Plus, Trash2,
-  Sparkles, GraduationCap, Star, GripVertical, Settings2, RotateCcw,
+  GraduationCap, Star, Zap, Target, ArrowRight,
+  BookMarked, Bell, CheckCircle2, AlertTriangle, BarChart3,
 } from 'lucide-react'
-import { format, formatDistanceToNow, parseISO } from 'date-fns'
+import { format, formatDistanceToNow, parseISO, isToday, isTomorrow, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import api from '@/utils/api'
 import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
-import { useDashboardWidgets, WIDGET_DEFS, WidgetId } from '@/hooks/useDashboardWidgets'
 import { EvaCountdown, NervHUD } from '@/components/EvaTimer'
+import { useStudyStats } from '@/hooks/useStudyStats'
 
 interface Stats { boards: number; subjects: number; events: number; avgGrade: number | null }
 interface Newsletter { id: string; title: string; body: string; author: string; created_at: string }
@@ -81,7 +82,7 @@ function NewsletterCreateModal({ onClose, onCreated }: {
           </div>
           <div>
             <label className="label">Conteúdo *</label>
-            <textarea className="input text-sm resize-none" rows={6}
+            <textarea className="input text-sm resize-none" rows={5}
                       placeholder="Escreva o conteúdo da newsletter..."
                       value={body} onChange={e => setBody(e.target.value)} />
           </div>
@@ -135,9 +136,7 @@ function NewsletterArchiveModal({ newsletters, onClose }: {
         </div>
         <div className="px-4 py-3 space-y-2 pb-8">
           {newsletters.length === 0 && (
-            <p className="text-sm text-center py-10" style={{ color: 'var(--text-muted)' }}>
-              Nenhuma newsletter ainda.
-            </p>
+            <p className="text-sm text-center py-10" style={{ color: 'var(--text-muted)' }}>Nenhuma newsletter ainda.</p>
           )}
           {newsletters.map(n => (
             <div key={n.id} className="rounded-2xl overflow-hidden transition-all"
@@ -174,10 +173,61 @@ function NewsletterArchiveModal({ newsletters, onClose }: {
   )
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
+// ── Quick Link Card ───────────────────────────────────────────────────────────
+function QuickLink({ to, label, icon: Icon, color, count, desc, badge }: {
+  to: string; label: string; icon: React.ElementType; color: string
+  count?: number | null; desc: string; badge?: string
+}) {
+  return (
+    <Link to={to}
+          className="group relative flex flex-col gap-3 p-4 rounded-2xl transition-all active:scale-[0.97] overflow-hidden"
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color + '66'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${color}22` }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '' }}>
+      {/* Background glow */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+           style={{ background: `radial-gradient(ellipse at top left, ${color}08 0%, transparent 60%)` }} />
+      <div className="flex items-start justify-between">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+             style={{ background: color + '18', border: `1px solid ${color}33` }}>
+          <Icon size={18} style={{ color }} />
+        </div>
+        {badge && (
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                style={{ background: color + '22', color }}>{badge}</span>
+        )}
+        {count !== null && count !== undefined && count > 0 && (
+          <span className="font-display font-bold text-lg leading-none" style={{ color }}>{count}</span>
+        )}
+      </div>
+      <div>
+        <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{label}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+      </div>
+    </Link>
+  )
+}
+
+// ── Stat Chip ─────────────────────────────────────────────────────────────────
+function StatChip({ emoji, value, label, color }: { emoji: string; value: string | number; label: string; color: string }) {
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+         style={{ background: color + '12', border: `1px solid ${color}30` }}>
+      <span style={{ fontSize: 20, lineHeight: 1 }}>{emoji}</span>
+      <div>
+        <p className="font-display font-bold text-base leading-none" style={{ color }}>{value}</p>
+        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Dashboard Page ─────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const user     = useAuthStore((s) => s.user)
   const location = useLocation()
+  const navigate = useNavigate()
+  const studyStats = useStudyStats()
   const [stats,       setStats]      = useState<Stats>({ boards: 0, subjects: 0, events: 0, avgGrade: null })
   const [events,      setEvents]     = useState<any[]>([])
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
@@ -187,13 +237,7 @@ export default function DashboardPage() {
   const [showCreateNL,  setShowCreateNL]  = useState(false)
   const [showArchiveNL, setShowArchiveNL] = useState(false)
   const [nlExpanded,    setNlExpanded]    = useState(false)
-  const [showCustomize, setShowCustomize] = useState(false)
   const now = new Date()
-
-  // Widget drag-and-drop
-  const widgets = useDashboardWidgets()
-  // Drag state for visual feedback
-  const [dragOver, setDragOver] = useState<WidgetId | null>(null)
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true); else setRefreshing(true)
@@ -210,7 +254,7 @@ export default function DashboardPage() {
         ? allGrades.reduce((a: number, g: any) => a + g.value, 0) / allGrades.length
         : null
       setStats({ boards: boards.data.length, subjects: subjects.data.length, events: evts.data.length, avgGrade: avg })
-      setEvents(evts.data.slice(0, 6))
+      setEvents(evts.data.slice(0, 5))
       setLatestNL(nlLatest.data)
       setNewsletters(nlAll.data)
     } catch { /* ignore */ }
@@ -224,8 +268,24 @@ export default function DashboardPage() {
   const greetingEmoji = hour < 5 ? '🌙' : hour < 12 ? '☀️' : hour < 18 ? '🌤️' : '🌙'
   const firstName = user?.full_name?.split(' ')[0] ?? 'aluno'
 
+  // Próximo evento urgente
+  const urgentEvent = events.find((ev: any) => {
+    const d = parseISO(ev.start_at)
+    return isToday(d) || isTomorrow(d) || differenceInDays(d, now) <= 3
+  })
+
+  const quickLinks = [
+    { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,  desc: 'Organize tarefas',    color: 'var(--accent-1)',  count: stats.boards },
+    { to: '/grades',   label: 'Disciplinas', icon: BookOpen,      desc: 'Notas e frequência',  color: '#a855f7',          count: stats.subjects },
+    { to: '/calendar', label: 'Calendário',  icon: CalendarDays,  desc: 'Provas e eventos',    color: '#f59e0b',          count: stats.events },
+    { to: '/entities', label: 'Entidades',   icon: Users,         desc: 'Grupos do curso',     color: '#10b981',          count: null },
+    { to: '/docentes', label: 'Docentes',    icon: BookMarked,    desc: 'Professores da EACH', color: '#06b6d4',          count: null },
+    { to: '/profile',  label: 'Perfil',      icon: Star,          desc: 'Conquistas e cartão', color: '#ec4899',          count: null },
+  ]
+
   return (
-    <div className="px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 max-w-5xl mx-auto w-full page-mobile">
+    <div className="px-3 py-4 sm:px-4 md:px-6 md:py-6 max-w-5xl mx-auto w-full page-mobile space-y-5">
+
       {showCreateNL && (
         <NewsletterCreateModal
           onClose={() => setShowCreateNL(false)}
@@ -239,113 +299,25 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* ── WIDGET CUSTOMIZE BAR ─────────────────────────── */}
-      <div className="flex items-center justify-end mb-2 gap-2">
-        <button
-          onClick={() => setShowCustomize(v => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-95"
-          style={{
-            background: showCustomize ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-            border: `1px solid ${showCustomize ? 'var(--accent-1)' : 'var(--border)'}`,
-            color: showCustomize ? 'var(--accent-3)' : 'var(--text-muted)',
-          }}
-          title="Personalizar widgets da home"
-        >
-          <Settings2 size={12} />
-          <span className="hidden sm:inline">Personalizar</span>
-        </button>
-      </div>
-
-      {showCustomize && (
-        <div className="mb-4 rounded-2xl p-4 animate-in"
-             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent-3)' }}>
-              Widgets · Arraste para reordenar
-            </p>
-            <button onClick={widgets.resetLayout}
-                    className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all hover:opacity-80"
-                    style={{ color: 'var(--text-muted)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-                    title="Resetar layout">
-              <RotateCcw size={10} /> Resetar
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {widgets.order.map(id => {
-              const def = WIDGET_DEFS.find(w => w.id === id)!
-              const isVisible = widgets.visible.has(id)
-              return (
-                <div
-                  key={id}
-                  draggable
-                  onDragStart={() => widgets.onDragStart(id)}
-                  onDragOver={e => { e.preventDefault(); setDragOver(id) }}
-                  onDragLeave={() => setDragOver(null)}
-                  onDrop={() => { widgets.onDrop(id); setDragOver(null) }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-grab active:cursor-grabbing transition-all select-none"
-                  style={{
-                    background: dragOver === id ? 'var(--accent-soft)' : isVisible ? 'var(--bg-elevated)' : 'var(--bg-base)',
-                    border: `1px solid ${dragOver === id ? 'var(--accent-1)' : isVisible ? 'var(--border-light)' : 'var(--border)'}`,
-                    opacity: isVisible ? 1 : 0.45,
-                    transform: dragOver === id ? 'scale(1.04)' : 'scale(1)',
-                    boxShadow: dragOver === id ? '0 4px 16px var(--accent-glow)' : 'none',
-                  }}
-                >
-                  <GripVertical size={12} style={{ color: 'var(--text-muted)' }} />
-                  <span style={{ fontSize: 14 }}>{def.icon}</span>
-                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{def.label}</span>
-                  <button
-                    onClick={() => widgets.toggleVisible(id)}
-                    className="ml-1 w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                    style={{
-                      background: isVisible ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                      border: `1px solid ${isVisible ? 'var(--accent-1)' : 'var(--border)'}`,
-                      color: isVisible ? 'var(--accent-3)' : 'var(--text-muted)',
-                      fontSize: 9,
-                    }}
-                    title={isVisible ? 'Ocultar widget' : 'Mostrar widget'}
-                    aria-label={isVisible ? `Ocultar ${def.label}` : `Mostrar ${def.label}`}
-                  >
-                    {isVisible ? '✓' : '×'}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-          <p className="text-[10px] mt-3" style={{ color: 'var(--text-muted)' }}>
-            Layout salvo automaticamente · Resetar restaura a ordem padrão
-          </p>
-        </div>
-      )}
-      {/* ── WIDGETS (ordered, visibility-controlled) ────── */}
-      {widgets.order.map(widgetId => {
-        if (!widgets.visible.has(widgetId)) return null
-
-        // GREETING / HERO widget
-        if (widgetId === 'greeting') return (
-      <div key="greeting"
-           className="hero-card relative overflow-hidden rounded-2xl mb-4 animate-in"
-           draggable
-           onDragStart={() => widgets.onDragStart('greeting')}
-           onDragOver={e => widgets.onDragOver(e, 'greeting')}
-           onDrop={() => widgets.onDrop('greeting')}
+      {/* ── HERO ──────────────────────────────────────────────────────── */}
+      <div className="hero-card relative overflow-hidden rounded-2xl animate-in"
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
              boxShadow: '0 4px 40px var(--accent-glow)',
            }}>
-        <div className="accent-orb" style={{ width: 260, height: 260, top: -110, right: -80, opacity: 0.12 }} />
-        <div className="accent-orb" style={{ width: 120, height: 120, bottom: -40, left: 20, opacity: 0.06, animationDelay: '3s' }} />
-        <div className="relative z-10 p-5 md:p-7">
-          <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="accent-orb" style={{ width: 220, height: 220, top: -90, right: -60, opacity: 0.12 }} />
+        <div className="accent-orb" style={{ width: 100, height: 100, bottom: -30, left: 20, opacity: 0.06, animationDelay: '3s' }} />
+        <div className="relative z-10 p-5 md:p-6">
+          <div className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <p className="text-xs font-medium mb-1 capitalize" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-xs font-medium mb-0.5 capitalize" style={{ color: 'var(--text-muted)' }}>
                 {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
               </p>
-              <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
                 {greeting}, {firstName} {greetingEmoji}
               </h1>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                 Sistemas de Informação · EACH · USP
               </p>
             </div>
@@ -355,12 +327,14 @@ export default function DashboardPage() {
               <RefreshCw size={15} />
             </button>
           </div>
+
+          {/* Stat chips row */}
           {!loading && (
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-2">
               {stats.avgGrade !== null && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
                      style={{ background: stats.avgGrade >= 5 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: stats.avgGrade >= 5 ? '#22c55e' : '#ef4444', border: `1px solid ${stats.avgGrade >= 5 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
-                  <TrendingUp size={11} /> {stats.avgGrade.toFixed(1)} média geral
+                  <TrendingUp size={11} /> {stats.avgGrade.toFixed(1)} média
                 </div>
               )}
               {stats.subjects > 0 && (
@@ -372,195 +346,61 @@ export default function DashboardPage() {
               {stats.events > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
                      style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
-                  <Clock size={11} /> {stats.events} evento{stats.events !== 1 ? 's' : ''} próximo{stats.events !== 1 ? 's' : ''}
+                  <Clock size={11} /> {stats.events} evento{stats.events !== 1 ? 's' : ''}
                 </div>
               )}
-              {stats.boards > 0 && (
+              {studyStats.streak > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-                     style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
-                  <KanbanSquare size={11} /> {stats.boards} quadro{stats.boards !== 1 ? 's' : ''}
+                     style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316', border: '1px solid rgba(249,115,22,0.25)' }}>
+                  🔥 {studyStats.streak} dia{studyStats.streak !== 1 ? 's' : ''} de sequência
                 </div>
               )}
             </div>
+          )}
+
+          {/* Urgent event banner */}
+          {!loading && urgentEvent && (
+            <button onClick={() => navigate('/calendar')}
+                    className="mt-3 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all hover:opacity-80 active:scale-[0.99]"
+                    style={{ background: TYPE_COLORS[urgentEvent.event_type] + '14', border: `1px solid ${TYPE_COLORS[urgentEvent.event_type]}33` }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                   style={{ background: TYPE_COLORS[urgentEvent.event_type] + '22' }}>
+                <Bell size={14} style={{ color: TYPE_COLORS[urgentEvent.event_type] }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold truncate" style={{ color: TYPE_COLORS[urgentEvent.event_type] }}>
+                  {isToday(parseISO(urgentEvent.start_at)) ? '⚡ Hoje' : isTomorrow(parseISO(urgentEvent.start_at)) ? '📅 Amanhã' : `📅 Em ${differenceInDays(parseISO(urgentEvent.start_at), now)} dias`}
+                  {' · '}{TYPE_LABELS[urgentEvent.event_type] ?? urgentEvent.event_type}
+                </p>
+                <p className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{urgentEvent.title}</p>
+              </div>
+              <ChevronRight size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            </button>
           )}
         </div>
       </div>
-        )
 
-        // STATS widget (thin stat pills row — alternative to inline stats above)
-        if (widgetId === 'stats') return null // stats are embedded in greeting; skip standalone
-
-        // NEWSLETTER widget
-        if (widgetId === 'newsletter') return (
-        <div key="newsletter" className="mb-4 animate-in-delay-1"
-             draggable
-             onDragStart={() => widgets.onDragStart('newsletter')}
-             onDragOver={e => widgets.onDragOver(e, 'newsletter')}
-             onDrop={() => widgets.onDrop('newsletter')}>
-          {loading ? (
-            <div className="card shimmer h-28 rounded-2xl" />
-          ) : latestNL ? (
-          <div className="rounded-2xl overflow-hidden"
-               style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-            <div className="flex items-center justify-between gap-3 px-5 py-3.5"
-                 style={{ background: 'linear-gradient(90deg, var(--accent-soft), transparent)', borderBottom: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                     style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }}>
-                  <Newspaper size={14} style={{ color: 'var(--accent-3)' }} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest"
-                          style={{ color: 'var(--accent-3)' }}>Newsletter</span>
-                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                      {formatDistanceToNow(parseISO(latestNL.created_at), { addSuffix: true, locale: ptBR })}
-                    </span>
-                  </div>
-                  <button className="text-sm font-bold text-left hover:opacity-80 transition-opacity"
-                          style={{ color: 'var(--text-primary)' }}
-                          onClick={() => setNlExpanded(v => !v)}>
-                    {latestNL.title}
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button onClick={() => setShowArchiveNL(true)}
-                        className="btn-ghost text-xs py-1.5 px-2.5 flex items-center gap-1"
-                        title="Ver todas">
-                  <Eye size={11} /> <span className="hidden sm:inline">Histórico</span>
-                </button>
-                <button onClick={() => setShowCreateNL(true)}
-                        className="btn-primary text-xs py-1.5 px-2.5 flex items-center gap-1">
-                  <Plus size={11} /> <span className="hidden sm:inline">Nova</span>
-                </button>
-                <button onClick={() => setNlExpanded(v => !v)} className="p-1"
-                        style={{ color: 'var(--text-muted)' }}>
-                  {nlExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Body — collapsed preview or expanded */}
-            <div className="px-5 py-3">
-              {nlExpanded ? (
-                <div className="animate-in">
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
-                    {latestNL.body}
-                  </p>
-                  <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
-                    por {latestNL.author} · {format(parseISO(latestNL.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm line-clamp-2 cursor-pointer" style={{ color: 'var(--text-secondary)' }}
-                   onClick={() => setNlExpanded(true)}>
-                  {latestNL.body}
-                </p>
-              )}
-            </div>
-
-            {/* Past newsletters preview strip */}
-            {newsletters.length > 1 && (
-              <div className="px-5 pb-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                {newsletters.slice(1, 4).map(n => (
-                  <button key={n.id}
-                          className="shrink-0 text-left px-3 py-2 rounded-xl transition-all hover:scale-[1.01]"
-                          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', minWidth: 160, maxWidth: 200 }}
-                          onClick={() => setShowArchiveNL(true)}>
-                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                      {format(parseISO(n.created_at), "d MMM", { locale: ptBR })}
-                    </p>
-                    <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{n.title}</p>
-                  </button>
-                ))}
-                {newsletters.length > 4 && (
-                  <button onClick={() => setShowArchiveNL(true)}
-                          className="shrink-0 text-xs px-3 py-2 rounded-xl"
-                          style={{ color: 'var(--accent-3)', background: 'var(--accent-soft)' }}>
-                    +{newsletters.length - 4} mais
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="rounded-2xl flex items-center justify-between gap-4 p-5"
-               style={{ border: '1px dashed var(--border-light)', background: 'var(--bg-card)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                   style={{ background: 'var(--bg-elevated)' }}>
-                <Newspaper size={18} style={{ color: 'var(--text-muted)' }} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  Nenhuma newsletter ainda
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Publique comunicados para todos os usuários
-                </p>
-              </div>
-            </div>
-            <button onClick={() => setShowCreateNL(true)}
-                    className="btn-primary text-xs py-2 px-4 shrink-0 flex items-center gap-1.5">
-              <Send size={12} /> Publicar
-            </button>
-          </div>
-          )}
+      {/* ── QUICK LINKS GRID ────────────────────────────────────────────── */}
+      <div className="animate-in-delay-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {quickLinks.map(ql => (
+            <QuickLink key={ql.to} {...ql} />
+          ))}
         </div>
-        ) // end newsletter widget
+      </div>
 
-        // QUICKLINKS widget
-        if (widgetId === 'quicklinks') return (
-        <div key="quicklinks" className="animate-in-delay-2"
-             draggable
-             onDragStart={() => widgets.onDragStart('quicklinks')}
-             onDragOver={e => widgets.onDragOver(e, 'quicklinks')}
-             onDrop={() => widgets.onDrop('quicklinks')}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
-             style={{ color: 'var(--text-muted)' }}>Acesso rápido</p>
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 quick-links-grid">
-            {[
-              { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,  desc: 'Quadros', count: stats.boards, color: 'var(--accent-1)' },
-              { to: '/grades',   label: 'Disciplinas', icon: BookOpen,      desc: 'Notas',   count: stats.subjects, color: '#a855f7' },
-              { to: '/calendar', label: 'Calendário',  icon: CalendarDays,  desc: 'Eventos', count: stats.events,  color: '#f59e0b' },
-              { to: '/entities', label: 'Entidades',   icon: Users,         desc: 'Grupos',  count: null, color: '#10b981' },
-              { to: '/grades',   label: 'Fluxograma',  icon: GraduationCap, desc: 'Grade',   count: null, color: '#06b6d4' },
-              { to: '/profile',  label: 'Perfil',      icon: Star,          desc: 'Conta',   count: null, color: '#ec4899' },
-            ].map(({ to, label, icon: Icon, desc, count, color }) => (
-              <Link key={label + to} to={to}
-                    className="card-hover flex flex-col p-4 gap-2.5 group transition-all"
-                    style={{ background: 'var(--bg-elevated)' }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
-                     style={{ background: color + '18', border: `1px solid ${color}33` }}>
-                  <Icon size={16} style={{ color }} />
-                </div>
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{label}</p>
-                    {count !== null && count > 0 && (
-                      <span className="font-display font-bold text-base leading-none" style={{ color }}>
-                        {count}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
-                </div>
-              </Link>
-            ))}
+      {/* ── 2-COLUMN: EVENTS + STUDY STATS ──────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-in-delay-2">
+
+        {/* Events — 3 cols */}
+        <div className="lg:col-span-3">
+          <div className="flex items-center justify-between mb-3 px-0.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Próximos eventos</p>
+            <Link to="/calendar" className="text-[10px] font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+                  style={{ color: 'var(--accent-3)' }}>
+              Ver todos <ArrowRight size={10} />
+            </Link>
           </div>
-        </div>
-        ) // end quicklinks widget
-
-        // EVENTS widget
-        if (widgetId === 'events') return (
-        <div key="events" className="animate-in-delay-3"
-             draggable
-             onDragStart={() => widgets.onDragStart('events')}
-             onDragOver={e => widgets.onDragOver(e, 'events')}
-             onDrop={() => widgets.onDrop('events')}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1"
-             style={{ color: 'var(--text-muted)' }}>Próximos eventos</p>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {loading ? (
               <div className="p-4 space-y-3">
@@ -578,21 +418,23 @@ export default function DashboardPage() {
               <div className="text-center py-10 px-4" style={{ color: 'var(--text-muted)' }}>
                 <CalendarDays size={28} className="mx-auto mb-2 opacity-30" />
                 <p className="text-sm">Nenhum evento próximo</p>
-                <Link to="/calendar" className="text-xs mt-1 inline-block" style={{ color: 'var(--accent-3)' }}>
-                  + Criar evento
+                <Link to="/calendar" className="text-xs mt-1.5 inline-flex items-center gap-1 font-medium" style={{ color: 'var(--accent-3)' }}>
+                  <Plus size={11} /> Criar evento
                 </Link>
               </div>
             ) : (
               <>
                 {events.map((ev: any, i: number) => {
                   const color = TYPE_COLORS[ev.event_type] ?? 'var(--accent-1)'
+                  const evDate = parseISO(ev.start_at)
+                  const isUrgent = isToday(evDate) || isTomorrow(evDate)
                   return (
                     <div key={ev.id}
-                         className="flex items-center gap-3 px-4 py-3 transition-colors"
+                         className="flex items-center gap-3 px-4 py-3 transition-colors cursor-default"
                          style={{ borderBottom: i < events.length - 1 ? '1px solid var(--border)' : 'none' }}
                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color, boxShadow: isUrgent ? `0 0 6px ${color}` : 'none' }} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate flex items-center gap-1.5"
                            style={{ color: 'var(--text-primary)' }}>
@@ -600,9 +442,9 @@ export default function DashboardPage() {
                           {ev.title}
                         </p>
                         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          {format(parseISO(ev.start_at), "d MMM · HH:mm", { locale: ptBR })}
-                          {' · '}
-                          {formatDistanceToNow(parseISO(ev.start_at), { locale: ptBR, addSuffix: true })}
+                          {isToday(evDate) ? '⚡ Hoje · ' : isTomorrow(evDate) ? '📅 Amanhã · ' : ''}
+                          {format(evDate, "d MMM · HH:mm", { locale: ptBR })}
+                          {' · '}{formatDistanceToNow(evDate, { locale: ptBR, addSuffix: true })}
                         </p>
                         <EvaCountdown targetDate={ev.start_at} />
                       </div>
@@ -613,21 +455,142 @@ export default function DashboardPage() {
                     </div>
                   )
                 })}
-                <div className="px-4 py-3 text-right" style={{ borderTop: '1px solid var(--border)' }}>
-                  <Link to="/calendar" className="text-xs font-medium" style={{ color: 'var(--accent-3)' }}>
-                    Ver calendário completo →
-                  </Link>
-                </div>
               </>
             )}
           </div>
         </div>
-        ) // end events widget
 
-        return null
-      })}
+        {/* Study Stats — 2 cols */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-3 px-0.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Estudo</p>
+            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>últimos 30 dias</span>
+          </div>
+          <div className="card space-y-3">
+            {/* Streak */}
+            <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 28, lineHeight: 1 }}>
+                {studyStats.streak >= 7 ? '🔥' : studyStats.streak >= 3 ? '⚡' : '📅'}
+              </span>
+              <div>
+                <p className="font-display font-bold text-xl leading-none"
+                   style={{ color: studyStats.streak > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                  {studyStats.streak} dia{studyStats.streak !== 1 ? 's' : ''}
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  {studyStats.streak === 0 ? 'Comece hoje!' : 'Sequência 🔥'}
+                </p>
+              </div>
+            </div>
 
-      {/* NERV HUD — Eva theme only */}
+            {/* Mini heatmap — last 14 days */}
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Atividade</p>
+              <div className="flex gap-1">
+                {Array.from({ length: 14 }, (_, i) => {
+                  const d = new Date(); d.setDate(d.getDate() - 13 + i)
+                  const key = d.toISOString().slice(0, 10)
+                  const active = studyStats.sessionDates.includes(key)
+                  return (
+                    <div key={key} className="flex-1 h-4 rounded-sm" title={key}
+                         style={{ background: active ? 'var(--accent-1)' : 'var(--bg-elevated)', border: '1px solid var(--border)', opacity: active ? 1 : 0.5 }} />
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { emoji: '🍅', value: Math.floor(studyStats.pomodoroMinutes / 25), label: 'Pomodoros', color: '#ef4444' },
+                { emoji: '⏱️', value: `${Math.floor(studyStats.pomodoroMinutes / 60)}h${studyStats.pomodoroMinutes % 60 > 0 ? `${studyStats.pomodoroMinutes % 60}m` : ''}`, label: 'Estudando', color: '#06b6d4' },
+                { emoji: '⚡', value: studyStats.flashcardsAnswered, label: 'Flashcards', color: '#22c55e' },
+                { emoji: '📝', value: studyStats.notesCreated, label: 'Anotações', color: '#f59e0b' },
+              ].map(s => (
+                <StatChip key={s.label} {...s} />
+              ))}
+            </div>
+
+            <Link to="/profile"
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-all hover:opacity-80"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+              <BarChart3 size={12} /> Ver estatísticas completas
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── NEWSLETTER ──────────────────────────────────────────────────── */}
+      <div className="animate-in-delay-3">
+        {loading ? (
+          <div className="card shimmer h-20 rounded-2xl" />
+        ) : latestNL ? (
+          <div className="rounded-2xl overflow-hidden"
+               style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+            <div className="flex items-center justify-between gap-3 px-4 py-3"
+                 style={{ background: 'linear-gradient(90deg, var(--accent-soft), transparent)', borderBottom: nlExpanded ? '1px solid var(--border)' : 'none' }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                     style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }}>
+                  <Newspaper size={12} style={{ color: 'var(--accent-3)' }} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent-3)' }}>Newsletter</span>
+                    <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                      {formatDistanceToNow(parseISO(latestNL.created_at), { addSuffix: true, locale: ptBR })}
+                    </span>
+                  </div>
+                  <button className="text-sm font-bold text-left hover:opacity-80 transition-opacity"
+                          style={{ color: 'var(--text-primary)' }}
+                          onClick={() => setNlExpanded(v => !v)}>
+                    {latestNL.title}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => setShowArchiveNL(true)}
+                        className="btn-ghost text-xs py-1.5 px-2.5 flex items-center gap-1">
+                  <Eye size={11} /> <span className="hidden sm:inline">Histórico</span>
+                </button>
+                <button onClick={() => setShowCreateNL(true)}
+                        className="btn-primary text-xs py-1.5 px-2.5 flex items-center gap-1">
+                  <Plus size={11} /> <span className="hidden sm:inline">Nova</span>
+                </button>
+                <button onClick={() => setNlExpanded(v => !v)} className="p-1" style={{ color: 'var(--text-muted)' }}>
+                  {nlExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+              </div>
+            </div>
+            {nlExpanded && (
+              <div className="px-5 py-4 animate-in">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>{latestNL.body}</p>
+                <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
+                  por {latestNL.author} · {format(parseISO(latestNL.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl flex items-center justify-between gap-4 p-4"
+               style={{ border: '1px dashed var(--border-light)', background: 'var(--bg-card)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
+                <Newspaper size={16} style={{ color: 'var(--text-muted)' }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Nenhuma newsletter</p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Publique comunicados para todos</p>
+              </div>
+            </div>
+            <button onClick={() => setShowCreateNL(true)} className="btn-primary text-xs py-2 px-3 shrink-0 flex items-center gap-1.5">
+              <Send size={12} /> Publicar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* NERV HUD */}
       <NervHUD events={events} />
     </div>
   )
