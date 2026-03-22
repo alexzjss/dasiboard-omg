@@ -113,7 +113,7 @@ async function exportAllData() {
 
 function importData(file: File, onDone: () => void) {
   const reader = new FileReader()
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target?.result as string)
       if (!data.version || !data.exportedAt) throw new Error('Formato inválido')

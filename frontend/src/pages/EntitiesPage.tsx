@@ -8,6 +8,7 @@ import {
 import { format, parseISO, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
+import { emitNotification } from '@/hooks/useNotifications'
 import api from '@/utils/api'
 
 interface Entity {

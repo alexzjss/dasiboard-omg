@@ -473,6 +473,7 @@ export default function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { theme, isDark, cycleTheme, setTheme, chronoEra } = useTheme()
+  const { exams, active: panicAlert, panicOn, activate: activatePanic, dismiss: dismissPanic, deactivate: deactivatePanic } = usePanicMode()
   const [showPicker,      setShowPicker]   = useState(false)
   const [showPokeball,    setShowPokeball] = useState(false)
   const [starter,         setStarter]      = useState<string>(() => localStorage.getItem('dasiboard-starter') ?? '')
@@ -609,7 +610,7 @@ export default function AppLayout() {
   }, [theme.id])
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden" style={{ paddingTop: (panicAlert || panicOn) ? 40 : 0 }} style={{ backgroundColor: 'var(--bg-base)' }}>
+    <div className="flex h-[100dvh] overflow-hidden" style={{ paddingTop: (panicAlert || panicOn) ? 40 : 0, backgroundColor: 'var(--bg-base)' }}>
 
       {/* ── Overlays & portals — display:contents keeps them outside flex flow ── */}
       <div style={{ display: 'contents' }}>
