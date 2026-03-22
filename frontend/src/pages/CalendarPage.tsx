@@ -1,15 +1,15 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
   startOfWeek, endOfWeek, isSameMonth, isSameDay, isToday,
-  addMonths, subMonths, parseISO,
-  addDays, addWeeks, subWeeks,
+  addMonths, subMonths, parseISO, addDays, addWeeks, subWeeks,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   ChevronLeft, ChevronRight, Plus, X, CalendarDays,
   Trash2, Globe, Filter, KeyRound, CalendarRange,
-  Clock, MapPin, BookOpen,
+  Clock, MapPin, BookOpen, Pencil, Download, Repeat,
+  Users,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
@@ -22,9 +22,11 @@ interface Event {
   all_day: boolean; color: string; location?: string
   class_code?: string; is_global?: boolean
   entity_id?: string; members_only?: boolean
+  recurring?: boolean; recur_weeks?: number
 }
 interface Subject { id: string; code: string; name: string; color: string; semester: string }
 interface ClassSlot { day: number; startTime: string; endTime: string; room?: string }
+interface Entity { id: string; slug: string; name: string; short_name: string; color: string; icon_emoji: string; is_member: boolean }
 
 const SCHEDULE_KEY = 'dasiboard-subject-schedules'
 function loadSchedules(): Record<string, ClassSlot[]> {
@@ -40,11 +42,10 @@ const TYPE_LABELS: Record<string, string> = {
   academic: 'Acadêmico', personal: 'Pessoal', work: 'Trabalho', entity: 'Entidade',
 }
 const DAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7) // 07h–21h
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 7)
 const PX_PER_HOUR = 64
 const START_HOUR = 7
 
-// ── Schedule event block ──────────────────────────────────────────────────────
 function timeToMinutes(timeStr: string): number {
   const [h, m] = timeStr.split(':').map(Number)
   return h * 60 + m
@@ -52,6 +53,175 @@ function timeToMinutes(timeStr: string): number {
 function timeISOToMinutes(iso: string): number {
   const d = parseISO(iso)
   return d.getHours() * 60 + d.getMinutes()
+}
+
+// ── Export as .ics ────────────────────────────────────────────────────────────
+function exportICS(events: Event[]) {
+  const esc = (s: string) => s.replace(/[,;\\]/g, c => '\\'+c).replace(/\n/g, '\\n')
+  const fmtDT = (iso: string) => iso.replace(/[-:]/g,'').replace('.000Z','Z').slice(0,15)+'Z'
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//DaSIboard//SI EACH USP//PT',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ]
+  for (const ev of events) {
+    lines.push('BEGIN:VEVENT')
+    lines.push(`UID:${ev.id}@dasiboard.each.usp.br`)
+    lines.push(`DTSTAMP:${fmtDT(new Date().toISOString())}`)
+    lines.push(`DTSTART:${fmtDT(ev.start_at)}`)
+    if (ev.end_at) lines.push(`DTEND:${fmtDT(ev.end_at)}`)
+    lines.push(`SUMMARY:${esc(ev.title)}`)
+    if (ev.description) lines.push(`DESCRIPTION:${esc(ev.description)}`)
+    if (ev.location)    lines.push(`LOCATION:${esc(ev.location)}`)
+    if (ev.class_code)  lines.push(`CATEGORIES:${esc(ev.class_code)}`)
+    if (ev.recurring && ev.recur_weeks)
+      lines.push(`RRULE:FREQ=WEEKLY;COUNT=${ev.recur_weeks}`)
+    lines.push('END:VEVENT')
+  }
+  lines.push('END:VCALENDAR')
+
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = 'dasiboard-eventos.ics'; a.click()
+  URL.revokeObjectURL(url)
+  toast.success('Calendário exportado como .ics!')
+}
+
+// ── Event Form ────────────────────────────────────────────────────────────────
+interface EventFormData {
+  title: string; description: string; event_type: string
+  start_at: string; end_at: string; all_day: boolean; color: string
+  location: string; class_code: string; entity_id: string
+  recurring: boolean; recur_weeks: number
+}
+
+function EventForm({
+  isGlobal, globalKey, setGlobalKey,
+  form, setForm, entities, isMemberOfEntity,
+  onSubmit, onCancel, editingEvent,
+}: {
+  isGlobal: boolean; globalKey: string; setGlobalKey: (v: string) => void
+  form: EventFormData; setForm: (f: EventFormData | ((prev: EventFormData) => EventFormData)) => void
+  entities: Entity[]; isMemberOfEntity: boolean
+  onSubmit: () => void; onCancel: () => void
+  editingEvent?: Event | null
+}) {
+  const set = (k: keyof EventFormData, v: any) => setForm(f => ({ ...f, [k]: v }))
+
+  return (
+    <div className="animate-in space-y-3 overflow-y-auto">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          {isGlobal && <Globe size={14} className="text-pink-400"/>}
+          {editingEvent ? <><Pencil size={14}/> Editar Evento</> : isGlobal ? 'Evento Global' : 'Novo Evento'}
+        </h3>
+        <button onClick={onCancel} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
+      </div>
+
+      {isGlobal && (
+        <>
+          <p className="text-xs rounded-lg px-3 py-2"
+             style={{ background:'rgba(219,39,119,0.1)', border:'1px solid rgba(219,39,119,0.2)', color:'#f9a8d4' }}>
+            Visível para todos. Requer chave para criar/editar.
+          </p>
+          <div>
+            <label className="label flex items-center gap-1"><KeyRound size={11}/> Chave</label>
+            <input className="input text-sm" type="password" placeholder="Chave secreta"
+                   value={globalKey} onChange={e => setGlobalKey(e.target.value)}/>
+          </div>
+        </>
+      )}
+
+      <div>
+        <label className="label">Título</label>
+        <input className="input text-sm" placeholder="Nome do evento" value={form.title}
+               onChange={e => set('title', e.target.value)}/>
+      </div>
+      <div>
+        <label className="label">Tipo</label>
+        <select className="input text-sm" value={form.event_type}
+                onChange={e => set('event_type', e.target.value)}>
+          {Object.entries(TYPE_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+      </div>
+
+      {/* Entity binding */}
+      {entities.filter(e => e.is_member).length > 0 && (
+        <div>
+          <label className="label flex items-center gap-1"><Users size={11}/> Vincular entidade <span className="normal-case text-[10px]" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
+          <select className="input text-sm" value={form.entity_id}
+                  onChange={e => set('entity_id', e.target.value)}>
+            <option value="">Nenhuma</option>
+            {entities.filter(e => e.is_member).map(e => (
+              <option key={e.id} value={e.id}>{e.icon_emoji} {e.short_name || e.name}</option>
+            ))}
+          </select>
+          {form.entity_id && (
+            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+              Este evento também aparecerá no painel da entidade selecionada.
+            </p>
+          )}
+        </div>
+      )}
+
+      <div>
+        <label className="label">Código da turma</label>
+        <input className="input text-sm" placeholder="Ex: ACH2157" value={form.class_code}
+               onChange={e => set('class_code', e.target.value)}/>
+      </div>
+      <div>
+        <label className="label">Início</label>
+        <input type="datetime-local" className="input text-sm" value={form.start_at}
+               onChange={e => set('start_at', e.target.value)}/>
+      </div>
+      <div>
+        <label className="label">Fim <span className="normal-case text-[10px]" style={{ color:'var(--text-muted)' }}>(opcional)</span></label>
+        <input type="datetime-local" className="input text-sm" value={form.end_at}
+               onChange={e => set('end_at', e.target.value)}/>
+      </div>
+      <div>
+        <label className="label">Local</label>
+        <input className="input text-sm" placeholder="Local (opcional)" value={form.location}
+               onChange={e => set('location', e.target.value)}/>
+      </div>
+      <div>
+        <label className="label">Descrição</label>
+        <textarea className="input text-sm resize-none h-14" placeholder="Descrição…" value={form.description}
+                  onChange={e => set('description', e.target.value)}/>
+      </div>
+
+      {/* Recurring */}
+      <div className="flex items-center gap-3 p-3 rounded-xl"
+           style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+        <Repeat size={13} style={{ color: form.recurring ? 'var(--accent-3)' : 'var(--text-muted)', flexShrink: 0 }} />
+        <div className="flex-1 min-w-0">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.recurring}
+                   onChange={e => set('recurring', e.target.checked)}
+                   className="rounded" />
+            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Repetir semanalmente</span>
+          </label>
+          {form.recurring && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>por</span>
+              <input type="number" min={1} max={52} value={form.recur_weeks}
+                     onChange={e => set('recur_weeks', Number(e.target.value))}
+                     className="input text-xs py-1 w-16" />
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>semanas</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button className="btn-primary w-full justify-center" onClick={onSubmit}>
+        {editingEvent ? 'Salvar alterações' : 'Criar evento'}
+      </button>
+    </div>
+  )
 }
 
 // ── Week Schedule View ────────────────────────────────────────────────────────
@@ -63,7 +233,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const TOTAL_HEIGHT = HOURS.length * PX_PER_HOUR
 
-  // Load week events
   const [weekEvents, setWeekEvents] = useState<Event[]>([])
   useEffect(() => {
     const from = weekStart.toISOString()
@@ -73,7 +242,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
       .catch(() => {})
   }, [weekStart])
 
-  // Build class slots per day from localStorage schedules
   const classByDay = useMemo(() => {
     const map: Record<number, Array<{ sub: Subject; slot: ClassSlot }>> = {}
     subjects.forEach(sub => {
@@ -84,7 +252,7 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
       })
     })
     return map
-  }, [subjects, schedules])
+  }, [subjects])
 
   const eventsByDay = useMemo(() => {
     const map: Record<string, Event[]> = {}
@@ -97,7 +265,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
 
   return (
     <div className="flex flex-col" style={{ height: '100%', minHeight: 0 }}>
-      {/* Schedule header */}
       <div className="px-4 py-3 shrink-0 flex items-center justify-between gap-3"
            style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-elevated)' }}>
         <p className="text-xs capitalize" style={{ color: 'var(--text-muted)' }}>
@@ -123,10 +290,8 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
         </div>
       </div>
 
-      {/* Timetable */}
       <div className="flex-1 overflow-auto" data-no-swipe>
         <div className="flex" style={{ minWidth: 500 }}>
-          {/* Hour labels */}
           <div className="shrink-0 w-12" style={{ paddingTop: 44 }}>
             {HOURS.map(h => (
               <div key={h} className="flex items-start justify-end pr-2"
@@ -138,7 +303,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
             ))}
           </div>
 
-          {/* Day columns */}
           <div className="flex flex-1">
             {weekDays.map((day, i) => {
               const key = format(day, 'yyyy-MM-dd')
@@ -148,7 +312,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
 
               return (
                 <div key={key} className="flex-1 flex flex-col" style={{ minWidth: 68, borderLeft: '1px solid var(--border)' }}>
-                  {/* Day header */}
                   <div className="h-11 flex flex-col items-center justify-center shrink-0 sticky top-0 z-10"
                        style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
                     <span className="text-[9px] font-bold uppercase"
@@ -161,9 +324,7 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
                     </div>
                   </div>
 
-                  {/* Events + classes area */}
                   <div className="relative" style={{ height: TOTAL_HEIGHT }}>
-                    {/* Hour grid lines */}
                     {HOURS.map(h => (
                       <div key={h} style={{
                         position: 'absolute', top: (h - START_HOUR) * PX_PER_HOUR,
@@ -172,12 +333,11 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
                       }} />
                     ))}
 
-                    {/* Today highlight */}
                     {isToday_d && (
                       <div style={{ position: 'absolute', inset: 0, background: 'var(--accent-soft)', opacity: 0.06, pointerEvents: 'none' }} />
                     )}
 
-                    {/* Class slots (from schedule) — lighter, behind events */}
+                    {/* Class slots from schedule */}
                     {classSlots.map(({ sub, slot }, ci) => {
                       const startMins = timeToMinutes(slot.startTime) - START_HOUR * 60
                       const endMins   = timeToMinutes(slot.endTime)   - START_HOUR * 60
@@ -199,7 +359,7 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
                       )
                     })}
 
-                    {/* Calendar events (solid, on top) */}
+                    {/* Calendar events */}
                     {dayEvents.map(e => {
                       const startMins = timeISOToMinutes(e.start_at) - START_HOUR * 60
                       const endMins   = e.end_at ? timeISOToMinutes(e.end_at) - START_HOUR * 60 : startMins + 60
@@ -230,7 +390,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
         </div>
       </div>
 
-      {/* Subject legend */}
       {subjects.some(s => (loadSchedules()[s.id] ?? []).length > 0) && (
         <div className="px-4 py-2 shrink-0 flex gap-2 overflow-x-auto scrollbar-hide"
              style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-elevated)' }}>
@@ -246,7 +405,6 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
         </div>
       )}
 
-      {/* Event detail popup */}
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
              style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
@@ -294,6 +452,15 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
                     <span className="text-sm font-mono">{selectedEvent.class_code}</span>
                   </div>
                 )}
+                {selectedEvent.description && (
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{selectedEvent.description}</p>
+                )}
+                {selectedEvent.recurring && (
+                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    <Repeat size={11} />
+                    <span>Recorrente · {selectedEvent.recur_weeks} semanas</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -304,13 +471,22 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
 }
 
 // ── Calendar Page ─────────────────────────────────────────────────────────────
+const FORM_DEFAULT: EventFormData = {
+  title: '', description: '', event_type: 'personal',
+  start_at: '', end_at: '', all_day: false, color: '#10B981',
+  location: '', class_code: '', entity_id: '',
+  recurring: false, recur_weeks: 16,
+}
+
 export default function CalendarPage() {
   const [view, setView]         = useState<'calendar' | 'schedule'>('calendar')
   const [current, setCurrent]   = useState(new Date())
   const [events, setEvents]     = useState<Event[]>([])
   const [subjects, setSubjects] = useState<Subject[]>([])
+  const [entities, setEntities] = useState<Entity[]>([])
   const [selected, setSelected] = useState<Date | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [isGlobalForm, setIsGlobalForm] = useState(false)
   const [showFilters, setShowFilters]   = useState(false)
   const [filterType, setFilterType]     = useState('all')
@@ -318,11 +494,7 @@ export default function CalendarPage() {
   const [globalKey, setGlobalKey]       = useState('')
   const [showKeyInput, setShowKeyInput] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
-  const [form, setForm] = useState({
-    title: '', description: '', event_type: 'personal',
-    start_at: '', end_at: '', all_day: false, color: '#10B981',
-    location: '', class_code: '',
-  })
+  const [form, setForm] = useState<EventFormData>(FORM_DEFAULT)
 
   const monthStart = startOfMonth(current)
   const monthEnd   = endOfMonth(current)
@@ -330,16 +502,18 @@ export default function CalendarPage() {
   const calEnd     = endOfWeek(monthEnd,     { weekStartsOn: 0 })
   const days       = eachDayOfInterval({ start: calStart, end: calEnd })
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
-      const [evRes, subRes] = await Promise.all([
+      const [evRes, subRes, entRes] = await Promise.all([
         api.get('/events/', { params: { start: calStart.toISOString(), end: calEnd.toISOString() } }),
         api.get('/grades/subjects').catch(() => ({ data: [] })),
+        api.get('/entities/').catch(() => ({ data: [] })),
       ])
       setEvents(evRes.data)
       setSubjects(subRes.data)
+      setEntities(entRes.data)
     } catch { toast.error('Erro ao carregar eventos') }
-  }
+  }, [current])
 
   useEffect(() => { load() }, [current])
 
@@ -354,9 +528,27 @@ export default function CalendarPage() {
 
   const eventsForDay = (day: Date) => filtered.filter((e) => isSameDay(parseISO(e.start_at), day))
   const daySelected  = selected ? eventsForDay(selected) : []
-  const openForm = (global = false) => { setIsGlobalForm(global); setShowForm(true) }
 
-  const createEvent = async () => {
+  const openForm = (global = false, ev?: Event) => {
+    setIsGlobalForm(global)
+    setGlobalKey('')
+    if (ev) {
+      setEditingEvent(ev)
+      setForm({
+        title: ev.title, description: ev.description ?? '', event_type: ev.event_type,
+        start_at: ev.start_at.slice(0,16), end_at: ev.end_at?.slice(0,16) ?? '',
+        all_day: ev.all_day, color: ev.color, location: ev.location ?? '',
+        class_code: ev.class_code ?? '', entity_id: ev.entity_id ?? '',
+        recurring: ev.recurring ?? false, recur_weeks: ev.recur_weeks ?? 16,
+      })
+    } else {
+      setEditingEvent(null)
+      setForm(FORM_DEFAULT)
+    }
+    setShowForm(true)
+  }
+
+  const createOrUpdateEvent = async () => {
     if (!form.title || !form.start_at) return
     try {
       const headers: Record<string, string> = {}
@@ -364,36 +556,51 @@ export default function CalendarPage() {
         if (!globalKey) { toast.error('Informe a chave de acesso global'); return }
         headers['x-global-key'] = globalKey
       }
-      const { data } = await api.post('/events/', {
+      const payload = {
         ...form,
         color: TYPE_COLORS[form.event_type] ?? form.color,
         end_at: form.end_at || undefined,
         location: form.location || undefined,
         description: form.description || undefined,
         class_code: form.class_code || undefined,
+        entity_id: form.entity_id || undefined,
         is_global: isGlobalForm,
-      }, { headers })
-      setEvents((prev) => [...prev, data])
+        recurring: form.recurring || undefined,
+        recur_weeks: form.recurring ? form.recur_weeks : undefined,
+      }
+
+      if (editingEvent) {
+        const { data } = await api.patch(`/events/${editingEvent.id}`, payload, { headers })
+        setEvents(prev => prev.map(e => e.id === editingEvent.id ? data : e))
+        toast.success('Evento atualizado!')
+      } else {
+        const { data } = await api.post('/events/', payload, { headers })
+        setEvents(prev => [...prev, data])
+        toast.success(isGlobalForm ? 'Evento global criado!' : 'Evento criado!')
+      }
       setShowForm(false)
-      setForm({ title:'',description:'',event_type:'personal',start_at:'',end_at:'',all_day:false,color:'#10B981',location:'',class_code:'' })
-      toast.success(isGlobalForm ? 'Evento global criado!' : 'Evento criado!')
+      setEditingEvent(null)
+      setForm(FORM_DEFAULT)
     } catch (err: any) {
       if (err.response?.status === 403) toast.error('Chave de acesso inválida')
-      else toast.error(err.response?.data?.detail ?? 'Erro ao criar evento')
+      else toast.error(err.response?.data?.detail ?? 'Erro ao salvar evento')
     }
   }
 
   const deleteEvent = async (ev: Event) => {
     if (ev.is_global) { setPendingDeleteId(ev.id); setShowKeyInput(true); return }
-    await api.delete(`/events/${ev.id}`)
-    setEvents((prev) => prev.filter((e) => e.id !== ev.id))
+    try {
+      await api.delete(`/events/${ev.id}`)
+      setEvents(prev => prev.filter(e => e.id !== ev.id))
+      toast.success('Evento removido')
+    } catch { toast.error('Erro ao remover evento') }
   }
 
   const confirmGlobalDelete = async () => {
     if (!pendingDeleteId || !globalKey) return
     try {
       await api.delete(`/events/${pendingDeleteId}`, { headers: { 'x-global-key': globalKey } })
-      setEvents((prev) => prev.filter((e) => e.id !== pendingDeleteId))
+      setEvents(prev => prev.filter(e => e.id !== pendingDeleteId))
       setPendingDeleteId(null); setShowKeyInput(false); setGlobalKey('')
       toast.success('Evento global removido')
     } catch { toast.error('Chave de acesso inválida') }
@@ -404,38 +611,33 @@ export default function CalendarPage() {
   return (
     <div className="flex flex-col" style={{ height: 'calc(100dvh - 52px - 60px)', minHeight: 0 }}>
 
-      {/* ── View toggle tab bar ── */}
+      {/* ── Tab bar ── */}
       <div className="shrink-0 flex items-center gap-2 px-4 py-2"
            style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
         <div className="flex gap-1 p-0.5 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-          <button
-            onClick={() => setView('calendar')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: view === 'calendar' ? 'var(--bg-card)' : 'transparent',
-              color: view === 'calendar' ? 'var(--text-primary)' : 'var(--text-muted)',
-              boxShadow: view === 'calendar' ? '0 1px 6px rgba(0,0,0,0.12)' : 'none',
-            }}>
+          <button onClick={() => setView('calendar')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={{ background: view==='calendar'?'var(--bg-card)':'transparent', color: view==='calendar'?'var(--text-primary)':'var(--text-muted)', boxShadow: view==='calendar'?'0 1px 6px rgba(0,0,0,0.12)':'none' }}>
             <CalendarDays size={13} /> Calendário
           </button>
-          <button
-            onClick={() => setView('schedule')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{
-              background: view === 'schedule' ? 'var(--bg-card)' : 'transparent',
-              color: view === 'schedule' ? 'var(--accent-3)' : 'var(--text-muted)',
-              boxShadow: view === 'schedule' ? '0 1px 6px rgba(0,0,0,0.12)' : 'none',
-            }}>
+          <button onClick={() => setView('schedule')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={{ background: view==='schedule'?'var(--bg-card)':'transparent', color: view==='schedule'?'var(--accent-3)':'var(--text-muted)', boxShadow: view==='schedule'?'0 1px 6px rgba(0,0,0,0.12)':'none' }}>
             <CalendarRange size={13} /> Cronograma
           </button>
         </div>
-        {/* Action buttons — only in calendar view */}
+
         {view === 'calendar' && (
           <div className="flex items-center gap-1 ml-auto">
             <button onClick={() => setShowFilters(!showFilters)}
                     className={clsx('btn-ghost p-2 transition-all', showFilters && 'text-purple-400')}
                     title="Filtros">
               <Filter size={14}/>
+            </button>
+            {/* .ics export */}
+            <button onClick={() => exportICS(events)}
+                    className="btn-ghost p-2" title="Exportar .ics">
+              <Download size={14}/>
             </button>
             <button onClick={() => setCurrent(s => subMonths(s, 1))} className="btn-ghost p-1.5"><ChevronLeft size={15}/></button>
             <button onClick={() => setCurrent(new Date())}
@@ -462,9 +664,8 @@ export default function CalendarPage() {
       {/* ── Calendar View ── */}
       {view === 'calendar' && (
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden" style={{ minHeight: 0 }}>
-          {/* Calendar grid area */}
+          {/* Calendar grid */}
           <div className="flex-1 flex flex-col p-3 md:p-4 overflow-hidden" style={{ minHeight: 0 }}>
-            {/* Month title */}
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display font-bold text-lg capitalize" style={{ color: 'var(--text-primary)' }}>
                 {format(current, 'MMMM yyyy', { locale: ptBR })}
@@ -476,7 +677,6 @@ export default function CalendarPage() {
               )}
             </div>
 
-            {/* Filters */}
             {showFilters && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3 p-3 rounded-xl animate-in"
                    style={{ background:'var(--bg-card)', border:'1px solid var(--border)' }}>
@@ -498,7 +698,6 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {/* Week day headers */}
             <div className="grid grid-cols-7 mb-1.5">
               {WEEK_DAYS.map(d => (
                 <div key={d} className="text-center text-[10px] font-semibold uppercase tracking-wider py-1.5"
@@ -506,7 +705,6 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            {/* Day grid */}
             <div className="grid grid-cols-7 gap-px rounded-xl overflow-auto flex-1"
                  style={{ minHeight: '200px', background: 'var(--border)', border: '1px solid var(--border)' }}>
               {days.map(day => {
@@ -541,7 +739,8 @@ export default function CalendarPage() {
           {/* Side panel */}
           <div className="w-full md:w-64 shrink-0 flex flex-col p-3 md:p-4 cal-side-panel calendar-side"
                style={{ maxHeight: selected || showForm ? undefined : 'auto' }}>
-            {/* Global key delete modal */}
+
+            {/* Global delete modal */}
             {showKeyInput && (
               <div className="animate-in space-y-3 mb-4 p-3 rounded-xl"
                    style={{ background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)' }}>
@@ -560,66 +759,16 @@ export default function CalendarPage() {
             )}
 
             {showForm ? (
-              <div className="animate-in space-y-3 overflow-y-auto">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display font-bold flex items-center gap-2" style={{ color:'var(--text-primary)' }}>
-                    {isGlobalForm && <Globe size={14} className="text-pink-400"/>}
-                    {isGlobalForm ? 'Evento Global' : 'Novo Evento'}
-                  </h3>
-                  <button onClick={() => setShowForm(false)} style={{ color:'var(--text-muted)' }}><X size={16}/></button>
-                </div>
-                {isGlobalForm && (
-                  <>
-                    <p className="text-xs rounded-lg px-3 py-2"
-                       style={{ background:'rgba(219,39,119,0.1)', border:'1px solid rgba(219,39,119,0.2)', color:'#f9a8d4' }}>
-                      Visível para todos. Requer chave para remover.
-                    </p>
-                    <div>
-                      <label className="label flex items-center gap-1"><KeyRound size={11}/> Chave</label>
-                      <input className="input text-sm" type="password" placeholder="Chave secreta"
-                             value={globalKey} onChange={e => setGlobalKey(e.target.value)}/>
-                    </div>
-                  </>
-                )}
-                <div>
-                  <label className="label">Título</label>
-                  <input className="input text-sm" placeholder="Nome do evento" value={form.title}
-                         onChange={e => setForm(f => ({ ...f, title: e.target.value }))}/>
-                </div>
-                <div>
-                  <label className="label">Tipo</label>
-                  <select className="input text-sm" value={form.event_type}
-                          onChange={e => setForm(f => ({ ...f, event_type: e.target.value }))}>
-                    {Object.entries(TYPE_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Código da turma</label>
-                  <input className="input text-sm" placeholder="Ex: ACH2157" value={form.class_code}
-                         onChange={e => setForm(f => ({ ...f, class_code: e.target.value }))}/>
-                </div>
-                <div>
-                  <label className="label">Início</label>
-                  <input type="datetime-local" className="input text-sm" value={form.start_at}
-                         onChange={e => setForm(f => ({ ...f, start_at: e.target.value }))}/>
-                </div>
-                <div>
-                  <label className="label">Fim <span className="normal-case text-[10px]" style={{ color:'var(--text-muted)' }}>(opcional)</span></label>
-                  <input type="datetime-local" className="input text-sm" value={form.end_at}
-                         onChange={e => setForm(f => ({ ...f, end_at: e.target.value }))}/>
-                </div>
-                <div>
-                  <label className="label">Local</label>
-                  <input className="input text-sm" placeholder="Local (opcional)" value={form.location}
-                         onChange={e => setForm(f => ({ ...f, location: e.target.value }))}/>
-                </div>
-                <div>
-                  <label className="label">Descrição</label>
-                  <textarea className="input text-sm resize-none h-14" placeholder="Descrição…" value={form.description}
-                            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}/>
-                </div>
-                <button className="btn-primary w-full justify-center" onClick={createEvent}>Criar evento</button>
-              </div>
+              <EventForm
+                isGlobal={isGlobalForm}
+                globalKey={globalKey} setGlobalKey={setGlobalKey}
+                form={form} setForm={setForm}
+                entities={entities}
+                isMemberOfEntity={entities.some(e => e.is_member)}
+                onSubmit={createOrUpdateEvent}
+                onCancel={() => { setShowForm(false); setEditingEvent(null) }}
+                editingEvent={editingEvent}
+              />
             ) : selected ? (
               <div className="animate-in overflow-y-auto">
                 <div className="flex items-center justify-between mb-3">
@@ -647,9 +796,10 @@ export default function CalendarPage() {
                       <div key={ev.id} className="p-3 rounded-xl border group transition-all"
                            style={{ borderColor: ev.color + '44', backgroundColor: ev.color + '0d' }}>
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 mb-0.5">
                               {ev.is_global && <Globe size={9} className="text-pink-400 shrink-0"/>}
+                              {ev.recurring && <Repeat size={9} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
                               <p className="text-sm font-medium truncate" style={{ color:'var(--text-primary)' }}>{ev.title}</p>
                             </div>
                             <p className="text-[10px]" style={{ color: ev.color }}>{TYPE_LABELS[ev.event_type]}</p>
@@ -661,15 +811,22 @@ export default function CalendarPage() {
                             )}
                             <p className="text-xs mt-1" style={{ color:'var(--text-muted)' }}>
                               {format(parseISO(ev.start_at), 'HH:mm')}
+                              {ev.end_at && ` – ${format(parseISO(ev.end_at), 'HH:mm')}`}
                             </p>
                             {ev.location && <p className="text-xs mt-0.5" style={{ color:'var(--text-muted)' }}>📍 {ev.location}</p>}
                           </div>
-                          <button onClick={() => deleteEvent(ev)}
-                                  className="opacity-0 group-hover:opacity-100 transition-all mt-0.5 shrink-0"
-                                  style={{ color: ev.is_global ? '#f87171' : 'var(--text-muted)' }}
-                                  title={ev.is_global ? 'Remover (requer chave)' : 'Remover'}>
-                            <Trash2 size={12}/>
-                          </button>
+                          {/* Edit + Delete buttons */}
+                          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all mt-0.5 shrink-0">
+                            <button onClick={() => openForm(ev.is_global ?? false, ev)}
+                                    style={{ color: 'var(--text-muted)' }} title="Editar">
+                              <Pencil size={11}/>
+                            </button>
+                            <button onClick={() => deleteEvent(ev)}
+                                    style={{ color: ev.is_global ? '#f87171' : 'var(--text-muted)' }}
+                                    title={ev.is_global ? 'Remover (requer chave)' : 'Remover'}>
+                              <Trash2 size={11}/>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -463,6 +463,19 @@ export default function KanbanPage() {
   }, [])
 
   useEffect(() => { load() }, [])
+  // Track "kanban ghost" achievement: opened without creating
+  useEffect(() => {
+    const key = 'dasiboard-kanban-ghost'
+    const prev = parseInt(localStorage.getItem(key) ?? '0', 10)
+    const initialCardCount = boards.reduce((a: number, b: any) => a + (b.cards?.length ?? 0), 0)
+    return () => {
+      const finalCardCount = boards.reduce((a: number, b: any) => a + (b.cards?.length ?? 0), 0)
+      if (finalCardCount === initialCardCount && initialCardCount > 0) {
+        localStorage.setItem(key, String(prev + 1))
+      }
+    }
+  }, [])
+
 
   const currentBoard = boards.find((b) => b.id === active)
 

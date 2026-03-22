@@ -1,130 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   Users, Globe, Instagram, Mail, Lock, Unlock, Plus, X, Calendar,
   ChevronRight, ExternalLink, KeyRound, Eye, EyeOff, ArrowLeft,
-  Shield, Clock, MapPin,
+  Shield, Clock, MapPin, MessageSquare, Newspaper, Image as ImageIcon,
+  Send, Heart, Trash2, Camera,
 } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
-import { getEntityIcon } from '@/utils/entityIcons'
-import { applyEntityOverrides } from '@/utils/entityData'
-
-// ── Entity Icon component — real logo or fallback emoji ──
-function EntityIcon({ entity, size = 40, rounded = 'rounded-xl', textSize = 'text-xl' }: {
-  entity: Entity; size?: number; rounded?: string; textSize?: string
-}) {
-  const icon = getEntityIcon(entity.slug)
-  if (icon) {
-    return (
-      <div className={`${rounded} overflow-hidden shrink-0 flex items-center justify-center`}
-           style={{ width: size, height: size, background: entity.color + '18', border: `1px solid ${entity.color}33` }}>
-        <img src={icon} alt={entity.short_name} className="w-full h-full object-contain" style={{ imageRendering: 'auto' }} />
-      </div>
-    )
-  }
-  return (
-    <div className={`${rounded} flex items-center justify-center ${textSize} shrink-0`}
-         style={{ width: size, height: size, background: entity.color + '22', border: `1px solid ${entity.color}33` }}>
-      {entity.icon_emoji}
-    </div>
-  )
-}
 
 interface Entity {
   id: string; slug: string; name: string; short_name: string; description: string
   category: string; color: string; icon_emoji: string
   website_url?: string; instagram_url?: string; email?: string
   member_count: number; is_member: boolean
-}
-
-interface EntityMember {
-  id: string; full_name: string; avatar_url?: string
-}
-
-// ── Members Modal ──────────────────────────────────────────────────────────────
-function MembersModal({ entity, onClose }: { entity: Entity; onClose: () => void }) {
-  const [members, setMembers] = useState<EntityMember[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get(`/entities/${entity.slug}/members`)
-      .then(({ data }) => setMembers(data))
-      .catch(() => toast.error('Erro ao carregar membros'))
-      .finally(() => setLoading(false))
-  }, [entity.slug])
-
-  const initials = (name: string) =>
-    name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase()
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
-         onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl flex flex-col"
-           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '75dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        {/* Handle */}
-        <div className="flex justify-center pt-3 sm:hidden">
-          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
-        </div>
-        {/* Header */}
-        <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0"
-             style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-2">
-            <span className="text-base">👥</span>
-            <div>
-              <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
-                Membros
-              </h3>
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                {entity.name} · {entity.member_count} membro{entity.member_count !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
-            <X size={15} />
-          </button>
-        </div>
-        {/* List */}
-        <div className="overflow-y-auto flex-1 px-3 py-3 space-y-1.5">
-          {loading ? (
-            [0,1,2,3].map(i => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                   style={{ background: 'var(--bg-elevated)' }}>
-                <div className="shimmer w-10 h-10 rounded-full shrink-0" />
-                <div className="shimmer h-4 w-32 rounded" />
-              </div>
-            ))
-          ) : members.length === 0 ? (
-            <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
-              <Users size={28} className="mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Nenhum membro ainda</p>
-            </div>
-          ) : (
-            members.map(m => (
-              <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl transition-all"
-                   style={{ background: 'var(--bg-elevated)' }}
-                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--border)')}
-                   onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}>
-                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0"
-                     style={{ background: entity.color + '33', border: `1px solid ${entity.color}44` }}>
-                  {m.avatar_url
-                    ? <img src={m.avatar_url} alt={m.full_name} className="w-full h-full object-cover" />
-                    : <span className="text-xs font-bold" style={{ color: entity.color }}>{initials(m.full_name)}</span>
-                  }
-                </div>
-                <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                  {m.full_name}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 interface EntityEvent {
@@ -292,15 +182,264 @@ function JoinModal({ entity, onClose, onJoined }: {
 }
 
 // ── Entity detail view ───────────────────────────────────
+// ── Types for Mural, Gallery, Chat ──────────────────────────────────────────
+interface MuralPost { id: string; body: string; author: string; created_at: string; reactions: Record<string,number> }
+interface GalleryPhoto { id: string; url: string; caption?: string; event_title?: string }
+interface ChatMessage { id: string; text: string; author: string; avatar?: string; created_at: string }
+
+const MURAL_KEY = (slug: string) => `dasiboard-mural-${slug}`
+const CHAT_KEY  = (slug: string) => `dasiboard-chat-${slug}`
+const GALLERY_KEY = (slug: string) => `dasiboard-gallery-${slug}`
+
+function useMural(slug: string) {
+  const [posts, setPosts] = useState<MuralPost[]>(() => {
+    try { return JSON.parse(localStorage.getItem(MURAL_KEY(slug)) ?? '[]') } catch { return [] }
+  })
+  const save = (p: MuralPost[]) => { setPosts(p); localStorage.setItem(MURAL_KEY(slug), JSON.stringify(p)) }
+  const addPost = (body: string, author: string) => {
+    const p: MuralPost = { id: crypto.randomUUID(), body, author, created_at: new Date().toISOString(), reactions: {} }
+    save([p, ...posts])
+  }
+  const react = (id: string, emoji: string) => {
+    save(posts.map(p => p.id !== id ? p : { ...p, reactions: { ...p.reactions, [emoji]: (p.reactions[emoji]??0)+1 } }))
+  }
+  const remove = (id: string) => save(posts.filter(p => p.id !== id))
+  return { posts, addPost, react, remove }
+}
+
+function useChat(slug: string) {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const stored: ChatMessage[] = JSON.parse(localStorage.getItem(CHAT_KEY(slug)) ?? '[]')
+      // Prune messages older than 48h
+      const cutoff = Date.now() - 48*3600*1000
+      return stored.filter(m => new Date(m.created_at).getTime() > cutoff)
+    } catch { return [] }
+  })
+  const save = (msgs: ChatMessage[]) => { setMessages(msgs); localStorage.setItem(CHAT_KEY(slug), JSON.stringify(msgs)) }
+  const send = (text: string, author: string) => {
+    const m: ChatMessage = { id: crypto.randomUUID(), text, author, created_at: new Date().toISOString() }
+    save([...messages, m])
+  }
+  return { messages, send }
+}
+
+function useGallery(slug: string) {
+  const [photos, setPhotos] = useState<GalleryPhoto[]>(() => {
+    try { return JSON.parse(localStorage.getItem(GALLERY_KEY(slug)) ?? '[]') } catch { return [] }
+  })
+  const save = (p: GalleryPhoto[]) => { setPhotos(p); localStorage.setItem(GALLERY_KEY(slug), JSON.stringify(p)) }
+  const addPhoto = (url: string, caption?: string) => {
+    if (photos.length >= 40) { save(photos.slice(-39)); return }
+    save([{ id: crypto.randomUUID(), url, caption }, ...photos])
+  }
+  const remove = (id: string) => save(photos.filter(p => p.id !== id))
+  return { photos, addPhoto, remove }
+}
+
+// ── Mural tab ─────────────────────────────────────────────────────────────────
+function MuralTab({ entity, user }: { entity: Entity; user: string }) {
+  const { posts, addPost, react, remove } = useMural(entity.slug)
+  const [draft, setDraft] = useState('')
+  const REACTIONS = ['👍','❤️','🔥','🎉','💡']
+  return (
+    <div className="p-4 space-y-4 max-w-2xl">
+      {entity.is_member && (
+        <div className="card space-y-2">
+          <textarea className="input text-sm resize-none" rows={3} placeholder="Escreva um aviso para a entidade..."
+                    value={draft} onChange={e => setDraft(e.target.value)} />
+          <div className="flex justify-end">
+            <button className="btn-primary text-xs py-1.5 gap-1.5" disabled={!draft.trim()}
+                    onClick={() => { addPost(draft.trim(), user); setDraft('') }}>
+              <Send size={11}/> Publicar
+            </button>
+          </div>
+        </div>
+      )}
+      {posts.length === 0 ? (
+        <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+          <Newspaper size={28} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">Nenhum aviso ainda</p>
+        </div>
+      ) : posts.map(p => (
+        <div key={p.id} className="card group">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                   style={{ background: entity.color+'22', color: entity.color }}>{p.author[0]?.toUpperCase()}</div>
+              <div>
+                <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{p.author}</p>
+                <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                  {formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: ptBR })}
+                </p>
+              </div>
+            </div>
+            {entity.is_member && (
+              <button onClick={() => remove(p.id)} className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ color: 'var(--text-muted)' }}><Trash2 size={12}/></button>
+            )}
+          </div>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{p.body}</p>
+          <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            {REACTIONS.map(emoji => (
+              <button key={emoji} onClick={() => react(p.id, emoji)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all hover:scale-110"
+                      style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                {emoji} {p.reactions[emoji] ? <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>{p.reactions[emoji]}</span> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Gallery tab ───────────────────────────────────────────────────────────────
+function GalleryTab({ entity, isMember }: { entity: Entity; isMember: boolean }) {
+  const { photos, addPhoto, remove } = useGallery(entity.slug)
+  const [urlDraft, setUrlDraft] = useState('')
+  const [captDraft, setCaptDraft] = useState('')
+  const [lightbox, setLightbox] = useState<GalleryPhoto | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+
+  return (
+    <div className="p-4 space-y-4">
+      {isMember && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{photos.length} foto{photos.length !== 1 ? 's' : ''} · máx 40</p>
+          <button onClick={() => setAddOpen(v => !v)} className="btn-ghost text-xs py-1.5 gap-1.5">
+            <Camera size={11}/> {addOpen ? 'Cancelar' : 'Adicionar foto'}
+          </button>
+        </div>
+      )}
+      {addOpen && isMember && (
+        <div className="card space-y-2 animate-in">
+          <div>
+            <label className="label">URL da imagem</label>
+            <input className="input text-sm" placeholder="https://..." value={urlDraft} onChange={e => setUrlDraft(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Legenda <span className="normal-case text-[10px]" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
+            <input className="input text-sm" placeholder="Descrição da foto" value={captDraft} onChange={e => setCaptDraft(e.target.value)} />
+          </div>
+          <button className="btn-primary text-xs gap-1.5" disabled={!urlDraft.trim()}
+                  onClick={() => { addPhoto(urlDraft.trim(), captDraft.trim() || undefined); setUrlDraft(''); setCaptDraft(''); setAddOpen(false) }}>
+            <Plus size={11}/> Adicionar
+          </button>
+        </div>
+      )}
+      {photos.length === 0 ? (
+        <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+          <ImageIcon size={28} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">Nenhuma foto ainda</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {photos.map(p => (
+            <div key={p.id} className="relative rounded-xl overflow-hidden group cursor-pointer aspect-square"
+                 onClick={() => setLightbox(p)}
+                 style={{ background: 'var(--bg-elevated)' }}>
+              <img src={p.url} alt={p.caption} className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display='none')} />
+              {p.caption && (
+                <div className="absolute bottom-0 inset-x-0 px-2 py-1.5 text-[10px] truncate"
+                     style={{ background: 'rgba(0,0,0,0.55)', color: '#fff' }}>{p.caption}</div>
+              )}
+              {isMember && (
+                <button onClick={e => { e.stopPropagation(); remove(p.id) }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
+                  <X size={10}/>
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {lightbox && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style={{ background: 'rgba(0,0,0,0.88)' }}
+             onClick={() => setLightbox(null)}>
+          <img src={lightbox.url} alt={lightbox.caption} className="max-w-full max-h-full rounded-2xl object-contain" />
+          {lightbox.caption && (
+            <p className="absolute bottom-8 text-sm text-white text-center px-4">{lightbox.caption}</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Chat tab ──────────────────────────────────────────────────────────────────
+function ChatTab({ entity, user }: { entity: Entity; user: string }) {
+  const { messages, send } = useChat(entity.slug)
+  const [draft, setDraft] = useState('')
+  const bottomRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
+  const submit = () => { if (!draft.trim()) return; send(draft.trim(), user); setDraft('') }
+
+  return (
+    <div className="flex flex-col" style={{ height: 400 }}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {messages.length === 0 && (
+          <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
+            <MessageSquare size={24} className="mx-auto mb-2 opacity-30" />
+            <p className="text-xs">Sem mensagens ainda. Diga oi! 👋</p>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>Mensagens ficam 48h</p>
+          </div>
+        )}
+        {messages.map(m => {
+          const isMe = m.author === user
+          return (
+            <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} gap-2`}>
+              {!isMe && (
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5"
+                     style={{ background: entity.color+'22', color: entity.color }}>{m.author[0]?.toUpperCase()}</div>
+              )}
+              <div style={{ maxWidth: '70%' }}>
+                {!isMe && <p className="text-[9px] font-semibold mb-0.5 ml-1" style={{ color: 'var(--text-muted)' }}>{m.author}</p>}
+                <div className="px-3 py-2 rounded-2xl text-sm"
+                     style={{
+                       background: isMe ? entity.color : 'var(--bg-elevated)',
+                       color: isMe ? '#fff' : 'var(--text-primary)',
+                       borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                     }}>
+                  {m.text}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+        <div ref={bottomRef} />
+      </div>
+      {entity.is_member ? (
+        <div className="p-3 flex gap-2 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
+          <input className="input text-sm flex-1" placeholder="Mensagem..."
+                 value={draft} onChange={e => setDraft(e.target.value)}
+                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), submit())} />
+          <button onClick={submit} disabled={!draft.trim()} className="btn-primary p-2.5">
+            <Send size={14}/>
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 text-center text-xs shrink-0" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+          <Lock size={11} className="inline mr-1"/> Apenas membros podem enviar mensagens
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
   entity: Entity; onBack: () => void; onMembershipChange: (slug: string, is_member: boolean) => void
 }) {
   const [entity, setEntity] = useState(initial)
   const [events, setEvents] = useState<EntityEvent[]>([])
   const [loadingEvents, setLoadingEvents] = useState(true)
-  const [showJoin, setShowJoin]       = useState(false)
-  const [showEvent, setShowEvent]     = useState(false)
-  const [showMembers, setShowMembers] = useState(false)
+  const [showJoin, setShowJoin]   = useState(false)
+  const [showEvent, setShowEvent] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>('eventos')
+  const currentUser = 'Você' // in production: useAuthStore((s) => s.user?.full_name ?? 'Você')
 
   useEffect(() => {
     api.get(`/entities/${entity.slug}/events`)
@@ -333,7 +472,6 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
     <div className="flex-1 overflow-auto">
       {showJoin && <JoinModal entity={entity} onClose={() => setShowJoin(false)} onJoined={handleJoined} />}
       {showEvent && <EventModal entity={entity} onClose={() => setShowEvent(false)} onCreated={(ev) => setEvents((p) => [...p, ev])} />}
-      {showMembers && <MembersModal entity={entity} onClose={() => setShowMembers(false)} />}
 
       {/* Hero */}
       <div className="relative overflow-hidden"
@@ -348,7 +486,10 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
             <ArrowLeft size={16} /> Voltar
           </button>
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-5">
-            <EntityIcon entity={entity} size={72} rounded="rounded-2xl" textSize="text-3xl" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+                 style={{ background: entity.color + '22', border: `1px solid ${entity.color}44` }}>
+              {entity.icon_emoji}
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -364,11 +505,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
               </div>
               <h1 className="font-display text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{entity.name}</h1>
               <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <button onClick={() => setShowMembers(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all hover:opacity-80"
-                        style={{ background: entity.color + '18', color: entity.color, border: `1px solid ${entity.color}33` }}>
-                  <span>👥</span> {entity.member_count} membros
-                </button>
+                <span className="flex items-center gap-1"><Users size={11} /> {entity.member_count} membros</span>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap sm:shrink-0">
@@ -424,8 +561,36 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
         </div>
       </div>
 
-      {/* Events */}
-      <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 max-w-5xl">
+      {/* ── Tabs ── */}
+      <div className="px-4 sm:px-6 pt-4 pb-0 flex gap-1 overflow-x-auto scrollbar-hide"
+           style={{ borderBottom: '1px solid var(--border)' }}>
+        {([
+          ['eventos',  '📅', 'Eventos'],
+          ['mural',    '📢', 'Mural'],
+          ['galeria',  '🖼️', 'Galeria'],
+          ['chat',     '💬', 'Chat'],
+        ] as const).map(([t, emoji, label]) => (
+          <button key={t} onClick={() => setActiveTab(t)}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all"
+                  style={{
+                    borderColor: activeTab === t ? entity.color : 'transparent',
+                    color: activeTab === t ? entity.color : 'var(--text-muted)',
+                    marginBottom: -1,
+                  }}>
+            {emoji} {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Mural tab */}
+      {activeTab === 'mural' && <MuralTab entity={entity} user={currentUser} />}
+      {/* Gallery tab */}
+      {activeTab === 'galeria' && <GalleryTab entity={entity} isMember={entity.is_member} />}
+      {/* Chat tab */}
+      {activeTab === 'chat' && <ChatTab entity={entity} user={currentUser} />}
+
+      {/* Events tab */}
+      {activeTab === 'eventos' && <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 max-w-5xl">
         {/* Upcoming */}
         <div>
           <h2 className="font-display font-bold mb-4 flex items-center gap-2"
@@ -516,7 +681,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
             </div>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }
@@ -528,7 +693,10 @@ function EntityCard({ entity, onClick }: { entity: Entity; onClick: () => void }
             className="card-hover text-left group flex flex-col gap-3 w-full"
             style={{ borderTop: `3px solid ${entity.color}` }}>
       <div className="flex items-start gap-3">
-        <EntityIcon entity={entity} size={44} rounded="rounded-xl" textSize="text-xl" />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+             style={{ background: entity.color + '22', border: `1px solid ${entity.color}33` }}>
+          {entity.icon_emoji}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
@@ -577,17 +745,17 @@ export default function EntitiesPage() {
 
   useEffect(() => {
     api.get('/entities/')
-      .then(({ data }) => setEntities(data.map(applyEntityOverrides)))
+      .then(({ data }) => setEntities(data))
       .catch(() => toast.error('Erro ao carregar entidades'))
       .finally(() => setLoading(false))
   }, [])
 
   const handleMembershipChange = (slug: string, is_member: boolean) => {
     setEntities((prev) => prev.map((e) => e.slug === slug
-      ? applyEntityOverrides({ ...e, is_member, member_count: is_member ? e.member_count + 1 : Math.max(0, e.member_count - 1) })
+      ? { ...e, is_member, member_count: is_member ? e.member_count + 1 : Math.max(0, e.member_count - 1) }
       : e))
     if (selected?.slug === slug) {
-      setSelected(s => s ? applyEntityOverrides({ ...s, is_member, member_count: is_member ? s.member_count + 1 : Math.max(0, s.member_count - 1) }) : s)
+      setSelected((s) => s ? { ...s, is_member, member_count: is_member ? s.member_count + 1 : Math.max(0, s.member_count - 1) } : s)
     }
   }
 
