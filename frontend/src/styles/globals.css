@@ -6453,3 +6453,28 @@ html { scroll-behavior: smooth; }
   opacity: 1;
   animation: dinoRun 4s linear infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ⚙️  SETTINGS — font size, density, reduced-motion overrides
+═══════════════════════════════════════════════════════════════════ */
+
+/* Font size — controlled by --app-font-size CSS var (12–20px) */
+:root {
+  --app-font-size: 14px;
+  --app-density:   1;
+}
+html { font-size: var(--app-font-size); }
+
+/* Density: compact reduces padding/gap by 20% */
+[data-density="compact"] .card           { padding: calc(12px * var(--app-density)); }
+[data-density="compact"] .card .space-y-4 > * + * { margin-top: calc(12px * var(--app-density)); }
+[data-density="compact"] nav a           { padding-top: calc(6px * var(--app-density)); padding-bottom: calc(6px * var(--app-density)); }
+[data-density="compact"] .py-2\.5        { padding-top: calc(6px * var(--app-density)); padding-bottom: calc(6px * var(--app-density)); }
+
+/* Reduced motion override (manual setting) */
+[data-reduced-motion="1"] *,
+[data-reduced-motion="1"] *::before,
+[data-reduced-motion="1"] *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}

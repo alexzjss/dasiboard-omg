@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
-  LogOut, Palette, Search, BookMarked, ChevronDown, Monitor,
+  LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings2,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
@@ -28,6 +28,10 @@ import { ShellPrompt } from '@/components/ShellPrompt'
 import { EvaSyncBar } from '@/components/EvaSync'
 import { PortatilSaveState } from '@/components/PortatilSaveState'
 import { AchievementToast, useAchievementToast } from '@/components/AchievementToast'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { useNotifications, maybeEmitWeeklyDigest } from '@/hooks/useNotifications'
+import { useSettings } from '@/hooks/useSettings'
+import { useStudyStats } from '@/hooks/useStudyStats'
 import clsx from 'clsx'
 
 const nav = [
@@ -38,6 +42,7 @@ const nav = [
   { to: '/entities',  label: 'Entidades',   icon: Users,           end: false },
   { to: '/docentes',  label: 'Docentes',    icon: BookMarked,      end: false },
   { to: '/profile',   label: 'Perfil',      icon: User,            end: false },
+  { to: '/settings',  label: 'Config.',     icon: Settings2,       end: false },
 ]
 
 // ── Theme preview colors for visual picker ───────────────────────────────────
@@ -365,9 +370,10 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode }: {
 
       <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.4 }} />
 
-      {/* Search */}
-      <div className="px-3 pt-2">
-        <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
+      {/* Search + Notifications row */}
+      <div className="px-3 pt-2 flex gap-1.5">
+        <NotificationCenter />
+        <button className="flex-1" onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
           <Search size={13} />
@@ -524,6 +530,11 @@ export default function AppLayout() {
   const liteMode  = useLiteMode()
   useChronoPortalSound()
   const { pending: achPending, dismiss: achDismiss } = useAchievementToast()
+  const studyStats = useStudyStats()
+  useSettings() // Apply settings CSS vars on mount
+
+  // Digest semanal
+  useEffect(() => { maybeEmitWeeklyDigest(studyStats) }, [])
 
   // Holo mouse tracking — dynamically update --holo-x/--holo-y on cards
   useEffect(() => {
@@ -629,6 +640,7 @@ export default function AppLayout() {
         </div>
         <div className="flex items-center gap-1.5">
 
+          <NotificationCenter />
           <button onClick={() => setSearchOpen(true)}
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
                   style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
