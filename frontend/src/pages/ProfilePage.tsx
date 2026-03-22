@@ -8,6 +8,7 @@ import {
   Sparkles, ImagePlus, Trash2, Lock, Star,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useStudyStats } from '@/hooks/useStudyStats'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 
@@ -821,7 +822,82 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* CONTA TAB */}
+      {/* STATS TAB */}
+      {activeTab==="stats"&&(
+        <div className="animate-in space-y-3">
+          {/* Streak */}
+          <div className="rounded-2xl p-4 flex items-center gap-4"
+               style={{ background: stats.streak > 0 ? 'rgba(245,158,11,0.08)' : 'var(--bg-elevated)', border: `1px solid ${stats.streak > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}` }}>
+            <span style={{ fontSize: 40, lineHeight: 1 }}>{stats.streak >= 7 ? '🔥' : stats.streak >= 3 ? '⚡' : '📅'}</span>
+            <div>
+              <p className="font-display font-bold text-2xl" style={{ color: stats.streak > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                {stats.streak} dia{stats.streak !== 1 ? 's' : ''}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {stats.streak === 0 ? 'Comece a sequência hoje!' : `Sequência de estudo 🔥`}
+              </p>
+            </div>
+          </div>
+
+          {/* Activity heatmap (last 30 days) */}
+          <div className="card p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>Atividade — 30 dias</p>
+            <div className="flex flex-wrap gap-1">
+              {Array.from({length:30},(_,i)=>{
+                const d = new Date(); d.setDate(d.getDate()-29+i)
+                const key = d.toISOString().slice(0,10)
+                const active = stats.sessionDates.includes(key)
+                const isToday = key === new Date().toISOString().slice(0,10)
+                return (
+                  <div key={key} className="w-5 h-5 rounded" title={key}
+                       style={{ background: active ? 'var(--accent-1)' : 'var(--bg-elevated)', border: isToday ? '2px solid var(--accent-3)' : '1px solid var(--border)', opacity: active ? 1 : 0.4 }}/>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label:'Notas criadas',     value: stats.notesCreated,           emoji:'📝', color:'#f59e0b' },
+              { label:'Flashcards resp.',  value: stats.flashcardsAnswered,     emoji:'⚡', color:'#22c55e' },
+              { label:'Taxa de acerto',    value: stats.flashcardsAnswered > 0 ? `${Math.round((stats.flashcardsCorrect/stats.flashcardsAnswered)*100)}%` : '—', emoji:'🎯', color:'#6366f1' },
+              { label:'Pomodoros',         value: Math.floor(stats.pomodoroMinutes/25), emoji:'🍅', color:'#ef4444' },
+              { label:'Tempo de estudo',   value: `${Math.floor(stats.pomodoroMinutes/60)}h ${stats.pomodoroMinutes%60}m`, emoji:'⏱️', color:'#06b6d4' },
+              { label:'Flashcards corretos', value: stats.flashcardsCorrect,    emoji:'✅', color:'#22c55e' },
+            ].map(({label,value,emoji,color})=>(
+              <div key={label} className="rounded-2xl p-3 flex items-center gap-3"
+                   style={{ background:'var(--bg-elevated)', border:'1px solid var(--border)' }}>
+                <span style={{fontSize:22,lineHeight:1}}>{emoji}</span>
+                <div>
+                  <p className="font-display font-bold text-lg leading-none" style={{color}}>{value}</p>
+                  <p className="text-[10px] mt-0.5" style={{color:'var(--text-muted)'}}>{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* High scores */}
+          {Object.keys(stats.highScores).length > 0 && (
+            <div className="card p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{color:'var(--text-muted)'}}>Recordes de flashcard</p>
+              <div className="space-y-1.5">
+                {Object.entries(stats.highScores).sort(([,a],[,b])=>b-a).slice(0,5).map(([sub,hs])=>(
+                  <div key={sub} className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
+                      <div className="h-full rounded-full" style={{width:`${hs}%`,background:hs>=80?'#22c55e':hs>=60?'#f59e0b':'#ef4444'}}/>
+                    </div>
+                    <span className="text-xs font-mono font-bold shrink-0" style={{color:'var(--text-muted)',minWidth:36,textAlign:'right'}}>{hs}%</span>
+                    <span className="text-[10px] truncate shrink-0" style={{color:'var(--text-secondary)',maxWidth:80}}>{sub}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+            {/* CONTA TAB */}
       {activeTab==="conta"&&(
         <div className="animate-in space-y-4">
           <div className="card">

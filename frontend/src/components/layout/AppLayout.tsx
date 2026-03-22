@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
@@ -71,6 +71,8 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
   'light-portatil':   { bg: '#9bbc0f', accent: '#306230', card: '#8bac0f' },
   'dark-aqua':        { bg: '#0a1a3a', accent: '#00aaff', card: '#0d2050' },
+  'dark-k7':          { bg: '#1a0e00', accent: '#ff8800', card: '#3d2200' },
+  'light-papiro':     { bg: '#fafaf5', accent: '#0050a0', card: '#f5f5ee' },
   // Chrono Trigger (usa preview base escuro)
   'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
 }
@@ -552,6 +554,35 @@ export default function AppLayout() {
   const liteMode  = useLiteMode()
   useChronoPortalSound()
   const { pending: achPending, dismiss: achDismiss } = useAchievementToast()
+
+  // Holo mouse tracking — dynamically update --holo-x/--holo-y on cards
+  useEffect(() => {
+    if (theme.id !== 'dark-holo') return
+    const handler = (e: MouseEvent) => {
+      const cards = document.querySelectorAll<HTMLElement>('[data-theme="dark-holo"] .card')
+      cards.forEach(card => {
+        const rect = card.getBoundingClientRect()
+        const x = ((e.clientX - rect.left) / rect.width) * 100
+        const y = ((e.clientY - rect.top) / rect.height) * 100
+        card.style.setProperty('--holo-x', `${x}%`)
+        card.style.setProperty('--holo-y', `${y}%`)
+      })
+    }
+    window.addEventListener('mousemove', handler, { passive: true })
+    return () => window.removeEventListener('mousemove', handler)
+  }, [theme.id])
+
+  // Minas dino — shows when any pomodoro is running
+  const minasRef = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (theme.id !== 'dark-minas') return
+    const handler = (e: CustomEvent) => {
+      const sidebar = document.querySelector<HTMLElement>('.sidebar-bg')
+      if (sidebar) sidebar.setAttribute('data-dino', e.detail?.running ? '1' : '0')
+    }
+    document.addEventListener('pomodoro:running' as any, handler)
+    return () => document.removeEventListener('pomodoro:running' as any, handler)
+  }, [theme.id])
 
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>

@@ -5,6 +5,7 @@ import {
   Zap, ChevronDown, ChevronRight, Clock,
 } from 'lucide-react'
 import { useNotes, generateFlashcards, Note } from '@/hooks/useNotes'
+import { recordStudyEvent } from '@/hooks/useStudyStats'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -54,6 +55,7 @@ function NoteEditor({
 
   const handleSave = () => {
     onSave({ id: note?.id, subjectId: note?.subjectId, eventId: note?.eventId, title: note?.title ?? 'Nota', content })
+    if (!note?.id) recordStudyEvent({ type: 'note_created' })
     setDirty(false)
   }
 

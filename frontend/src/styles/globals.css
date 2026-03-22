@@ -6194,3 +6194,262 @@ html { scroll-behavior: smooth; }
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   📼  DARK — K7  (Cassette tape · Marrom/Laranja · Retrô 80s)
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-k7"] {
+  --bg-base:        #1a0e00;
+  --bg-surface:     #261500;
+  --bg-elevated:    #331b00;
+  --bg-card:        #3d2200;
+  --border:         rgba(200,120,0,0.22);
+  --border-light:   rgba(200,120,0,0.40);
+  --text-primary:   #f5e0c0;
+  --text-secondary: #c88040;
+  --text-muted:     #6b3e10;
+  --accent-1:       #c85000;
+  --accent-2:       #a04000;
+  --accent-3:       #ff8800;
+  --accent-glow:    rgba(200,80,0,0.35);
+  --accent-soft:    rgba(200,80,0,0.12);
+  --gradient-hero:  linear-gradient(135deg, #c85000 0%, #7a2e00 50%, #1a0e00 100%);
+  --gradient-btn:   linear-gradient(135deg, #c85000, #a04000);
+  --noise-opacity:  0.05;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "DM Sans", sans-serif;
+}
+[data-theme="dark-k7"] h1,
+[data-theme="dark-k7"] h2,
+[data-theme="dark-k7"] h3,
+[data-theme="dark-k7"] h4 {
+  font-family: "Syne", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ff8800;
+  text-shadow: 0 0 12px rgba(200,80,0,0.5);
+}
+/* Magnetic tape spiral pattern */
+[data-theme="dark-k7"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 6px,
+      rgba(200,80,0,0.03) 6px,
+      rgba(200,80,0,0.03) 7px
+    ),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(200,80,0,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(120,40,0,0.08) 0%, transparent 50%);
+}
+[data-theme="dark-k7"] body::after {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #a04000, #ff8800, #c85000, #ff8800, #a04000);
+  pointer-events: none; z-index: 9000; opacity: 0.7;
+}
+[data-theme="dark-k7"] .sidebar-bg {
+  background: linear-gradient(180deg, #261500 0%, #1a0e00 100%);
+  border-right: 1px solid rgba(200,80,0,0.2);
+}
+[data-theme="dark-k7"] .sidebar-bg::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #a04000, #ff8800, #a04000);
+  pointer-events: none;
+}
+[data-theme="dark-k7"] .card {
+  background: rgba(61,34,0,0.92);
+  border: 1px solid rgba(200,80,0,0.18);
+  border-top: 1px solid rgba(200,80,0,0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+[data-theme="dark-k7"] .card-hover:hover {
+  border-color: rgba(255,136,0,0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(200,80,0,0.2);
+}
+[data-theme="dark-k7"] .nav-active {
+  background: rgba(200,80,0,0.12) !important;
+  border: 1px solid rgba(255,136,0,0.4) !important;
+  color: #ff8800 !important;
+}
+[data-theme="dark-k7"] .nav-inactive { color: #6b3e10; }
+[data-theme="dark-k7"] .nav-inactive:hover { color: #ff8800; background: rgba(200,80,0,0.08); }
+[data-theme="dark-k7"] .btn-primary {
+  background: linear-gradient(135deg, #c85000, #a04000) !important;
+  border: 1px solid rgba(255,136,0,0.4) !important;
+  box-shadow: 0 2px 12px rgba(200,80,0,0.3) !important;
+  font-weight: 700 !important;
+}
+[data-theme="dark-k7"] .input {
+  background: rgba(26,14,0,0.8) !important;
+  border-color: rgba(200,80,0,0.25) !important;
+  color: #f5e0c0 !important;
+}
+[data-theme="dark-k7"] .input:focus { border-color: #c85000 !important; box-shadow: 0 0 0 2px rgba(200,80,0,0.15) !important; }
+[data-theme="dark-k7"] ::-webkit-scrollbar-thumb { background: #c85000; }
+[data-theme="dark-k7"] ::-webkit-scrollbar-track { background: #1a0e00; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   📋  LIGHT — Papiro  (Caderno de engenharia · Papel milimetrado)
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="light-papiro"] {
+  --bg-base:        #fafaf5;
+  --bg-surface:     #f5f5ee;
+  --bg-elevated:    #f0f0e8;
+  --bg-card:        #fafaf5;
+  --border:         rgba(0,80,160,0.18);
+  --border-light:   rgba(0,80,160,0.30);
+  --text-primary:   #1a2040;
+  --text-secondary: #2040a0;
+  --text-muted:     #6080c0;
+  --accent-1:       #0050a0;
+  --accent-2:       #003880;
+  --accent-3:       #0068d0;
+  --accent-glow:    rgba(0,80,160,0.15);
+  --accent-soft:    rgba(0,80,160,0.07);
+  --gradient-hero:  linear-gradient(135deg, #0050a0 0%, #0068d0 60%, #88aaff 100%);
+  --gradient-btn:   linear-gradient(135deg, #0050a0, #003880);
+  --noise-opacity:  0;
+  --card-blur:      0px;
+  --sidebar-overlay: none;
+  font-family: "JetBrains Mono", monospace;
+}
+[data-theme="light-papiro"] h1,
+[data-theme="light-papiro"] h2,
+[data-theme="light-papiro"] h3,
+[data-theme="light-papiro"] h4 {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  color: #1a2040;
+  letter-spacing: 0.02em;
+}
+/* Graph paper grid */
+[data-theme="light-papiro"] body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,80,160,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,80,160,0.07) 1px, transparent 1px),
+    linear-gradient(rgba(0,80,160,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,80,160,0.04) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
+}
+/* Red left margin line */
+[data-theme="light-papiro"] body::after {
+  content: '';
+  position: fixed; top: 0; bottom: 0; left: 72px;
+  width: 1.5px; pointer-events: none; z-index: 0;
+  background: rgba(220,60,60,0.25);
+}
+[data-theme="light-papiro"] .sidebar-bg {
+  background: linear-gradient(180deg, #e8e8e0 0%, #f0f0e8 100%);
+  border-right: 2px solid rgba(0,80,160,0.2);
+}
+[data-theme="light-papiro"] .sidebar-bg::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: rgba(0,80,160,0.3); pointer-events: none;
+}
+[data-theme="light-papiro"] .nav-active {
+  background: rgba(0,80,160,0.08) !important;
+  border: 1px solid rgba(0,80,160,0.3) !important;
+  border-left: 3px solid #0050a0 !important;
+  color: #0050a0 !important;
+  border-radius: 4px !important;
+}
+[data-theme="light-papiro"] .nav-inactive { color: #6080c0; }
+[data-theme="light-papiro"] .nav-inactive:hover { background: rgba(0,80,160,0.05); color: #0050a0; }
+[data-theme="light-papiro"] .card {
+  background: #fafaf5;
+  border: 1px solid rgba(0,80,160,0.15);
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0 rgba(0,80,160,0.08);
+}
+[data-theme="light-papiro"] .card-hover:hover {
+  border-color: rgba(0,80,160,0.35);
+  box-shadow: 3px 3px 0 rgba(0,80,160,0.12);
+  transform: translateY(-1px) translateX(-1px);
+}
+[data-theme="light-papiro"] .btn-primary {
+  background: linear-gradient(135deg, #0050a0, #003880) !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0 rgba(0,50,120,0.2) !important;
+  font-weight: 700 !important;
+}
+[data-theme="light-papiro"] .btn-primary:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: none !important;
+}
+[data-theme="light-papiro"] .input {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(0,80,160,0.2) !important;
+  border-radius: 4px !important;
+  font-family: "JetBrains Mono", monospace !important;
+}
+[data-theme="light-papiro"] .input:focus {
+  border-color: #0050a0 !important;
+  box-shadow: 2px 2px 0 rgba(0,80,160,0.15) !important;
+}
+[data-theme="light-papiro"] .label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #0050a0;
+  text-transform: uppercase;
+}
+[data-theme="light-papiro"] ::-webkit-scrollbar { width: 6px; }
+[data-theme="light-papiro"] ::-webkit-scrollbar-thumb { background: rgba(0,80,160,0.3); border-radius: 2px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   🌈  HOLO — mouse-tracking iridescent glow on cards
+═══════════════════════════════════════════════════════════════════ */
+[data-theme="dark-holo"] .card {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+  --holo-x: 50%;
+  --holo-y: 50%;
+}
+[data-theme="dark-holo"] .card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(
+    circle 160px at var(--holo-x) var(--holo-y),
+    rgba(180,80,255,0.18) 0%,
+    rgba(0,200,255,0.12) 30%,
+    rgba(0,255,180,0.08) 55%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.1s;
+  mix-blend-mode: screen;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🦕  MINAS — pixel dinos running in sidebar footer
+═══════════════════════════════════════════════════════════════════ */
+@keyframes dinoRun {
+  0%   { transform: translateX(200px); }
+  100% { transform: translateX(-60px); }
+}
+[data-theme="dark-minas"] .sidebar-bg::after {
+  content: '🦕';
+  position: absolute;
+  bottom: 78px;
+  left: 0;
+  font-size: 18px;
+  pointer-events: none;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+/* Shown when data-pomodoro-running="1" is on the sidebar */
+[data-theme="dark-minas"] .sidebar-bg[data-dino="1"]::after {
+  opacity: 1;
+  animation: dinoRun 4s linear infinite;
+}

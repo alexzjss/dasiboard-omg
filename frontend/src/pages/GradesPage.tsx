@@ -652,7 +652,7 @@ function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete,
 
               {/* Attendance widget */}
               {subject.total_classes > 0 && (
-                <AttendanceWidget subject={subject} onUpdate={(t, a) => onUpdateAttendance(subject.id, t, a)}/>
+                <AttendanceWidget subject={subject} onUpdate={onUpdateAttendance}/>
               )}
             </div>
           )}
@@ -687,6 +687,8 @@ export default function GradesPage() {
   const [hoveredCode,   setHoveredCode]   = useState<string | null>(null)
   const [subjectPopup,  setSubjectPopup]  = useState<Subject | null>(null)
   const [popupDef,      setPopupDef]      = useState<SubjectDef | null>(null)
+  const [reviewTarget,  setReviewTarget]  = useState<{subjectId:string; subjectName:string; cards:any[]} | null>(null)
+  const { getAllFlashcards } = useNotes()
   const [fluxoStates,   setFluxoStates]   = useState<Record<string, FluxoState>>(() => {
     try { return JSON.parse(localStorage.getItem('dasiboard-fluxogram') ?? '{}') } catch { return {} }
   })
@@ -877,6 +879,14 @@ export default function GradesPage() {
       )}
 
       {/* Subject detail popup (for linked subjects — from sidebar or fluxo click) */}
+      {reviewTarget && (
+        <ReviewMode
+          subjectName={reviewTarget.subjectName}
+          cards={reviewTarget.cards}
+          onClose={() => setReviewTarget(null)}
+        />
+      )}
+
       {subjectPopup && (
         <SubjectDetailPopup
           subject={subjectPopup}

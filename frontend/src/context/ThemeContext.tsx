@@ -11,6 +11,8 @@ export type ThemeId =
   | 'dark-chrono'
   | 'light-portatil'
   | 'dark-aqua'
+  | 'dark-k7'
+  | 'light-papiro'
 
 // Sub-eras do Chrono Trigger que rotacionam por página
 export type ChronoEra = 'prehistoria' | 'antiguidade' | 'era-media' | 'futuro' | 'fim-dos-tempos'
@@ -67,6 +69,8 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-memento',    name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',       group: 'anime'   },
   { id: 'light-portatil',   name: 'Portátil',     dark: false, emoji: '🎮', description: 'Game Boy · Verde acinzentado', group: 'games' },
   { id: 'dark-aqua',        name: 'Aqua',         dark: true,  emoji: '💧', description: 'Windows XP Luna · Azul vitrificado', group: 'special' },
+  { id: 'dark-k7',          name: 'K7',           dark: true,  emoji: '📼', description: 'Cassette · Marrom/Laranja · 80s',    group: 'vibes'   },
+  { id: 'light-papiro',     name: 'Papiro',       dark: false, emoji: '📋', description: 'Caderno de engenharia · Milimetrado', group: 'tech'    },
 ]
 
 export const DARK_THEMES  = THEMES.filter(t => t.dark)

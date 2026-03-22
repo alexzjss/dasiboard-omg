@@ -1,6 +1,10 @@
 // ── Modo Revisão — Pomodoro + Flashcards gerados das notas ────────────────────
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, ChevronRight, ChevronLeft, Check, RotateCcw, Zap, Brain, Timer, Trophy } from 'lucide-react'
+import { X, Check, RotateCcw, Zap, Brain, Trophy, Users, Copy, LogIn, LogOut } from 'lucide-react'
+import { recordStudyEvent } from '@/hooks/useStudyStats'
+import { useStudyRoom, generateRoomCode } from '@/hooks/useStudyRoom'
+import { useTheme } from '@/context/ThemeContext'
+import { useAuthStore } from '@/store/authStore'
 import { Flashcard, createReviewSession } from '@/hooks/useNotes'
 
 // ── Pomodoro sub-component ────────────────────────────────────────────────────
@@ -141,35 +145,62 @@ function FlipCard({ card, onCorrect, onWrong }: {
 }
 
 // ── Review Mode modal ─────────────────────────────────────────────────────────
-export default function ReviewMode({ subjectName, cards, onClose }: {
+export default function ReviewMode({ subjectName, cards, onClose, subjectId }: {
   subjectName: string
+  subjectId?: string
   cards: Flashcard[]
   onClose: () => void
 }) {
   const [session]  = useState(() => createReviewSession(cards))
-  const [idx, setIdx]       = useState(0)
+  const [idx, setIdx]         = useState(0)
   const [correct, setCorrect] = useState<string[]>([])
   const [wrong, setWrong]     = useState<string[]>([])
   const [done, setDone]       = useState(false)
   const [pomoDone, setPomoDone] = useState(0)
+  const [showRoom, setShowRoom] = useState(false)
+  const [roomInput, setRoomInput] = useState('')
+
+  const { theme } = useTheme()
+  const user = useAuthStore(s => s.user)
+  const myName = user?.full_name?.split(' ')[0] ?? 'Eu'
+
+  const room = useStudyRoom(myName)
+  const isGameTheme = ['dark-pixel','light-720','light-portatil','dark-dlc'].includes(theme.id)
 
   const card = session[idx]
 
   const next = useCallback(() => {
     if (idx >= session.length - 1) setDone(true)
     else setIdx(i => i + 1)
-  }, [idx, session.length])
+    room.updateProgress(idx + 1, correct.length, session.length)
+  }, [idx, session.length, correct.length, room])
 
-  const onCorrect = () => { setCorrect(p => [...p, card.id]); next() }
-  const onWrong   = () => { setWrong(p => [...p, card.id]); next() }
-
-  const restart = () => {
-    setIdx(0); setCorrect([]); setWrong([]); setDone(false)
+  const onCorrect = () => {
+    recordStudyEvent({ type: 'flashcard_answered', correct: true })
+    setCorrect(p => [...p, card.id]); next()
   }
+  const onWrong = () => {
+    recordStudyEvent({ type: 'flashcard_answered', correct: false })
+    setWrong(p => [...p, card.id]); next()
+  }
+
+  const restart = () => { setIdx(0); setCorrect([]); setWrong([]); setDone(false) }
 
   const score = correct.length
   const total = session.length
   const pct   = total ? Math.round((score / total) * 100) : 0
+
+  // Record stats on completion
+  useEffect(() => {
+    if (!done || total === 0) return
+    recordStudyEvent({ type: 'high_score', subjectId: subjectName, pct })
+    // Save high score to localStorage for pixel/720/etc themes
+    if (isGameTheme) {
+      const key = 'dasiboard-hs-' + subjectName.replace(/\s+/g, '-').toLowerCase()
+      const prev = parseInt(localStorage.getItem(key) ?? '0', 10)
+      if (pct > prev) localStorage.setItem(key, String(pct))
+    }
+  }, [done])
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:p-4"
@@ -198,6 +229,12 @@ export default function ReviewMode({ subjectName, cards, onClose }: {
                 {idx + 1}/{total}
               </span>
             )}
+            <button type="button" onClick={() => setShowRoom(v => !v)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                    style={{ background: room.connected ? 'var(--accent-soft)' : 'var(--bg-elevated)', color: room.connected ? 'var(--accent-3)' : 'var(--text-muted)', border: `1px solid ${room.connected ? 'var(--accent-1)' : 'var(--border)'}` }}
+                    title="Sala de estudos">
+              <Users size={14} />
+            </button>
             <button type="button" onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
               <X size={15} />
             </button>
@@ -205,8 +242,80 @@ export default function ReviewMode({ subjectName, cards, onClose }: {
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Study room panel */}
+          {showRoom && (
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                  <Users size={13} style={{ color: 'var(--accent-3)' }}/> Sala de estudos
+                </p>
+                {room.connected && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg" style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)' }}>
+                      {room.roomCode}
+                    </span>
+                    <button type="button" onClick={() => { navigator.clipboard?.writeText(room.roomCode ?? ''); }}
+                            className="w-6 h-6 rounded flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
+                      <Copy size={11}/>
+                    </button>
+                    <button type="button" onClick={room.leave}
+                            className="w-6 h-6 rounded flex items-center justify-center" style={{ color: '#f87171' }}>
+                      <LogOut size={11}/>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {!room.connected ? (
+                <div className="space-y-2">
+                  <button type="button" onClick={() => { const code = generateRoomCode(); room.join(code) }}
+                          className="w-full btn-primary text-xs justify-center gap-1.5">
+                    <Zap size={12}/> Criar sala
+                  </button>
+                  <div className="flex gap-2">
+                    <input type="text" value={roomInput} onChange={e => setRoomInput(e.target.value.toUpperCase())}
+                           placeholder="Código da sala..." maxLength={6}
+                           className="input text-xs flex-1 font-mono"
+                           onKeyDown={e => e.key === 'Enter' && roomInput.length >= 4 && room.join(roomInput)}/>
+                    <button type="button" onClick={() => room.join(roomInput)} disabled={roomInput.length < 4}
+                            className="btn-ghost text-xs px-3 gap-1 disabled:opacity-40">
+                      <LogIn size={12}/> Entrar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {room.peers.length === 0 ? (
+                    <p className="text-xs text-center py-2" style={{ color: 'var(--text-muted)' }}>Aguardando colegas… compartilhe o código!</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {/* Self */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--accent-3)' }}/>
+                        <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-primary)' }}>{myName} (você)</span>
+                        <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{idx + 1}/{total}</span>
+                      </div>
+                      {room.peers.map(peer => (
+                        <div key={peer.id} className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ background: '#22c55e' }}/>
+                          <span className="text-xs flex-1" style={{ color: 'var(--text-secondary)' }}>{peer.name}</span>
+                          <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{peer.cardIndex}/{total}</span>
+                          {peer.total > 0 && (
+                            <span className="text-xs font-bold" style={{ color: peer.correct/peer.total >= 0.7 ? '#22c55e' : 'var(--text-muted)' }}>
+                              {Math.round((peer.correct/peer.total)*100)}%
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Pomodoro bar */}
-          <PomodoroBar subjectName={subjectName} onDone={() => setPomoDone(p => p + 1)} />
+          <PomodoroBar subjectName={subjectName} onDone={() => { setPomoDone(p => p + 1); recordStudyEvent({ type: 'pomodoro_completed', minutes: 25 }) }} />
 
           {pomoDone > 0 && (
             <p className="text-xs text-center" style={{ color: '#22c55e' }}>
@@ -249,6 +358,20 @@ export default function ReviewMode({ subjectName, cards, onClose }: {
                   <p className="text-xs" style={{ color: '#ef4444', opacity: 0.7 }}>Erros</p>
                 </div>
               </div>
+
+              {/* High score for game themes */}
+              {isGameTheme && (() => {
+                const key = 'dasiboard-hs-' + subjectName.replace(/\s+/g, '-').toLowerCase()
+                const hs = parseInt(localStorage.getItem(key) ?? '0', 10)
+                return pct >= hs && pct > 0 ? (
+                  <div className="text-center py-2 rounded-xl animate-in"
+                       style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                    <p className="text-xs font-bold" style={{ color: '#f59e0b' }}>⭐ NOVO RECORDE! {pct}%</p>
+                  </div>
+                ) : hs > 0 ? (
+                  <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>Recorde: {hs}%</p>
+                ) : null
+              })()}
 
               <div className="flex gap-2">
                 <button type="button" onClick={restart} className="flex-1 btn-ghost gap-2 justify-center">
