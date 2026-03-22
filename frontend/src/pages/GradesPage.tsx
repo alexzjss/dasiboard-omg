@@ -156,8 +156,8 @@ function AttendanceWidget({ subject, onUpdate }: {
 
   return (
     <div className="rounded-2xl p-3 space-y-3"
-      {ConfirmDialogEl}
          style={{ background: draftFF ? 'rgba(239,68,68,0.05)' : 'var(--bg-elevated)', border: `1px solid ${draftFF ? 'rgba(239,68,68,0.2)' : 'var(--border)'}` }}>
+      {ConfirmDialogEl}
       <div className="flex items-center gap-4">
         {/* Ring */}
         <div className="relative shrink-0" style={{ width: 52, height: 52 }}>
