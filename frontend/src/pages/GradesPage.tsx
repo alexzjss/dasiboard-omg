@@ -5,7 +5,7 @@ import { useNotes } from '@/hooks/useNotes'
 import {
   Plus, Trash2, BookOpen, TrendingUp, ChevronDown, ChevronRight,
   Award, AlertTriangle, X, Minus, Save, CheckCircle2, Clock, Lock,
-  GitBranch, LayoutGrid, List,
+  GitBranch, FileText, Brain,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
@@ -472,6 +472,211 @@ function FluxoNode({ sub, status, fluxoState, highlighted, dimmed, onClick }: {
   )
 }
 
+// ─────────────────────── SubjectDetailPopup ─────────────────────────────────
+function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete, onAddGrade, onDeleteGrade, onUpdateAttendance, onStartReview, saveFluxoState }: {
+  subject: Subject; fluxoDef?: SubjectDef; fluxoStates: Record<string, FluxoState>
+  onClose: () => void
+  onDelete: () => void
+  onAddGrade: (id: string, g: Partial<Grade>) => void
+  onDeleteGrade: (sid: string, gid: string) => void
+  onUpdateAttendance: (id: string, total: number, att: number) => void
+  onStartReview?: (subjectId: string, subjectName: string) => void
+  saveFluxoState: (s: FluxoState) => void
+}) {
+  const [activeSection, setActiveSection] = useState<'info'|'notes'>('info')
+  const [addingGrade, setAddingGrade]     = useState(false)
+  const [gradeForm, setGradeForm]         = useState({ label: '', value: '', weight: '1', max_value: '10' })
+  const avg = weightedAvg(subject.grades)
+  const absent = subject.total_classes - subject.attended
+  const failedByAbs = absent > Math.floor(subject.total_classes * 0.3) && subject.total_classes > 0
+  const passFail = avg === null ? null : avg >= 5
+  const fluxoStatus = fluxoDef ? getFluxoStatus(fluxoDef.code, fluxoStates) : null
+
+  const submitGrade = async () => {
+    if (!gradeForm.label || !gradeForm.value) return
+    await onAddGrade(subject.id, {
+      label: gradeForm.label, value: parseFloat(gradeForm.value),
+      weight: parseFloat(gradeForm.weight), max_value: parseFloat(gradeForm.max_value),
+    })
+    setGradeForm({ label: '', value: '', weight: '1', max_value: '10' })
+    setAddingGrade(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+         onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in flex flex-col"
+           style={{ background: 'var(--bg-card)', border: `1px solid ${subject.color}33`, maxHeight: '92dvh', boxShadow: `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px ${subject.color}18` }}>
+
+        {/* Handle */}
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }}/>
+        </div>
+
+        {/* Header */}
+        <div className="px-5 pt-3 pb-0">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                   style={{ background: subject.color + '22', border: `1px solid ${subject.color}44` }}>
+                <BookOpen size={18} style={{ color: subject.color }}/>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-xs font-bold" style={{ color: subject.color }}>{subject.code}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>{subject.semester}</span>
+                  {fluxoStatus && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold" style={{
+                      background: fluxoStatus === 'passed' ? 'rgba(34,197,94,0.15)' : fluxoStatus === 'in-progress' ? subject.color + '20' : 'var(--bg-elevated)',
+                      color: fluxoStatus === 'passed' ? '#22c55e' : fluxoStatus === 'in-progress' ? subject.color : 'var(--text-muted)',
+                    }}>
+                      {fluxoStatus === 'passed' ? '✓ Aprovado' : fluxoStatus === 'in-progress' ? 'Em curso' : fluxoStatus}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display font-bold text-base leading-tight mt-0.5 truncate" style={{ color: 'var(--text-primary)' }}>{subject.name}</h3>
+                {subject.professor && <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{subject.professor}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onStartReview && (
+                <button onClick={() => onStartReview(subject.id, subject.name)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
+                        style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.25)' }}>
+                  <Brain size={12}/> Revisar
+                </button>
+              )}
+              <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+                <X size={15}/>
+              </button>
+            </div>
+          </div>
+
+          {/* Section tabs */}
+          <div className="flex gap-0 rounded-xl overflow-hidden p-0.5" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+            {([['info','📊 Notas & Frequência'],['notes','📝 Anotações']] as const).map(([s,label]) => (
+              <button key={s} onClick={() => setActiveSection(s)}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                      style={{
+                        background: activeSection === s ? 'var(--bg-card)' : 'transparent',
+                        color: activeSection === s ? 'var(--text-primary)' : 'var(--text-muted)',
+                        boxShadow: activeSection === s ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                      }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+
+          {activeSection === 'info' && (
+            <div className="space-y-4">
+              {/* Avg + attendance summary */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl p-3 text-center" style={{ background: avg !== null ? (avg >= 5 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)') : 'var(--bg-elevated)', border: `1px solid ${avg !== null ? (avg >= 5 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)') : 'var(--border)'}` }}>
+                  <p className="text-xl font-bold font-display" style={{ color: avg !== null ? (avg >= 5 ? '#22c55e' : '#ef4444') : 'var(--text-muted)' }}>
+                    {avg !== null ? avg.toFixed(1) : '—'}
+                  </p>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Média</p>
+                </div>
+                <div className="rounded-xl p-3 text-center" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                  <p className="text-xl font-bold font-display" style={{ color: failedByAbs ? '#ef4444' : 'var(--text-primary)' }}>
+                    {subject.attended}/{subject.total_classes}
+                  </p>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Presenças</p>
+                </div>
+                <div className="rounded-xl p-3 text-center" style={{ background: failedByAbs ? 'rgba(239,68,68,0.08)' : 'var(--bg-elevated)', border: `1px solid ${failedByAbs ? 'rgba(239,68,68,0.2)' : 'var(--border)'}` }}>
+                  <p className="text-xl font-bold font-display" style={{ color: failedByAbs ? '#ef4444' : 'var(--text-muted)' }}>
+                    {subject.total_classes > 0 ? Math.round(((subject.attended / subject.total_classes) * 100)) : 0}%
+                  </p>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Frequência</p>
+                </div>
+              </div>
+
+              {/* Grades */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Notas</p>
+                  <button onClick={() => setAddingGrade(v => !v)} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-70" style={{ color: 'var(--accent-3)' }}>
+                    <Plus size={11}/> Adicionar
+                  </button>
+                </div>
+
+                {addingGrade && (
+                  <div className="rounded-xl p-3 mb-2 space-y-2" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><label className="label text-[10px]">Nome</label><input className="input text-xs" placeholder="P1, Trabalho…" value={gradeForm.label} onChange={e => setGradeForm(f => ({...f, label: e.target.value}))}/></div>
+                      <div><label className="label text-[10px]">Nota</label><input type="number" className="input text-xs" step="0.1" min="0" value={gradeForm.value} onChange={e => setGradeForm(f => ({...f, value: e.target.value}))}/></div>
+                      <div><label className="label text-[10px]">Máx</label><input type="number" className="input text-xs" value={gradeForm.max_value} onChange={e => setGradeForm(f => ({...f, max_value: e.target.value}))}/></div>
+                      <div><label className="label text-[10px]">Peso</label><input type="number" className="input text-xs" step="0.1" min="0.1" value={gradeForm.weight} onChange={e => setGradeForm(f => ({...f, weight: e.target.value}))}/></div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="btn-primary text-xs flex-1 justify-center" onClick={submitGrade}>Salvar nota</button>
+                      <button className="btn-ghost text-xs" onClick={() => setAddingGrade(false)}>Cancelar</button>
+                    </div>
+                  </div>
+                )}
+
+                {subject.grades.length === 0 ? (
+                  <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>Nenhuma nota cadastrada</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {subject.grades.map(g => {
+                      const pct = (g.value / g.max_value) * 10
+                      return (
+                        <div key={g.id} className="flex items-center gap-3 px-3 py-2 rounded-xl group"
+                             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{g.label}</span>
+                              <span className="text-[10px] font-mono" style={{ color: pct >= 5 ? '#22c55e' : '#ef4444' }}>{g.value}/{g.max_value}</span>
+                              <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>×{g.weight}</span>
+                            </div>
+                            <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                              <div className="h-full rounded-full" style={{ width: `${(g.value / g.max_value) * 100}%`, background: pct >= 5 ? '#22c55e' : '#ef4444' }}/>
+                            </div>
+                          </div>
+                          <button onClick={() => onDeleteGrade(subject.id, g.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-xs" style={{ color: '#f87171' }}>
+                            <Trash2 size={13}/>
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Attendance widget */}
+              {subject.total_classes > 0 && (
+                <AttendanceWidget subject={subject} onUpdate={(t, a) => onUpdateAttendance(subject.id, t, a)}/>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'notes' && (
+            <NotesPanel
+              subjectId={subject.id}
+              subjectName={subject.name}
+              onFlashcards={() => onStartReview?.(subject.id, subject.name)}
+            />
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 flex gap-2" style={{ borderTop: '1px solid var(--border)' }}>
+          <button onClick={() => { onDelete(); onClose() }} className="btn-ghost text-xs gap-1.5" style={{ color: '#f87171' }}>
+            <Trash2 size={12}/> Remover disciplina
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─────────────────────── Main Page ───────────────────────────────────────────
 const COLORS = ['#8B5CF6','#4d67f5','#10B981','#F59E0B','#EF4444','#06B6D4','#EC4899']
 
@@ -479,8 +684,8 @@ export default function GradesPage() {
   const [subjects,      setSubjects]      = useState<Subject[]>([])
   const [loading,       setLoading]       = useState(true)
   const [creating,      setCreating]      = useState(false)
-  const [view,          setView]          = useState<'split'|'list'>('split')
   const [hoveredCode,   setHoveredCode]   = useState<string | null>(null)
+  const [subjectPopup,  setSubjectPopup]  = useState<Subject | null>(null)
   const [popupDef,      setPopupDef]      = useState<SubjectDef | null>(null)
   const [fluxoStates,   setFluxoStates]   = useState<Record<string, FluxoState>>(() => {
     try { return JSON.parse(localStorage.getItem('dasiboard-fluxogram') ?? '{}') } catch { return {} }
@@ -559,16 +764,7 @@ export default function GradesPage() {
               {failingAbs > 0 && <div className="px-3 py-1.5 rounded-xl" style={{ background: 'rgba(239,68,68,0.12)' }}><span className="text-sm font-bold" style={{ color: '#ef4444' }}>{failingAbs}</span><span className="text-[10px] ml-1" style={{ color: '#f87171' }}>FF</span></div>}
             </div>
           )}
-          {/* View toggle */}
-          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-            {([['split', LayoutGrid, 'Grade + Lista'] as const, ['list', List, 'Só lista'] as const]).map(([v, Icon, label]) => (
-              <button key={v} onClick={() => setView(v)} title={label}
-                      className="px-3 py-1.5 flex items-center gap-1.5 text-xs transition-all"
-                      style={{ background: view === v ? 'var(--accent-soft)' : 'transparent', color: view === v ? 'var(--accent-3)' : 'var(--text-muted)' }}>
-                <Icon size={14}/> <span className="hidden sm:inline">{label}</span>
-              </button>
-            ))}
-          </div>
+
         </div>
       </div>
 
@@ -583,150 +779,125 @@ export default function GradesPage() {
         <span className="ml-auto italic text-[9px]" style={{ color: 'var(--text-muted)' }}>Passe o mouse para ver conexões · clique para detalhes</span>
       </div>
 
-      {/* ── Content ── */}
-      {view === 'split' ? (
-        <div className="flex-1 flex overflow-hidden grades-split">
-          {/* Left: Fluxogram */}
-          <div className="flex-1 overflow-auto grades-fluxo" style={{ borderRight: '1px solid var(--border)', minWidth: 0 }}>
-            <div className="flex gap-2 p-3 min-w-max items-start">
-              {SEMESTERS.map(sem => (
-                <div key={sem} className="flex flex-col gap-1.5" style={{ minWidth: 120, maxWidth: 135 }}>
-                  <div className="px-2 py-1.5 rounded-lg text-center font-display font-bold text-[10px] uppercase tracking-wide shrink-0"
-                       style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }}>
-                    {sem}º
-                  </div>
-                  {SUBJECTS.filter(s => s.semester === sem).map(sub => {
-                    const status = getFluxoStatus(sub.code, fluxoStates)
-                    const isLinked = !!linkedSubject(sub.code)
-                    return (
-                      <div key={sub.code}
-                           onMouseEnter={() => setHoveredCode(sub.code)}
-                           onMouseLeave={() => setHoveredCode(null)}
-                           style={{ position: 'relative' }}>
-                        {isLinked && (
-                          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full z-10" style={{ background: 'var(--accent-3)', border: '1px solid var(--bg-card)' }}/>
-                        )}
-                        <FluxoNode
-                          sub={sub} status={status}
-                          fluxoState={fluxoStates[sub.code]}
-                          highlighted={highlighted?.has(sub.code) ?? false}
-                          dimmed={highlighted !== null && !(highlighted.has(sub.code))}
-                          onClick={() => setPopupDef(sub)}
-                        />
-                      </div>
-                    )
-                  })}
+      {/* ── Fluxogram (full width, only view) ── */}
+      <div className="flex-1 overflow-auto grades-fluxo" data-no-swipe>
+        <div className="flex gap-2 p-3 min-w-max items-start">
+          {/* Add discipline button as first column */}
+          <div className="flex flex-col gap-1.5" style={{ minWidth: 120, maxWidth: 135 }}>
+            <div className="px-2 py-1.5 rounded-lg text-center font-display font-bold text-[10px] uppercase tracking-wide"
+                 style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+              Minhas
+            </div>
+            {subjects.map(s => (
+              <button key={s.id}
+                      onMouseEnter={() => setHoveredCode(s.code)}
+                      onMouseLeave={() => setHoveredCode(null)}
+                      onClick={() => setSubjectPopup(s)}
+                      className="w-full text-left px-2 py-1.5 rounded-lg border transition-all text-[10px] hover:scale-[1.03]"
+                      style={{ background: s.color + '18', borderColor: s.color + '55', borderLeft: `3px solid ${s.color}` }}>
+                <div className="flex items-center gap-1 mb-0.5">
+                  <FileText size={9} style={{ color: s.color }}/>
+                  <span className="font-mono font-bold truncate" style={{ color: s.color }}>{s.code || s.name.slice(0, 6)}</span>
                 </div>
-              ))}
-            </div>
+                <p className="leading-tight truncate" style={{ color: 'var(--text-secondary)', fontSize: 9 }}>
+                  {s.name.length > 22 ? s.name.slice(0, 20) + '…' : s.name}
+                </p>
+              </button>
+            ))}
+            <button onClick={() => setCreating(true)}
+                    className="w-full px-2 py-1.5 rounded-lg text-[9px] font-semibold transition-all hover:scale-[1.03]"
+                    style={{ border: '1px dashed var(--accent-1)', color: 'var(--accent-3)', background: 'var(--accent-soft)' }}>
+              + Nova disciplina
+            </button>
           </div>
 
-          {/* Right: Subject list */}
-          <div className="w-80 xl:w-96 shrink-0 flex flex-col overflow-hidden grades-list">
-            <div className="flex-1 overflow-y-auto">
-              <div className="px-3 py-3 space-y-2">
-                {/* Create button */}
-                {creating ? (
-                  <div className="card animate-in space-y-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Nova disciplina</span>
-                      <button onClick={() => setCreating(false)} style={{ color: 'var(--text-muted)' }}><X size={15}/></button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><label className="label text-xs">Código</label><input className="input text-xs" placeholder="ACH2041" value={form.code} onChange={e => setForm(f => ({...f, code: e.target.value}))}/></div>
-                      <div><label className="label text-xs">Semestre</label><input className="input text-xs" placeholder="2025.1" value={form.semester} onChange={e => setForm(f => ({...f, semester: e.target.value}))}/></div>
-                      <div className="col-span-2"><label className="label text-xs">Nome</label><input className="input text-xs" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))}/></div>
-                      <div className="col-span-2"><label className="label text-xs">Professor(a)</label><input className="input text-xs" value={form.professor} onChange={e => setForm(f => ({...f, professor: e.target.value}))}/></div>
-                      <div><label className="label text-xs">Total de aulas</label><input type="number" className="input text-xs" value={form.total_classes} onChange={e => setForm(f => ({...f, total_classes: e.target.value}))}/></div>
-                      <div><label className="label text-xs">Cor</label><div className="flex gap-1 mt-1 flex-wrap">{COLORS.map(c => (<button key={c} onClick={() => setForm(f => ({...f, color: c}))} className="w-5 h-5 rounded-full" style={{ backgroundColor: c, transform: form.color === c ? 'scale(1.3)' : 'scale(1)', boxShadow: form.color === c ? `0 0 0 2px var(--bg-card), 0 0 0 3px ${c}` : 'none' }}/>))}</div></div>
-                    </div>
-                    <div className="flex gap-2"><button className="btn-primary text-xs flex-1 justify-center" onClick={createSubject}>Criar</button><button className="btn-ghost text-xs" onClick={() => setCreating(false)}>Cancelar</button></div>
-                  </div>
-                ) : (
-                  <button onClick={() => setCreating(true)} className="btn-primary text-xs w-full justify-center"><Plus size={12}/> Nova disciplina</button>
-                )}
-
-                {loading ? (
-                  <div className="space-y-2">{[0,1,2].map(i => <div key={i} className="card shimmer h-16"/>)}</div>
-                ) : subjects.length === 0 ? (
-                  <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                    <BookOpen size={28} className="mx-auto mb-2 opacity-30"/>
-                    <p className="text-xs">Nenhuma disciplina</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {subjects.map(s => (
-                      <div key={s.id}
-                           onMouseEnter={() => setHoveredCode(s.code)}
-                           onMouseLeave={() => setHoveredCode(null)}>
-                        <SubjectCard
-                          subject={s}
-                          fluxoDef={SUBJECTS.find(f => f.code === s.code)}
-                          fluxoStates={fluxoStates}
-                          onDelete={() => deleteSubject(s.id)}
-                          onAddGrade={addGrade}
-                          onDeleteGrade={deleteGrade}
-                          onUpdateAttendance={updateAttendance}
-                          onOpenFluxo={def => setPopupDef(def)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {/* Semester columns */}
+          {SEMESTERS.map(sem => (
+            <div key={sem} className="flex flex-col gap-1.5" style={{ minWidth: 120, maxWidth: 135 }}>
+              <div className="px-2 py-1.5 rounded-lg text-center font-display font-bold text-[10px] uppercase tracking-wide shrink-0"
+                   style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }}>
+                {sem}º
               </div>
+              {SUBJECTS.filter(s => s.semester === sem).map(sub => {
+                const status = getFluxoStatus(sub.code, fluxoStates)
+                const isLinked = !!linkedSubject(sub.code)
+                const linked = linkedSubject(sub.code)
+                return (
+                  <div key={sub.code}
+                       onMouseEnter={() => setHoveredCode(sub.code)}
+                       onMouseLeave={() => setHoveredCode(null)}
+                       style={{ position: 'relative' }}>
+                    {isLinked && (
+                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full z-10"
+                           style={{ background: 'var(--accent-3)', border: '1px solid var(--bg-card)' }}/>
+                    )}
+                    <FluxoNode
+                      sub={sub} status={status}
+                      fluxoState={fluxoStates[sub.code]}
+                      highlighted={highlighted?.has(sub.code) ?? false}
+                      dimmed={highlighted !== null && !(highlighted.has(sub.code))}
+                      onClick={() => {
+                        setPopupDef(sub)
+                        if (linked) setSubjectPopup(linked)
+                      }}
+                    />
+                  </div>
+                )
+              })}
             </div>
-          </div>
+          ))}
         </div>
-      ) : (
-        /* List-only view */
-        <div className="flex-1 overflow-y-auto">
-          <div className="px-4 py-4 max-w-3xl mx-auto space-y-3">
-            {creating ? (
-              <div className="card animate-in space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Nova disciplina</h3>
-                  <button onClick={() => setCreating(false)} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div><label className="label">Código</label><input className="input text-sm" placeholder="ACH2041" value={form.code} onChange={e => setForm(f => ({...f, code: e.target.value}))}/></div>
-                  <div><label className="label">Semestre</label><input className="input text-sm" placeholder="2025.1" value={form.semester} onChange={e => setForm(f => ({...f, semester: e.target.value}))}/></div>
-                  <div className="sm:col-span-2"><label className="label">Nome</label><input className="input text-sm" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))}/></div>
-                  <div className="sm:col-span-2"><label className="label">Professor(a)</label><input className="input text-sm" value={form.professor} onChange={e => setForm(f => ({...f, professor: e.target.value}))}/></div>
-                  <div><label className="label">Total de aulas</label><input type="number" className="input text-sm" value={form.total_classes} onChange={e => setForm(f => ({...f, total_classes: e.target.value}))}/></div>
-                  <div><label className="label">Cor</label><div className="flex gap-2 mt-1">{COLORS.map(c => (<button key={c} onClick={() => setForm(f => ({...f, color: c}))} className="w-7 h-7 rounded-full" style={{ backgroundColor: c, transform: form.color === c ? 'scale(1.25)' : 'scale(1)', boxShadow: form.color === c ? `0 0 0 2px var(--bg-card), 0 0 0 4px ${c}` : 'none' }}/>))}</div></div>
-                </div>
-                <div className="flex gap-2"><button className="btn-primary" onClick={createSubject}>Criar disciplina</button><button className="btn-ghost" onClick={() => setCreating(false)}>Cancelar</button></div>
-              </div>
-            ) : (
-              <button onClick={() => setCreating(true)} className="btn-primary"><Plus size={15}/> Nova disciplina</button>
-            )}
-            {loading ? (
-              <div className="space-y-3">{[0,1,2].map(i => <div key={i} className="card shimmer h-20"/>)}</div>
-            ) : subjects.length === 0 ? (
-              <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>
-                <BookOpen size={40} className="mx-auto mb-3 opacity-30"/>
-                <p className="text-sm">Nenhuma disciplina cadastrada</p>
-                <button onClick={() => setCreating(true)} className="text-xs mt-2" style={{ color: 'var(--accent-3)' }}>+ Adicionar primeira</button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {subjects.map(s => (
-                  <SubjectCard key={s.id} subject={s}
-                               fluxoDef={SUBJECTS.find(f => f.code === s.code)}
-                               fluxoStates={fluxoStates}
-                               onDelete={() => deleteSubject(s.id)}
-                               onAddGrade={addGrade} onDeleteGrade={deleteGrade}
-                               onUpdateAttendance={updateAttendance}
-                               onOpenFluxo={def => setPopupDef(def)}/>
-                ))}
-              </div>
-            )}
+      </div>
+
+      {/* Create discipline modal */}
+      {creating && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+             onClick={e => { if (e.target === e.currentTarget) setCreating(false) }}>
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl animate-in space-y-3 p-5"
+               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '90dvh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Nova disciplina</h3>
+              <button onClick={() => setCreating(false)} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className="label">Código</label><input className="input text-sm" placeholder="ACH2041" value={form.code} onChange={e => setForm(f => ({...f, code: e.target.value}))}/></div>
+              <div><label className="label">Semestre</label><input className="input text-sm" placeholder="2025.1" value={form.semester} onChange={e => setForm(f => ({...f, semester: e.target.value}))}/></div>
+              <div className="col-span-2"><label className="label">Nome</label><input className="input text-sm" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))}/></div>
+              <div className="col-span-2"><label className="label">Professor(a)</label><input className="input text-sm" value={form.professor} onChange={e => setForm(f => ({...f, professor: e.target.value}))}/></div>
+              <div><label className="label">Total de aulas</label><input type="number" className="input text-sm" value={form.total_classes} onChange={e => setForm(f => ({...f, total_classes: e.target.value}))}/></div>
+              <div><label className="label">Cor</label><div className="flex gap-2 mt-1 flex-wrap">{COLORS.map(col => (<button key={col} onClick={() => setForm(f => ({...f, color: col}))} className="w-6 h-6 rounded-full" style={{ backgroundColor: col, transform: form.color === col ? 'scale(1.3)' : 'scale(1)', boxShadow: form.color === col ? `0 0 0 2px var(--bg-card), 0 0 0 3px ${col}` : 'none' }}/>))}</div></div>
+            </div>
+            <div className="flex gap-2">
+              <button className="btn-primary flex-1 justify-center" onClick={createSubject}>Criar disciplina</button>
+              <button className="btn-ghost" onClick={() => setCreating(false)}>Cancelar</button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Unified popup */}
-      {popupDef && (
+      {/* Subject detail popup (for linked subjects — from sidebar or fluxo click) */}
+      {subjectPopup && (
+        <SubjectDetailPopup
+          subject={subjectPopup}
+          fluxoDef={SUBJECTS.find(f => f.code === subjectPopup.code)}
+          fluxoStates={fluxoStates}
+          onClose={() => { setSubjectPopup(null); setPopupDef(null) }}
+          onDelete={() => { deleteSubject(subjectPopup.id); setSubjectPopup(null) }}
+          onAddGrade={addGrade}
+          onDeleteGrade={deleteGrade}
+          onUpdateAttendance={updateAttendance}
+          onStartReview={(sid, sname) => {
+            const cards = getAllFlashcards(sid)
+            if (cards.length === 0) { toast.error('Crie notas com Q:/A: primeiro!'); return }
+            setReviewTarget({ subjectId: sid, subjectName: sname, cards })
+          }}
+          saveFluxoState={saveFluxoState}
+        />
+      )}
+
+      {/* Fluxogram-only popup (for non-linked curriculum subjects) */}
+      {popupDef && !subjectPopup && (
         <FluxoPopup
           def={popupDef}
           fluxoStates={fluxoStates}

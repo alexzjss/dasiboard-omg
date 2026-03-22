@@ -11,6 +11,7 @@ import ProfilePage from '@/pages/ProfilePage'
 import DocentesPage from '@/pages/DocentesPage'
 import EntitiesPage from '@/pages/EntitiesPage'
 import FluxogramPage from '@/pages/FluxogramPage'
+import SchedulePage from '@/pages/SchedulePage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.accessToken)
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="profile"  element={<ProfilePage />} />
         <Route path="docentes" element={<DocentesPage />} />
         <Route path="fluxogram" element={<FluxogramPage />} />
+        <Route path="schedule" element={<SchedulePage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

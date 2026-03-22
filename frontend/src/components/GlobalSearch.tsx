@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, X, BookOpen, KanbanSquare, CalendarDays, Users, User, Clock, Hash, ArrowRight } from 'lucide-react'
+import { Search, X, BookOpen, KanbanSquare, CalendarDays, Users, User, Clock, Hash, ArrowRight, FileText, Brain, Zap } from 'lucide-react'
 import api from '@/utils/api'
 
 // ── Result types ──────────────────────────────────────────────────────────────
-type ResultKind = 'subject'|'card'|'event'|'entity'|'docente'|'nav'
+type ResultKind = 'subject'|'card'|'event'|'entity'|'docente'|'nav'|'note'|'flashcard'
 
 interface SearchResult {
   id: string
@@ -23,6 +23,8 @@ const KIND_META: Record<ResultKind, { icon: any; label: string; color: string }>
   entity:   { icon: Users,        label: 'Entidade',    color: '#10b981' },
   docente:  { icon: User,         label: 'Docente',     color: '#ec4899' },
   nav:      { icon: Hash,         label: 'Página',      color: 'var(--accent-3)' },
+  note:     { icon: FileText,     label: 'Nota',        color: '#f59e0b' },
+  flashcard:{ icon: Brain,        label: 'Flashcard',   color: '#22c55e' },
 }
 
 // Static nav pages always in results
@@ -60,8 +62,18 @@ let cachedData: {
   events: any[]
   entities: any[]
   docentes: any[]
+  notes: any[]
+  flashcards: any[]
   fetchedAt: number
 } | null = null
+
+// Load notes from localStorage (no API needed)
+function loadNotesFromStorage() {
+  try {
+    const raw = localStorage.getItem('dasiboard-notes')
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
 
 async function fetchAll() {
   if (cachedData && Date.now() - cachedData.fetchedAt < 60_000) return cachedData
@@ -88,12 +100,33 @@ async function fetchAll() {
     }
   }
 
+  // Load notes from localStorage
+  const notesRaw = loadNotesFromStorage()
+  const flashcardsRaw: any[] = []
+  for (const note of notesRaw) {
+    // Parse Q/A patterns from note content
+    const lines = (note.content || '').split('\n')
+    for (let i = 0; i < lines.length; i++) {
+      const qm = lines[i].trim().match(/^[Qq][:：]\s*(.+)/)
+      if (qm) {
+        for (let j = i+1; j < Math.min(i+5, lines.length); j++) {
+          const am = lines[j].trim().match(/^[Aa][:：]\s*(.+)/)
+          if (am) { flashcardsRaw.push({ id: note.id+'-'+i, front: qm[1], back: am[1], noteId: note.id, subjectId: note.subjectId }); break }
+        }
+      }
+      const bm = lines[i].trim().match(/^\*\*(.+?)\*\*\s*[—–-]\s*(.+)/)
+      if (bm) flashcardsRaw.push({ id: note.id+'-b-'+i, front: bm[1], back: bm[2], noteId: note.id, subjectId: note.subjectId })
+    }
+  }
+
   cachedData = {
     subjects: subjects.status === 'fulfilled' ? subjects.value.data : [],
     cards,
     events:   events.status === 'fulfilled'   ? events.value.data  : [],
     entities: entities.status === 'fulfilled' ? entities.value.data : [],
     docentes: docentes.status === 'fulfilled' ? docentes.value.data : [],
+    notes: notesRaw,
+    flashcards: flashcardsRaw,
     fetchedAt: Date.now(),
   }
   return cachedData
@@ -180,9 +213,35 @@ function buildResults(data: typeof cachedData, query: string): SearchResult[] {
     })
   }
 
+  // Notes
+  for (const n of data.notes) {
+    const sc = Math.max(score(n.title ?? '', q), score(n.content ?? '', q))
+    if (sc > 0) results.push({
+      id: `note-${n.id}`,
+      kind: 'note',
+      title: n.title || 'Nota sem título',
+      subtitle: `Nota · ${n.subjectId ? n.subjectId : 'Geral'}`,
+      href: '/grades',
+      score: sc,
+    })
+  }
+
+  // Flashcards
+  for (const f of data.flashcards) {
+    const sc = Math.max(score(f.front ?? '', q), score(f.back ?? '', q))
+    if (sc > 0) results.push({
+      id: `flashcard-${f.id}`,
+      kind: 'flashcard',
+      title: f.front,
+      subtitle: `Flashcard → ${f.back.slice(0, 60)}${f.back.length > 60 ? '…' : ''}`,
+      href: '/grades',
+      score: sc + 5, // boost flashcards slightly
+    })
+  }
+
   return results
     .sort((a, b) => b.score - a.score)
-    .slice(0, 12)
+    .slice(0, 14)
 }
 
 // ── Spotlight UI ──────────────────────────────────────────────────────────────
@@ -195,8 +254,9 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const dataRef  = useRef<typeof cachedData>(null)
 
-  // Load data on mount
+  // Load data on mount — also refresh notes cache
   useEffect(() => {
+    cachedData = null  // invalidate so notes are always fresh
     setLoading(true)
     fetchAll().then(d => {
       dataRef.current = d
