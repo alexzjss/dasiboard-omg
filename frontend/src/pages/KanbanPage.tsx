@@ -204,7 +204,7 @@ function CardModal({
 }
 
 // ── Sortable Card ─────────────────────────────────────────
-function KanbanCard({ card, colAccent, onEdit }: {
+function KanbanCard({ card, colAccent, onEdit, columns, onMove }: {
   card: Card; colAccent: string; onEdit: (c: Card) => void
   columns?: Column[]; onMove?: (cardId: string, toColId: string) => void
 }) {
