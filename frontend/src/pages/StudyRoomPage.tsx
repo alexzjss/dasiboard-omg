@@ -1,16 +1,14 @@
 // ── Study Room — Dedicated study overlay with Pomodoro, Notes, Flashcards, Goals ──
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Timer, Brain, Target, Zap, X, Play, Pause, RotateCcw,
-  Volume2, VolumeX, Check, Plus, Trash2, FileText,
-  ChevronRight, Trophy, BookOpen, Users, Copy, LogIn, LogOut,
-  Flame, BarChart3, ArrowLeft, Maximize2, Minimize2,
+  Volume2, VolumeX, Check, Plus, Trash2,
+  ChevronRight,
+  ArrowLeft, Maximize2, Minimize2,
 } from 'lucide-react'
 import { useNotes, generateFlashcards, Flashcard, createReviewSession } from '@/hooks/useNotes'
 import { useStudyStats, recordStudyEvent } from '@/hooks/useStudyStats'
-import { useStudyRoom, generateRoomCode } from '@/hooks/useStudyRoom'
-import { useAuthStore } from '@/store/authStore'
 import api from '@/utils/api'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -389,7 +387,6 @@ function StatsBar() {
 // ── Study Room Main Page ──────────────────────────────────────────────────────
 export default function StudyRoomPage() {
   const navigate = useNavigate()
-  const user     = useAuthStore(s => s.user)
   const [tab, setTab]         = useState<StudyTab>('pomodoro')
   const [subjects, setSubjects]= useState<{ id:string; name:string; code:string; color:string }[]>([])
   const [activeSubject, setActiveSubject] = useState<{ id:string; name:string; code:string; color:string } | null>(null)

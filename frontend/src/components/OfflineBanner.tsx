@@ -126,9 +126,11 @@ export function OfflineBanner() {
     if (prevOffline && !offline) {
       setJustCameBack(true)
       setTimeout(() => setJustCameBack(false), 3000)
-      // Attempt to flush any queued writes
+      // Attempt to flush any queued writes via Background Sync if supported
       navigator.serviceWorker?.ready.then(reg => {
-        reg.sync?.register('dasiboard-sync').catch(() => {})
+        type SyncReg = { sync?: { register(tag: string): Promise<void> } }
+        const syncReg = reg as unknown as SyncReg
+        syncReg.sync?.register('dasiboard-sync').catch(() => {})
       }).catch(() => {})
     }
     setPrevOffline(offline)
