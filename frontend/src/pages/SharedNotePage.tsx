@@ -22,7 +22,7 @@ export default function SharedNotePage() {
   useEffect(() => {
     if (!token) return
     // Public endpoint — no auth header needed, but axios still sends it if present
-    api.get(`/social/notes/shared/${token}`)
+    api.get(`/social/shared-note/${token}`)
       .then(({ data }) => setNote(data))
       .catch(err => { if (err.response?.status === 404) setNotFound(true) })
       .finally(() => setLoading(false))

@@ -139,13 +139,14 @@ def get_turma(
     )
     members = db.fetchall()
 
-    # Global events tagged to this year (events where class_code starts with year digits)
+    # Global events (all recent ones relevant to this cohort year)
     db.execute(
         "SELECT id, title, event_type, start_at, end_at, color, location "
         "FROM global_events "
-        "WHERE class_code LIKE %s OR class_code LIKE %s "
+        "WHERE EXTRACT(YEAR FROM start_at) = %s "
+        "   OR class_code LIKE %s OR class_code LIKE %s "
         "ORDER BY start_at DESC LIMIT 20",
-        (f"{year}%", f"%-{year}%"),
+        (year, f"{year}%", f"%-{year}%"),
     )
     events = db.fetchall()
 
@@ -270,7 +271,7 @@ def delete_note(
     db.execute("DELETE FROM notes WHERE id = %s AND owner_id = %s", (note_id, str(user["id"])))
 
 
-@router.get("/notes/shared/{token}")
+@router.get("/shared-note/{token}")
 def get_shared_note(token: str, db: RealDictCursor = Depends(get_db)):
     """Public endpoint — no auth required."""
     db.execute(
@@ -330,7 +331,7 @@ def list_rooms(db: RealDictCursor = Depends(get_db), user=Depends(get_current_us
         ORDER BY r.created_at DESC
         LIMIT 20
         """,
-        (uid, user.get("nusp", "")),
+        (uid, user.get("nusp") or ""),
     )
     return db.fetchall()
 
@@ -350,8 +351,7 @@ def create_room(
     room = db.fetchone()
     # Auto-join creator
     db.execute(
-        "INSERT INTO study_room_sessions (room_id, user_id) VALUES (%s, %s) "
-        "ON CONFLICT DO NOTHING",
+        "INSERT INTO study_room_sessions (room_id, user_id) VALUES (%s, %s)",
         (str(room["id"]), str(user["id"])),
     )
     return room

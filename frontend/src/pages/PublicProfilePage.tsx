@@ -68,9 +68,11 @@ export default function PublicProfilePage() {
   // Build unlocked achievements from the IDs the server returned
   const allAchs = buildAchievements({
     hasBoards: false, hasMultipleBoards: false, hasLanguage: false,
-    hasArea: false, hasPassedSubject: false, hasFailedSubject: false,
+    hasArea: false, hasPassedSubject: user.subjects.some(s => s.avg_grade !== null && s.avg_grade >= 5),
+    hasFailedSubject: false,
     hasAvatar: !!user.avatar_url, hasNusp: !!user.nusp,
-    eventCount: 0, subjectCount: 0, gradeCount: 0, loginCount: 1, easterEggFound: false,
+    eventCount: 0, subjectCount: user.subjects.length,
+    gradeCount: 0, loginCount: 1, easterEggFound: false,
   })
   const displayAchs = allAchs.filter(a => user.achievements.includes(a.id)).slice(0, 12)
 

@@ -215,6 +215,115 @@ INSERT INTO entities (slug, name, short_name, description, category, color, icon
  'Grupo de garotas em computação e empreendedorismo da EACH. Promove diversidade de gênero na tecnologia, com eventos, mentorias e ações para empoderar mulheres na carreira de TI.',
  'diversity', '#e879f9', '🌸', 'https://instagram.com/grace.each', NULL)
 ON CONFLICT (slug) DO NOTHING;
+
+-- ══════════════════════════════════════════════════════
+-- SOCIAL FEATURES — idempotent migrations (added later)
+-- ══════════════════════════════════════════════════════
+
+-- Public profile columns on users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS public_profile      BOOLEAN  NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS public_bio          TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS entry_year          SMALLINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS public_subjects     BOOLEAN  NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS public_achievements BOOLEAN  NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_users_entry_year     ON users (entry_year)     WHERE entry_year IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_users_public_profile ON users (public_profile) WHERE public_profile = TRUE;
+
+-- User achievements (server-side)
+CREATE TABLE IF NOT EXISTS user_achievements (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ach_id      VARCHAR(50) NOT NULL,
+    unlocked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, ach_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements (user_id);
+
+-- Social / shared notes
+CREATE TABLE IF NOT EXISTS notes (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title       VARCHAR(255) NOT NULL,
+    content     TEXT         NOT NULL DEFAULT '',
+    subject_id  UUID         REFERENCES subjects(id) ON DELETE SET NULL,
+    is_public   BOOLEAN      NOT NULL DEFAULT FALSE,
+    share_token VARCHAR(20)  UNIQUE,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_notes_owner       ON notes (owner_id);
+CREATE INDEX IF NOT EXISTS idx_notes_share_token ON notes (share_token) WHERE share_token IS NOT NULL;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_notes_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_notes_updated_at
+      BEFORE UPDATE ON notes FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+  END IF;
+END $$;
+
+-- Study rooms
+CREATE TABLE IF NOT EXISTS study_rooms (
+    id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    code         VARCHAR(20)  UNIQUE NOT NULL,
+    subject_code VARCHAR(20),
+    subject_name VARCHAR(255) NOT NULL,
+    created_by   UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_study_rooms_creator ON study_rooms (created_by);
+
+CREATE TABLE IF NOT EXISTS study_room_sessions (
+    id        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_id   UUID        NOT NULL REFERENCES study_rooms(id) ON DELETE CASCADE,
+    user_id   UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    left_at   TIMESTAMPTZ,
+    duration_min INTEGER,
+    UNIQUE(room_id, user_id, joined_at)
+);
+CREATE INDEX IF NOT EXISTS idx_room_sessions_room   ON study_room_sessions (room_id);
+CREATE INDEX IF NOT EXISTS idx_room_sessions_user   ON study_room_sessions (user_id);
+CREATE INDEX IF NOT EXISTS idx_room_sessions_online ON study_room_sessions (room_id) WHERE left_at IS NULL;
+
+-- Auto-compute duration_min on leave
+CREATE OR REPLACE FUNCTION compute_duration()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.left_at IS NOT NULL AND OLD.left_at IS NULL THEN
+    NEW.duration_min := GREATEST(1, EXTRACT(EPOCH FROM (NEW.left_at - NEW.joined_at)) / 60)::INTEGER;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_session_duration'
+  ) THEN
+    CREATE TRIGGER trg_session_duration
+      BEFORE UPDATE ON study_room_sessions
+      FOR EACH ROW EXECUTE FUNCTION compute_duration();
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS study_room_invites (
+    id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_id      UUID        NOT NULL REFERENCES study_rooms(id) ON DELETE CASCADE,
+    invited_nusp VARCHAR(20) NOT NULL,
+    invited_by   UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(room_id, invited_nusp)
+);
+CREATE INDEX IF NOT EXISTS idx_room_invites_room ON study_room_invites (room_id);
+CREATE INDEX IF NOT EXISTS idx_room_invites_nusp ON study_room_invites (invited_nusp);
+
+-- is_global flag on events
+ALTER TABLE events        ADD COLUMN IF NOT EXISTS is_global BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE global_events ADD COLUMN IF NOT EXISTS is_global BOOLEAN NOT NULL DEFAULT TRUE;
+
 """
 
 

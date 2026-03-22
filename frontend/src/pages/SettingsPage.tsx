@@ -173,7 +173,14 @@ function PrivacySection() {
         public_achievements: next.public_achievements,
       })
       toast.success('Salvo!')
-    } catch { toast.error('Erro ao salvar') }
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      if (detail && detail.includes('column')) {
+        toast.error('Erro de configuração do servidor. Contate o administrador.')
+      } else {
+        toast.error(detail ?? 'Erro ao salvar')
+      }
+    }
   }
 
   if (!loaded) return (
