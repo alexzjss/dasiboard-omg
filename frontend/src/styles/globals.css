@@ -6411,6 +6411,193 @@ html { scroll-behavior: smooth; }
 [data-theme="light-papiro"] ::-webkit-scrollbar { width: 6px; }
 [data-theme="light-papiro"] ::-webkit-scrollbar-thumb { background: rgba(0,80,160,0.3); border-radius: 2px; }
 
+  /* ═══════════════════════════════════════════════════════
+     🏛️  LIGHT — USP Oficial (Azul #004A8F · Ouro #FFCB00)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-usp"] {
+    --bg-base:        #f4f7fb;
+    --bg-surface:     #ffffff;
+    --bg-elevated:    #eef3fa;
+    --bg-card:        #ffffff;
+    --border:         #ccd9ed;
+    --border-light:   #b0c8e8;
+    --text-primary:   #001833;
+    --text-secondary: #003a7a;
+    --text-muted:     #6a8bb5;
+    --accent-1:       #004A8F;
+    --accent-2:       #003575;
+    --accent-3:       #FFCB00;
+    --accent-glow:    rgba(0,74,143,0.20);
+    --accent-soft:    rgba(0,74,143,0.08);
+    --gradient-hero:  linear-gradient(135deg, #004A8F 0%, #0066cc 50%, #FFCB00 100%);
+    --gradient-btn:   linear-gradient(135deg, #004A8F, #003575);
+    --noise-opacity:  0.012;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+  }
+  [data-theme="light-usp"] h1,
+  [data-theme="light-usp"] h2,
+  [data-theme="light-usp"] h3,
+  [data-theme="light-usp"] h4 {
+    font-family: 'Playfair Display', 'Georgia', serif;
+    color: #004A8F;
+  }
+  [data-theme="light-usp"] .nav-active {
+    background: rgba(0,74,143,0.10) !important;
+    border-color: #004A8F !important;
+    color: #004A8F !important;
+  }
+  [data-theme="light-usp"] .btn-primary {
+    background: linear-gradient(135deg, #004A8F, #003575) !important;
+    box-shadow: 0 2px 12px rgba(0,74,143,0.30) !important;
+  }
+  [data-theme="light-usp"] .card {
+    border-color: #ccd9ed;
+    box-shadow: 0 2px 12px rgba(0,74,143,0.07);
+  }
+  [data-theme="light-usp"] .sidebar-bg {
+    background: linear-gradient(180deg, #004A8F 0%, #002d60 100%) !important;
+    border-right: 1px solid #003575 !important;
+  }
+  [data-theme="light-usp"] .sidebar-bg .nav-active,
+  [data-theme="light-usp"] .sidebar-bg .nav-inactive,
+  [data-theme="light-usp"] .sidebar-bg p,
+  [data-theme="light-usp"] .sidebar-bg span {
+    color: rgba(255,255,255,0.90) !important;
+  }
+  [data-theme="light-usp"] .sidebar-bg .nav-active {
+    background: rgba(255,203,0,0.18) !important;
+    border-color: rgba(255,203,0,0.50) !important;
+    color: #FFCB00 !important;
+  }
+  [data-theme="light-usp"] .sidebar-bg .nav-inactive {
+    color: rgba(255,255,255,0.65) !important;
+  }
+  [data-theme="light-usp"] .sidebar-bg .nav-inactive:hover {
+    background: rgba(255,255,255,0.10) !important;
+    color: rgba(255,255,255,0.90) !important;
+  }
+  /* Gold top accent bar */
+  [data-theme="light-usp"] main::before {
+    content: '';
+    position: fixed;
+    top: 0; left: var(--sidebar-w); right: 0; height: 3px;
+    background: linear-gradient(90deg, #FFCB00, #FFE066, #FFCB00);
+    z-index: 20;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     🌾  LIGHT — Stardew Valley (Terroso · Verde campo · Pixel)
+  ═══════════════════════════════════════════════════════ */
+  [data-theme="light-stardew"] {
+    --bg-base:        #e8d5a3;
+    --bg-surface:     #f5e6c0;
+    --bg-elevated:    #eedba8;
+    --bg-card:        #fdf0cc;
+    --border:         #c4a96a;
+    --border-light:   #a88844;
+    --text-primary:   #2c1a08;
+    --text-secondary: #4a2e10;
+    --text-muted:     #8b6a3a;
+    --accent-1:       #4a7c59;
+    --accent-2:       #365c42;
+    --accent-3:       #6aaa80;
+    --accent-glow:    rgba(74,124,89,0.25);
+    --accent-soft:    rgba(74,124,89,0.12);
+    --gradient-hero:  linear-gradient(135deg, #4a7c59 0%, #6aaa80 50%, #e8d5a3 100%);
+    --gradient-btn:   linear-gradient(135deg, #4a7c59, #365c42);
+    --noise-opacity:  0.06;
+    --card-blur:      0px;
+    --sidebar-overlay: none;
+    font-family: 'DM Sans', sans-serif;
+    image-rendering: auto;
+  }
+  [data-theme="light-stardew"] h1,
+  [data-theme="light-stardew"] h2,
+  [data-theme="light-stardew"] h3,
+  [data-theme="light-stardew"] h4 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.72em;
+    letter-spacing: 0.04em;
+    color: #2c1a08;
+    line-height: 1.6;
+  }
+  [data-theme="light-stardew"] .card {
+    background: #fdf0cc !important;
+    border: 2px solid #c4a96a !important;
+    border-radius: 4px !important;
+    box-shadow: 3px 3px 0 #a88844, 0 0 0 1px #a8884430 !important;
+  }
+  [data-theme="light-stardew"] .card-hover:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 4px 5px 0 #a88844 !important;
+  }
+  [data-theme="light-stardew"] .btn {
+    border-radius: 2px !important;
+    image-rendering: pixelated;
+  }
+  [data-theme="light-stardew"] .btn-primary {
+    background: linear-gradient(180deg, #6aaa80 0%, #4a7c59 100%) !important;
+    border: 2px solid #365c42 !important;
+    border-bottom: 4px solid #2a4432 !important;
+    box-shadow: none !important;
+    border-radius: 2px !important;
+  }
+  [data-theme="light-stardew"] .btn-primary:active {
+    border-bottom-width: 2px !important;
+    transform: translateY(2px) !important;
+  }
+  [data-theme="light-stardew"] .input {
+    background: #fdf8e8 !important;
+    border: 2px solid #c4a96a !important;
+    border-radius: 2px !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  [data-theme="light-stardew"] .input:focus {
+    border-color: #4a7c59 !important;
+    box-shadow: 0 0 0 3px rgba(74,124,89,0.18) !important;
+  }
+  [data-theme="light-stardew"] .sidebar-bg {
+    background: linear-gradient(180deg, #5a8c6a 0%, #3d6b4f 100%) !important;
+    border-right: 3px solid #2a4432 !important;
+  }
+  [data-theme="light-stardew"] .sidebar-bg .nav-active {
+    background: rgba(253,240,204,0.20) !important;
+    border: 2px solid #fdf0cc88 !important;
+    color: #fdf0cc !important;
+    border-radius: 2px !important;
+  }
+  [data-theme="light-stardew"] .sidebar-bg .nav-inactive {
+    color: rgba(253,240,204,0.70) !important;
+    border-radius: 2px !important;
+  }
+  [data-theme="light-stardew"] .sidebar-bg .nav-inactive:hover {
+    background: rgba(253,240,204,0.12) !important;
+    color: #fdf0cc !important;
+  }
+  /* Stardew pixel dirt border top */
+  [data-theme="light-stardew"] main::before {
+    content: '';
+    position: fixed;
+    top: 0; left: var(--sidebar-w); right: 0; height: 4px;
+    background: repeating-linear-gradient(
+      90deg,
+      #4a7c59 0px, #4a7c59 8px,
+      #6aaa80 8px, #6aaa80 16px,
+      #365c42 16px, #365c42 24px
+    );
+    z-index: 20;
+    image-rendering: pixelated;
+  }
+  /* Stardew page transitions — gentle bounce */
+  [data-theme="light-stardew"] .animate-in {
+    animation: stardewBounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+  }
+  @keyframes stardewBounce {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
 /* ═══════════════════════════════════════════════════════════════════
    🌈  HOLO — mouse-tracking iridescent glow on cards
 ═══════════════════════════════════════════════════════════════════ */

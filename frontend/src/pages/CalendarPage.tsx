@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import clsx from 'clsx'
 import { useEventReminders } from '@/hooks/usePushNotifications'
+import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
 
 interface Event {
   id: string; title: string; description?: string
@@ -478,8 +479,105 @@ const FORM_DEFAULT: EventFormData = {
   recurring: false, recur_weeks: 16,
 }
 
+// ── Agenda View — mobile-first list grouped by day ───────────────────────────
+function AgendaView({ events, TYPE_LABELS, TYPE_COLORS }: {
+  events: { id: string; title: string; event_type: string; start_at: string; end_at?: string; color: string; location?: string; class_code?: string; is_global?: boolean }[]
+  TYPE_LABELS: Record<string, string>
+  TYPE_COLORS: Record<string, string>
+}) {
+  const today = new Date()
+  const upcoming = events
+    .filter(e => new Date(e.start_at) >= startOfDay(today))
+    .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime())
+    .slice(0, 60)
+
+  if (upcoming.length === 0) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3" style={{ color: 'var(--text-muted)' }}>
+      <CalendarDays size={40} style={{ opacity: 0.2 }} />
+      <p className="text-sm">Nenhum evento próximo</p>
+    </div>
+  )
+
+  // Group by day
+  const groups: Record<string, typeof upcoming> = {}
+  for (const ev of upcoming) {
+    const dayKey = ev.start_at.slice(0, 10)
+    if (!groups[dayKey]) groups[dayKey] = []
+    groups[dayKey].push(ev)
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4 space-y-5">
+      {Object.entries(groups).map(([dayKey, dayEvents]) => {
+        const d = new Date(dayKey + 'T12:00:00')
+        const isToday2 = isSameDay(d, today)
+        const isTom   = isSameDay(d, addDays(today, 1))
+        const dayLabel = isToday2 ? 'Hoje' : isTom ? 'Amanhã'
+          : format(d, "EEEE, d 'de' MMMM", { locale: ptBR })
+        return (
+          <div key={dayKey}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2.5 h-2.5 rounded-full shrink-0"
+                   style={{ background: isToday2 ? 'var(--accent-3)' : 'var(--border-light)' }} />
+              <p className="text-xs font-bold uppercase tracking-widest capitalize"
+                 style={{ color: isToday2 ? 'var(--accent-3)' : 'var(--text-muted)' }}>
+                {dayLabel}
+              </p>
+              <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+            </div>
+            <div className="space-y-2 pl-5">
+              {dayEvents.map(ev => {
+                const startDt = new Date(ev.start_at)
+                const endDt   = ev.end_at ? new Date(ev.end_at) : null
+                const color   = TYPE_COLORS[ev.event_type] ?? ev.color
+                return (
+                  <div key={ev.id}
+                       className="flex items-start gap-3 p-3 rounded-2xl transition-all active:scale-[0.98]"
+                       style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderLeft: `3px solid ${color}` }}>
+                    <div className="shrink-0 text-center" style={{ minWidth: 44 }}>
+                      <p className="text-[10px] font-mono font-bold" style={{ color }}>
+                        {format(startDt, 'HH:mm')}
+                      </p>
+                      {endDt && (
+                        <p className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>
+                          {format(endDt, 'HH:mm')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
+                        {ev.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                              style={{ background: color + '18', color }}>
+                          {TYPE_LABELS[ev.event_type] ?? ev.event_type}
+                        </span>
+                        {ev.location && (
+                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>📍 {ev.location}</span>
+                        )}
+                        {ev.class_code && (
+                          <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{ev.class_code}</span>
+                        )}
+                        {ev.is_global && (
+                          <span className="text-[10px]" style={{ color: '#db2777' }}>🌐 Global</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+
 export default function CalendarPage() {
-  const [view, setView]         = useState<'calendar' | 'schedule'>('calendar')
+  const [view, setView]         = useState<'calendar' | 'schedule' | 'agenda'>('calendar')
   const [current, setCurrent]   = useState(new Date())
   const [events, setEvents]     = useState<Event[]>([])
   const [subjects, setSubjects] = useState<Subject[]>([])
@@ -577,6 +675,7 @@ export default function CalendarPage() {
         const { data } = await api.post('/events/', payload, { headers })
         setEvents(prev => [...prev, data])
         toast.success(isGlobalForm ? 'Evento global criado!' : 'Evento criado!')
+        addExp(isGlobalForm ? EXP_REWARDS.eventGlobal : EXP_REWARDS.eventCreated, 'event')
       }
       setShowForm(false)
       setEditingEvent(null)
@@ -625,6 +724,11 @@ export default function CalendarPage() {
                   style={{ background: view==='schedule'?'var(--bg-card)':'transparent', color: view==='schedule'?'var(--accent-3)':'var(--text-muted)', boxShadow: view==='schedule'?'0 1px 6px rgba(0,0,0,0.12)':'none' }}>
             <CalendarRange size={13} /> Cronograma
           </button>
+          <button onClick={() => setView('agenda')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all sm:hidden"
+                  style={{ background: view==='agenda'?'var(--bg-card)':'transparent', color: view==='agenda'?'var(--accent-3)':'var(--text-muted)', boxShadow: view==='agenda'?'0 1px 6px rgba(0,0,0,0.12)':'none' }}>
+            <Clock size={13} /> Agenda
+          </button>
         </div>
 
         {view === 'calendar' && (
@@ -659,6 +763,10 @@ export default function CalendarPage() {
         <div className="flex-1 overflow-hidden">
           <ScheduleView events={events} subjects={subjects} />
         </div>
+      )}
+      {/* ── Agenda View — mobile list ── */}
+      {view === 'agenda' && (
+        <AgendaView events={filtered} TYPE_LABELS={TYPE_LABELS} TYPE_COLORS={TYPE_COLORS} />
       )}
 
       {/* ── Calendar View ── */}

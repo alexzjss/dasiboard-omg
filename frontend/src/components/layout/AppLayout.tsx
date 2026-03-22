@@ -76,6 +76,8 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'light-papiro':     { bg: '#fafaf5', accent: '#0050a0', card: '#f5f5ee' },
   // Chrono Trigger (usa preview base escuro)
   'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
+  'light-usp':        { bg: '#f4f7fb', accent: '#004A8F', card: '#ffffff' },
+  'light-stardew':    { bg: '#e8d5a3', accent: '#4a7c59', card: '#fdf0cc' },
 }
 
 // ── Pokéball + Starter picker (Pixel theme only) ─────────────────────────────

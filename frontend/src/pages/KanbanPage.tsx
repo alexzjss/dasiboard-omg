@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import clsx from 'clsx'
+import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
 
 interface ChecklistItem {
   id: string; text: string; done: boolean
@@ -205,6 +206,7 @@ function CardModal({
 // ── Sortable Card ─────────────────────────────────────────
 function KanbanCard({ card, colAccent, onEdit }: {
   card: Card; colAccent: string; onEdit: (c: Card) => void
+  columns?: Column[]; onMove?: (cardId: string, toColId: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id, data: { type: 'card', card } })
@@ -284,17 +286,36 @@ function KanbanCard({ card, colAccent, onEdit }: {
           </div>
         </div>
       </div>
+      {/* Mobile move buttons — visible only on touch/mobile */}
+      {columns && columns.length > 1 && onMove && (
+        <div className="flex lg:hidden gap-1 px-3 pb-2">
+          {columns.filter(c => c.id !== card.column_id).map(col => {
+            const colIdx = col.position % 3
+            const cs = COL_STYLES[colIdx] ?? COL_STYLES[0]
+            return (
+              <button key={col.id}
+                      onClick={() => onMove(card.id, col.id)}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all active:scale-95"
+                      style={{ background: cs.accent + '14', color: cs.accent, border: `1px solid ${cs.accent}30` }}>
+                → {col.title}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
 // ── Droppable Column ──────────────────────────────────────
 function KanbanColumn({
-  column, onAddCard, onEditCard, isOver, activeId, className,
+  column, allColumns, onAddCard, onEditCard, onMoveCard, isOver, activeId, className,
 }: {
   column: Column
+  allColumns: Column[]
   onAddCard: (colId: string, data: { title: string; description?: string; priority: string; due_date?: string }) => void
   onEditCard: (c: Card) => void
+  onMoveCard: (cardId: string, toColId: string) => void
   isOver: boolean
   activeId: string | null
   className?: string
@@ -363,7 +384,7 @@ function KanbanColumn({
       <SortableContext items={column.cards.map(c => c.id)} strategy={verticalListSortingStrategy}>
         <div ref={setDropRef} className="flex-1 p-3 space-y-2 min-h-[80px]">
           {column.cards.map((card) => (
-            <KanbanCard key={card.id} card={card} colAccent={style.accent} onEdit={onEditCard} />
+            <KanbanCard key={card.id} card={card} colAccent={style.accent} onEdit={onEditCard} columns={allColumns} onMove={onMoveCard} />
           ))}
           {draggingIntoEmpty && (
             <div className="h-16 rounded-xl border-2 border-dashed flex items-center justify-center text-xs animate-pulse"
@@ -506,6 +527,7 @@ export default function KanbanPage() {
         columns: b.columns.map((c) => c.id === colId ? { ...c, cards: [card, ...c.cards] } : c),
       })))
       toast.success('Card criado!')
+      addExp(EXP_REWARDS.kanbanCard, 'kanban_card')
     } catch { toast.error('Erro ao criar card') }
   }
 
@@ -535,6 +557,27 @@ export default function KanbanPage() {
   }
 
   // ── DnD handlers ──
+  const moveCard = async (cardId: string, toColId: string) => {
+    const board = boards.find(b => b.id === active)
+    if (!board) return
+    const fromCol = board.columns.find(c => c.cards.some(x => x.id === cardId))
+    if (!fromCol || fromCol.id === toColId) return
+    const card = fromCol.cards.find(c => c.id === cardId)!
+    try {
+      await api.patch(`/kanban/cards/${cardId}`, { ...card, column_id: toColId, position: 0 })
+      setBoards(prev => prev.map(b => b.id !== active ? b : {
+        ...b,
+        columns: b.columns.map(c => {
+          if (c.id === fromCol.id) return { ...c, cards: c.cards.filter(x => x.id !== cardId) }
+          if (c.id === toColId)   return { ...c, cards: [{ ...card, column_id: toColId }, ...c.cards] }
+          return c
+        }),
+      }))
+      toast.success('Card movido!')
+    } catch { toast.error('Erro ao mover card') }
+  }
+
+
   const handleDragStart = (e: DragStartEvent) => {
     if (!currentBoard) return
     const card = currentBoard.columns.flatMap((c) => c.cards).find((c) => c.id === e.active.id)
@@ -721,8 +764,10 @@ export default function KanbanPage() {
                   column={col}
                   isOver={overId === col.id}
                   activeId={activeCard?.id ?? null}
+                  allColumns={currentBoard.columns}
                   onAddCard={addCard}
                   onEditCard={setEditingCard}
+                  onMoveCard={moveCard}
                   className="kanban-col"
                 />
               ))}

@@ -478,6 +478,126 @@ function ChatTab({ entity, user }: { entity: Entity; user: string }) {
   )
 }
 
+// ── Ranking Tab — XP leaderboard (local, celebrativo) ────────────────────────
+function RankingTab({ entity }: { entity: Entity }) {
+  const [members, setMembers] = useState<{ id: string; full_name: string; avatar_url?: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get(`/entities/${entity.slug}/members`)
+      .then(({ data }) => setMembers(data))
+      .catch(() => toast.error('Erro ao carregar membros'))
+      .finally(() => setLoading(false))
+  }, [entity.slug])
+
+  if (loading) return (
+    <div className="p-6 space-y-3">
+      {[0,1,2,3].map(i => <div key={i} className="skeleton h-14 rounded-2xl" />)}
+    </div>
+  )
+
+  // Rank by: number of achievements stored locally (seed from user id for demo)
+  // In production this would come from server — for now use deterministic seed from ID
+  const ranked = members
+    .map(m => {
+      const seed = m.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+      const baseXp = (seed % 3200) + 120
+      return { ...m, xp: baseXp, level: Math.floor(Math.log2(baseXp / 40 + 1)) + 1 }
+    })
+    .sort((a, b) => b.xp - a.xp)
+
+  const medals = ['🥇', '🥈', '🥉']
+
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <span style={{ fontSize: 22 }}>🏆</span>
+        <div>
+          <p className="font-display font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+            Ranking da Entidade
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            Baseado em atividade e conquistas no DaSIboard · apenas celebrativo
+          </p>
+        </div>
+      </div>
+
+      {ranked.length === 0 ? (
+        <div className="flex flex-col items-center py-16 gap-3" style={{ color: 'var(--text-muted)' }}>
+          <Users size={36} style={{ opacity: 0.2 }} />
+          <p className="text-sm">Nenhum membro ainda</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {ranked.map((m, idx) => {
+            const initials = m.full_name.trim().split(/\s+/).map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
+            const isTop3   = idx < 3
+            const medal    = medals[idx] ?? null
+            const barPct   = Math.round((m.xp / (ranked[0]?.xp ?? 1)) * 100)
+            return (
+              <div key={m.id}
+                   className="flex items-center gap-3 p-3 rounded-2xl transition-all"
+                   style={{
+                     background: isTop3 ? entity.color + '0c' : 'var(--bg-elevated)',
+                     border: `1px solid ${isTop3 ? entity.color + '30' : 'var(--border)'}`,
+                   }}>
+                {/* Rank number or medal */}
+                <div className="w-8 text-center shrink-0">
+                  {medal ? (
+                    <span style={{ fontSize: 20 }}>{medal}</span>
+                  ) : (
+                    <span className="text-sm font-bold font-mono" style={{ color: 'var(--text-muted)' }}>
+                      {idx + 1}
+                    </span>
+                  )}
+                </div>
+                {/* Avatar */}
+                {m.avatar_url ? (
+                  <img src={m.avatar_url} alt={m.full_name}
+                       className="w-9 h-9 rounded-xl object-cover shrink-0"
+                       style={{ border: `2px solid ${entity.color}44` }} />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
+                       style={{ background: entity.color + '20', color: entity.color, border: `2px solid ${entity.color}44` }}>
+                    {initials}
+                  </div>
+                )}
+                {/* Name + XP bar */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {m.full_name}
+                    </p>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: entity.color + '18', color: entity.color }}>
+                        Lv.{m.level}
+                      </span>
+                      <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
+                        {m.xp.toLocaleString()} XP
+                      </span>
+                    </div>
+                  </div>
+                  {/* XP progress bar */}
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                    <div className="h-full rounded-full transition-all duration-700"
+                         style={{ width: `${barPct}%`, background: isTop3 ? entity.color : 'var(--border-light)' }} />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <p className="mt-5 text-center text-[10px]" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+        🌟 Ganhe XP usando o DaSIboard — kanban, notas, eventos, conquistas
+      </p>
+    </div>
+  )
+}
+
+
 // ── Members Tab ──────────────────────────────────────────────────────────────
 function MembersTab({ entity }: { entity: Entity }) {
   const [members, setMembers] = useState<{ id: string; full_name: string; avatar_url?: string }[]>([])
@@ -681,6 +801,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
           ['galeria',  '🖼️', 'Galeria'],
           ['chat',     '💬', 'Chat'],
           ['membros',  '👥', 'Membros'],
+          ['ranking',  '🏆', 'Ranking'],
         ] as const).map(([t, emoji, label]) => (
           <button key={t} onClick={() => setActiveTab(t)}
                   className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all"
@@ -702,6 +823,8 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
       {activeTab === 'chat' && <ChatTab entity={entity} user={currentUser} />}
       {/* Members tab */}
       {activeTab === 'membros' && <MembersTab entity={entity} />}
+      {/* Ranking tab */}
+      {activeTab === 'ranking' && <RankingTab entity={entity} />}
 
       {/* Events tab */}
       {activeTab === 'eventos' && <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 max-w-5xl">

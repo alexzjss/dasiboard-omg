@@ -763,7 +763,7 @@ function drawPortraitInfo(
 }
 
 
-// ── LANDSCAPE card (1.59:1 — carteirinha horizontal) ─────────────────────────
+// ── LANDSCAPE card — Arc treatment (same shape system as portrait) ───────────
 function drawLandscapeCard(
   canvas: HTMLCanvasElement,
   user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
@@ -773,134 +773,281 @@ function drawLandscapeCard(
   entityBg: { color: string; name: string } | null,
 ) {
   const W = 920, H = 580
-  canvas.width = W*2; canvas.height = H*2
+  canvas.width = W * 2; canvas.height = H * 2
   const ctx = canvas.getContext('2d')!
-  ctx.scale(2,2)
+  ctx.scale(2, 2)
 
-  const rngColor  = seededRng(user.id+'-hue')
-  const hue       = Math.floor(rngColor()*360)
-  const scheme    = pickColorScheme(user.id)
-  const rngScheme = seededRng(user.id+'-scheme-vals')
-  const { sat, lit } = applyColorScheme(hue, scheme, rngScheme)
-  const rngBg     = seededRng(user.id+'-bgv3')
-  const style     = pickCardStyle(user.id)
-  const effect    = pickCardEffect(user.id)
-  const isDark    = lit < 44
+  // Seed user hue (same as portrait for visual consistency)
+  const hue = Math.floor(seededRng(user.id + '-hue')() * 360)
+  const { sat, lit } = applyColorScheme(hue, pickColorScheme(user.id), seededRng(user.id + '-scheme-vals'))
+  const rngBg = seededRng(user.id + '-bgv3')
 
-  ctx.clearRect(0,0,W,H)
-  ctx.save(); roundRect(ctx,0,0,W,H,28); ctx.clip()
+  // Always solid cream base
+  ctx.clearRect(0, 0, W, H)
+  ctx.save()
+  roundRect(ctx, 0, 0, W, H, 28)
+  ctx.clip()
 
-  // Left zone (photo + pattern): 38% width
-  const leftW = Math.round(W * 0.38)
+  const cardBase = '#FAFAF5'
+  ctx.fillStyle  = cardBase
+  ctx.fillRect(0, 0, W, H)
 
-  // Draw pattern in left zone
-  drawCardBackground(ctx, leftW, H, H, style, hue, sat, lit, rngBg, entityBg)
-  addGrain(ctx, seededRng(user.id+'-grainv3'), leftW, H, 0.018, 1500)
+  // ── Left zone: shape fills left 42% ──────────────────────────────────────
+  const leftW = Math.round(W * 0.42)
 
-  // Right zone: always pure white
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(leftW, 0, W-leftW, H)
+  // Pick shape same as portrait
+  const shapeRng  = seededRng(String(hue) + String(Math.round(sat)) + String(Math.round(lit)) + 'shp')
+  const shapeRng2 = seededRng(String(hue) + String(Math.round(sat)) + 'shp2')
+  const shapes: BlobShape[] = ['leaf', 'arch', 'wave', 'corner', 'hill', 'shield']
+  const shape = shapes[Math.floor(shapeRng() * shapes.length)]
 
-  // Separator
-  ctx.strokeStyle='rgba(0,0,0,0.08)'
-  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(leftW,20); ctx.lineTo(leftW,H-20); ctx.stroke()
+  // Colors — always user hue, never entity
+  const blobH = hue
+  const blobS = Math.max(sat, 42)
+  const blobL = Math.min(Math.max(lit, 32), 64)
+  const hi    = `hsl(${blobH}, ${Math.max(blobS - 18, 28)}%, ${Math.min(blobL + 26, 82)}%)`
+  const mid   = `hsl(${blobH}, ${blobS}%, ${blobL}%)`
+  const low   = `hsl(${(blobH + 18) % 360}, ${Math.min(blobS + 8, 88)}%, ${Math.max(blobL - 22, 20)}%)`
 
-  // Avatar — centered in left (colored) zone — always light text on blob
-  const avR  = 72
-  const avCx = Math.round(leftW/2)
-  const avCy = Math.round(H*0.42)
-  const initials = user.full_name.trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase()
-  const [r1,g1,b1] = hslToRgb(hue, sat, lit)
-  const borderClrL = entityBg ? entityBg.color : `rgb(${r1},${g1},${b1})`
-  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClrL, true)
+  // Draw shape clipped to left zone
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(0, 0, leftW, H)
+  ctx.clip()
 
-  // Institution label — white on blob
-  ctx.font='500 9px monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'
-  ctx.fillStyle='rgba(255,255,255,0.65)'
-  ctx.fillText('EACH · USP', avCx, avCy-avR-12)
+  ctx.fillStyle = cardBase
+  ctx.fillRect(0, 0, leftW, H)
 
-  // Name below avatar — white on blob
-  const parts = user.full_name.trim().split(/\s+/)
-  ctx.font='700 15px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.92)'
-  ctx.fillText(parts[0]??'', avCx, avCy+avR+22)
-  if (parts.length>1) {
-    ctx.font='400 12px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.60)'
-    ctx.fillText(parts.slice(1).join(' '), avCx, avCy+avR+38)
+  drawShape(ctx, leftW, H, shape, shapeRng2)
+  const grad = ctx.createLinearGradient(leftW * 0.08, H * 0.04, leftW * 0.92, H * 0.96)
+  grad.addColorStop(0,    hi)
+  grad.addColorStop(0.42, mid)
+  grad.addColorStop(1,    low)
+  ctx.fillStyle = grad
+  ctx.fill()
+
+  // Grain (fillRect dots, respects clip)
+  const grainRng = seededRng(String(hue) + 'grain2')
+  ctx.globalAlpha = 0.05
+  for (let i = 0; i < 1200; i++) {
+    const gx = grainRng() * leftW, gy = grainRng() * H
+    ctx.fillStyle = grainRng() > 0.5 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)'
+    ctx.fillRect(gx, gy, 1.5, 1.5)
+  }
+  ctx.globalAlpha = 1
+
+  // Sheen
+  drawShape(ctx, leftW, H, shape, seededRng(String(hue) + String(Math.round(sat)) + 'shp2'))
+  const sheenX = leftW * (0.18 + shapeRng() * 0.28)
+  const sheenY = H * 0.08
+  const sheenR = leftW * (0.44 + shapeRng() * 0.16)
+  const sheen  = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, sheenR)
+  sheen.addColorStop(0,   'rgba(255,255,255,0.28)')
+  sheen.addColorStop(0.5, 'rgba(255,255,255,0.06)')
+  sheen.addColorStop(1,   'rgba(255,255,255,0)')
+  ctx.fillStyle = sheen
+  ctx.fill()
+
+  ctx.restore() // end left zone clip
+
+  // ── Avatar in left zone ───────────────────────────────────────────────────
+  const avR  = Math.round(H * 0.13)
+  const avCx = Math.round(leftW / 2)
+  const avCy = Math.round(H * 0.44)
+  const initials = user.full_name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, hi, true)
+
+  // Name below avatar in shape zone (white text on colored shape)
+  const nameParts = user.full_name.trim().split(/\s+/)
+  ctx.textAlign    = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.globalAlpha  = 1
+
+  let fnSz = Math.round(leftW * 0.096)
+  ctx.font = `700 ${fnSz}px sans-serif`
+  while (ctx.measureText(nameParts[0] ?? '').width > leftW * 0.82 && fnSz > 16) {
+    fnSz -= 2; ctx.font = `700 ${fnSz}px sans-serif`
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'
+  ctx.fillText(nameParts[0] ?? '', avCx, avCy + avR + fnSz * 0.95)
+
+  if (nameParts.length > 1) {
+    const lnSz = Math.round(fnSz * 0.70)
+    ctx.font      = `400 ${lnSz}px sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.62)'
+    ctx.fillText(nameParts.slice(1).join(' '), avCx, avCy + avR + fnSz * 0.95 + lnSz * 1.1)
   }
 
-  // ── Right zone info — entity hue for ink when entity set ───────────────────
-  const rx    = leftW + 36
-  const lInkHue = entityBg ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })() : hue
-  const inkC  = `hsl(${lInkHue},55%,14%)`
-  const inkF  = `hsl(${lInkHue},28%,46%)`
-  const acC   = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-16,18)}%)`
-  ctx.textAlign='left'; ctx.textBaseline='alphabetic'
+  // Institution micro-label above avatar
+  ctx.font         = `500 ${Math.round(leftW * 0.036)}px monospace`
+  ctx.fillStyle    = 'rgba(255,255,255,0.55)'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText('EACH · USP', avCx, avCy - avR - H * 0.022)
 
-  // Header line — "CARTÃO DE ESTUDANTE"
-  ctx.font='600 10px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.8
-  ctx.fillText('CARTÃO DE ESTUDANTE', rx, 38); ctx.globalAlpha=1
+  ctx.textAlign    = 'left'
+  ctx.textBaseline = 'alphabetic'
+
+  // ── Right zone: info panel ────────────────────────────────────────────────
+  const rx     = leftW + W * 0.04
+  const rW     = W - rx - W * 0.04
+  const ink    = `hsl(${hue}, 55%, 12%)`
+  const inkMid = `hsl(${hue}, 28%, 44%)`
+  const inkF   = `hsl(${hue}, 18%, 60%)`
+  const accent = `hsl(${hue}, ${Math.max(sat, 52)}%, ${Math.max(blobL - 8, 26)}%)`
+
+  // Header label
+  ctx.font         = `600 ${Math.round(W * 0.012)}px monospace`
+  ctx.fillStyle    = accent
+  ctx.globalAlpha  = 0.65
+  ctx.fillText('CARTÃO DE ESTUDANTE', rx, H * 0.092)
+  ctx.globalAlpha  = 1
 
   // Full name large
-  ctx.font='700 32px sans-serif'; ctx.fillStyle=inkC
-  const fullName = user.full_name
-  ctx.fillText(fullName.length>22 ? fullName.slice(0,20)+'…' : fullName, rx, 78)
+  let bigNameSz = Math.round(W * 0.048)
+  ctx.font = `700 ${bigNameSz}px sans-serif`
+  while (ctx.measureText(user.full_name).width > rW && bigNameSz > 20) {
+    bigNameSz -= 2; ctx.font = `700 ${bigNameSz}px sans-serif`
+  }
+  ctx.fillStyle = ink
+  ctx.fillText(user.full_name.length > 26 ? user.full_name.slice(0, 24) + '…' : user.full_name, rx, H * 0.092 + bigNameSz * 1.1)
 
-  // Title
-  const trng = seededRng(user.id+'-title')
-  ctx.font='400 14px sans-serif'; ctx.fillStyle=inkF
-  ctx.fillText(TITLES[Math.floor(trng()*TITLES.length)], rx, 100)
+  // Title tagline
+  const trng   = seededRng(user.id + '-title')
+  const title  = TITLES[Math.floor(trng() * TITLES.length)]
+  const titleSz = Math.round(W * 0.020)
+  ctx.font      = `500 ${titleSz}px monospace`
+  ctx.fillStyle = inkMid
+  ctx.fillText(title.toUpperCase(), rx, H * 0.092 + bigNameSz * 1.1 + titleSz * 1.5)
 
   // Divider
-  ctx.strokeStyle='rgba(0,0,0,0.08)'
-  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(rx,116); ctx.lineTo(W-36,116); ctx.stroke()
+  const divY = H * 0.092 + bigNameSz * 1.1 + titleSz * 1.5 + H * 0.04
+  ctx.strokeStyle = 'rgba(0,0,0,0.07)'
+  ctx.lineWidth   = 1
+  ctx.beginPath()
+  ctx.moveTo(rx, divY)
+  ctx.lineTo(W - W * 0.04, divY)
+  ctx.stroke()
 
-  // Fields grid
-  const fields: [string,string][] = [
-    ['CURSO','Sistemas de Informação'],
-    ['UNIDADE','EACH – USP'],
-    user.nusp ? ['Nº USP',user.nusp] : ['E-MAIL', user.email],
-    area ? ['ÁREA', area] : ['TURMA', '—'],
+  // Fields 2×2 grid
+  const fields: [string, string][] = [
+    ['CURSO', 'Sistemas de Informação'],
+    ['UNIDADE', 'EACH – USP'],
+    ['ÁREA', area || '—'],
+    ['LINGUAGEM', language || '—'],
   ]
-  fields.forEach(([label,val],i) => {
-    const fy = 140 + i*52
-    ctx.font='500 9px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.7; ctx.fillText(label, rx, fy)
-    ctx.globalAlpha=1; ctx.font='600 16px sans-serif'; ctx.fillStyle=inkC
-    ctx.fillText(val.length>24?val.slice(0,22)+'…':val, rx, fy+19)
+  const col1X = rx, col2X = rx + rW * 0.52
+  const fieldSzLabel = Math.round(W * 0.013)
+  const fieldSzVal   = Math.round(W * 0.022)
+  fields.forEach(([label, val], i) => {
+    const col = i % 2 === 0 ? col1X : col2X
+    const row = Math.floor(i / 2)
+    const fy  = divY + H * 0.065 + row * H * 0.18
+    ctx.font      = `500 ${fieldSzLabel}px monospace`
+    ctx.fillStyle = accent
+    ctx.globalAlpha = 0.65
+    ctx.fillText(label, col, fy)
+    ctx.globalAlpha = 1
+    ctx.font      = `600 ${fieldSzVal}px sans-serif`
+    ctx.fillStyle = ink
+    const maxW = rW * 0.46
+    ctx.fillText(val.length > 18 ? val.slice(0, 16) + '…' : val, col, fy + fieldSzVal * 1.2)
   })
 
-  // Language badge if set
-  if (language) {
-    ctx.font='600 10px sans-serif'
-    const lw = ctx.measureText(language).width + 16
-    roundRect(ctx, rx, 362, lw, 26, 13)
-    ctx.fillStyle=acC; ctx.globalAlpha=0.15; ctx.fill()
-    ctx.strokeStyle=acC; ctx.globalAlpha=0.45; ctx.lineWidth=1; ctx.stroke()
-    ctx.fillStyle=acC; ctx.globalAlpha=1; ctx.textAlign='center'
-    ctx.fillText(language, rx+lw/2, 379); ctx.textAlign='left'
+  // Bottom strip: tag + nusp + achievements
+  const stripY = H * 0.854
+  const tagH   = H * 0.072
+
+  // Arc tag [area | language]
+  const tagSz    = Math.round(W * 0.018)
+  ctx.font       = `600 ${tagSz}px monospace`
+  const ll       = area || 'SI'
+  const rl       = user.nusp ?? String(new Date().getFullYear())
+  const llW      = ctx.measureText(ll).width
+  const divW2    = Math.max(1, W * 0.0015)
+  const tPad     = tagH * 0.42
+  ctx.font       = `500 ${tagSz}px monospace`
+  const rlW      = ctx.measureText(rl).width
+  const tagTW    = tPad + llW + tPad + divW2 + tPad + rlW + tPad
+
+  ctx.strokeStyle = accent
+  ctx.lineWidth   = Math.max(1, W * 0.0016)
+  roundRect(ctx, rx, stripY, tagTW, tagH, tagH * 0.35)
+  ctx.stroke()
+
+  // Plain vertical divider
+  const dvX = rx + tPad + llW + tPad
+  ctx.beginPath()
+  ctx.moveTo(dvX, stripY + tagH * 0.18)
+  ctx.lineTo(dvX, stripY + tagH * 0.82)
+  ctx.strokeStyle = accent
+  ctx.lineWidth   = divW2
+  ctx.globalAlpha = 0.45
+  ctx.stroke()
+  ctx.globalAlpha = 1
+
+  ctx.font         = `600 ${tagSz}px monospace`
+  ctx.fillStyle    = accent
+  ctx.textBaseline = 'middle'
+  ctx.textAlign    = 'left'
+  ctx.fillText(ll, rx + tPad, stripY + tagH / 2)
+  ctx.font = `500 ${tagSz}px monospace`
+  ctx.fillText(rl, dvX + divW2 + tPad, stripY + tagH / 2)
+  ctx.textAlign    = 'left'
+  ctx.textBaseline = 'alphabetic'
+
+  // Achievements — right
+  const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 5)
+  if (displayA.length > 0) {
+    const eSz = Math.round(W * 0.034)
+    ctx.font         = `${eSz}px serif`
+    ctx.textBaseline = 'middle'
+    ctx.textAlign    = 'right'
+    let ax = W - W * 0.04
+    for (const ach of [...displayA].reverse()) {
+      ctx.fillText(ach.emoji, ax, stripY + tagH / 2)
+      ax -= eSz * 1.3
+    }
+    ctx.textAlign    = 'left'
+    ctx.textBaseline = 'alphabetic'
   }
 
-  // Achievement emojis — bottom right
-  const displayA=activeAchievements.filter(a=>a.unlocked).slice(0,5)
-  if (displayA.length>0) {
-    ctx.textAlign='left'; ctx.font='20px serif'; ctx.globalAlpha=1
-    displayA.forEach((ach,i) => ctx.fillText(ach.emoji, rx + i*26, H-28))
-    ctx.textAlign='left'
-  }
-
-  // QR decorative — same seed as portrait for consistency
-  const qrSize = 72
-  const qrX = W - 40 - qrSize, qrY = H - 40 - qrSize
-  drawDecorativeQR(ctx, qrX, qrY, qrSize, acC.replace(')',',0.55)').replace('hsl','hsla'), seededRng(user.id+'-qr'))
+  // EACH label bottom-right
+  ctx.font         = `600 ${Math.round(W * 0.016)}px sans-serif`
+  ctx.fillStyle    = ink
+  ctx.globalAlpha  = 0.35
+  ctx.textAlign    = 'right'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText('EACH · USP', W - W * 0.04, H - H * 0.028)
 
   // ID watermark
-  ctx.font='400 8px monospace'; ctx.fillStyle='rgba(0,0,0,0.20)'; ctx.globalAlpha=1; ctx.textAlign='right'
-  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), W-36, H-14)
-  ctx.globalAlpha=1; ctx.textAlign='left'
+  ctx.font         = `400 ${Math.round(W * 0.013)}px monospace`
+  ctx.fillStyle    = ink
+  ctx.globalAlpha  = 0.08
+  ctx.textAlign    = 'left'
+  ctx.fillText(user.id.replace(/-/g, '').slice(0, 8).toUpperCase(), rx, H - H * 0.028)
+  ctx.globalAlpha  = 1
+  ctx.textAlign    = 'left'
 
-  // Border
-  ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1.5; ctx.globalAlpha=1
-  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,28); ctx.stroke()
+  // Entity border effect — on card edges only
+  if (entityBg) {
+    const [er, eg, eb] = hexToRgb(entityBg.color)
+    const glow = ctx.createLinearGradient(0, 0, W, H)
+    glow.addColorStop(0,   `rgba(${er},${eg},${eb},0.65)`)
+    glow.addColorStop(0.5, `rgba(${er},${eg},${eb},0.38)`)
+    glow.addColorStop(1,   `rgba(${er},${eg},${eb},0.65)`)
+    ctx.strokeStyle = glow; ctx.lineWidth = 5; ctx.globalAlpha = 1
+    roundRect(ctx, 3, 3, W - 6, H - 6, 26); ctx.stroke()
+    ctx.strokeStyle = `rgba(${er},${eg},${eb},0.60)`; ctx.lineWidth = 1.5
+    roundRect(ctx, 5, 5, W - 10, H - 10, 25); ctx.stroke()
+  }
+
+  // Outer border
+  ctx.strokeStyle = 'rgba(0,0,0,0.07)'; ctx.lineWidth = 1; ctx.globalAlpha = 1
+  roundRect(ctx, 0.5, 0.5, W - 1, H - 1, 28); ctx.stroke()
+
   ctx.restore()
 }
+
 
 // ── PORTRAIT main draw ────────────────────────────────────────────────────────
 function drawPortraitCard(
@@ -1194,6 +1341,7 @@ export default function ProfilePage() {
   })
   const [entityBgId,setEntityBgId]=useState<string|null>(()=>localStorage.getItem("dasiboard-card-entity")??null)
   const [showAchievPicker,setShowAchievPicker]=useState(false)
+  const [showCardFullscreen,setShowCardFullscreen]=useState(false)
   const [showEntityPicker,setShowEntityPicker]=useState(false)
   const [avatarLoading,setAvatarLoading]=useState(false)
   const [activeTab,setActiveTab]=useState<"conquistas"|"stats"|"conta">("conquistas")
@@ -1357,6 +1505,36 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 py-5 sm:px-6 md:px-8 md:py-7 max-w-5xl mx-auto w-full page-mobile">
+      {/* Mobile card fullscreen overlay */}
+      {showCardFullscreen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center lg:hidden"
+             style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }}
+             onClick={() => setShowCardFullscreen(false)}>
+          <div className="w-full px-4" style={{ maxWidth: cardVariant === 'portrait' ? 340 : 560 }}
+               onClick={e => e.stopPropagation()}>
+            <div style={{
+              position: 'relative', width: '100%',
+              paddingBottom: cardVariant === 'portrait' ? '135.3%' : '63.04%',
+              borderRadius: 28, overflow: 'hidden',
+              boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+            }}>
+              <canvas ref={cardVariant === 'portrait' ? canvasRef : canvasLandRef}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
+                               borderRadius: 28 }} />
+            </div>
+            <div className="flex gap-3 mt-4 justify-center">
+              <button onClick={handleDownload}
+                      className="btn-primary text-sm px-5 py-2.5 gap-2">
+                <Download size={15} /> Baixar card
+              </button>
+              <button onClick={() => setShowCardFullscreen(false)}
+                      className="btn-ghost text-sm px-5 py-2.5 gap-2">
+                <X size={15} /> Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showAchievPicker&&<AchievementPicker achievements={achievements} selected={activeAchievIds} onSave={saveAchievements} onClose={()=>setShowAchievPicker(false)}/>}
       {showEntityPicker&&<EntityBgPicker entities={entities} currentEntityId={entityBgId} onSave={saveEntityBg} onClose={()=>setShowEntityPicker(false)}/>}
 
@@ -1440,7 +1618,9 @@ export default function ProfilePage() {
               borderRadius:28, overflow:'hidden',
               boxShadow:'0 28px 72px rgba(0,0,0,0.28),0 8px 20px rgba(0,0,0,0.16)',
               backfaceVisibility:'hidden',
-            }}>
+              cursor: 'pointer',
+            }}
+            onClick={() => { if (window.innerWidth < 1024) setShowCardFullscreen(true) }}>
               {/* Portrait canvas */}
               <canvas ref={canvasRef} onClick={handleDownload} title="Clique para baixar"
                       className="profile-card-canvas"

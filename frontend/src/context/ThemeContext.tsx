@@ -13,6 +13,8 @@ export type ThemeId =
   | 'dark-aqua'
   | 'dark-k7'
   | 'light-papiro'
+  | 'light-usp'
+  | 'light-stardew'
 
 // Sub-eras do Chrono Trigger que rotacionam por página
 export type ChronoEra = 'prehistoria' | 'antiguidade' | 'era-media' | 'futuro' | 'fim-dos-tempos'
@@ -71,6 +73,8 @@ export const THEMES: ThemeMeta[] = [
   { id: 'dark-aqua',        name: 'Aqua',         dark: true,  emoji: '💧', description: 'Windows XP Luna · Azul vitrificado', group: 'special' },
   { id: 'dark-k7',          name: 'K7',           dark: true,  emoji: '📼', description: 'Cassette · Marrom/Laranja · 80s',    group: 'vibes'   },
   { id: 'light-papiro',     name: 'Papiro',       dark: false, emoji: '📋', description: 'Caderno de engenharia · Milimetrado', group: 'tech'    },
+  { id: 'light-usp',        name: 'USP Oficial',  dark: false, emoji: '🏛️', description: 'Identidade visual oficial · Azul & Ouro', group: 'special' },
+  { id: 'light-stardew',    name: 'Stardew',      dark: false, emoji: '🌾', description: 'Vida no campo pixel · Terroso & Verde', group: 'games'   },
 ]
 
 export const DARK_THEMES  = THEMES.filter(t => t.dark)
