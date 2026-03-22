@@ -391,6 +391,16 @@ function SemesterWidget() {
 
   const radius = 36, circ = 2 * Math.PI * radius
 
+  if (pct === null && !editing) return (
+    <button onClick={() => { setDraft(cfg); setEditing(true) }}
+            aria-label="Configurar datas do semestre"
+            className="flex items-center gap-2 text-[10px] font-medium hover:opacity-70 transition-opacity px-0.5"
+            style={{ color: 'var(--text-muted)' }}>
+      <GraduationCap size={13} />
+      <span>Configurar semestre</span>
+    </button>
+  )
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
@@ -747,7 +757,7 @@ export default function DashboardPage() {
   const latestTag = latestNL?.tag ? NL_TAGS[latestNL.tag] : NL_TAGS['geral']
 
   return (
-    <div className="px-4 py-4 sm:px-5 md:px-8 md:py-6 max-w-6xl mx-auto w-full page-mobile space-y-4 md:space-y-5">
+    <div className="px-4 pt-2 pb-4 sm:px-5 md:px-8 md:py-6 max-w-6xl mx-auto w-full page-mobile space-y-4 md:space-y-5">
 
       {showCreateNL && (
         <NewsletterCreateModal
