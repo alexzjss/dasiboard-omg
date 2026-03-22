@@ -297,21 +297,72 @@ function FocusModePanel({ onClose }: { onClose: () => void }) {
 
 // ── Study Mode Button (sidebar widget) ───────────────────────
 export default function StudyMode() {
-  const [open, setOpen]         = useState(false)
-  const [activePanel, setPanel] = useState<'pomodoro'|'focus'|null>(null)
+  const [open, setOpen]           = useState(false)
+  const [activePanel, setPanel]   = useState<'pomodoro'|'focus'|null>(null)
   const [isStudying, setStudying] = useState(false)
+  const [panelPos, setPanelPos]   = useState({ top: 0, left: 0 })
+  const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const panelRef = useRef<HTMLDivElement>(null)
 
   const panels = [
-    { id: 'pomodoro' as const, label: 'Pomodoro',     icon: Timer,    color: '#ef4444', desc: 'Timer de foco' },
-    { id: 'focus'    as const, label: 'Metas',        icon: Target,   color: '#a855f7', desc: 'Lista de objetivos' },
+    { id: 'pomodoro' as const, label: 'Pomodoro', icon: Timer,  color: '#ef4444', desc: 'Timer de foco' },
+    { id: 'focus'    as const, label: 'Metas',    icon: Target, color: '#a855f7', desc: 'Lista de objetivos' },
   ]
 
+  // Close panel on outside click
+  useEffect(() => {
+    if (!activePanel) return
+    const h = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node) &&
+          !Object.values(btnRefs.current).some(b => b?.contains(e.target as Node))) {
+        setPanel(null)
+      }
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [activePanel])
+
   const handlePanel = (id: 'pomodoro' | 'focus') => {
-    setPanel(activePanel === id ? null : id)
+    if (activePanel === id) { setPanel(null); return }
+    // Calculate position based on button location
+    const btn = btnRefs.current[id]
+    if (btn) {
+      const r = btn.getBoundingClientRect()
+      setPanelPos({
+        top:  r.top,
+        left: r.right + 8,  // opens to the right of the sidebar
+      })
+    }
+    setPanel(id)
   }
 
   return (
     <div className="px-3 pb-3">
+      {/* Fixed panel — renders outside sidebar via portal-like fixed positioning */}
+      {activePanel && (
+        <>
+          {/* Backdrop to close */}
+          <div className="fixed inset-0 z-[998]" onClick={() => setPanel(null)} />
+          <div ref={panelRef}
+               className="animate-in"
+               style={{
+                 position: 'fixed',
+                 top: Math.max(8, Math.min(panelPos.top, window.innerHeight - 420)),
+                 left: panelPos.left,
+                 width: 320,
+                 zIndex: 999,
+                 background: 'var(--bg-card)',
+                 border: '1px solid var(--border)',
+                 borderRadius: 16,
+                 boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
+                 padding: 12,
+               }}>
+            {activePanel === 'pomodoro' && <PomodoroPanel onClose={() => setPanel(null)} />}
+            {activePanel === 'focus'    && <FocusModePanel onClose={() => setPanel(null)} />}
+          </div>
+        </>
+      )}
+
       {/* Main study mode toggle button */}
       <button
         onClick={() => { setOpen(o => !o); if (!open) setStudying(true) }}
@@ -343,35 +394,26 @@ export default function StudyMode() {
           style={{ color: 'var(--text-muted)', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
       </button>
 
-      {/* Expanded: sub-tools */}
+      {/* Expanded: sub-tool buttons */}
       {open && (
         <div className="mt-2 space-y-1 animate-in">
           {panels.map(p => (
-            <div key={p.id}>
-              <button
-                onClick={() => handlePanel(p.id)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-                style={{
-                  background: activePanel === p.id ? p.color + '18' : 'transparent',
-                  border: activePanel === p.id ? `1px solid ${p.color}40` : '1px solid transparent',
-                  color: activePanel === p.id ? p.color : 'var(--text-secondary)',
-                }}>
-                <p.icon size={13} />
-                <span className="flex-1 text-left">{p.label}</span>
-                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{p.desc}</span>
-                <ChevronRight size={11}
-                  style={{ color: 'var(--text-muted)', transform: activePanel === p.id ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
-              </button>
-
-              {/* Panel popup inside sidebar */}
-              {activePanel === p.id && (
-                <div className="mt-2 p-3 rounded-xl animate-in"
-                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
-                  {p.id === 'pomodoro' && <PomodoroPanel onClose={() => setPanel(null)} />}
-                  {p.id === 'focus'    && <FocusModePanel onClose={() => setPanel(null)} />}
-                </div>
-              )}
-            </div>
+            <button
+              key={p.id}
+              ref={el => { btnRefs.current[p.id] = el }}
+              onClick={() => handlePanel(p.id)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+              style={{
+                background: activePanel === p.id ? p.color + '18' : 'transparent',
+                border: activePanel === p.id ? `1px solid ${p.color}40` : '1px solid transparent',
+                color: activePanel === p.id ? p.color : 'var(--text-secondary)',
+              }}>
+              <p.icon size={13} />
+              <span className="flex-1 text-left">{p.label}</span>
+              <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{p.desc}</span>
+              <ChevronRight size={11}
+                style={{ color: 'var(--text-muted)', transform: activePanel === p.id ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
           ))}
 
           {/* Quit study mode */}
