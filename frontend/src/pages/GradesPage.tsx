@@ -486,7 +486,7 @@ function FluxoNode({ sub, status, fluxoState, highlighted, dimmed, onClick }: {
 }
 
 // ─────────────────────── SubjectDetailPopup ─────────────────────────────────
-function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete, onAddGrade, onDeleteGrade, onUpdateAttendance, onStartReview, saveFluxoState }: {
+function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete, onAddGrade, onDeleteGrade, onUpdateAttendance, onStartReview, saveFluxoState, onEditSchedule }: {
   subject: Subject; fluxoDef?: SubjectDef; fluxoStates: Record<string, FluxoState>
   onClose: () => void
   onDelete: () => void
@@ -495,6 +495,7 @@ function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete,
   onUpdateAttendance: (id: string, total: number, att: number) => void
   onStartReview?: (subjectId: string, subjectName: string) => void
   saveFluxoState: (s: FluxoState) => void
+  onEditSchedule?: (subject: Subject) => void
 }) {
   const [activeSection, setActiveSection] = useState<'info'|'notes'>('info')
   const [addingGrade, setAddingGrade]     = useState(false)
@@ -680,8 +681,13 @@ function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete,
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 flex gap-2" style={{ borderTop: '1px solid var(--border)' }}>
-          <button onClick={() => { onDelete(); onClose() }} className="btn-ghost text-xs gap-1.5" style={{ color: '#f87171' }}>
+        <div className="px-5 py-3 flex gap-2 flex-wrap" style={{ borderTop: '1px solid var(--border)' }}>
+          {onEditSchedule && (
+            <button onClick={() => onEditSchedule(subject)} className="btn-ghost text-xs gap-1.5" style={{ color: 'var(--accent-3)' }}>
+              <Clock size={12}/> Horários de aula
+            </button>
+          )}
+          <button onClick={() => { onDelete(); onClose() }} className="btn-ghost text-xs gap-1.5 ml-auto" style={{ color: '#f87171' }}>
             <Trash2 size={12}/> Remover disciplina
           </button>
         </div>
@@ -1122,6 +1128,10 @@ export default function GradesPage() {
               return
             }
             setReviewTarget({ subjectId: sid, subjectName: sname, cards })
+          }}
+          onEditSchedule={(sub) => {
+            setSubjectPopup(null)
+            setScheduleTarget(sub)
           }}
           saveFluxoState={saveFluxoState}
         />

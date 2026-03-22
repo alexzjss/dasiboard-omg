@@ -9,6 +9,7 @@ import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import { getEntityIcon } from '@/utils/entityIcons'
+import { applyEntityOverrides } from '@/utils/entityData'
 
 // ── Entity Icon component — real logo or fallback emoji ──
 function EntityIcon({ entity, size = 40, rounded = 'rounded-xl', textSize = 'text-xl' }: {
@@ -482,17 +483,17 @@ export default function EntitiesPage() {
 
   useEffect(() => {
     api.get('/entities/')
-      .then(({ data }) => setEntities(data))
+      .then(({ data }) => setEntities(data.map(applyEntityOverrides)))
       .catch(() => toast.error('Erro ao carregar entidades'))
       .finally(() => setLoading(false))
   }, [])
 
   const handleMembershipChange = (slug: string, is_member: boolean) => {
     setEntities((prev) => prev.map((e) => e.slug === slug
-      ? { ...e, is_member, member_count: is_member ? e.member_count + 1 : Math.max(0, e.member_count - 1) }
+      ? applyEntityOverrides({ ...e, is_member, member_count: is_member ? e.member_count + 1 : Math.max(0, e.member_count - 1) })
       : e))
     if (selected?.slug === slug) {
-      setSelected((s) => s ? { ...s, is_member, member_count: is_member ? s.member_count + 1 : Math.max(0, s.member_count - 1) } : s)
+      setSelected(s => s ? applyEntityOverrides({ ...s, is_member, member_count: is_member ? s.member_count + 1 : Math.max(0, s.member_count - 1) }) : s)
     }
   }
 

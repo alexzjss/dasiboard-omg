@@ -33,7 +33,6 @@ def list_events(
     uid = str(user["id"])
     entity_ids = _user_entity_ids(db, uid)
 
-    # ── Personal events ────────────────────────────────────
     personal_q = (
         "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
@@ -46,7 +45,6 @@ def list_events(
     if event_type: personal_q += " AND event_type = %s"; p_params.append(event_type)
     if class_code: personal_q += " AND class_code ILIKE %s"; p_params.append(f"%{class_code}%")
 
-    # ── Entity events the user can see ────────────────────
     entity_parts: list = []
     e_all_params: list = []
     if entity_ids:
@@ -64,7 +62,6 @@ def list_events(
         entity_parts.append(f"({eq})")
         e_all_params = e_params
 
-    # ── Global events ──────────────────────────────────────
     global_q = (
         "SELECT id, NULL::uuid AS owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
@@ -76,7 +73,6 @@ def list_events(
     if end:        global_q += " AND start_at <= %s"; g_params.append(end)
     if event_type: global_q += " AND event_type = %s"; g_params.append(event_type)
 
-    # ── Combine ───────────────────────────────────────────
     parts = [f"({personal_q})"] + entity_parts + [f"({global_q})"]
     combined = " UNION ALL ".join(parts) + " ORDER BY start_at"
     all_params = p_params + e_all_params + g_params
@@ -127,20 +123,45 @@ def create_event(
 
 @router.patch("/{event_id}", response_model=EventOut)
 def update_event(
-    event_id: str, body: EventCreate,
-    db: RealDictCursor = Depends(get_db), user=Depends(get_current_user),
+    event_id: str,
+    body: EventCreate,
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+    x_global_key: Optional[str] = Header(None),
 ):
+    eid = str(body.entity_id) if body.entity_id else None
+
+    # Try personal event first
     db.execute("SELECT id FROM events WHERE id = %s AND owner_id = %s", (event_id, str(user["id"])))
-    if not db.fetchone():
-        raise HTTPException(404, "Evento não encontrado")
-    db.execute(
-        "UPDATE events SET title=%s, description=%s, event_type=%s, start_at=%s, "
-        "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s "
-        "WHERE id=%s RETURNING *, FALSE AS is_global",
-        (body.title, body.description, body.event_type, body.start_at,
-         body.end_at, body.all_day, body.color, body.location, body.class_code, event_id),
-    )
-    return db.fetchone()
+    if db.fetchone():
+        db.execute(
+            "UPDATE events SET title=%s, description=%s, event_type=%s, start_at=%s, "
+            "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s "
+            "WHERE id=%s RETURNING *, FALSE AS is_global",
+            (body.title, body.description, body.event_type, body.start_at,
+             body.end_at, body.all_day, body.color, body.location, body.class_code, eid, event_id),
+        )
+        row = db.fetchone()
+        if not row.get("owner_id"):
+            row = dict(row); row["owner_id"] = str(user["id"])
+        return row
+
+    # Try global event (requires key)
+    db.execute("SELECT id FROM global_events WHERE id = %s", (event_id,))
+    if db.fetchone():
+        require_global_key(x_global_key)
+        db.execute(
+            "UPDATE global_events SET title=%s, description=%s, event_type=%s, start_at=%s, "
+            "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s "
+            "WHERE id=%s RETURNING *, TRUE AS is_global",
+            (body.title, body.description, body.event_type, body.start_at,
+             body.end_at, body.all_day, body.color, body.location, body.class_code, eid, event_id),
+        )
+        row = dict(db.fetchone())
+        row["owner_id"] = "00000000-0000-0000-0000-000000000000"
+        return row
+
+    raise HTTPException(404, "Evento não encontrado ou sem permissão")
 
 
 @router.delete("/{event_id}", status_code=204)
