@@ -25,87 +25,7 @@ function seededRng(seed: string) {
   }
 }
 
-const TITLES = [
-  'Explorador Incansável','Arquiteto de Sonhos','Nômade Digital',
-  'Construtor do Futuro','Caçador de Bugs','Artesão do Código',
-  'Viajante entre Mundos','Filósofo dos Pixels','Guardião da Stack',
-  'Detetive de Dados','Mago das Abstrações','Pesquisador Curioso',
-  'Estrategista Criativo','Desbravador de APIs','Artista do Terminal',
-  'Navegador de Incertezas','Alquimista Digital','Construtor Obstinado',
-  'Sonhador Pragmático','Engenheiro de Possibilidades','Entusiasta Nato',
-  'Pensador Lateral','Hacker de Soluções','Curador de Conhecimento',
-  'Montador de Sistemas','Visionário Técnico','Explorador de Fronteiras',
-]
-
-export const AREAS = [
-  'Frontend','Backend','Fullstack','Mobile','Data Science',
-  'IA & ML','DevOps','Cybersecurity','Game Dev','Design',
-  'Pesquisa','UX/UI','Cloud','Embedded','Blockchain','QA',
-]
-export const LANGUAGES = [
-  'Python','JavaScript','TypeScript','Java','Kotlin','Swift',
-  'Go','Rust','C','C++','C#','PHP','Ruby','Dart','Scala',
-  'R','MATLAB','Haskell','SQL','Shell','Lua','Zig','Elixir',
-  'Clojure','F#','OCaml','Assembly','VHDL','Prolog',
-]
-
-export interface Achievement {
-  id: string; emoji: string; label: string; desc: string
-  hint: string; color: string
-  rarity: 'common' | 'rare' | 'epic' | 'legendary'
-  unlocked: boolean
-  category: 'profile' | 'academic' | 'kanban' | 'social' | 'secret' | 'system'
-}
-
-const RARITY_LABEL: Record<string, string> = {
-  common: 'Comum', rare: 'Raro', epic: 'Épico', legendary: 'Lendário',
-}
-const RARITY_COLOR: Record<string, string> = {
-  common: '#6b7280', rare: '#3b82f6', epic: '#a855f7', legendary: '#f59e0b',
-}
-const CATEGORY_LABELS: Record<string, string> = {
-  profile: 'Perfil', academic: 'Acadêmico', kanban: 'Organização',
-  social: 'Comunidade', secret: 'Secretas', system: 'Sistema',
-}
-
-export const buildAchievements = (opts: {
-  hasBoards: boolean; hasMultipleBoards: boolean; hasLanguage: boolean
-  hasArea: boolean; hasPassedSubject: boolean; hasFailedSubject: boolean
-  hasAvatar: boolean; hasNusp: boolean; eventCount: number
-  subjectCount: number; gradeCount: number; loginCount: number
-  easterEggFound: boolean
-}): Achievement[] => [
-  { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',       rarity: 'legendary', category: 'system',
-    desc: 'Membro fundador do DaSIboard',          hint: 'Crie sua conta',          color: '#f59e0b', unlocked: true },
-  { id: 'coder',      emoji: '💻', label: 'Desenvolvedor',  rarity: 'common',    category: 'profile',
-    desc: 'Selecionou uma linguagem principal',     hint: 'Escolha sua linguagem',    color: '#6366f1', unlocked: opts.hasLanguage },
-  { id: 'specialist', emoji: '🎯', label: 'Especialista',   rarity: 'common',    category: 'profile',
-    desc: 'Selecionou uma área de atuação',         hint: 'Escolha sua área',          color: '#06b6d4', unlocked: opts.hasArea },
-  { id: 'face',       emoji: '📸', label: 'Fotogênico',     rarity: 'common',    category: 'profile',
-    desc: 'Adicionou foto de perfil',               hint: 'Faça upload de uma foto',   color: '#ec4899', unlocked: opts.hasAvatar },
-  { id: 'identified', emoji: '🪪', label: 'Identificado',   rarity: 'common',    category: 'profile',
-    desc: 'Adicionou número USP',                   hint: 'Informe seu Nº USP',         color: '#8b5cf6', unlocked: opts.hasNusp },
-  { id: 'eisenhower', emoji: '📋', label: 'Eisenhower',     rarity: 'common',    category: 'kanban',
-    desc: 'Criou o primeiro quadro Kanban',         hint: 'Crie um quadro em Kanban',  color: '#22c55e', unlocked: opts.hasBoards },
-  { id: 'organizer',  emoji: '🗂️', label: 'Organizador',   rarity: 'rare',      category: 'kanban',
-    desc: 'Criou 3 ou mais quadros Kanban',         hint: 'Crie pelo menos 3 quadros', color: '#10b981', unlocked: opts.hasMultipleBoards },
-  { id: 'planner',    emoji: '🗓️', label: 'Planejador',    rarity: 'common',    category: 'kanban',
-    desc: 'Criou 5+ eventos no calendário',         hint: 'Adicione eventos',           color: '#f59e0b', unlocked: opts.eventCount >= 5 },
-  { id: 'night_owl',  emoji: '🦉', label: 'Coruja',         rarity: 'rare',      category: 'academic',
-    desc: 'Aprovado em pelo menos uma disciplina',  hint: 'Registre notas e passe',    color: '#a855f7', unlocked: opts.hasPassedSubject },
-  { id: 'survivor',   emoji: '💀', label: 'Sobrevivente',   rarity: 'rare',      category: 'academic',
-    desc: 'Reprovado e voltou mais forte',          hint: 'Registre uma reprovação',   color: '#ef4444', unlocked: opts.hasFailedSubject },
-  { id: 'scholar',    emoji: '📚', label: 'Estudioso',      rarity: 'epic',      category: 'academic',
-    desc: 'Cadastrou 6+ disciplinas',               hint: 'Adicione 6 matérias',       color: '#6366f1', unlocked: opts.subjectCount >= 6 },
-  { id: 'annotator',  emoji: '✏️', label: 'Anotador',       rarity: 'common',    category: 'academic',
-    desc: 'Registrou 10+ notas',                   hint: 'Adicione notas',             color: '#f97316', unlocked: opts.gradeCount >= 10 },
-  { id: 'easter_egg', emoji: '🥚', label: 'Caçador',        rarity: 'legendary', category: 'secret',
-    desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
-  { id: 'night_coder',emoji: '🌙', label: 'Coder Noturno',  rarity: 'epic',      category: 'secret',
-    desc: 'Usou o app após meia-noite',             hint: '???',                        color: '#6366f1', unlocked: new Date().getHours() >= 0 && new Date().getHours() < 4 },
-]
-
-// ── Canvas helpers ─────────────────────────────────────────────────────────────
+// ── Canvas utilities ───────────────────────────────────────────────────────────
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r)
@@ -114,33 +34,608 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r)
   ctx.closePath()
 }
-function drawBlob(ctx: CanvasRenderingContext2D, rng: () => number, cx: number, cy: number, baseR: number) {
-  const n = 7 + Math.floor(rng() * 6)
-  const pts: [number,number][] = []
-  for (let i = 0; i < n; i++) {
-    const angle = (i/n)*Math.PI*2 - Math.PI/2
-    const r = baseR * (0.45 + rng() * 0.90)
-    pts.push([cx + Math.cos(angle)*r, cy + Math.sin(angle)*r])
-  }
-  ctx.beginPath()
-  for (let i = 0; i < pts.length; i++) {
-    const p0=pts[(i-1+n)%n], p1=pts[i], p2=pts[(i+1)%n], p3=pts[(i+2)%n]
-    const cp1x=p1[0]+(p2[0]-p0[0])/5, cp1y=p1[1]+(p2[1]-p0[1])/5
-    const cp2x=p2[0]-(p3[0]-p1[0])/5, cp2y=p2[1]-(p3[1]-p1[1])/5
-    if (i===0) ctx.moveTo(p1[0],p1[1])
-    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
-  }
-  ctx.closePath()
-}
-function addNoise(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count=5000) {
+
+function addGrain(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count=4000) {
   for (let i=0;i<count;i++) {
-    const x=rng()*W, y=rng()*H, v=Math.floor(rng()*220)
+    const x=rng()*W, y=rng()*H, v=Math.floor(rng()*255)
     ctx.fillStyle=`rgba(${v},${v},${v},${alpha*rng()})`
     ctx.fillRect(x,y,1,1)
   }
 }
 
-// ── Portrait card draw (680×920 = 3:4.06) ────────────────────────────────────
+// Parse hex color to RGB
+function hexToRgb(hex: string): [number,number,number] {
+  const n = parseInt(hex.replace('#',''), 16)
+  return [(n>>16)&255, (n>>8)&255, n&255]
+}
+function hslToRgb(h:number, s:number, l:number): [number,number,number] {
+  s/=100; l/=100
+  const a = s*Math.min(l,1-l)
+  const f = (n:number) => { const k=(n+h/30)%12; return l-a*Math.max(Math.min(k-3,9-k,1),-1) }
+  return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)]
+}
+
+// ── Card styles — 9 distinct visual concepts ───────────────────────────────────
+// Inspired by: Polish student ID geometric patterns, Tokyo Olympics holographic
+// tickets, boarding passes, all-access badges, gradient layers, geometric waves
+
+type CardStyle =
+  | 'geometric_rays'    // Polish ID style — radiating ray bands from corner
+  | 'layer_stack'       // Stacked transparent hexagon/rect layers (gradient layers image)
+  | 'wave_lines'        // Parallel curved lines filling the zone (Seoul wave image)
+  | 'checkerboard'      // Bold checker pattern (Brooklyn image)
+  | 'holographic'       // Holographic rainbow gradient + noise (Tokyo Olympics ticket)
+  | 'boarding_pass'     // Barcode strips + gradient ticket (boarding pass images)
+  | 'diagonal_bands'    // Diagonal colored stripes (Polish ID diagonal pattern)
+  | 'concentric_shapes' // Nested shrinking shapes with glow
+  | 'ink_splatter'      // Organic ink-like splashes (original blob but more dramatic)
+
+function pickCardStyle(userId: string): CardStyle {
+  const rng = seededRng(userId + '-style')
+  const styles: CardStyle[] = [
+    'geometric_rays','layer_stack','wave_lines','checkerboard',
+    'holographic','boarding_pass','diagonal_bands','concentric_shapes','ink_splatter'
+  ]
+  return styles[Math.floor(rng() * styles.length)]
+}
+
+// ── Effect overlays — decoupled from background, applied on top ──────────────
+type CardEffect = 'foil' | 'scanlines' | 'vignette' | 'chromatic' | 'grain_heavy' | 'none'
+
+function pickCardEffect(userId: string): CardEffect {
+  const rng = seededRng(userId + '-effect')
+  const effects: CardEffect[] = ['foil','scanlines','vignette','chromatic','grain_heavy','none','foil','none']
+  return effects[Math.floor(rng() * effects.length)]
+}
+
+// ── Draw background style ─────────────────────────────────────────────────────
+function drawCardBackground(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, zoneH: number,
+  style: CardStyle,
+  hue: number, sat: number, lit: number,
+  rng: () => number,
+  entityBg: {color:string; name:string} | null
+) {
+  const [r1,g1,b1] = hslToRgb(hue, sat, lit)
+  const [r2,g2,b2] = hslToRgb((hue+40)%360, sat-10, lit-18)
+  const [r3,g3,b3] = hslToRgb((hue+80)%360, sat-20, lit-8)
+  const c1 = `rgb(${r1},${g1},${b1})`
+  const c2 = `rgb(${r2},${g2},${b2})`
+  const c3 = `rgb(${r3},${g3},${b3})`
+  const a1 = `rgba(${r1},${g1},${b1},0)`
+  const a2 = `rgba(${r2},${g2},${b2},0)`
+
+  // Card base bg
+  const isDark = lit < 45
+  const bgBase = entityBg
+    ? (isDark ? '#0e0e12' : '#f8f7f2')
+    : (isDark ? `hsl(${hue},18%,8%)` : `hsl(${hue},12%,97%)`)
+
+  ctx.fillStyle = bgBase
+  ctx.fillRect(0,0,W,H)
+
+  // Entity background gradient overlay
+  if (entityBg) {
+    const [er,eg,eb] = hexToRgb(entityBg.color)
+    const eg2 = ctx.createLinearGradient(0,0,W,H)
+    eg2.addColorStop(0, `rgba(${er},${eg},${eb},0.18)`)
+    eg2.addColorStop(1, `rgba(${er},${eg},${eb},0.06)`)
+    ctx.fillStyle = eg2
+    ctx.fillRect(0,0,W,H)
+  }
+
+  ctx.save()
+  ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+
+  switch(style) {
+
+    case 'geometric_rays': {
+      // Radiating bands from a corner — inspired by Polish student IDs
+      const cx = W * (rng() < 0.5 ? -0.05 : 1.05)
+      const cy = H * (-0.1 + rng() * 0.2)
+      const numRays = 14 + Math.floor(rng() * 8)
+      const totalAngle = Math.PI * (0.55 + rng() * 0.25)
+      const startAngle = cy < H/2 ? 0.1 : -Math.PI + 0.1
+
+      for (let i = 0; i < numRays; i++) {
+        const angle1 = startAngle + (i / numRays) * totalAngle
+        const angle2 = startAngle + ((i+1) / numRays) * totalAngle
+        const dist = Math.sqrt(W*W+H*H) * 1.6
+
+        ctx.beginPath()
+        ctx.moveTo(cx, cy)
+        ctx.lineTo(cx + Math.cos(angle1)*dist, cy + Math.sin(angle1)*dist)
+        ctx.lineTo(cx + Math.cos(angle2)*dist, cy + Math.sin(angle2)*dist)
+        ctx.closePath()
+
+        const t = i / numRays
+        const alpha = i % 2 === 0 ? 0.85 : 0.65
+        const rayGrad = ctx.createLinearGradient(cx, cy, cx + Math.cos((angle1+angle2)/2)*dist*0.7, cy + Math.sin((angle1+angle2)/2)*dist*0.7)
+        if (i % 2 === 0) {
+          rayGrad.addColorStop(0, c1)
+          rayGrad.addColorStop(1, c2)
+        } else {
+          rayGrad.addColorStop(0, c2)
+          rayGrad.addColorStop(1, c3)
+        }
+        ctx.globalAlpha = alpha
+        ctx.fillStyle = rayGrad
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'layer_stack': {
+      // Stacked semi-transparent layers shrinking toward center — gradient covers image
+      const numLayers = 7 + Math.floor(rng() * 4)
+      const shapeType = rng() < 0.33 ? 'rect' : rng() < 0.5 ? 'hex' : 'rounded'
+      const baseAlpha = 0.75
+
+      for (let i = numLayers-1; i >= 0; i--) {
+        const t = i / numLayers
+        const margin = (1-t) * W * 0.42
+        const topMargin = (1-t) * zoneH * 0.38
+        const layerAlpha = baseAlpha * (0.4 + t * 0.6)
+        const hShift = (i * 22) % 360
+
+        const lg = ctx.createLinearGradient(margin, topMargin, W-margin, zoneH-topMargin*0.4)
+        lg.addColorStop(0, `hsl(${(hue + hShift*0.8)%360},${sat}%,${lit}%)`)
+        lg.addColorStop(1, `hsl(${(hue + hShift)%360},${sat-15}%,${Math.max(lit-20,15)}%)`)
+
+        ctx.globalAlpha = layerAlpha
+        ctx.fillStyle = lg
+
+        if (shapeType === 'rect') {
+          ctx.fillRect(margin, topMargin, W-margin*2, zoneH-topMargin)
+        } else if (shapeType === 'rounded') {
+          roundRect(ctx, margin, topMargin, W-margin*2, zoneH-topMargin, 18)
+          ctx.fill()
+        } else {
+          // Hexagon-ish
+          const cx2 = W/2, cy2 = topMargin + (zoneH-topMargin)/2
+          const rx = (W-margin*2)/2, ry = (zoneH-topMargin)/2
+          ctx.beginPath()
+          for (let j=0;j<6;j++) {
+            const a = (j/6)*Math.PI*2 - Math.PI/6
+            j===0 ? ctx.moveTo(cx2+Math.cos(a)*rx, cy2+Math.sin(a)*ry*0.85)
+                  : ctx.lineTo(cx2+Math.cos(a)*rx, cy2+Math.sin(a)*ry*0.85)
+          }
+          ctx.closePath()
+          ctx.fill()
+        }
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'wave_lines': {
+      // Parallel wave lines filling the zone — Seoul psychedelic wave
+      const numWaves = 28 + Math.floor(rng() * 16)
+      const amplitude = 20 + rng() * 50
+      const frequency = 0.008 + rng() * 0.016
+      const phaseShift = rng() * Math.PI * 2
+      const lineW = zoneH / numWaves
+
+      for (let wi = 0; wi < numWaves; wi++) {
+        const t = wi / numWaves
+        const y0 = (wi / numWaves) * zoneH
+        const hh = hue + t * 60
+        const ll = lit - t * 20
+
+        ctx.beginPath()
+        ctx.moveTo(-10, y0)
+        for (let x=0; x<=W+10; x+=3) {
+          const wave = Math.sin(x * frequency + phaseShift + wi * 0.3) * amplitude
+          ctx.lineTo(x, y0 + wave)
+        }
+        ctx.lineTo(W+10, zoneH+10)
+        ctx.lineTo(-10, zoneH+10)
+        ctx.closePath()
+
+        ctx.fillStyle = `hsl(${hh%360},${sat}%,${ll}%)`
+        ctx.globalAlpha = 0.9
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'checkerboard': {
+      // Bold checker + color gradient shift per row/col — Brooklyn image
+      const cols = 8 + Math.floor(rng() * 6)
+      const cellW = W / cols
+      const rows = Math.ceil(zoneH / cellW)
+
+      for (let row=0; row<rows; row++) {
+        for (let col=0; col<cols; col++) {
+          const t = (row + col) / (rows + cols)
+          const isOn = (row + col) % 2 === 0
+          if (!isOn) continue
+          const h2 = (hue + t * 45) % 360
+          ctx.fillStyle = `hsl(${h2},${sat}%,${lit - t*15}%)`
+          ctx.globalAlpha = 0.9
+          ctx.fillRect(col*cellW, row*cellW, cellW, cellW)
+        }
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'holographic': {
+      // Holographic iridescent gradient — Tokyo Olympics ticket style
+      const numStops = 8
+      const grad = ctx.createLinearGradient(0, 0, W * (0.7 + rng()*0.6), zoneH * (0.6 + rng()*0.5))
+
+      const holoHues = [hue, (hue+45)%360, (hue+90)%360, (hue+135)%360, (hue+180)%360,
+                        (hue+225)%360, (hue+270)%360, (hue+315)%360]
+      for (let i=0; i<numStops; i++) {
+        const t = i / (numStops-1)
+        const hh = holoHues[i]
+        grad.addColorStop(t, `hsl(${hh},${80 + rng()*15}%,${60 + rng()*20}%)`)
+      }
+
+      ctx.globalAlpha = 0.92
+      ctx.fillStyle = grad
+      ctx.fillRect(0,0,W,zoneH)
+
+      // White shimmer overlay
+      const shimmer = ctx.createLinearGradient(W*0.1, 0, W*0.9, zoneH)
+      shimmer.addColorStop(0, 'rgba(255,255,255,0)')
+      shimmer.addColorStop(0.35, 'rgba(255,255,255,0.22)')
+      shimmer.addColorStop(0.5, 'rgba(255,255,255,0.38)')
+      shimmer.addColorStop(0.65, 'rgba(255,255,255,0.22)')
+      shimmer.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = shimmer
+      ctx.fillRect(0,0,W,zoneH)
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'boarding_pass': {
+      // Ticket/boarding pass aesthetic — gradient upper block + info strips
+      const grad = ctx.createLinearGradient(0, 0, W, zoneH)
+      grad.addColorStop(0, c1)
+      grad.addColorStop(0.4, c2)
+      grad.addColorStop(1, c3)
+      ctx.fillStyle = grad
+      ctx.globalAlpha = 0.95
+      ctx.fillRect(0,0,W,zoneH)
+      ctx.globalAlpha = 1
+
+      // Perforated dashed line near bottom of zone
+      const perf = zoneH * 0.85
+      ctx.setLineDash([8, 6])
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+      ctx.lineWidth = 1.5
+      ctx.beginPath(); ctx.moveTo(20, perf); ctx.lineTo(W-20, perf); ctx.stroke()
+      ctx.setLineDash([])
+
+      // Mini barcode-style stripes at bottom
+      const barH = zoneH * 0.12
+      const barY = zoneH * 0.87
+      const numBars = 32 + Math.floor(rng() * 16)
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'
+      for (let bi=0; bi<numBars; bi++) {
+        const bw = 1 + Math.floor(rng() * 4)
+        const bx = 40 + rng() * (W-80)
+        ctx.fillRect(bx, barY, bw, barH * (0.5 + rng()*0.5))
+      }
+      break
+    }
+
+    case 'diagonal_bands': {
+      // Bold diagonal colored bands — Polish ID diagonal variant
+      const numBands = 8 + Math.floor(rng() * 6)
+      const angle = 35 + rng() * 30
+      const rad = (angle * Math.PI) / 180
+      const bandW = (W * 1.8) / numBands
+
+      for (let bi=0; bi<numBands; bi++) {
+        const t = bi / numBands
+        const x = bi * bandW - W * 0.4
+        const h2 = (hue + bi * 18) % 360
+        const l2 = lit - bi * 4
+        const isEven = bi % 2 === 0
+
+        ctx.save()
+        ctx.translate(x, -zoneH*0.2)
+        ctx.rotate(rad)
+
+        const bandGrad = ctx.createLinearGradient(0,0,bandW,0)
+        bandGrad.addColorStop(0, `hsl(${h2},${sat}%,${l2}%)`)
+        bandGrad.addColorStop(1, `hsl(${(h2+20)%360},${sat-8}%,${Math.max(l2-15,15)}%)`)
+
+        ctx.fillStyle = bandGrad
+        ctx.globalAlpha = isEven ? 0.88 : 0.72
+        ctx.fillRect(0, 0, bandW*0.82, zoneH*2.5)
+        ctx.restore()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'concentric_shapes': {
+      // Nested concentric shapes shrinking with glow
+      const numRings = 9 + Math.floor(rng() * 5)
+      const shapeN = Math.floor(rng() * 4) + 3 // 3=triangle, 4=diamond, 5=pentagon, 6=hex
+      const cx = W * (0.35 + rng() * 0.30)
+      const cy = zoneH * (0.35 + rng() * 0.25)
+      const maxR = Math.min(W, zoneH) * 0.78
+
+      // Background solid first
+      const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR)
+      bgGrad.addColorStop(0, c1)
+      bgGrad.addColorStop(1, c3)
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0,0,W,zoneH)
+
+      for (let ri=numRings-1; ri>=0; ri--) {
+        const t = ri / numRings
+        const r = maxR * t
+        const hh = (hue + ri * 15) % 360
+        const ll = 30 + ri * (60/numRings)
+        const alpha = 0.15 + (1-t) * 0.5
+
+        ctx.beginPath()
+        for (let pi=0; pi<shapeN; pi++) {
+          const a = (pi/shapeN)*Math.PI*2 - Math.PI/2
+          const px = cx + Math.cos(a)*r
+          const py = cy + Math.sin(a)*r
+          pi===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py)
+        }
+        ctx.closePath()
+
+        ctx.strokeStyle = `hsl(${hh},${sat}%,${ll}%)`
+        ctx.lineWidth = 3 + (1-t) * 4
+        ctx.globalAlpha = alpha
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    case 'ink_splatter':
+    default: {
+      // Dramatic organic ink splash — evolved from original blob
+      const numSplats = 2 + Math.floor(rng() * 3)
+      for (let si=0; si<numSplats; si++) {
+        const scx = W * (0.1 + rng() * 0.8)
+        const scy = zoneH * (-0.1 + rng() * 0.8)
+        const sr = Math.min(W, zoneH) * (0.45 + rng() * 0.55)
+        const n = 8 + Math.floor(rng()*6)
+        const pts: [number,number][] = []
+        for (let i=0;i<n;i++) {
+          const a = (i/n)*Math.PI*2 - Math.PI/2
+          const rr = sr * (0.35 + rng()*1.0)
+          pts.push([scx+Math.cos(a)*rr, scy+Math.sin(a)*rr])
+        }
+        ctx.beginPath()
+        for (let i=0;i<pts.length;i++) {
+          const p0=pts[(i-1+n)%n], p1=pts[i], p2=pts[(i+1)%n], p3=pts[(i+2)%n]
+          const cp1x=p1[0]+(p2[0]-p0[0])/5, cp1y=p1[1]+(p2[1]-p0[1])/5
+          const cp2x=p2[0]-(p3[0]-p1[0])/5, cp2y=p2[1]-(p3[1]-p1[1])/5
+          if (i===0) ctx.moveTo(p1[0],p1[1])
+          ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
+        }
+        ctx.closePath()
+        const sg = ctx.createRadialGradient(scx-sr*0.2,scy-sr*0.2,sr*0.03,scx+sr*0.1,scy+sr*0.1,sr*1.0)
+        sg.addColorStop(0, c1)
+        sg.addColorStop(0.55, c2)
+        sg.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.fillStyle = sg
+        ctx.globalAlpha = si === 0 ? 0.92 : 0.65
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+  }
+  ctx.restore()
+}
+
+// ── Draw effect overlay (independent of background) ───────────────────────────
+function drawCardEffect(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, zoneH: number,
+  effect: CardEffect,
+  hue: number,
+  rng: () => number
+) {
+  switch(effect) {
+    case 'foil': {
+      // Gold/silver foil shimmer in diagonal
+      const foilGrad = ctx.createLinearGradient(0, 0, W, zoneH)
+      foilGrad.addColorStop(0.00, 'rgba(255,255,255,0.00)')
+      foilGrad.addColorStop(0.30, 'rgba(255,255,255,0.06)')
+      foilGrad.addColorStop(0.42, 'rgba(255,240,180,0.28)')
+      foilGrad.addColorStop(0.50, 'rgba(255,255,255,0.38)')
+      foilGrad.addColorStop(0.58, 'rgba(200,220,255,0.22)')
+      foilGrad.addColorStop(0.70, 'rgba(255,255,255,0.06)')
+      foilGrad.addColorStop(1.00, 'rgba(255,255,255,0.00)')
+      ctx.save()
+      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+      ctx.fillStyle = foilGrad; ctx.fillRect(0,0,W,zoneH)
+      ctx.restore()
+      break
+    }
+    case 'scanlines': {
+      // Horizontal scanlines CRT effect
+      ctx.save()
+      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+      for (let y=0; y<zoneH; y+=3) {
+        ctx.fillStyle = 'rgba(0,0,0,0.12)'
+        ctx.fillRect(0,y,W,1)
+      }
+      ctx.restore()
+      break
+    }
+    case 'vignette': {
+      const vgGrad = ctx.createRadialGradient(W/2, zoneH/2, zoneH*0.2, W/2, zoneH/2, zoneH*0.85)
+      vgGrad.addColorStop(0, 'rgba(0,0,0,0)')
+      vgGrad.addColorStop(1, 'rgba(0,0,0,0.45)')
+      ctx.save()
+      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+      ctx.fillStyle = vgGrad; ctx.fillRect(0,0,W,zoneH)
+      ctx.restore()
+      break
+    }
+    case 'chromatic': {
+      // Chromatic aberration fringe at edges
+      ctx.save()
+      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+      const cg1 = ctx.createLinearGradient(0,0,W*0.15,0)
+      cg1.addColorStop(0,'rgba(255,0,0,0.08)'); cg1.addColorStop(1,'rgba(255,0,0,0)')
+      ctx.fillStyle = cg1; ctx.fillRect(0,0,W,zoneH)
+      const cg2 = ctx.createLinearGradient(W,0,W*0.85,0)
+      cg2.addColorStop(0,'rgba(0,80,255,0.08)'); cg2.addColorStop(1,'rgba(0,80,255,0)')
+      ctx.fillStyle = cg2; ctx.fillRect(0,0,W,zoneH)
+      ctx.restore()
+      break
+    }
+    case 'grain_heavy': {
+      addGrain(ctx, rng, W, zoneH, 0.09, 12000)
+      break
+    }
+    case 'none':
+    default:
+      break
+  }
+}
+
+// ── Draw info section (bottom of card) ───────────────────────────────────────
+function drawCardInfo(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, zoneH: number,
+  user: {full_name:string; email:string; nusp?:string; id:string; avatar_url?:string},
+  activeAchievements: Achievement[],
+  area: string, language: string,
+  hue: number, sat: number,
+  entityBg: {color:string; name:string} | null,
+  style: CardStyle,
+) {
+  const isDark = style === 'checkerboard' || style === 'holographic' || style === 'diagonal_bands'
+  const onDark = hslToRgb(hue, sat, 15)
+  const inkColor  = entityBg
+    ? `hsl(${hue},55%,12%)`
+    : isDark ? `rgba(${onDark[0]},${onDark[1]},${onDark[2]},0.9)` : `hsl(${hue},55%,12%)`
+  const inkFaint  = entityBg
+    ? `hsl(${hue},30%,45%)`
+    : isDark ? `rgba(255,255,255,0.65)` : `hsl(${hue},30%,45%)`
+  const accentPill= `hsl(${hue},${sat}%,${Math.max(40-sat*0.1,20)}%)`
+
+  const textX = 44
+  const nameY = H * 0.606
+
+  // Name
+  const parts     = user.full_name.trim().split(/\s+/)
+  const firstName = parts[0] ?? ''
+  const lastName  = parts.slice(1).join(' ')
+
+  ctx.textAlign    = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font         = '800 52px sans-serif'
+  ctx.fillStyle    = inkColor
+  ctx.fillText(firstName, textX, nameY)
+  const fnW = ctx.measureText(firstName).width
+
+  if (lastName) {
+    ctx.font      = '300 52px sans-serif'
+    ctx.fillStyle = inkFaint
+    const spW = ctx.measureText(' ').width
+    if (fnW + spW + ctx.measureText(lastName).width < W - textX * 2)
+      ctx.fillText(lastName, textX + fnW + spW, nameY)
+    else
+      ctx.fillText(lastName, textX, nameY + 58)
+  }
+
+  // Title
+  const titleRng  = seededRng(user.id + '-title')
+  const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
+  const titleY    = nameY + 42
+  ctx.font        = '400 17px sans-serif'
+  ctx.fillStyle   = inkFaint
+  ctx.fillText(titleText, textX, titleY)
+
+  // USP + email
+  const infoY   = titleY + 30
+  const nuspStr = user.nusp ? `#${user.nusp}` : ''
+  ctx.font      = '400 12px monospace'
+  ctx.fillStyle = inkFaint
+  ctx.globalAlpha = 0.6
+  ctx.fillText([nuspStr, user.email].filter(Boolean).join('  ·  '), textX, infoY)
+  ctx.globalAlpha = 1
+
+  // Style badge — small watermark top-right showing the card style
+  ctx.font = '500 9px monospace'
+  ctx.fillStyle = inkFaint
+  ctx.globalAlpha = 0.28
+  ctx.textAlign = 'right'
+  const styleLabel: Record<CardStyle,string> = {
+    geometric_rays:'GEO', layer_stack:'LAY', wave_lines:'WAV',
+    checkerboard:'CHK', holographic:'HOL', boarding_pass:'TKT',
+    diagonal_bands:'DIA', concentric_shapes:'CON', ink_splatter:'INK',
+  }
+  ctx.fillText(styleLabel[style] ?? 'USP', W-textX, 32)
+  ctx.textAlign = 'left'
+  ctx.globalAlpha = 1
+
+  // Bottom: area|language pill
+  const bottomY = H - 64
+  const aLabel  = area || '', lLabel = language || ''
+  if (aLabel || lLabel) {
+    const pillH = 38
+    ctx.font = '600 13px sans-serif'
+    const aW    = aLabel ? ctx.measureText(aLabel).width + 22 : 0
+    const lW    = lLabel ? ctx.measureText(lLabel).width + 22 : 0
+    const sepW  = (aLabel && lLabel) ? 12 : 0
+    const totalW = aW + sepW + lW
+
+    ctx.strokeStyle = accentPill; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5
+    roundRect(ctx, textX, bottomY, totalW, pillH, pillH/2); ctx.stroke()
+    ctx.globalAlpha = 1
+
+    if (aLabel && lLabel) {
+      ctx.save()
+      ctx.beginPath()
+      roundRect(ctx, textX+aW, bottomY+4, sepW, pillH-8, 2); ctx.clip()
+      ctx.fillStyle = accentPill; ctx.globalAlpha = 0.10
+      ctx.fillRect(textX+aW, bottomY+4, sepW, pillH-8)
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = accentPill; ctx.lineWidth = 1
+      for (let sx = -pillH; sx < sepW + pillH; sx += 4) {
+        ctx.beginPath()
+        ctx.moveTo(textX+aW+sx, bottomY+4)
+        ctx.lineTo(textX+aW+sx+pillH, bottomY+4+pillH)
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1; ctx.restore()
+    }
+
+    ctx.fillStyle = accentPill; ctx.textAlign = 'center'
+    if (aLabel) ctx.fillText(aLabel, textX + aW/2, bottomY + pillH/2 + 5)
+    if (lLabel) ctx.fillText(lLabel, textX + aW + sepW + lW/2, bottomY + pillH/2 + 5)
+    ctx.textAlign = 'left'
+  }
+
+  // Achievements — right-aligned
+  const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 5)
+  if (displayA.length > 0) {
+    let bx = W - textX
+    ctx.textAlign = 'right'; ctx.font = '26px serif'
+    for (const ach of [...displayA].reverse()) {
+      ctx.globalAlpha = 1; ctx.fillText(ach.emoji, bx, bottomY + 30); bx -= 30
+    }
+    ctx.textAlign = 'left'; ctx.globalAlpha = 1
+  }
+
+  // ID watermark
+  ctx.font = '400 9px monospace'; ctx.fillStyle = inkColor; ctx.globalAlpha = 0.18
+  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), textX, H-22)
+  ctx.globalAlpha = 1
+}
+
+// ── Main card draw function ─────────────────────────────────────────────────
 function drawPortraitCard(
   canvas: HTMLCanvasElement,
   user: {full_name:string; email:string; nusp?:string; id:string; avatar_url?:string},
@@ -148,165 +643,53 @@ function drawPortraitCard(
   area: string, language: string,
   entityBg: {color:string; name:string} | null,
 ) {
-  const W=680, H=920
-  canvas.width=W*2; canvas.height=H*2
-  canvas.style.width=W+"px"; canvas.style.height=H+"px"
-  const ctx = canvas.getContext("2d")!
-  ctx.scale(2,2)
+  const W = 680, H = 920
+  canvas.width  = W * 2; canvas.height = H * 2
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(2, 2)
 
-  const rngBlob  = seededRng(user.id+"-blob")
-  const rngColor = seededRng(user.id+"-hue")
-  const hue      = Math.floor(rngColor()*360)
-  const sat      = 72 + Math.floor(rngColor()*18)
-  const blobLit  = 52 + Math.floor(rngColor()*18)
+  const rngColor  = seededRng(user.id + '-hue')
+  const rngBg     = seededRng(user.id + '-bg-rng')
+  const hue       = Math.floor(rngColor() * 360)
+  const sat       = 70 + Math.floor(rngColor() * 20)
+  const lit       = 48 + Math.floor(rngColor() * 20)
 
-  // Blob always uses the user's own seeded colors — entityBg only changes the card background
-  const bgColor   = entityBg ? "#f8f7f2" : `hsl(${hue},${Math.floor(sat*0.10)}%,97%)`
-  const inkColor  = `hsl(${hue},60%,14%)`
-  const inkFaint  = `hsl(${hue},35%,52%)`
-  const blobMain  = `hsl(${hue},${sat}%,${blobLit}%)`
-  const blobShift = `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
-  const accentPill= `hsl(${hue},${sat}%,${Math.max(blobLit-26,18)}%)`
+  const style     = pickCardStyle(user.id)
+  const effect    = pickCardEffect(user.id)
+  const zoneH     = H * 0.57
 
-  ctx.clearRect(0,0,W,H)
+  ctx.clearRect(0, 0, W, H)
 
-  // ── Card bg + blob — all inside card rounded-rect clip ──
-  ctx.save()          // save [1] — card clip
-  roundRect(ctx,0,0,W,H,32)
-  ctx.clip()
+  // ── [1] Rounded card clip
+  ctx.save()
+  roundRect(ctx, 0, 0, W, H, 32); ctx.clip()
 
-  // Background fill
-  if (entityBg) {
-    const g = ctx.createLinearGradient(0,0,W,H)
-    g.addColorStop(0, entityBg.color+"28")
-    g.addColorStop(0.5,"#f9f9f5")
-    g.addColorStop(1, entityBg.color+"14")
-    ctx.fillStyle = g
-  } else { ctx.fillStyle = bgColor }
-  ctx.fillRect(0,0,W,H)
+  // ── [2] Draw background pattern
+  drawCardBackground(ctx, W, H, zoneH, style, hue, sat, lit, rngBg, entityBg)
 
-  // Blob in upper zone
-  const blobZoneH = H*0.57
-  const blobCx = W*(0.42+rngBlob()*0.28)
-  const blobCy = H*(-0.04+rngBlob()*0.12)
-  const blobR  = H*(0.55+rngBlob()*0.18)
+  // ── [3] Grain over background zone
+  addGrain(ctx, seededRng(user.id + '-grain'), W, zoneH, 0.04, 5000)
 
-  ctx.save()          // save [2] — blob zone clip
-  ctx.beginPath(); ctx.rect(0,0,W,blobZoneH); ctx.clip()
+  // ── [4] Draw effect overlay (foil / scanlines / etc)
+  drawCardEffect(ctx, W, H, zoneH, effect, hue, seededRng(user.id + '-efx'))
 
-  const blobGrad = ctx.createRadialGradient(
-    blobCx-blobR*0.25,blobCy-blobR*0.20,blobR*0.04,
-    blobCx+blobR*0.10,blobCy+blobR*0.10,blobR*1.05
-  )
-  blobGrad.addColorStop(0, blobMain)
-  blobGrad.addColorStop(0.5, blobShift)
-  // Safe transparent stop — works for both hsl and hex
-  blobGrad.addColorStop(1, "rgba(0,0,0,0)")
-  drawBlob(ctx,rngBlob,blobCx,blobCy,blobR)
-  ctx.fillStyle = blobGrad; ctx.fill()
+  // ── [5] Grain over whole card (subtle)
+  addGrain(ctx, seededRng(user.id + '-bg-g'), W, H, 0.010, 1800)
 
-  // Grain inside blob
-  ctx.save()          // save [3] — grain clip inside blob
-  drawBlob(ctx,seededRng(user.id+"-blob"),blobCx,blobCy,blobR)
-  ctx.clip()
-  addNoise(ctx,seededRng(user.id+"-grain"),W,blobZoneH,0.055,7000)
-  ctx.restore()       // restore [3]
-  ctx.restore()       // restore [2] — back to card clip only
+  ctx.restore() // restore [1]
 
-  // Background grain over full card
-  addNoise(ctx,seededRng(user.id+"-bg"),W,H,0.012,2000)
+  // ── [6] Draw text info section (outside card clip for text sharpness)
+  ctx.save()
+  roundRect(ctx, 0, 0, W, H, 32); ctx.clip()
+  drawCardInfo(ctx, W, H, zoneH, user, activeAchievements, area, language, hue, sat, entityBg, style)
 
-  ctx.restore()       // restore [1] — back to no clip
-
-  // Entity background: no label overlay on card — the background gradient speaks for itself
-
-  // Name
-  const textX=44, nameY=H*0.604
-  const parts=user.full_name.trim().split(/\s+/)
-  const firstName=parts[0]??"", lastName=parts.slice(1).join(" ")
-  ctx.textAlign="left"; ctx.textBaseline="alphabetic"
-  ctx.font="800 52px sans-serif"; ctx.fillStyle=inkColor
-  ctx.fillText(firstName,textX,nameY)
-  const fnW=ctx.measureText(firstName).width
-  if (lastName) {
-    ctx.font="300 52px sans-serif"; ctx.fillStyle=inkFaint
-    const spW=ctx.measureText(" ").width
-    if (fnW+spW+ctx.measureText(lastName).width < W-textX*2)
-      ctx.fillText(lastName,textX+fnW+spW,nameY)
-    else ctx.fillText(lastName,textX,nameY+58)
-  }
-
-  // Title
-  const titleRng=seededRng(user.id+"-title")
-  const titleText=TITLES[Math.floor(titleRng()*TITLES.length)]
-  const titleY=nameY+42
-  ctx.font="400 17px sans-serif"; ctx.fillStyle=inkFaint
-  ctx.fillText(titleText,textX,titleY)
-
-  // Info
-  const infoY=titleY+30
-  const nuspStr=user.nusp ? `#${user.nusp}` : ""
-  ctx.font="400 12px monospace"; ctx.fillStyle=inkFaint; ctx.globalAlpha=0.6
-  ctx.fillText([nuspStr,user.email].filter(Boolean).join("  ·  "),textX,infoY)
-  ctx.globalAlpha=1
-
-  // Bottom: pill + achievements
-  const bottomY=H-64
-  const aLabel=area||"", lLabel=language||""
-  if (aLabel||lLabel) {
-    const pillH=38
-    ctx.font="600 13px sans-serif"
-    const aW=aLabel ? ctx.measureText(aLabel).width+22 : 0
-    const lW=lLabel ? ctx.measureText(lLabel).width+22 : 0
-    const sepW=(aLabel&&lLabel) ? 12 : 0
-    const totalW=aW+sepW+lW
-    ctx.strokeStyle=accentPill; ctx.globalAlpha=0.5; ctx.lineWidth=1.5
-    roundRect(ctx,textX,bottomY,totalW,pillH,pillH/2); ctx.stroke()
-    ctx.globalAlpha=1
-    if (aLabel&&lLabel) {
-      ctx.save()
-      ctx.beginPath()
-      roundRect(ctx,textX+aW,bottomY+4,sepW,pillH-8,2)
-      ctx.clip()
-      ctx.fillStyle=accentPill; ctx.globalAlpha=0.10
-      ctx.fillRect(textX+aW,bottomY+4,sepW,pillH-8)
-      ctx.globalAlpha=0.35; ctx.strokeStyle=accentPill; ctx.lineWidth=1
-      for (let sx=-pillH;sx<sepW+pillH;sx+=4) {
-        ctx.beginPath()
-        ctx.moveTo(textX+aW+sx,bottomY+4)
-        ctx.lineTo(textX+aW+sx+pillH,bottomY+4+pillH)
-        ctx.stroke()
-      }
-      ctx.globalAlpha=1; ctx.restore()
-    }
-    ctx.fillStyle=accentPill; ctx.textAlign="center"; ctx.globalAlpha=1
-    if (aLabel) ctx.fillText(aLabel,textX+aW/2,bottomY+pillH/2+5)
-    if (lLabel) ctx.fillText(lLabel,textX+aW+sepW+lW/2,bottomY+pillH/2+5)
-    ctx.textAlign="left"
-  }
-
-  // Achievements right side
-  const displayA=activeAchievements.filter(a=>a.unlocked).slice(0,5)
-  if (displayA.length>0) {
-    let bx=W-textX
-    ctx.textAlign="right"; ctx.font="26px serif"
-    for (const ach of [...displayA].reverse()) {
-      ctx.globalAlpha=1; ctx.fillText(ach.emoji,bx,bottomY+30)
-      bx-=30
-    }
-    ctx.textAlign="left"; ctx.globalAlpha=1
-  }
-
-  // Watermark
-  ctx.font="400 9px monospace"; ctx.fillStyle=inkColor; ctx.globalAlpha=0.18
-  ctx.fillText(user.id.replace(/-/g,"").slice(0,8).toUpperCase(),textX,H-22)
-  ctx.globalAlpha=1
-
-  // Border
-  ctx.strokeStyle=inkColor; ctx.globalAlpha=0.08; ctx.lineWidth=1.5
-  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,32); ctx.stroke()
-  ctx.globalAlpha=1
+  // ── [7] Border
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.globalAlpha = 1; ctx.lineWidth = 1.5
+  roundRect(ctx, 0.75, 0.75, W-1.5, H-1.5, 32); ctx.stroke()
+  ctx.restore()
 }
+
 
 // ── Achievement Picker ────────────────────────────────────────────────────────
 function AchievementPicker({achievements,selected,onSave,onClose}: {
