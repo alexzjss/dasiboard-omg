@@ -329,7 +329,7 @@ export default function StudyMode() {
     if (btn) {
       const r = btn.getBoundingClientRect()
       const estimatedH = id === 'pomodoro' ? 560 : 260
-      const idealTop = r.top + r.height / 2 - estimatedH / 2
+      const idealTop = r.top + r.height / 2 - estimatedH / 2 - (id === 'focus' ? 80 : 0)
       const top = Math.max(8, Math.min(idealTop, window.innerHeight - estimatedH - 8))
       setPanelPos({ top, left: r.right + 8 })
     }
