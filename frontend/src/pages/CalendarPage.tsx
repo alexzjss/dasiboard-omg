@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import {
-  format, startOfMonth, endOfMonth, eachDayOfInterval,
+  format, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval,
   startOfWeek, endOfWeek, isSameMonth, isSameDay, isToday,
   addMonths, subMonths, parseISO, addDays, addWeeks, subWeeks,
 } from 'date-fns'
