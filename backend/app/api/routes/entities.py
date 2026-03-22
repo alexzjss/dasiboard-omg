@@ -155,3 +155,19 @@ def create_entity_event(
          str(entity["id"]), body.members_only),
     )
     return db.fetchone()
+
+
+@router.get("/{slug}/members")
+def list_entity_members(slug: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    db.execute("SELECT id FROM entities WHERE slug = %s", (slug,))
+    entity = db.fetchone()
+    if not entity:
+        raise HTTPException(404, "Entidade não encontrada")
+    db.execute("""
+        SELECT u.id, u.full_name, u.avatar_url
+        FROM entity_members em
+        JOIN users u ON u.id = em.user_id
+        WHERE em.entity_id = %s
+        ORDER BY u.full_name
+    """, (str(entity["id"]),))
+    return db.fetchall()
