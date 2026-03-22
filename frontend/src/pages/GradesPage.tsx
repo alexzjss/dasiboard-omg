@@ -14,10 +14,23 @@ import clsx from 'clsx'
 // ─────────────────────── Types ───────────────────────────────────────────────
 interface Grade   { id: string; label: string; value: number; weight: number; max_value: number }
 interface Subject { id: string; code: string; name: string; professor?: string; semester: string; color: string; grades: Grade[]; total_classes: number; attended: number }
+// Schedule stored locally (not sent to API)
+interface ClassSlot { day: number; startTime: string; endTime: string; room?: string } // day: 0=Dom..6=Sáb
+interface SubjectSchedule { subjectId: string; slots: ClassSlot[] }
 type FluxoStatus = 'locked'|'available'|'in-progress'|'passed'|'failed'|'weak-passed'
 interface FluxoState { code: string; status: FluxoStatus; grade?: number; absences?: number; totalClasses?: number }
 type PrereqRule = { code: string; weak?: boolean }
 interface SubjectDef { code: string; name: string; abbr: string; semester: number; credits: number; optional?: boolean; prereqs: PrereqRule[]; color?: string }
+
+const SCHEDULE_KEY = 'dasiboard-subject-schedules'
+function loadSchedules(): Record<string, ClassSlot[]> {
+  try { return JSON.parse(localStorage.getItem(SCHEDULE_KEY) ?? '{}') } catch { return {} }
+}
+function saveSchedules(s: Record<string, ClassSlot[]>) {
+  localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s))
+}
+
+const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
 const PASS_GRADE = 5, WEAK_PASS_GRADE = 3
 const SEMESTERS = [1,2,3,4,5,6,7,8]
@@ -677,22 +690,218 @@ function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete,
   )
 }
 
+// ─────────────────────── SubjectPickerModal ──────────────────────────────────
+function SubjectPickerModal({ existingCodes, onAdd, onClose }: {
+  existingCodes: string[]
+  onAdd: (def: SubjectDef, color: string, semester: string, professor: string, totalClasses: number) => void
+  onClose: () => void
+}) {
+  const [search, setSearch]   = useState('')
+  const [selected, setSelected] = useState<SubjectDef | null>(null)
+  const [semFilter, setSemFilter] = useState<number | 'all'>('all')
+  const [color, setColor]     = useState('#8B5CF6')
+  const [semester, setSemester] = useState('2025.1')
+  const [professor, setProfessor] = useState('')
+  const [totalClasses, setTotalClasses] = useState('')
+
+  const available = SUBJECTS.filter(s =>
+    !existingCodes.includes(s.code) &&
+    (semFilter === 'all' || s.semester === semFilter) &&
+    (search === '' ||
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.code.toLowerCase().includes(search.toLowerCase()) ||
+      s.abbr.toLowerCase().includes(search.toLowerCase()))
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+         onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in flex flex-col"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '92dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }}/>
+        </div>
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Adicionar disciplina</h3>
+          <button onClick={onClose} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
+        </div>
+
+        {/* Search + semester filter */}
+        <div className="px-4 py-3 space-y-2" style={{ borderBottom: '1px solid var(--border)' }}>
+          <input className="input text-sm" placeholder="Buscar por nome, código ou abreviação..."
+                 value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {(['all', 1,2,3,4,5,6,7,8] as const).map(s => (
+              <button key={s} onClick={() => setSemFilter(s)}
+                      className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
+                      style={{ background: semFilter === s ? 'var(--accent-soft)' : 'var(--bg-elevated)', color: semFilter === s ? 'var(--accent-3)' : 'var(--text-muted)', border: `1px solid ${semFilter === s ? 'var(--accent-1)' : 'var(--border)'}` }}>
+                {s === 'all' ? 'Todos' : `${s}º sem`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Subject list */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+          {available.length === 0 && (
+            <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>
+              {existingCodes.length === SUBJECTS.length ? 'Você já adicionou todas as disciplinas!' : 'Nenhuma disciplina encontrada.'}
+            </p>
+          )}
+          {available.map(def => (
+            <button key={def.code} onClick={() => setSelected(def)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all hover:scale-[1.01]"
+                    style={{
+                      background: selected?.code === def.code ? (def.color ?? '#6366f1') + '18' : 'var(--bg-elevated)',
+                      border: `1px solid ${selected?.code === def.code ? (def.color ?? '#6366f1') + '55' : 'var(--border)'}`,
+                    }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-mono font-bold"
+                   style={{ background: (def.color ?? '#6366f1') + '22', color: def.color ?? '#6366f1', border: `1px solid ${(def.color ?? '#6366f1')}33` }}>
+                {def.abbr.slice(0, 4)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold" style={{ color: def.color ?? '#6366f1' }}>{def.code}</span>
+                  {def.optional && <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>opcional</span>}
+                </div>
+                <p className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{def.name}</p>
+              </div>
+              <span className="text-[10px] shrink-0" style={{ color: 'var(--text-muted)' }}>{def.semester}º · {def.credits}cr</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Config for selected */}
+        {selected && (
+          <div className="px-4 pb-4 pt-3 space-y-3 animate-in" style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-elevated)' }}>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono font-bold"
+                   style={{ background: color + '22', color, border: `1px solid ${color}44` }}>{selected.abbr.slice(0,4)}</div>
+              <div>
+                <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{selected.name}</p>
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{selected.code} · {selected.semester}º semestre</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="label text-[10px]">Semestre letivo</label>
+                <input className="input text-sm" placeholder="2025.1" value={semester} onChange={e => setSemester(e.target.value)}/>
+              </div>
+              <div>
+                <label className="label text-[10px]">Total de aulas</label>
+                <input type="number" className="input text-sm" placeholder="60" value={totalClasses} onChange={e => setTotalClasses(e.target.value)}/>
+              </div>
+              <div className="col-span-2">
+                <label className="label text-[10px]">Professor(a)</label>
+                <input className="input text-sm" placeholder="Nome do professor" value={professor} onChange={e => setProfessor(e.target.value)}/>
+              </div>
+              <div className="col-span-2">
+                <label className="label text-[10px]">Cor</label>
+                <div className="flex gap-2 mt-1 flex-wrap">
+                  {COLORS.map(col => (
+                    <button key={col} onClick={() => setColor(col)} className="w-6 h-6 rounded-full transition-transform"
+                            style={{ backgroundColor: col, transform: color === col ? 'scale(1.35)' : 'scale(1)', boxShadow: color === col ? `0 0 0 2px var(--bg-card), 0 0 0 3px ${col}` : 'none' }}/>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button className="btn-primary flex-1 justify-center" onClick={() => onAdd(selected, color, semester, professor, parseInt(totalClasses) || 0)}>
+                Adicionar disciplina →
+              </button>
+              <button className="btn-ghost" onClick={() => setSelected(null)}>Voltar</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────── ScheduleEditorModal ─────────────────────────────────
+function ScheduleEditorModal({ subject, slots, onSave, onSkip }: {
+  subject: Subject; slots: ClassSlot[]
+  onSave: (slots: ClassSlot[]) => void
+  onSkip: () => void
+}) {
+  const [editSlots, setEditSlots] = useState<ClassSlot[]>(slots.length > 0 ? slots : [{ day: 1, startTime: '08:00', endTime: '10:00', room: '' }])
+
+  const addSlot = () => setEditSlots(p => [...p, { day: 1, startTime: '08:00', endTime: '10:00', room: '' }])
+  const removeSlot = (i: number) => setEditSlots(p => p.filter((_, idx) => idx !== i))
+  const updateSlot = (i: number, patch: Partial<ClassSlot>) => setEditSlots(p => p.map((s, idx) => idx === i ? { ...s, ...patch } : s))
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '90dvh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }}/>
+        </div>
+        <div className="px-5 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Horários de aula</h3>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{subject.name} — aparecerão no cronograma</p>
+        </div>
+        <div className="px-4 py-3 space-y-2">
+          {editSlots.map((slot, i) => (
+            <div key={i} className="flex flex-col gap-2 p-3 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center justify-between gap-2">
+                <select className="input text-sm flex-1"
+                        value={slot.day} onChange={e => updateSlot(i, { day: parseInt(e.target.value) })}>
+                  {DAY_NAMES.map((d, di) => <option key={di} value={di}>{d}</option>)}
+                </select>
+                <button onClick={() => removeSlot(i)} className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0" style={{ color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}>
+                  <X size={12}/>
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="label text-[10px]">Início</label>
+                  <input type="time" className="input text-sm" value={slot.startTime} onChange={e => updateSlot(i, { startTime: e.target.value })}/>
+                </div>
+                <div>
+                  <label className="label text-[10px]">Fim</label>
+                  <input type="time" className="input text-sm" value={slot.endTime} onChange={e => updateSlot(i, { endTime: e.target.value })}/>
+                </div>
+                <div className="col-span-2">
+                  <label className="label text-[10px]">Sala (opcional)</label>
+                  <input className="input text-sm" placeholder="Ex: Bloco A — Sala 216" value={slot.room ?? ''} onChange={e => updateSlot(i, { room: e.target.value })}/>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button onClick={addSlot} className="w-full py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-80"
+                  style={{ border: '1px dashed var(--accent-1)', color: 'var(--accent-3)', background: 'var(--accent-soft)' }}>
+            + Adicionar horário
+          </button>
+        </div>
+        <div className="px-4 pb-5 flex gap-2">
+          <button className="btn-primary flex-1 justify-center" onClick={() => onSave(editSlots)}>Salvar horários</button>
+          <button className="btn-ghost" onClick={onSkip}>Pular</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─────────────────────── Main Page ───────────────────────────────────────────
 const COLORS = ['#8B5CF6','#4d67f5','#10B981','#F59E0B','#EF4444','#06B6D4','#EC4899']
 
 export default function GradesPage() {
   const [subjects,      setSubjects]      = useState<Subject[]>([])
   const [loading,       setLoading]       = useState(true)
-  const [creating,      setCreating]      = useState(false)
+  const [showPicker,    setShowPicker]    = useState(false)   // NEW: subject picker
+  const [scheduleTarget,setScheduleTarget]= useState<Subject | null>(null) // NEW: schedule editor
   const [hoveredCode,   setHoveredCode]   = useState<string | null>(null)
   const [subjectPopup,  setSubjectPopup]  = useState<Subject | null>(null)
   const [popupDef,      setPopupDef]      = useState<SubjectDef | null>(null)
   const [reviewTarget,  setReviewTarget]  = useState<{subjectId:string; subjectName:string; cards:any[]} | null>(null)
+  const [schedules,     setSchedules]     = useState<Record<string, ClassSlot[]>>(loadSchedules)
   const { getAllFlashcards } = useNotes()
   const [fluxoStates,   setFluxoStates]   = useState<Record<string, FluxoState>>(() => {
     try { return JSON.parse(localStorage.getItem('dasiboard-fluxogram') ?? '{}') } catch { return {} }
   })
-  const [form, setForm] = useState({ code: '', name: '', professor: '', semester: '2025.1', color: '#8B5CF6', total_classes: '' })
 
   useEffect(() => {
     api.get('/grades/subjects').then(({ data }) => setSubjects(data)).catch(() => toast.error('Erro ao carregar disciplinas')).finally(() => setLoading(false))
@@ -706,12 +915,23 @@ export default function GradesPage() {
     })
   }, [])
 
-  const createSubject = async () => {
-    if (!form.code || !form.name) return
+  const addSubjectFromDef = async (def: SubjectDef, color: string, semester: string, professor: string, totalClasses: number) => {
     try {
-      const { data } = await api.post('/grades/subjects', { ...form, total_classes: parseInt(form.total_classes) || 0, attended: parseInt(form.total_classes) || 0 })
-      setSubjects(p => [...p, data]); setForm({ code: '', name: '', professor: '', semester: '2025.1', color: '#8B5CF6', total_classes: '' }); setCreating(false); toast.success('Disciplina criada!')
-    } catch { toast.error('Erro ao criar disciplina') }
+      const { data } = await api.post('/grades/subjects', {
+        code: def.code, name: def.name, professor, semester, color,
+        total_classes: totalClasses, attended: 0,
+      })
+      setSubjects(p => [...p, data])
+      toast.success(`${def.abbr} adicionada!`)
+      return data as Subject
+    } catch { toast.error('Erro ao adicionar disciplina'); return null }
+  }
+  const saveSubjectSchedule = (subjectId: string, slots: ClassSlot[]) => {
+    setSchedules(prev => {
+      const next = { ...prev, [subjectId]: slots }
+      saveSchedules(next)
+      return next
+    })
   }
   const deleteSubject      = async (id: string) => { await api.delete(`/grades/subjects/${id}`); setSubjects(p => p.filter(s => s.id !== id)); toast.success('Disciplina removida') }
   const addGrade           = async (subjectId: string, grade: Partial<Grade>) => {
@@ -806,10 +1026,10 @@ export default function GradesPage() {
                 </p>
               </button>
             ))}
-            <button onClick={() => setCreating(true)}
+            <button onClick={() => setShowPicker(true)}
                     className="w-full px-2 py-1.5 rounded-lg text-[9px] font-semibold transition-all hover:scale-[1.03]"
                     style={{ border: '1px dashed var(--accent-1)', color: 'var(--accent-3)', background: 'var(--accent-soft)' }}>
-              + Nova disciplina
+              + Adicionar disciplina
             </button>
           </div>
 
@@ -851,31 +1071,29 @@ export default function GradesPage() {
         </div>
       </div>
 
-      {/* Create discipline modal */}
-      {creating && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-             onClick={e => { if (e.target === e.currentTarget) setCreating(false) }}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl animate-in space-y-3 p-5"
-               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '90dvh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Nova disciplina</h3>
-              <button onClick={() => setCreating(false)} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><label className="label">Código</label><input className="input text-sm" placeholder="ACH2041" value={form.code} onChange={e => setForm(f => ({...f, code: e.target.value}))}/></div>
-              <div><label className="label">Semestre</label><input className="input text-sm" placeholder="2025.1" value={form.semester} onChange={e => setForm(f => ({...f, semester: e.target.value}))}/></div>
-              <div className="col-span-2"><label className="label">Nome</label><input className="input text-sm" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))}/></div>
-              <div className="col-span-2"><label className="label">Professor(a)</label><input className="input text-sm" value={form.professor} onChange={e => setForm(f => ({...f, professor: e.target.value}))}/></div>
-              <div><label className="label">Total de aulas</label><input type="number" className="input text-sm" value={form.total_classes} onChange={e => setForm(f => ({...f, total_classes: e.target.value}))}/></div>
-              <div><label className="label">Cor</label><div className="flex gap-2 mt-1 flex-wrap">{COLORS.map(col => (<button key={col} onClick={() => setForm(f => ({...f, color: col}))} className="w-6 h-6 rounded-full" style={{ backgroundColor: col, transform: form.color === col ? 'scale(1.3)' : 'scale(1)', boxShadow: form.color === col ? `0 0 0 2px var(--bg-card), 0 0 0 3px ${col}` : 'none' }}/>))}</div></div>
-            </div>
-            <div className="flex gap-2">
-              <button className="btn-primary flex-1 justify-center" onClick={createSubject}>Criar disciplina</button>
-              <button className="btn-ghost" onClick={() => setCreating(false)}>Cancelar</button>
-            </div>
-          </div>
-        </div>
+      {/* Subject Picker Modal */}
+      {showPicker && (
+        <SubjectPickerModal
+          existingCodes={subjects.map(s => s.code)}
+          onAdd={async (def, color, semester, professor, totalClasses) => {
+            const created = await addSubjectFromDef(def, color, semester, professor, totalClasses)
+            if (created) {
+              setShowPicker(false)
+              setScheduleTarget(created)
+            }
+          }}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {/* Schedule Editor Modal */}
+      {scheduleTarget && (
+        <ScheduleEditorModal
+          subject={scheduleTarget}
+          slots={schedules[scheduleTarget.id] ?? []}
+          onSave={(slots) => { saveSubjectSchedule(scheduleTarget.id, slots); setScheduleTarget(null) }}
+          onSkip={() => setScheduleTarget(null)}
+        />
       )}
 
       {/* Subject detail popup (for linked subjects — from sidebar or fluxo click) */}
@@ -899,7 +1117,10 @@ export default function GradesPage() {
           onUpdateAttendance={updateAttendance}
           onStartReview={(sid, sname) => {
             const cards = getAllFlashcards(sid)
-            if (cards.length === 0) { toast.error('Crie notas com Q:/A: primeiro!'); return }
+            if (cards.length === 0) {
+              toast.error('Abra "Anotações", crie uma nota e use Q:/A: para gerar flashcards!')
+              return
+            }
             setReviewTarget({ subjectId: sid, subjectName: sname, cards })
           }}
           saveFluxoState={saveFluxoState}

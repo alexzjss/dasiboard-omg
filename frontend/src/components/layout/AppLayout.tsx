@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, CalendarRange, User, GraduationCap, Sun, Moon, Users, X,
+  CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
   LogOut, Palette, Search, BookMarked, ChevronDown, Monitor,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -34,7 +34,6 @@ const nav = [
   { to: '/',          label: 'Início',      icon: LayoutDashboard, end: true  },
   { to: '/kanban',    label: 'Kanban',      icon: KanbanSquare,    end: false },
   { to: '/grades',    label: 'Disciplinas', icon: BookOpen,        end: false },
-  { to: '/schedule',  label: 'Cronograma',  icon: CalendarRange,   end: false },
   { to: '/calendar',  label: 'Calendário',  icon: CalendarDays,    end: false },
   { to: '/entities',  label: 'Entidades',   icon: Users,           end: false },
   { to: '/docentes',  label: 'Docentes',    icon: BookMarked,      end: false },

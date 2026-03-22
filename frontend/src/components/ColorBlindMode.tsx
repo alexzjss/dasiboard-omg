@@ -1,56 +1,64 @@
-// ── Daltonismo / Color Blind Mode ─────────────────────────────────────────────
+// ── Daltonismo / Color Blind Mode — SVG DOM injection (browser-compatible) ─────
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Eye, Check } from 'lucide-react'
 
 export type ColorBlindType = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia'
-
 const STORAGE_KEY = 'dasiboard-colorblind'
 
 export const CB_LABELS: Record<ColorBlindType, string> = {
-  none:         'Normal',
-  protanopia:   'Protanopia',
-  deuteranopia: 'Deuteranopia',
-  tritanopia:   'Tritanopia',
+  none: 'Normal', protanopia: 'Protanopia',
+  deuteranopia: 'Deuteranopia', tritanopia: 'Tritanopia',
 }
 const CB_DESC: Record<ColorBlindType, string> = {
-  none:         'Visão normal',
-  protanopia:   'Dificuldade com vermelho',
-  deuteranopia: 'Dificuldade com verde',
-  tritanopia:   'Dificuldade com azul',
+  none: 'Visão normal', protanopia: 'Dificuldade com vermelho',
+  deuteranopia: 'Dificuldade com verde', tritanopia: 'Dificuldade com azul',
 }
 
-// SVG matrix values for each type
-const CB_MATRICES: Record<string, string> = {
-  protanopia:
-    '0.567 0.433 0     0 0  ' +
-    '0.558 0.442 0     0 0  ' +
-    '0     0.242 0.758 0 0  ' +
-    '0     0     0     1 0',
-  deuteranopia:
-    '0.625 0.375 0     0 0  ' +
-    '0.700 0.300 0     0 0  ' +
-    '0     0.300 0.700 0 0  ' +
-    '0     0     0     1 0',
-  tritanopia:
-    '0.950 0.050 0     0 0  ' +
-    '0     0.433 0.567 0 0  ' +
-    '0     0.475 0.525 0 0  ' +
-    '0     0     0     1 0',
+// ColorMatrix values per type
+const CB_MATRICES: Record<string, number[]> = {
+  protanopia:   [0.567,0.433,0,0,0, 0.558,0.442,0,0,0, 0,0.242,0.758,0,0, 0,0,0,1,0],
+  deuteranopia: [0.625,0.375,0,0,0, 0.700,0.300,0,0,0, 0,0.300,0.700,0,0, 0,0,0,1,0],
+  tritanopia:   [0.950,0.050,0,0,0, 0,0.433,0.567,0,0, 0,0.475,0.525,0,0, 0,0,0,1,0],
 }
 
-// Apply filter directly as inline style on <html> — most reliable cross-browser approach
+const SVG_ID   = 'dasiboard-cb-svg'
+const FILTER_ID = 'dasiboard-cb-filter'
+
+// Inject/update a real SVG <filter> element in the DOM body
 function applyFilter(mode: ColorBlindType) {
   const root = document.documentElement
+
+  // Remove old SVG if exists
+  document.getElementById(SVG_ID)?.remove()
+
   if (mode === 'none') {
     root.style.filter = ''
-    root.style.webkitFilter = ''
-  } else {
-    // Use SVG filter via data URI — works without needing DOM-injected SVG
-    const matrix = CB_MATRICES[mode]
-    const svgFilter = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><filter id='cb'><feColorMatrix type='matrix' values='${matrix}'/></filter></svg>#cb")`
-    root.style.filter = svgFilter
-    root.style.webkitFilter = svgFilter
+    return
   }
+
+  const matrix = CB_MATRICES[mode]
+  const svgNS = 'http://www.w3.org/2000/svg'
+
+  const svg = document.createElementNS(svgNS, 'svg')
+  svg.id = SVG_ID
+  svg.setAttribute('xmlns', svgNS)
+  svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;'
+  svg.setAttribute('aria-hidden', 'true')
+
+  const defs = document.createElementNS(svgNS, 'defs')
+  const filter = document.createElementNS(svgNS, 'filter')
+  filter.id = FILTER_ID
+
+  const feColorMatrix = document.createElementNS(svgNS, 'feColorMatrix')
+  feColorMatrix.setAttribute('type', 'matrix')
+  feColorMatrix.setAttribute('values', matrix.join(' '))
+
+  filter.appendChild(feColorMatrix)
+  defs.appendChild(filter)
+  svg.appendChild(defs)
+  document.body.insertBefore(svg, document.body.firstChild)
+
+  root.style.filter = `url(#${FILTER_ID})`
 }
 
 export function useColorBlindMode() {
@@ -73,17 +81,15 @@ export function useColorBlindMode() {
   return { mode, apply }
 }
 
-// No-op component (filter is now applied via inline style, no DOM SVG needed)
+// Kept for AppLayout compatibility
 export function ColorBlindFilters() { return null }
 
-// ── Compact icon button for the 3-button tool strip ───────────────────────────
 export function ColorBlindButton({ mode, apply }: { mode: ColorBlindType; apply: (m: ColorBlindType) => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const types: ColorBlindType[] = ['none', 'protanopia', 'deuteranopia', 'tritanopia']
   const active = mode !== 'none'
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -112,7 +118,7 @@ export function ColorBlindButton({ mode, apply }: { mode: ColorBlindType; apply:
 
       {open && (
         <div
-          className="absolute bottom-full left-0 mb-1.5 rounded-xl overflow-hidden shadow-xl z-[60] min-w-[180px]"
+          className="absolute bottom-full left-0 mb-1.5 rounded-xl overflow-hidden shadow-xl z-[60] min-w-[190px]"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
         >
           <p className="px-3 pt-2.5 pb-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
@@ -148,7 +154,6 @@ export function ColorBlindButton({ mode, apply }: { mode: ColorBlindType; apply:
   )
 }
 
-// Legacy full-width toggle (kept for any other usages)
 export function ColorBlindToggle({ mode, apply }: { mode: ColorBlindType; apply: (m: ColorBlindType) => void }) {
   return <ColorBlindButton mode={mode} apply={apply} />
 }
