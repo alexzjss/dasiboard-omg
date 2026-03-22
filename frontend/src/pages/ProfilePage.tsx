@@ -1,4 +1,3 @@
-import React from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { format } from 'date-fns'
@@ -6,7 +5,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   User, Mail, Hash, Calendar, GraduationCap, LogOut,
   Download, RefreshCw, X, Check, Code2, Trophy,
-  Sparkles, ImagePlus, Trash2, Lock, Star,
+  Sparkles, ImagePlus, Trash2, Lock, Star, RotateCw, Maximize2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useStudyStats } from '@/hooks/useStudyStats'
@@ -25,6 +24,7 @@ function seededRng(seed: string) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296
   }
 }
+
 
 const TITLES = [
   'Explorador Incansável','Arquiteto de Sonhos','Nômade Digital',
@@ -75,9 +75,6 @@ export const buildAchievements = (opts: {
   hasAvatar: boolean; hasNusp: boolean; eventCount: number
   subjectCount: number; gradeCount: number; loginCount: number
   easterEggFound: boolean
-  hasPerfectGrade: boolean
-  dailyFlashcards: number
-  kanbanOpenedEmpty: number
 }): Achievement[] => [
   { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',       rarity: 'legendary', category: 'system',
     desc: 'Membro fundador do DaSIboard',          hint: 'Crie sua conta',          color: '#f59e0b', unlocked: true },
@@ -107,17 +104,9 @@ export const buildAchievements = (opts: {
     desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
   { id: 'night_coder',emoji: '🌙', label: 'Coder Noturno',  rarity: 'epic',      category: 'secret',
     desc: 'Usou o app após meia-noite',             hint: '???',                        color: '#6366f1', unlocked: new Date().getHours() >= 0 && new Date().getHours() < 4 },
-  { id: 'three_am',   emoji: '👁️', label: 'Às 3:33',        rarity: 'legendary', category: 'secret',
-    desc: 'Estava online exatamente às 3:33 da manhã', hint: '???',                    color: '#7c3aed', unlocked: (() => { const h = new Date().getHours(), m = new Date().getMinutes(); return h === 3 && m === 33 })() },
-  { id: 'grade_10',   emoji: '💯', label: 'Perfeito',        rarity: 'epic',      category: 'academic',
-    desc: 'Registrou nota 10 em uma disciplina',    hint: 'Tire 10 em alguma prova',    color: '#f59e0b', unlocked: opts.hasPerfectGrade },
-  { id: 'flashcard_100', emoji: '⚡', label: 'Maratonista',  rarity: 'epic',     category: 'academic',
-    desc: 'Respondeu 100 flashcards em um dia',     hint: 'Responda muito em um dia',   color: '#22c55e', unlocked: opts.dailyFlashcards >= 100 },
-  { id: 'kanban_ghost',emoji: '👻', label: 'Procrastinador', rarity: 'rare',     category: 'secret',
-    desc: 'Abriu o Kanban 5x sem criar nada',       hint: '???',                        color: '#6b7280', unlocked: opts.kanbanOpenedEmpty >= 5 },
 ]
 
-// ── Canvas helpers ─────────────────────────────────────────────────────────────
+// ── Canvas utilities ─────────────────────────────────────────────────────────
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r)
@@ -126,199 +115,601 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r)
   ctx.closePath()
 }
-function drawBlob(ctx: CanvasRenderingContext2D, rng: () => number, cx: number, cy: number, baseR: number) {
-  const n = 7 + Math.floor(rng() * 6)
+function addGrain(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count = 4000) {
+  for (let i = 0; i < count; i++) {
+    const x = rng()*W, y = rng()*H, v = Math.floor(rng()*255)
+    ctx.fillStyle = `rgba(${v},${v},${v},${alpha*rng()})`;  ctx.fillRect(x, y, 1, 1)
+  }
+}
+function hexToRgb(hex: string): [number,number,number] {
+  const clean = hex.replace('#','').padEnd(6,'0')
+  const n = parseInt(clean.slice(0,6), 16)
+  return [(n>>16)&255, (n>>8)&255, n&255]
+}
+function hslToRgb(h: number, s: number, l: number): [number,number,number] {
+  s /= 100; l /= 100
+  const a = s * Math.min(l, 1-l)
+  const f = (n: number) => { const k = (n+h/30)%12; return l - a*Math.max(Math.min(k-3,9-k,1),-1) }
+  return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)]
+}
+function rgbToHsl(r: number, g: number, b: number): [number,number,number] {
+  r/=255; g/=255; b/=255
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), l=(max+min)/2
+  if (max===min) return [0,0,l*100]
+  const d=max-min, s=d/(l>0.5?2-max-min:max+min)
+  const h=max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4
+  return [h*60, s*100, l*100]
+}
+
+function deriveColors(hue: number, sat: number, lit: number) {
+  const h2=(hue+40)%360, h3=(hue+85)%360, h4=(hue-30+360)%360
+  return {
+    c1:`hsl(${hue},${sat}%,${lit}%)`,
+    c2:`hsl(${h2},${sat-8}%,${lit-18}%)`,
+    c3:`hsl(${h3},${sat-16}%,${Math.max(lit-30,12)}%)`,
+    c4:`hsl(${h4},${Math.min(sat+10,100)}%,${Math.min(lit+18,88)}%)`,
+    c5:`hsl(${hue},${sat-25}%,${Math.min(lit+32,92)}%)`,
+    hue, sat, lit, h2, h3, h4,
+  }
+}
+
+type CardStyle =
+  | 'geometric_rays' | 'layer_stack' | 'wave_lines' | 'holographic'
+  | 'boarding_pass'  | 'concentric_shapes' | 'ink_splatter'
+  | 'halftone' | 'topographic' | 'neon_glow'
+
+type CardEffect =
+  | 'foil_gold' | 'foil_holo' | 'scanlines' | 'vignette'
+  | 'chromatic' | 'grain_film' | 'crosshatch' | 'noise_rgb' | 'none'
+
+type ColorScheme = 'vivid' | 'pastel' | 'dark_rich' | 'neon' | 'earth' | 'cold'
+
+function pickCardStyle(userId: string): CardStyle {
+  const rng = seededRng(userId+'-stylev3')
+  const s: CardStyle[] = ['geometric_rays','layer_stack','wave_lines','holographic',
+    'boarding_pass','concentric_shapes','ink_splatter','halftone','topographic','neon_glow']
+  return s[Math.floor(rng()*s.length)]
+}
+function pickCardEffect(userId: string): CardEffect {
+  const rng = seededRng(userId+'-effectv2')
+  const e: CardEffect[] = ['foil_gold','foil_holo','scanlines','vignette','chromatic',
+    'grain_film','crosshatch','noise_rgb','none','foil_holo','foil_gold','none','vignette','scanlines','none']
+  return e[Math.floor(rng()*e.length)]
+}
+function pickColorScheme(userId: string): ColorScheme {
+  const rng = seededRng(userId+'-scheme')
+  const s: ColorScheme[] = ['vivid','pastel','dark_rich','neon','earth','cold','vivid','vivid']
+  return s[Math.floor(rng()*s.length)]
+}
+function applyColorScheme(hue: number, scheme: ColorScheme, rng: () => number): { sat: number; lit: number } {
+  switch(scheme) {
+    case 'vivid':     return { sat:75+rng()*18, lit:50+rng()*12 }
+    case 'pastel':    return { sat:42+rng()*20, lit:68+rng()*14 }
+    case 'dark_rich': return { sat:68+rng()*22, lit:30+rng()*14 }
+    case 'neon':      return { sat:90+rng()*10, lit:54+rng()*12 }
+    case 'earth':     return { sat:32+rng()*28, lit:40+rng()*20 }
+    case 'cold':      return { sat:52+rng()*28, lit:56+rng()*18 }
+  }
+}
+
+// ── Avatar rendering (circle with border) ─────────────────────────────────────
+function drawAvatarCircle(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement | null,
+  initials: string,
+  cx: number, cy: number, r: number,
+  borderColor: string, isDark: boolean,
+) {
+  // Border ring
+  ctx.save()
+  ctx.beginPath(); ctx.arc(cx, cy, r+3, 0, Math.PI*2)
+  ctx.fillStyle = borderColor; ctx.globalAlpha = 0.9; ctx.fill()
+  ctx.globalAlpha = 1; ctx.restore()
+
+  // Clip circle
+  ctx.save()
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip()
+
+  if (img) {
+    // Draw image fitted inside circle
+    const size = r*2
+    ctx.drawImage(img, cx-r, cy-r, size, size)
+  } else {
+    // Initials fallback
+    const bg = isDark ? `rgba(255,255,255,0.15)` : `rgba(0,0,0,0.12)`
+    ctx.fillStyle = bg; ctx.fillRect(cx-r, cy-r, r*2, r*2)
+    ctx.font = `700 ${Math.round(r*0.72)}px sans-serif`
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.7)'
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(initials, cx, cy)
+  }
+  ctx.restore()
+}
+
+// ── QR-code-like pattern (decorative, not scannable) ─────────────────────────
+function drawDecorativeQR(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, size: number,
+  fgColor: string, rng: () => number,
+) {
+  const cells = 9
+  const cell  = size / cells
+  ctx.fillStyle = fgColor
+
+  // Corner squares (mandatory in real QR)
+  const corner = (cx: number, cy: number) => {
+    ctx.fillRect(cx, cy, cell*3, cell*3)
+    ctx.clearRect(cx+cell, cy+cell, cell, cell)
+    ctx.fillRect(cx+cell, cy+cell, cell, cell) // center dot
+  }
+  ctx.save()
+  ctx.globalAlpha = 0.85
+  corner(x, y); corner(x+size-cell*3, y); corner(x, y+size-cell*3)
+  // Random data cells
+  for (let r=0; r<cells; r++) {
+    for (let c=0; c<cells; c++) {
+      if ((r<3&&c<3)||(r<3&&c>5)||(r>5&&c<3)) continue
+      if (rng()<0.48) ctx.fillRect(x+c*cell, y+r*cell, cell-0.5, cell-0.5)
+    }
+  }
+  ctx.restore()
+}
+
+// ── PORTRAIT card background ──────────────────────────────────────────────────
+function drawCardBackground(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, zoneH: number,
+  _style: CardStyle, hue: number, sat: number, lit: number,
+  rng: () => number,
+  entityBg: { color: string; name: string } | null,
+) {
+  // White area — pure white for default, very lightly tinted for entity
+  if (entityBg) {
+    const [er,eg,eb] = hexToRgb(entityBg.color)
+    // Paint white area with a very subtle tint (3% opacity)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = `rgba(${er},${eg},${eb},0.04)`
+    ctx.fillRect(0, 0, W, H)
+  } else {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
+  }
+
+  // Blob color — entity color (corrected) or user hue
+  let blobH = hue, blobS = sat, blobL = lit
+  if (entityBg) {
+    const [er,eg,eb] = hexToRgb(entityBg.color)
+    const [eh,es,el] = rgbToHsl(er,eg,eb) // already returns h:0-360, s:0-100, l:0-100
+    blobH = eh
+    blobS = Math.max(es, 55)  // ensure vivid saturation
+    blobL = Math.min(Math.max(el, 38), 62)  // clamp lightness so blob is always visible
+  }
+  // Slightly lighter/shifted secondary color for gradient depth
+  const blobMain  = `hsl(${blobH},${blobS}%,${blobL}%)`
+  const blobLight = `hsl(${blobH},${Math.max(blobS-15,30)}%,${Math.min(blobL+20,80)}%)`
+  const blobShift = `hsl(${(blobH+22)%360},${Math.max(blobS-8,30)}%,${Math.max(blobL-12,22)}%)`
+
+  // Clip strictly to colored zone — nothing bleeds into white area
+  ctx.save()
+  ctx.beginPath(); ctx.rect(0, 0, W, zoneH); ctx.clip()
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
+
+  // ── Organic blob: large, anchored to top, wavy bottom edge ────────────────
+  // Slight random tilt so each card looks different even at same position
+  const tiltAngle = (rng() - 0.5) * 0.4  // -0.2 to +0.2 radians
+  const mainCx = W * (0.30 + rng() * 0.40)
+  const mainCy = zoneH * (-0.08 + rng() * 0.15)
+  const mainR  = Math.min(W, zoneH) * (0.88 + rng() * 0.35)
+
+  const n = 11 + Math.floor(rng() * 5)
   const pts: [number,number][] = []
   for (let i = 0; i < n; i++) {
-    const angle = (i/n)*Math.PI*2 - Math.PI/2
-    const r = baseR * (0.45 + rng() * 0.90)
-    pts.push([cx + Math.cos(angle)*r, cy + Math.sin(angle)*r])
+    // Rotate the base angle by tiltAngle for organic inclination
+    const baseAngle = (i / n) * Math.PI * 2 - Math.PI / 2 + tiltAngle
+    const isBottom = Math.sin(baseAngle - tiltAngle) > 0
+    // Bottom: very wavy and irregular; top: tighter to form solid top edge
+    const variance = isBottom
+      ? (0.25 + rng() * 0.95)   // big variance = dramatic organic bottom
+      : (0.80 + rng() * 0.28)   // small variance = solid top
+    const r = mainR * variance
+    pts.push([mainCx + Math.cos(baseAngle)*r, mainCy + Math.sin(baseAngle)*r])
   }
+
   ctx.beginPath()
   for (let i = 0; i < pts.length; i++) {
-    const p0=pts[(i-1+n)%n], p1=pts[i], p2=pts[(i+1)%n], p3=pts[(i+2)%n]
-    const cp1x=p1[0]+(p2[0]-p0[0])/5, cp1y=p1[1]+(p2[1]-p0[1])/5
-    const cp2x=p2[0]-(p3[0]-p1[0])/5, cp2y=p2[1]-(p3[1]-p1[1])/5
-    if (i===0) ctx.moveTo(p1[0],p1[1])
-    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
+    const p0 = pts[(i-1+n)%n], p1 = pts[i]
+    const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
+    const t = 0.30 + rng() * 0.10
+    const cp1x = p1[0]+(p2[0]-p0[0])*t, cp1y = p1[1]+(p2[1]-p0[1])*t
+    const cp2x = p2[0]-(p3[0]-p1[0])*t, cp2y = p2[1]-(p3[1]-p1[1])*t
+    if (i === 0) ctx.moveTo(p1[0], p1[1])
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
   }
   ctx.closePath()
-}
-function addNoise(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count=5000) {
-  for (let i=0;i<count;i++) {
-    const x=rng()*W, y=rng()*H, v=Math.floor(rng()*220)
-    ctx.fillStyle=`rgba(${v},${v},${v},${alpha*rng()})`
-    ctx.fillRect(x,y,1,1)
+
+  // Gradient: bright highlight near top-left, main color in center, shift at edges
+  const gInnerX = mainCx - mainR*0.30, gInnerY = mainCy - mainR*0.15
+  const grad = ctx.createRadialGradient(gInnerX, gInnerY, mainR*0.05, mainCx, mainCy, mainR*1.10)
+  grad.addColorStop(0,    blobLight)
+  grad.addColorStop(0.30, blobMain)
+  grad.addColorStop(0.70, blobShift)
+  grad.addColorStop(1,    `hsla(${(blobH+22)%360},${Math.max(blobS-8,30)}%,${Math.max(blobL-12,22)}%,0)`)
+  ctx.fillStyle = grad
+  ctx.globalAlpha = 1
+  ctx.fill()
+  ctx.globalAlpha = 1
+
+  // Optional secondary small accent blob for depth
+  if (rng() > 0.4) {
+    const ax = W * (0.55 + rng() * 0.50), ay = zoneH * (-0.05 + rng() * 0.30)
+    const ar = Math.min(W, zoneH) * (0.25 + rng() * 0.25)
+    const an = 7 + Math.floor(rng() * 5)
+    const apts: [number,number][] = []
+    for (let i = 0; i < an; i++) {
+      const angle = (i/an)*Math.PI*2 - Math.PI/2
+      apts.push([ax + Math.cos(angle)*ar*(0.5+rng()*0.9), ay + Math.sin(angle)*ar*(0.5+rng()*0.9)])
+    }
+    ctx.beginPath()
+    for (let i = 0; i < apts.length; i++) {
+      const p0=apts[(i-1+an)%an],p1=apts[i],p2=apts[(i+1)%an],p3=apts[(i+2)%an]
+      const cp1x=p1[0]+(p2[0]-p0[0])*0.3,cp1y=p1[1]+(p2[1]-p0[1])*0.3
+      const cp2x=p2[0]-(p3[0]-p1[0])*0.3,cp2y=p2[1]-(p3[1]-p1[1])*0.3
+      if(i===0)ctx.moveTo(p1[0],p1[1])
+      ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
+    }
+    ctx.closePath()
+    const ag = ctx.createRadialGradient(ax,ay,ar*0.05,ax,ay,ar)
+    ag.addColorStop(0, blobMain); ag.addColorStop(1, `hsla(${blobH},${blobS}%,${blobL}%,0)`)
+    ctx.fillStyle = ag; ctx.globalAlpha = 0.50; ctx.fill(); ctx.globalAlpha = 1
   }
+  ctx.restore()
+}
+function drawCardEffect(ctx: CanvasRenderingContext2D, W: number, H: number, zoneH: number, effect: CardEffect, hue: number, rng: () => number) {
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+  switch(effect) {
+    case 'foil_gold': {
+      const g=ctx.createLinearGradient(0,0,W,zoneH)
+      g.addColorStop(0.00,'rgba(255,255,255,0.00)'); g.addColorStop(0.28,'rgba(255,255,255,0.04)')
+      g.addColorStop(0.40,'rgba(255,235,140,0.30)'); g.addColorStop(0.48,'rgba(255,255,255,0.44)')
+      g.addColorStop(0.56,'rgba(220,200,255,0.24)'); g.addColorStop(0.68,'rgba(255,255,255,0.06)'); g.addColorStop(1.00,'rgba(255,255,255,0.00)')
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,zoneH); break
+    }
+    case 'foil_holo': {
+      const nb=5+Math.floor(rng()*4)
+      for(let bi=0;bi<nb;bi++){
+        const t=bi/nb, bx=t*W+rng()*40-20, bw=40+rng()*80, hh=(bi*55+hue*0.5)%360
+        const sg=ctx.createLinearGradient(bx,0,bx+bw,zoneH)
+        sg.addColorStop(0,`hsla(${hh},80%,75%,0)`); sg.addColorStop(0.35,`hsla(${hh},80%,75%,0.20)`)
+        sg.addColorStop(0.5,`hsla(${(hh+40)%360},85%,80%,0.32)`); sg.addColorStop(0.65,`hsla(${(hh+80)%360},80%,75%,0.20)`); sg.addColorStop(1,`hsla(${hh},80%,75%,0)`)
+        ctx.fillStyle=sg; ctx.fillRect(bx,0,bw,zoneH)
+      }
+      break
+    }
+    case 'scanlines': { for(let y=0;y<zoneH;y+=3){ctx.fillStyle='rgba(0,0,0,0.10)';ctx.fillRect(0,y,W,1)} break }
+    case 'vignette': {
+      const vg=ctx.createRadialGradient(W/2,zoneH/2,zoneH*0.15,W/2,zoneH/2,zoneH*0.88)
+      vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.48)')
+      ctx.fillStyle=vg; ctx.fillRect(0,0,W,zoneH); break
+    }
+    case 'chromatic': {
+      const cgl=ctx.createLinearGradient(0,0,W*0.18,0); cgl.addColorStop(0,'rgba(255,0,0,0.10)'); cgl.addColorStop(1,'rgba(255,0,0,0)'); ctx.fillStyle=cgl; ctx.fillRect(0,0,W,zoneH)
+      const cgr=ctx.createLinearGradient(W,0,W*0.82,0); cgr.addColorStop(0,'rgba(0,60,255,0.10)'); cgr.addColorStop(1,'rgba(0,60,255,0)'); ctx.fillStyle=cgr; ctx.fillRect(0,0,W,zoneH); break
+    }
+    case 'grain_film': addGrain(ctx,rng,W,zoneH,0.10,14000); break
+    case 'crosshatch': {
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=0.8
+      for(let x=-zoneH;x<W+zoneH;x+=8){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+zoneH,zoneH);ctx.stroke()}
+      ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=0.8
+      for(let x=-zoneH;x<W+zoneH;x+=8){ctx.beginPath();ctx.moveTo(x,zoneH);ctx.lineTo(x+zoneH,0);ctx.stroke()}
+      break
+    }
+    case 'noise_rgb': {
+      const rng2=seededRng('rgb-noise')
+      for(let i=0;i<8000;i++){const x=rng2()*W,y=rng2()*zoneH,ch=Math.floor(rng2()*3),a=0.04+rng2()*0.08;ctx.fillStyle=ch===0?`rgba(255,0,0,${a})`:ch===1?`rgba(0,255,0,${a})`:`rgba(0,0,255,${a})`;ctx.fillRect(x+(ch-1)*1.5,y,2,2)}
+      break
+    }
+    case 'none': default: break
+  }
+  ctx.restore()
 }
 
-// ── Portrait card draw (680×920 = 3:4.06) ────────────────────────────────────
-function drawPortraitCard(
-  canvas: HTMLCanvasElement,
-  user: {full_name:string; email:string; nusp?:string; id:string; avatar_url?:string},
+// ── PORTRAIT card info — reorganized with avatar ───────────────────────────────
+function drawPortraitInfo(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, zoneH: number,
+  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
+  avatarImg: HTMLImageElement | null,
   activeAchievements: Achievement[],
   area: string, language: string,
-  entityBg: {color:string; name:string} | null,
+  hue: number, sat: number, lit: number,
+  entityBg: { color: string; name: string } | null,
+  style: CardStyle,
 ) {
-  const W=680, H=920
-  canvas.width=W*2; canvas.height=H*2
-  canvas.style.width=W+"px"; canvas.style.height=H+"px"
-  const ctx = canvas.getContext("2d")!
-  ctx.scale(2,2)
+  // Use entity hue for ink when entity is set, else user hue
+  const inkHue = entityBg ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })() : hue
+  const inkColor  = `hsl(${inkHue},55%,12%)`
+  const inkFaint  = `hsl(${inkHue},30%,45%)`
+  const accentClr = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-18,18)}%)`
 
-  const rngBlob  = seededRng(user.id+"-blob")
-  const rngColor = seededRng(user.id+"-hue")
-  const hue      = Math.floor(rngColor()*360)
-  const sat      = 72 + Math.floor(rngColor()*18)
-  const blobLit  = 52 + Math.floor(rngColor()*18)
+  // ── Avatar — bottom-left of colored zone (always light text on blob) ──────
+  const avR  = 54
+  const avCx = 52 + avR
+  const avCy = zoneH - avR - 28
+  const [r1,g1,b1] = hslToRgb(hue, sat, lit)
+  const borderClr = entityBg ? entityBg.color : `rgb(${r1},${g1},${b1})`
+  const initials  = user.full_name.trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase()
+  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClr, true)
 
-  // Blob always uses the user's own seeded colors — entityBg only changes the card background
-  const bgColor   = entityBg ? "#f8f7f2" : `hsl(${hue},${Math.floor(sat*0.10)}%,97%)`
-  const inkColor  = `hsl(${hue},60%,14%)`
-  const inkFaint  = `hsl(${hue},35%,52%)`
-  const blobMain  = `hsl(${hue},${sat}%,${blobLit}%)`
-  const blobShift = `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
-  const accentPill= `hsl(${hue},${sat}%,${Math.max(blobLit-26,18)}%)`
+  // ── NUSP watermark — bottom-right of colored zone ─────────────────────────
+  ctx.font = '400 9px monospace'
+  ctx.fillStyle = 'rgba(255,255,255,0.40)'
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'
+  if (user.nusp) ctx.fillText(`#${user.nusp}`, W-44, zoneH - 18)
+  ctx.textAlign = 'left'
 
-  ctx.clearRect(0,0,W,H)
+  // ── Info section — reorganized ─────────────────────────────────────────────
+  // Layout:
+  //   [zoneH .. zoneH+nameHeight]  →  Name (large, bold/thin split)
+  //   [below name]                 →  Title (italic, faint)
+  //   [below title]                →  Email · NUSP (mono, faint)
+  //   [bottom strip left]          →  area|lang pill
+  //   [bottom strip right]         →  achievement emojis (up to 4)
+  //   [very bottom]                →  ID watermark (tiny)
 
-  // ── Card bg + blob — all inside card rounded-rect clip ──
-  ctx.save()          // save [1] — card clip
-  roundRect(ctx,0,0,W,H,32)
-  ctx.clip()
+  const padX  = 44
+  const nameY = zoneH + 68  // start of name, with breathing room
 
-  // Background fill
-  if (entityBg) {
-    const g = ctx.createLinearGradient(0,0,W,H)
-    g.addColorStop(0, entityBg.color+"28")
-    g.addColorStop(0.5,"#f9f9f5")
-    g.addColorStop(1, entityBg.color+"14")
-    ctx.fillStyle = g
-  } else { ctx.fillStyle = bgColor }
-  ctx.fillRect(0,0,W,H)
+  const parts     = user.full_name.trim().split(/\s+/)
+  const firstName = parts[0] ?? ''
+  const lastName  = parts.slice(1).join(' ')
 
-  // Blob in upper zone
-  const blobZoneH = H*0.57
-  const blobCx = W*(0.42+rngBlob()*0.28)
-  const blobCy = H*(-0.04+rngBlob()*0.12)
-  const blobR  = H*(0.55+rngBlob()*0.18)
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
+  ctx.font      = '800 50px sans-serif'
+  ctx.fillStyle = inkColor
+  ctx.fillText(firstName, padX, nameY)
+  const fnW = ctx.measureText(firstName).width
 
-  ctx.save()          // save [2] — blob zone clip
-  ctx.beginPath(); ctx.rect(0,0,W,blobZoneH); ctx.clip()
-
-  const blobGrad = ctx.createRadialGradient(
-    blobCx-blobR*0.25,blobCy-blobR*0.20,blobR*0.04,
-    blobCx+blobR*0.10,blobCy+blobR*0.10,blobR*1.05
-  )
-  blobGrad.addColorStop(0, blobMain)
-  blobGrad.addColorStop(0.5, blobShift)
-  // Safe transparent stop — works for both hsl and hex
-  blobGrad.addColorStop(1, "rgba(0,0,0,0)")
-  drawBlob(ctx,rngBlob,blobCx,blobCy,blobR)
-  ctx.fillStyle = blobGrad; ctx.fill()
-
-  // Grain inside blob
-  ctx.save()          // save [3] — grain clip inside blob
-  drawBlob(ctx,seededRng(user.id+"-blob"),blobCx,blobCy,blobR)
-  ctx.clip()
-  addNoise(ctx,seededRng(user.id+"-grain"),W,blobZoneH,0.055,7000)
-  ctx.restore()       // restore [3]
-  ctx.restore()       // restore [2] — back to card clip only
-
-  // Background grain over full card
-  addNoise(ctx,seededRng(user.id+"-bg"),W,H,0.012,2000)
-
-  ctx.restore()       // restore [1] — back to no clip
-
-  // Entity background: no label overlay on card — the background gradient speaks for itself
-
-  // Name
-  const textX=44, nameY=H*0.604
-  const parts=user.full_name.trim().split(/\s+/)
-  const firstName=parts[0]??"", lastName=parts.slice(1).join(" ")
-  ctx.textAlign="left"; ctx.textBaseline="alphabetic"
-  ctx.font="800 52px sans-serif"; ctx.fillStyle=inkColor
-  ctx.fillText(firstName,textX,nameY)
-  const fnW=ctx.measureText(firstName).width
   if (lastName) {
-    ctx.font="300 52px sans-serif"; ctx.fillStyle=inkFaint
-    const spW=ctx.measureText(" ").width
-    if (fnW+spW+ctx.measureText(lastName).width < W-textX*2)
-      ctx.fillText(lastName,textX+fnW+spW,nameY)
-    else ctx.fillText(lastName,textX,nameY+58)
+    ctx.font      = '300 50px sans-serif'
+    ctx.fillStyle = inkFaint
+    const spW = ctx.measureText(' ').width
+    if (fnW + spW + ctx.measureText(lastName).width < W - padX*2)
+      ctx.fillText(lastName, padX + fnW + spW, nameY)
+    else
+      ctx.fillText(lastName, padX, nameY + 55)
   }
 
-  // Title
-  const titleRng=seededRng(user.id+"-title")
-  const titleText=TITLES[Math.floor(titleRng()*TITLES.length)]
-  const titleY=nameY+42
-  ctx.font="400 17px sans-serif"; ctx.fillStyle=inkFaint
-  ctx.fillText(titleText,textX,titleY)
+  // Title — seeded per user
+  const trng    = seededRng(user.id+'-title')
+  const titleTx = TITLES[Math.floor(trng()*TITLES.length)]
+  ctx.font      = '400 16px sans-serif'
+  ctx.fillStyle = inkFaint
+  ctx.fillText(titleTx, padX, nameY + 44)
 
-  // Info
-  const infoY=titleY+30
-  const nuspStr=user.nusp ? `#${user.nusp}` : ""
-  ctx.font="400 12px monospace"; ctx.fillStyle=inkFaint; ctx.globalAlpha=0.6
-  ctx.fillText([nuspStr,user.email].filter(Boolean).join("  ·  "),textX,infoY)
-  ctx.globalAlpha=1
+  // Email · NUSP info line
+  ctx.font = '400 11px monospace'; ctx.fillStyle = inkFaint; ctx.globalAlpha = 0.55
+  const nuspStr = user.nusp ? `#${user.nusp}` : ''
+  ctx.fillText([nuspStr, user.email].filter(Boolean).join('  ·  '), padX, nameY + 72)
+  ctx.globalAlpha = 1
 
-  // Bottom: pill + achievements
-  const bottomY=H-64
-  const aLabel=area||"", lLabel=language||""
-  if (aLabel||lLabel) {
-    const pillH=38
-    ctx.font="600 13px sans-serif"
-    const aW=aLabel ? ctx.measureText(aLabel).width+22 : 0
-    const lW=lLabel ? ctx.measureText(lLabel).width+22 : 0
-    const sepW=(aLabel&&lLabel) ? 12 : 0
-    const totalW=aW+sepW+lW
-    ctx.strokeStyle=accentPill; ctx.globalAlpha=0.5; ctx.lineWidth=1.5
-    roundRect(ctx,textX,bottomY,totalW,pillH,pillH/2); ctx.stroke()
-    ctx.globalAlpha=1
-    if (aLabel&&lLabel) {
-      ctx.save()
-      ctx.beginPath()
-      roundRect(ctx,textX+aW,bottomY+4,sepW,pillH-8,2)
-      ctx.clip()
-      ctx.fillStyle=accentPill; ctx.globalAlpha=0.10
-      ctx.fillRect(textX+aW,bottomY+4,sepW,pillH-8)
-      ctx.globalAlpha=0.35; ctx.strokeStyle=accentPill; ctx.lineWidth=1
-      for (let sx=-pillH;sx<sepW+pillH;sx+=4) {
-        ctx.beginPath()
-        ctx.moveTo(textX+aW+sx,bottomY+4)
-        ctx.lineTo(textX+aW+sx+pillH,bottomY+4+pillH)
-        ctx.stroke()
-      }
+  // ── Bottom row: pill + achievements ───────────────────────────────────────
+  const bottomY = H - 62
+  const aLabel  = area || '', lLabel = language || ''
+
+  if (aLabel || lLabel) {
+    const pillH = 36
+    ctx.font = '600 12px sans-serif'
+    const aW   = aLabel ? ctx.measureText(aLabel).width + 20 : 0
+    const lW   = lLabel ? ctx.measureText(lLabel).width + 20 : 0
+    const sepW = aLabel && lLabel ? 10 : 0
+
+    ctx.strokeStyle = accentClr; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5
+    roundRect(ctx, padX, bottomY, aW+sepW+lW, pillH, pillH/2); ctx.stroke(); ctx.globalAlpha = 1
+
+    if (aLabel && lLabel) {
+      ctx.save(); ctx.beginPath(); roundRect(ctx, padX+aW, bottomY+4, sepW, pillH-8, 2); ctx.clip()
+      ctx.fillStyle=accentClr; ctx.globalAlpha=0.10; ctx.fillRect(padX+aW,bottomY+4,sepW,pillH-8)
+      ctx.globalAlpha=0.28; ctx.strokeStyle=accentClr; ctx.lineWidth=1
+      for(let sx=-pillH;sx<sepW+pillH;sx+=4){ctx.beginPath();ctx.moveTo(padX+aW+sx,bottomY+4);ctx.lineTo(padX+aW+sx+pillH,bottomY+4+pillH);ctx.stroke()}
       ctx.globalAlpha=1; ctx.restore()
     }
-    ctx.fillStyle=accentPill; ctx.textAlign="center"; ctx.globalAlpha=1
-    if (aLabel) ctx.fillText(aLabel,textX+aW/2,bottomY+pillH/2+5)
-    if (lLabel) ctx.fillText(lLabel,textX+aW+sepW+lW/2,bottomY+pillH/2+5)
-    ctx.textAlign="left"
+    ctx.fillStyle=accentClr; ctx.textAlign='center'
+    if (aLabel) ctx.fillText(aLabel, padX+aW/2, bottomY+pillH/2+4)
+    if (lLabel) ctx.fillText(lLabel, padX+aW+sepW+lW/2, bottomY+pillH/2+4)
+    ctx.textAlign='left'
   }
 
-  // Achievements right side
-  const displayA=activeAchievements.filter(a=>a.unlocked).slice(0,5)
-  if (displayA.length>0) {
-    let bx=W-textX
-    ctx.textAlign="right"; ctx.font="26px serif"
+  // Achievements — right side, up to 4
+  const displayA = activeAchievements.filter(a=>a.unlocked).slice(0,4)
+  if (displayA.length > 0) {
+    ctx.textAlign='right'; ctx.font='24px serif'
+    let bx = W - padX
     for (const ach of [...displayA].reverse()) {
-      ctx.globalAlpha=1; ctx.fillText(ach.emoji,bx,bottomY+30)
-      bx-=30
+      ctx.globalAlpha=1; ctx.fillText(ach.emoji, bx, bottomY+26); bx -= 28
     }
-    ctx.textAlign="left"; ctx.globalAlpha=1
+    ctx.textAlign='left'; ctx.globalAlpha=1
   }
 
-  // Watermark
-  ctx.font="400 9px monospace"; ctx.fillStyle=inkColor; ctx.globalAlpha=0.18
-  ctx.fillText(user.id.replace(/-/g,"").slice(0,8).toUpperCase(),textX,H-22)
-  ctx.globalAlpha=1
-
-  // Border
-  ctx.strokeStyle=inkColor; ctx.globalAlpha=0.08; ctx.lineWidth=1.5
-  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,32); ctx.stroke()
+  // ID watermark
+  ctx.font='400 8px monospace'; ctx.fillStyle=inkColor; ctx.globalAlpha=0.14
+  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), padX, H-20)
   ctx.globalAlpha=1
 }
+
+// ── LANDSCAPE card (1.59:1 — carteirinha horizontal) ─────────────────────────
+function drawLandscapeCard(
+  canvas: HTMLCanvasElement,
+  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
+  avatarImg: HTMLImageElement | null,
+  activeAchievements: Achievement[],
+  area: string, language: string,
+  entityBg: { color: string; name: string } | null,
+) {
+  const W = 920, H = 580
+  canvas.width = W*2; canvas.height = H*2
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(2,2)
+
+  const rngColor  = seededRng(user.id+'-hue')
+  const hue       = Math.floor(rngColor()*360)
+  const scheme    = pickColorScheme(user.id)
+  const rngScheme = seededRng(user.id+'-scheme-vals')
+  const { sat, lit } = applyColorScheme(hue, scheme, rngScheme)
+  const rngBg     = seededRng(user.id+'-bgv3')
+  const style     = pickCardStyle(user.id)
+  const effect    = pickCardEffect(user.id)
+  const isDark    = lit < 44
+
+  ctx.clearRect(0,0,W,H)
+  ctx.save(); roundRect(ctx,0,0,W,H,28); ctx.clip()
+
+  // Left zone (photo + pattern): 38% width
+  const leftW = Math.round(W * 0.38)
+
+  // Draw pattern in left zone
+  drawCardBackground(ctx, leftW, H, H, style, hue, sat, lit, rngBg, entityBg)
+  addGrain(ctx, seededRng(user.id+'-grainv3'), leftW, H, 0.018, 1500)
+
+  // Right zone: always pure white
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(leftW, 0, W-leftW, H)
+
+  // Separator
+  ctx.strokeStyle='rgba(0,0,0,0.08)'
+  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(leftW,20); ctx.lineTo(leftW,H-20); ctx.stroke()
+
+  // Avatar — centered in left (colored) zone — always light text on blob
+  const avR  = 72
+  const avCx = Math.round(leftW/2)
+  const avCy = Math.round(H*0.42)
+  const initials = user.full_name.trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase()
+  const [r1,g1,b1] = hslToRgb(hue, sat, lit)
+  const borderClrL = entityBg ? entityBg.color : `rgb(${r1},${g1},${b1})`
+  drawAvatarCircle(ctx, avatarImg, initials, avCx, avCy, avR, borderClrL, true)
+
+  // Institution label — white on blob
+  ctx.font='500 9px monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'
+  ctx.fillStyle='rgba(255,255,255,0.65)'
+  ctx.fillText('EACH · USP', avCx, avCy-avR-12)
+
+  // Name below avatar — white on blob
+  const parts = user.full_name.trim().split(/\s+/)
+  ctx.font='700 15px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.92)'
+  ctx.fillText(parts[0]??'', avCx, avCy+avR+22)
+  if (parts.length>1) {
+    ctx.font='400 12px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.60)'
+    ctx.fillText(parts.slice(1).join(' '), avCx, avCy+avR+38)
+  }
+
+  // ── Right zone info — entity hue for ink when entity set ───────────────────
+  const rx    = leftW + 36
+  const lInkHue = entityBg ? (() => { const [er,eg,eb]=hexToRgb(entityBg.color); const [eh]=rgbToHsl(er,eg,eb); return eh })() : hue
+  const inkC  = `hsl(${lInkHue},55%,14%)`
+  const inkF  = `hsl(${lInkHue},28%,46%)`
+  const acC   = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(lit-16,18)}%)`
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic'
+
+  // Header line — "CARTÃO DE ESTUDANTE"
+  ctx.font='600 10px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.8
+  ctx.fillText('CARTÃO DE ESTUDANTE', rx, 38); ctx.globalAlpha=1
+
+  // Full name large
+  ctx.font='700 32px sans-serif'; ctx.fillStyle=inkC
+  const fullName = user.full_name
+  ctx.fillText(fullName.length>22 ? fullName.slice(0,20)+'…' : fullName, rx, 78)
+
+  // Title
+  const trng = seededRng(user.id+'-title')
+  ctx.font='400 14px sans-serif'; ctx.fillStyle=inkF
+  ctx.fillText(TITLES[Math.floor(trng()*TITLES.length)], rx, 100)
+
+  // Divider
+  ctx.strokeStyle='rgba(0,0,0,0.08)'
+  ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(rx,116); ctx.lineTo(W-36,116); ctx.stroke()
+
+  // Fields grid
+  const fields: [string,string][] = [
+    ['CURSO','Sistemas de Informação'],
+    ['UNIDADE','EACH – USP'],
+    user.nusp ? ['Nº USP',user.nusp] : ['E-MAIL', user.email],
+    area ? ['ÁREA', area] : ['TURMA', '—'],
+  ]
+  fields.forEach(([label,val],i) => {
+    const fy = 140 + i*52
+    ctx.font='500 9px monospace'; ctx.fillStyle=acC; ctx.globalAlpha=0.7; ctx.fillText(label, rx, fy)
+    ctx.globalAlpha=1; ctx.font='600 16px sans-serif'; ctx.fillStyle=inkC
+    ctx.fillText(val.length>24?val.slice(0,22)+'…':val, rx, fy+19)
+  })
+
+  // Language badge if set
+  if (language) {
+    ctx.font='600 10px sans-serif'
+    const lw = ctx.measureText(language).width + 16
+    roundRect(ctx, rx, 362, lw, 26, 13)
+    ctx.fillStyle=acC; ctx.globalAlpha=0.15; ctx.fill()
+    ctx.strokeStyle=acC; ctx.globalAlpha=0.45; ctx.lineWidth=1; ctx.stroke()
+    ctx.fillStyle=acC; ctx.globalAlpha=1; ctx.textAlign='center'
+    ctx.fillText(language, rx+lw/2, 379); ctx.textAlign='left'
+  }
+
+  // Achievement emojis — bottom right
+  const displayA=activeAchievements.filter(a=>a.unlocked).slice(0,5)
+  if (displayA.length>0) {
+    ctx.textAlign='left'; ctx.font='20px serif'; ctx.globalAlpha=1
+    displayA.forEach((ach,i) => ctx.fillText(ach.emoji, rx + i*26, H-28))
+    ctx.textAlign='left'
+  }
+
+  // QR decorative — same seed as portrait for consistency
+  const qrSize = 72
+  const qrX = W - 40 - qrSize, qrY = H - 40 - qrSize
+  drawDecorativeQR(ctx, qrX, qrY, qrSize, acC.replace(')',',0.55)').replace('hsl','hsla'), seededRng(user.id+'-qr'))
+
+  // ID watermark
+  ctx.font='400 8px monospace'; ctx.fillStyle='rgba(0,0,0,0.20)'; ctx.globalAlpha=1; ctx.textAlign='right'
+  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), W-36, H-14)
+  ctx.globalAlpha=1; ctx.textAlign='left'
+
+  // Border
+  ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1.5; ctx.globalAlpha=1
+  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,28); ctx.stroke()
+  ctx.restore()
+}
+
+// ── PORTRAIT main draw ────────────────────────────────────────────────────────
+function drawPortraitCard(
+  canvas: HTMLCanvasElement,
+  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
+  avatarImg: HTMLImageElement | null,
+  activeAchievements: Achievement[],
+  area: string, language: string,
+  entityBg: { color: string; name: string } | null,
+) {
+  const W = 680, H = 920
+  canvas.width = W*2; canvas.height = H*2
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(2,2)
+
+  const rngColor  = seededRng(user.id+'-hue')
+  const hue       = Math.floor(rngColor()*360)
+  const scheme    = pickColorScheme(user.id)
+  const rngScheme = seededRng(user.id+'-scheme-vals')
+  const { sat, lit } = applyColorScheme(hue, scheme, rngScheme)
+  const style  = pickCardStyle(user.id)
+  const effect = pickCardEffect(user.id)
+  const rngBg  = seededRng(user.id+'-bgv3')
+  const zoneH  = H * 0.57
+
+  ctx.clearRect(0,0,W,H)
+  ctx.save(); roundRect(ctx,0,0,W,H,32); ctx.clip()
+  drawCardBackground(ctx,W,H,zoneH,style,hue,sat,lit,rngBg,entityBg)
+  addGrain(ctx,seededRng(user.id+'-grainv3'),W,zoneH,0.018,2000)
+  drawPortraitInfo(ctx,W,H,zoneH,user,avatarImg,activeAchievements,area,language,hue,sat,lit,entityBg,style)
+  ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1.5; ctx.globalAlpha=1
+  roundRect(ctx,0.75,0.75,W-1.5,H-1.5,32); ctx.stroke()
+  ctx.restore()
+}
+
 
 // ── Achievement Picker ────────────────────────────────────────────────────────
 function AchievementPicker({achievements,selected,onSave,onClose}: {
@@ -565,7 +956,11 @@ function EntityBgPicker({entities,currentEntityId,onSave,onClose}: {
 export default function ProfilePage() {
   const {user,logout,setUser}=useAuthStore()
   const navigate=useNavigate()
-  const canvasRef=useRef<HTMLCanvasElement>(null)
+  const canvasRef     = useRef<HTMLCanvasElement>(null)
+  const canvasLandRef = useRef<HTMLCanvasElement>(null)
+  const [cardVariant, setCardVariant]  = useState<'portrait'|'landscape'>('portrait')
+  const [cardFlipped, setCardFlipped]  = useState(false)
+  const [avatarImg,   setAvatarImg]    = useState<HTMLImageElement|null>(null)
   const fileInputRef=useRef<HTMLInputElement>(null)
 
   const [area,setAreaState]=useState<string>(()=>localStorage.getItem("dasiboard-area")??"")
@@ -578,7 +973,7 @@ export default function ProfilePage() {
   const [showEntityPicker,setShowEntityPicker]=useState(false)
   const [avatarLoading,setAvatarLoading]=useState(false)
   const [activeTab,setActiveTab]=useState<"conquistas"|"stats"|"conta">("conquistas")
-  const studyStats = useStudyStats()
+  const stats = useStudyStats()
 
   const [entities,setEntities]=useState<Entity[]>([])
   const [memberSlugs,setMemberSlugs]=useState<string[]>([])
@@ -617,27 +1012,15 @@ export default function ProfilePage() {
       })
       setHasPassedSubject(passed); setHasFailedSubject(failed)
       setEventCount((evtRes.data as any[]).length)
-      setSubjectsData(subjects)
-      setSubjectsData(subjects)
     })
   },[])
-
-  // New achievement tracking
-  const kanbanOpenedEmpty = parseInt(localStorage.getItem('dasiboard-kanban-ghost') ?? '0', 10)
-  const dailyFCKey = `dasiboard-daily-fc-${new Date().toISOString().slice(0,10)}`
-  const dailyFlashcards = parseInt(localStorage.getItem(dailyFCKey) ?? '0', 10)
-  const [subjectsData, setSubjectsData] = useState<any[]>([])
-  const hasPerfectGrade = subjectsData.some((s: any) =>
-    (s.grades ?? []).some((g: any) => Number(g.value) >= 10)
-  )
 
   const achievements=useMemo(()=>buildAchievements({
     hasBoards, hasMultipleBoards:hasMultiBoards, hasLanguage:!!language,
     hasArea:!!area, hasPassedSubject, hasFailedSubject, hasAvatar:!!user?.avatar_url,
     hasNusp:!!user?.nusp, eventCount, subjectCount, gradeCount,
     loginCount:1, easterEggFound,
-    hasPerfectGrade, dailyFlashcards, kanbanOpenedEmpty,
-  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound,hasPerfectGrade,dailyFlashcards,kanbanOpenedEmpty])
+  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound])
 
   const activeAchievements=useMemo(
     ()=>achievements.filter(a=>activeAchievIds.includes(a.id)&&a.unlocked),
@@ -650,13 +1033,26 @@ export default function ProfilePage() {
     return {color:ent.color, name:ent.short_name||ent.name}
   },[entityBgId,entities])
 
-  const draw=useCallback(()=>{
-    if(!canvasRef.current||!user)return
-    try{drawPortraitCard(canvasRef.current,user,activeAchievements,area,language,entityBgData)}
-    catch(err){console.error("Card draw:",err)}
-  },[user,activeAchievements,area,language,entityBgData])
+  // Load avatar image whenever url changes
+  useEffect(() => {
+    if (!user?.avatar_url) { setAvatarImg(null); return }
+    const img = new Image()
+    img.onload  = () => setAvatarImg(img)
+    img.onerror = () => setAvatarImg(null)
+    img.src = user.avatar_url
+  }, [user?.avatar_url])
 
-  useEffect(()=>{draw()},[draw])
+  const draw = useCallback(() => {
+    if (!user) return
+    if (canvasRef.current)
+      try { drawPortraitCard(canvasRef.current, user, avatarImg, activeAchievements, area, language, entityBgData) }
+      catch(err) { console.error('Portrait draw:', err) }
+    if (canvasLandRef.current)
+      try { drawLandscapeCard(canvasLandRef.current, user, avatarImg, activeAchievements, area, language, entityBgData) }
+      catch(err) { console.error('Landscape draw:', err) }
+  }, [user, avatarImg, activeAchievements, area, language, entityBgData])
+
+  useEffect(() => { draw() }, [draw])
 
   const handleAvatarChange=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0]; if(!file)return
@@ -678,11 +1074,13 @@ export default function ProfilePage() {
     try{const{data}=await api.patch("/users/me/avatar",{avatar_url:null});setUser(data);toast.success("Foto removida")}
     catch{toast.error("Erro ao remover foto")}finally{setAvatarLoading(false)}
   }
-  const handleDownload=()=>{
-    if(!canvasRef.current||!user)return
-    const a=document.createElement("a")
-    a.download=`dasiboard-${user.full_name.toLowerCase().replace(/\s+/g,"-")}.png`
-    a.href=canvasRef.current.toDataURL("image/png",1.0); a.click()
+  const handleDownload = () => {
+    if (!user) return
+    const canvas = cardVariant === 'portrait' ? canvasRef.current : canvasLandRef.current
+    if (!canvas) return
+    const a = document.createElement('a')
+    a.download = `dasiboard-${user.full_name.toLowerCase().replace(/\s+/g,'-')}-${cardVariant}.png`
+    a.href = canvas.toDataURL('image/png', 1.0); a.click()
   }
 
   const saveAchievements=(ids:string[])=>{localStorage.setItem("dasiboard-achievements",JSON.stringify(ids));setActiveAchievIds(ids)}
@@ -709,41 +1107,59 @@ export default function ProfilePage() {
       {showEntityPicker&&<EntityBgPicker entities={entities} currentEntityId={entityBgId} onSave={saveEntityBg} onClose={()=>setShowEntityPicker(false)}/>}
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-7 animate-in">
+      <div className="flex items-center gap-5 mb-7 animate-in">
         <div className="relative shrink-0">
-          <div className="w-16 h-16 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 4px 20px var(--accent-glow)"}}>
+          <div className="w-24 h-24 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 4px 24px var(--accent-glow)"}}>
             <div className="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
                  style={{background:user.avatar_url?"transparent":"var(--bg-card)"}}>
               {user.avatar_url?<img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover"/>
-                :<span className="text-xl font-bold text-white font-display">{initials}</span>}
+                :<span className="text-3xl font-bold text-white font-display">{initials}</span>}
             </div>
           </div>
-          {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={14} className="animate-spin text-white"/></div>}
+          {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={16} className="animate-spin text-white"/></div>}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-xl font-bold truncate" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
-          <p className="text-xs mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold"
+          <h1 className="font-display text-2xl font-bold truncate" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
+          <p className="text-sm mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold"
                   style={{background:"rgba(245,158,11,0.12)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.25)"}}>
-              <Trophy size={9}/> {unlockedCount} conquistas
+              <Trophy size={11}/> {unlockedCount} conquistas
             </span>
-            {entityBgData&&<span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+            {entityBgData&&<span className="text-xs px-2.5 py-1 rounded-full font-semibold"
                   style={{background:entityBgData.color+"18",color:entityBgData.color,border:`1px solid ${entityBgData.color}30`}}>{entityBgData.name}</span>}
           </div>
         </div>
       </div>
 
-      {/* Card portrait */}
+      {/* ── Card section — flip + variant ────────────────────────────── */}
       <div className="mb-6 animate-in">
+
+        {/* Toolbar */}
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest" style={{color:"var(--text-muted)"}}>Cartão de perfil</p>
+          <div className="flex gap-1 p-0.5 rounded-xl" style={{background:'var(--bg-elevated)',border:'1px solid var(--border)'}}>
+            {(['portrait','landscape'] as const).map(v=>(
+              <button key={v} onClick={()=>{setCardVariant(v);setCardFlipped(false)}}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all"
+                      style={{
+                        background:cardVariant===v?'var(--bg-card)':'transparent',
+                        color:cardVariant===v?'var(--text-primary)':'var(--text-muted)',
+                        boxShadow:cardVariant===v?'0 1px 4px rgba(0,0,0,0.12)':'none',
+                      }}>
+                {v==='portrait'?'↕ Retrato':'↔ Paisagem'}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1.5">
-            <button onClick={()=>setShowEntityPicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5" title="Fundo da entidade">
+            <button onClick={()=>setShowEntityPicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
               <ImagePlus size={12}/><span className="hidden sm:inline">Fundo</span>
             </button>
             <button onClick={()=>setShowAchievPicker(true)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5">
               <Trophy size={12}/><span className="hidden sm:inline">Conquistas</span>
+            </button>
+            <button onClick={()=>setCardFlipped(f=>!f)} className="btn-ghost text-xs py-1.5 px-2.5 gap-1.5"
+                    title="Virar cartão">
+              <RotateCw size={12}/><span className="hidden sm:inline">Virar</span>
             </button>
             <button onClick={draw} className="btn-ghost text-xs py-1.5 px-2.5"><RefreshCw size={12}/></button>
             <button onClick={handleDownload} className="btn-primary text-xs py-1.5 px-2.5 gap-1.5">
@@ -751,20 +1167,150 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-        <div className="flex justify-center">
-          {/* Aspect-ratio container for 680:920 portrait card */}
-          <div style={{width:"100%",maxWidth:320,position:"relative"}}>
-            <div style={{position:"relative",paddingBottom:`${(920/680)*100}%`,borderRadius:24,overflow:"hidden",boxShadow:"0 24px 64px rgba(0,0,0,0.22),0 6px 16px rgba(0,0,0,0.14)"}}>
-              <canvas
-                ref={canvasRef}
-                onClick={handleDownload}
-                title="Clique para baixar"
-                style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",cursor:"pointer",borderRadius:24,display:"block"}}
-              />
+
+        {/* Card with flip animation */}
+        <div className="flex justify-center" style={{perspective:1400}}>
+          <div style={{
+            width:'100%',
+            maxWidth: cardVariant==='portrait' ? 380 : '100%',
+            position:'relative',
+            transformStyle:'preserve-3d',
+            transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            transition:'transform 0.65s cubic-bezier(0.4,0.2,0.2,1)',
+          }}>
+
+            {/* FRONT — portrait or landscape canvas */}
+            <div style={{
+              position:'relative', width:'100%',
+              paddingBottom: cardVariant==='portrait' ? '135.3%' : '63.04%',
+              borderRadius:28, overflow:'hidden',
+              boxShadow:'0 28px 72px rgba(0,0,0,0.28),0 8px 20px rgba(0,0,0,0.16)',
+              backfaceVisibility:'hidden',
+            }}>
+              {/* Portrait canvas */}
+              <canvas ref={canvasRef} onClick={handleDownload} title="Clique para baixar"
+                      style={{
+                        position:'absolute', inset:0, width:'100%', height:'100%',
+                        display: cardVariant==='portrait' ? 'block' : 'none',
+                        cursor:'pointer', borderRadius:28,
+                      }}/>
+              {/* Landscape canvas */}
+              <canvas ref={canvasLandRef} onClick={handleDownload} title="Clique para baixar"
+                      style={{
+                        position:'absolute', inset:0, width:'100%', height:'100%',
+                        display: cardVariant==='landscape' ? 'block' : 'none',
+                        cursor:'pointer', borderRadius:28,
+                      }}/>
             </div>
+
+            {/* BACK — stats & achievements (rotated 180°) */}
+            <div style={{
+              position:'absolute', inset:0,
+              backfaceVisibility:'hidden',
+              transform:'rotateY(180deg)',
+              borderRadius:28, overflow:'hidden',
+              boxShadow:'0 28px 72px rgba(0,0,0,0.28)',
+              background:'var(--bg-card)',
+              border:'1px solid var(--border)',
+              display:'flex', flexDirection:'column',
+            }}>
+              {/* Back header strip in user color */}
+              <div style={{
+                height:8, flexShrink:0,
+                background:`hsl(${Math.floor(seededRng(user.id+'-hue')()*360)},70%,52%)`,
+              }}/>
+
+              <div className="flex-1 flex flex-col p-5 gap-4 overflow-y-auto">
+                {/* User mini-header */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+                       style={{background:'var(--bg-elevated)',border:'2px solid var(--border)'}}>
+                    {user.avatar_url
+                      ? <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover"/>
+                      : <span className="font-bold text-base" style={{color:'var(--text-muted)'}}>{initials}</span>
+                    }
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-sm" style={{color:'var(--text-primary)'}}>{user.full_name}</p>
+                    <p className="text-[10px] font-mono" style={{color:'var(--text-muted)'}}>
+                      {user.nusp ? `#${user.nusp}  ·  ` : ''}{user.email}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    {emoji:'🔥', val:stats.streak,           label:'dias seguidos'},
+                    {emoji:'⚡', val:stats.flashcardsAnswered, label:'flashcards'},
+                    {emoji:'🍅', val:Math.floor(stats.pomodoroMinutes/25), label:'pomodoros'},
+                    {emoji:'📝', val:stats.notesCreated,      label:'notas'},
+                    {emoji:'🎯', val:stats.flashcardsAnswered>0?`${Math.round((stats.flashcardsCorrect/stats.flashcardsAnswered)*100)}%`:'—', label:'acertos'},
+                    {emoji:'⏱️', val:`${Math.floor(stats.pomodoroMinutes/60)}h`, label:'de estudo'},
+                  ].map(({emoji,val,label})=>(
+                    <div key={label} className="rounded-xl p-2.5 text-center"
+                         style={{background:'var(--bg-elevated)',border:'1px solid var(--border)'}}>
+                      <p className="text-base">{emoji}</p>
+                      <p className="font-display font-bold text-sm mt-0.5" style={{color:'var(--text-primary)'}}>{val}</p>
+                      <p className="text-[9px]" style={{color:'var(--text-muted)'}}>{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Achievements strip */}
+                {activeAchievements.length > 0 && (
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{color:'var(--text-muted)'}}>
+                      Conquistas no cartão
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {activeAchievements.filter(a=>a.unlocked).map(a=>(
+                        <div key={a.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold"
+                             style={{background:a.color+'18',border:`1px solid ${a.color}40`,color:a.color}}>
+                          <span>{a.emoji}</span><span>{a.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* QR decorative placeholder */}
+                <div className="flex items-center gap-3 mt-auto pt-2" style={{borderTop:'1px solid var(--border)'}}>
+                  <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden flex items-center justify-center"
+                       style={{background:'var(--bg-elevated)',border:'1px solid var(--border)'}}>
+                    {/* Decorative QR pattern in CSS */}
+                    <svg width="40" height="40" viewBox="0 0 9 9">
+                      <rect x="0" y="0" width="3" height="3" fill="currentColor" style={{color:'var(--text-secondary)'}}/>
+                      <rect x="1" y="1" width="1" height="1" fill="var(--bg-elevated)"/>
+                      <rect x="6" y="0" width="3" height="3" fill="currentColor" style={{color:'var(--text-secondary)'}}/>
+                      <rect x="7" y="1" width="1" height="1" fill="var(--bg-elevated)"/>
+                      <rect x="0" y="6" width="3" height="3" fill="currentColor" style={{color:'var(--text-secondary)'}}/>
+                      <rect x="1" y="7" width="1" height="1" fill="var(--bg-elevated)"/>
+                      {[3,5,4,6,3,7,5,6,4,4,6,5,5,8,7,4,8,6,3,3].map((v,i)=>(
+                        i%2===0 ? null : <rect key={i} x={[3,5,4,6,3,7,5,6,4,4,6,5,5,8,7,4,8,6,3,3][i-1]} y={v} width="1" height="1" fill="currentColor" style={{color:'var(--text-secondary)'}}/>
+                      ))}
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold" style={{color:'var(--text-primary)'}}>DaSIboard · EACH · USP</p>
+                    <p className="text-[9px] font-mono mt-0.5" style={{color:'var(--text-muted)'}}>
+                      {user.id.replace(/-/g,'').slice(0,16).toUpperCase()}
+                    </p>
+                  </div>
+                  <button onClick={()=>setCardFlipped(false)} className="ml-auto btn-ghost text-xs py-1 px-2.5 gap-1">
+                    <RotateCw size={10}/> Voltar
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
-        <p className="text-[10px] text-center mt-2.5" style={{color:"var(--text-muted)"}}>Único por conta · clique para baixar · blob gerado pelo seu ID</p>
+
+        <p className="text-[10px] text-center mt-3" style={{color:'var(--text-muted)'}}>
+          {cardFlipped ? 'Verso do cartão — estatísticas e conquistas'
+            : `${cardVariant === 'portrait' ? 'Retrato' : 'Paisagem'} · clique para baixar · vire para ver o verso`}
+        </p>
       </div>
 
       {/* Área & Linguagem */}
@@ -796,10 +1342,10 @@ export default function ProfilePage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 p-1 rounded-2xl animate-in-delay-1" style={{background:"var(--bg-elevated)",border:"1px solid var(--border)"}}>
-        {(["conquistas","conta"] as const).map(t=>(
+        {(["conquistas","stats","conta"] as const).map(t=>(
           <button key={t} onClick={()=>setActiveTab(t)} className="flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all"
                   style={{background:activeTab===t?"var(--bg-card)":"transparent",color:activeTab===t?"var(--text-primary)":"var(--text-muted)",boxShadow:activeTab===t?"0 2px 8px rgba(0,0,0,0.12)":"none"}}>
-            {t==="conquistas"?`🏆 Conquistas (${unlockedCount})`:"👤 Conta"}
+            {t==="conquistas"?`🏆 Conquistas (${unlockedCount})`:t==="stats"?"📊 Stats":"👤 Conta"}
           </button>
         ))}
       </div>
@@ -852,14 +1398,14 @@ export default function ProfilePage() {
         <div className="animate-in space-y-3">
           {/* Streak */}
           <div className="rounded-2xl p-4 flex items-center gap-4"
-               style={{ background: studyStats.streak > 0 ? 'rgba(245,158,11,0.08)' : 'var(--bg-elevated)', border: `1px solid ${studyStats.streak > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}` }}>
-            <span style={{ fontSize: 40, lineHeight: 1 }}>{studyStats.streak >= 7 ? '🔥' : studyStats.streak >= 3 ? '⚡' : '📅'}</span>
+               style={{ background: stats.streak > 0 ? 'rgba(245,158,11,0.08)' : 'var(--bg-elevated)', border: `1px solid ${stats.streak > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}` }}>
+            <span style={{ fontSize: 40, lineHeight: 1 }}>{stats.streak >= 7 ? '🔥' : stats.streak >= 3 ? '⚡' : '📅'}</span>
             <div>
-              <p className="font-display font-bold text-2xl" style={{ color: studyStats.streak > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
-                {studyStats.streak} dia{studyStats.streak !== 1 ? 's' : ''}
+              <p className="font-display font-bold text-2xl" style={{ color: stats.streak > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                {stats.streak} dia{stats.streak !== 1 ? 's' : ''}
               </p>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {studyStats.streak === 0 ? 'Comece a sequência hoje!' : `Sequência de estudo 🔥`}
+                {stats.streak === 0 ? 'Comece a sequência hoje!' : `Sequência de estudo 🔥`}
               </p>
             </div>
           </div>
@@ -871,7 +1417,7 @@ export default function ProfilePage() {
               {Array.from({length:30},(_,i)=>{
                 const d = new Date(); d.setDate(d.getDate()-29+i)
                 const key = d.toISOString().slice(0,10)
-                const active = studyStats.sessionDates.includes(key)
+                const active = stats.sessionDates.includes(key)
                 const isToday = key === new Date().toISOString().slice(0,10)
                 return (
                   <div key={key} className="w-5 h-5 rounded" title={key}
@@ -884,12 +1430,12 @@ export default function ProfilePage() {
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label:'Notas criadas',     value: studyStats.notesCreated,           emoji:'📝', color:'#f59e0b' },
-              { label:'Flashcards resp.',  value: studyStats.flashcardsAnswered,     emoji:'⚡', color:'#22c55e' },
-              { label:'Taxa de acerto',    value: studyStats.flashcardsAnswered > 0 ? `${Math.round((studyStats.flashcardsCorrect/studyStats.flashcardsAnswered)*100)}%` : '—', emoji:'🎯', color:'#6366f1' },
-              { label:'Pomodoros',         value: Math.floor(studyStats.pomodoroMinutes/25), emoji:'🍅', color:'#ef4444' },
-              { label:'Tempo de estudo',   value: `${Math.floor(studyStats.pomodoroMinutes/60)}h ${studyStats.pomodoroMinutes%60}m`, emoji:'⏱️', color:'#06b6d4' },
-              { label:'Flashcards corretos', value: studyStats.flashcardsCorrect,    emoji:'✅', color:'#22c55e' },
+              { label:'Notas criadas',     value: stats.notesCreated,           emoji:'📝', color:'#f59e0b' },
+              { label:'Flashcards resp.',  value: stats.flashcardsAnswered,     emoji:'⚡', color:'#22c55e' },
+              { label:'Taxa de acerto',    value: stats.flashcardsAnswered > 0 ? `${Math.round((stats.flashcardsCorrect/stats.flashcardsAnswered)*100)}%` : '—', emoji:'🎯', color:'#6366f1' },
+              { label:'Pomodoros',         value: Math.floor(stats.pomodoroMinutes/25), emoji:'🍅', color:'#ef4444' },
+              { label:'Tempo de estudo',   value: `${Math.floor(stats.pomodoroMinutes/60)}h ${stats.pomodoroMinutes%60}m`, emoji:'⏱️', color:'#06b6d4' },
+              { label:'Flashcards corretos', value: stats.flashcardsCorrect,    emoji:'✅', color:'#22c55e' },
             ].map(({label,value,emoji,color})=>(
               <div key={label} className="rounded-2xl p-3 flex items-center gap-3"
                    style={{ background:'var(--bg-elevated)', border:'1px solid var(--border)' }}>
@@ -903,16 +1449,16 @@ export default function ProfilePage() {
           </div>
 
           {/* High scores */}
-          {Object.keys(studyStats.highScores).length > 0 && (
+          {Object.keys(stats.highScores).length > 0 && (
             <div className="card p-4">
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{color:'var(--text-muted)'}}>Recordes de flashcard</p>
               <div className="space-y-1.5">
-                {(Object.entries(studyStats.highScores) as [string,number][]).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([sub,score])=>{ return (
+                {(Object.entries(stats.highScores) as [string, number][]).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([sub,hs])=>(
                   <div key={sub} className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
-                      <div className="h-full rounded-full" style={{width:`${score}%`,background:score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444'}}/>
+                      <div className="h-full rounded-full" style={{width:`${hs}%`,background:hs>=80?'#22c55e':hs>=60?'#f59e0b':'#ef4444'}}/>
                     </div>
-                    <span className="text-xs font-mono font-bold shrink-0" style={{color:'var(--text-muted)',minWidth:36,textAlign:'right'}}>{score}%</span>
+                    <span className="text-xs font-mono font-bold shrink-0" style={{color:'var(--text-muted)',minWidth:36,textAlign:'right'}}>{hs}%</span>
                     <span className="text-[10px] truncate shrink-0" style={{color:'var(--text-secondary)',maxWidth:80}}>{sub}</span>
                   </div>
                 ))}
