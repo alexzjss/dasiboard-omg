@@ -19,6 +19,7 @@ import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
 import { LofiPlayer } from '@/components/LofiPlayer'
 import { useFocusMode, FocusModeBar } from '@/components/FocusMode'
 import { ColorBlindFilters, ColorBlindButton, useColorBlindMode } from '@/components/ColorBlindMode'
+import { useLiteMode, LiteModeButton } from '@/components/LiteMode'
 import { ExpBar } from '@/components/ExpCounter'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { useChronoPortalSound } from '@/hooks/useChronoPortal'
@@ -60,7 +61,6 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'light-ilha':       { bg: '#0077cc', accent: '#ffcc33', card: '#ffffff' },
   'light-vidro':      { bg: '#b8d8f8', accent: '#3b82f6', card: 'rgba(255,255,255,0.45)' },
   'light-vanilla':    { bg: '#faf7f2', accent: '#c8a060', card: '#ffffff' },
-  'light-lite':       { bg: '#f8f9fa', accent: '#4444ff', card: '#ffffff' },
   // Claros novos
   'light-punkrock':   { bg: '#1a1f8f', accent: '#e60000', card: '#ffffff' },
   'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
@@ -311,11 +311,12 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
 }
 
 // ── Sidebar inner ─────────────────────────────────────────────────────────────
-function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }: {
+function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind, liteMode }: {
   onOpenPicker: () => void
   onToggleFocus: () => void
   focusActive: boolean
   colorBlind: ReturnType<typeof useColorBlindMode>
+  liteMode: { active: boolean; toggle: () => void }
 }) {
   const { user, logout } = useAuthStore()
   const { theme, isDark, toggleDarkLight } = useTheme()
@@ -387,11 +388,12 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }
         ))}
       </nav>
 
-      {/* Tools panel: Presentation + Focus + ColorBlind — grouped as icon strip */}
+      {/* Tools panel: Presentation + Focus + ColorBlind + Lite — 2×2 grid */}
       <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="px-3 pt-2 pb-1">
-          {/* Row of 3 tool toggles */}
-          <div className="flex gap-1.5 mb-1">
+          <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5 px-0.5" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>Ferramentas</p>
+          {/* 2×2 grid of tool toggles */}
+          <div className="grid grid-cols-2 gap-1.5 mb-1">
             {/* Apresentação */}
             <button
               onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
@@ -426,6 +428,8 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }
 
             {/* Daltonismo */}
             <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
+            {/* Lite Mode */}
+            <LiteModeButton active={liteMode.active} onToggle={liteMode.toggle} />
           </div>
         </div>
         {/* Lo-fi player — shown for DLC, Pixel, 720, Portátil */}
@@ -538,6 +542,7 @@ export default function AppLayout() {
   const saveStarter = (id: string) => { localStorage.setItem('dasiboard-starter', id); setStarter(id) }
   const focusMode = useFocusMode()
   const colorBlind = useColorBlindMode()
+  const liteMode  = useLiteMode()
   useChronoPortalSound()
 
   return (
@@ -581,7 +586,7 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} colorBlind={colorBlind} />
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} onToggleFocus={focusMode.toggle} focusActive={focusMode.active} colorBlind={colorBlind} liteMode={liteMode} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">

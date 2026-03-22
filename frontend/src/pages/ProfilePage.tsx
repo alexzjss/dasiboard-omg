@@ -159,12 +159,13 @@ function drawPortraitCard(
   const sat      = 72 + Math.floor(rngColor()*18)
   const blobLit  = 52 + Math.floor(rngColor()*18)
 
-  const bgColor   = entityBg ? "#f9f9f5" : `hsl(${hue},${Math.floor(sat*0.10)}%,97%)`
+  // Blob always uses the user's own seeded colors — entityBg only changes the card background
+  const bgColor   = entityBg ? "#f8f7f2" : `hsl(${hue},${Math.floor(sat*0.10)}%,97%)`
   const inkColor  = `hsl(${hue},60%,14%)`
   const inkFaint  = `hsl(${hue},35%,52%)`
-  const blobMain  = entityBg ? entityBg.color : `hsl(${hue},${sat}%,${blobLit}%)`
-  const blobShift = entityBg ? entityBg.color+"bb" : `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
-  const accentPill= entityBg ? entityBg.color : `hsl(${hue},${sat}%,${Math.max(blobLit-26,18)}%)`
+  const blobMain  = `hsl(${hue},${sat}%,${blobLit}%)`
+  const blobShift = `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
+  const accentPill= `hsl(${hue},${sat}%,${Math.max(blobLit-26,18)}%)`
 
   ctx.clearRect(0,0,W,H)
 
@@ -216,17 +217,7 @@ function drawPortraitCard(
 
   ctx.restore()       // restore [1] — back to no clip
 
-  // Entity label top-left
-  if (entityBg) {
-    ctx.save()
-    ctx.font="600 11px sans-serif"
-    const lw = ctx.measureText(entityBg.name).width+24
-    roundRect(ctx,20,20,lw,26,13)
-    ctx.fillStyle=entityBg.color+"dd"; ctx.fill()
-    ctx.fillStyle="#ffffff"; ctx.textAlign="center"; ctx.textBaseline="middle"
-    ctx.fillText(entityBg.name,20+lw/2,20+13)
-    ctx.restore()
-  }
+  // Entity background: no label overlay on card — the background gradient speaks for itself
 
   // Name
   const textX=44, nameY=H*0.604

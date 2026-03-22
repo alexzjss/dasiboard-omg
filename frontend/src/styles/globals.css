@@ -3412,60 +3412,6 @@
 }
 [data-theme="dark-pixel"] main::after { display: none; }
 @media (max-width: 1023px) { [data-theme="dark-pixel"] main::before { left: 0 !important; } }
-
-/* ────────────────────────────────────────────────────────
-   ✨  LITE — Ultra leve, zero efeitos, performance máxima
-──────────────────────────────────────────────────────── */
-[data-theme="light-lite"] body { background: #f8f9fa; }
-[data-theme="light-lite"] body::before,
-[data-theme="light-lite"] body::after { display: none; }
-
-[data-theme="light-lite"] .sidebar-bg {
-  background: #ffffff;
-  border-right: 1px solid #e0e0e0;
-}
-[data-theme="light-lite"] .sidebar-bg::before,
-[data-theme="light-lite"] .sidebar-bg::after { display: none; }
-
-[data-theme="light-lite"] .nav-active {
-  background: rgba(68,68,255,0.08);
-  border-left: 3px solid #4444ff;
-  border-color: transparent;
-  color: #2222cc;
-  font-weight: 600;
-}
-[data-theme="light-lite"] .nav-inactive { color: #888888; }
-[data-theme="light-lite"] .nav-inactive:hover { background: #f1f3f5; color: #333333; }
-
-[data-theme="light-lite"] .card {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-[data-theme="light-lite"] .card::before, [data-theme="light-lite"] .card::after { display: none; }
-[data-theme="light-lite"] .card-hover:hover { border-color: #4444ff; box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
-
-[data-theme="light-lite"] .btn-primary {
-  background: #4444ff;
-  border: none;
-  border-radius: 6px !important;
-  color: #fff;
-  font-weight: 600;
-  box-shadow: none;
-}
-[data-theme="light-lite"] .btn-primary:hover { background: #3333ee; }
-[data-theme="light-lite"] .btn-ghost { border: 1px solid #e0e0e0; color: #555555; border-radius: 6px !important; }
-[data-theme="light-lite"] .btn-ghost:hover { background: #f1f3f5; }
-[data-theme="light-lite"] .input { border: 1px solid #e0e0e0; border-radius: 6px !important; background: #ffffff; color: #1a1a1a; box-shadow: none; }
-[data-theme="light-lite"] .input:focus { border-color: #4444ff; box-shadow: 0 0 0 2px rgba(68,68,255,0.12); }
-
-[data-theme="light-lite"] .accent-orb { display: none; }
-[data-theme="light-lite"] * { animation: none !important; transition: color 0.1s, background-color 0.1s, border-color 0.1s !important; }
-[data-theme="light-lite"] main::before, [data-theme="light-lite"] main::after { display: none; }
-[data-theme="light-lite"] .shimmer { animation: shimmer 1.5s infinite !important; }
-
-
 /* ════════════════════════════════════════════════════════
    MODO APRESENTAÇÃO — esconde sidebar/nav, fontes grandes
 ════════════════════════════════════════════════════════ */
@@ -6088,4 +6034,110 @@ html { scroll-behavior: smooth; }
 ═══════════════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
   [data-theme="light-blueprint"] .main-mobile-pad-top { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ⚡  MODO LITE — [data-lite="1"] no <html>
+   Mantém o tema atual mas desativa efeitos pesados:
+   - Remove todas animações CSS
+   - Desabilita pseudo-elementos decorativos (::before/::after em body)
+   - Remove backdrop-filter / blur
+   - Desabilita accent-orbs, scanlines, grid patterns
+   - Remove box-shadow ornamental
+   - Desabilita transições longas
+   Resultado: mesmo visual, muito menos GPU/CPU
+═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Zera todas as animações e transições */
+[data-lite="1"] *,
+[data-lite="1"] *::before,
+[data-lite="1"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0.001ms !important;
+}
+
+/* 2. Remove decorações de body (gradientes de fundo, padrões, lasers) */
+[data-lite="1"] body::before,
+[data-lite="1"] body::after {
+  display: none !important;
+}
+
+/* 3. Remove decorações de sidebar */
+[data-lite="1"] .sidebar-bg::before,
+[data-lite="1"] .sidebar-bg::after {
+  display: none !important;
+}
+
+/* 4. Remove accent orbs */
+[data-lite="1"] .accent-orb {
+  display: none !important;
+}
+
+/* 5. Remove backdrop-filter em todos os elementos */
+[data-lite="1"] *,
+[data-lite="1"] .mobile-topbar,
+[data-lite="1"] .mobile-bottomnav,
+[data-lite="1"] aside {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 6. Simplifica sombras dos cards */
+[data-lite="1"] .card {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
+}
+[data-lite="1"] .card::before,
+[data-lite="1"] .card::after {
+  display: none !important;
+}
+
+/* 7. Remove box-shadow dos botões (mantém bordas) */
+[data-lite="1"] .btn-primary {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* 8. Remove glow dos inputs */
+[data-lite="1"] .input:focus {
+  box-shadow: 0 0 0 2px var(--accent-soft) !important;
+}
+
+/* 9. main::before / main::after (RGB strips, watermarks) */
+[data-lite="1"] main::before,
+[data-lite="1"] main::after {
+  display: none !important;
+}
+
+/* 10. Shimmer skeleton mantém mas sem animação */
+[data-lite="1"] .shimmer {
+  background: var(--bg-elevated) !important;
+  animation: none !important;
+}
+
+/* 11. Scanlines e noise do Portátil */
+[data-lite="1"] [style*="repeating-linear-gradient"] {
+  background-image: none !important;
+}
+
+/* 12. nav-active simplifica */
+[data-lite="1"] .nav-active {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* 13. Mantém hover states básicos (transform leve) para UX */
+[data-lite="1"] .card-hover:hover {
+  transform: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* 14. Indicador visual sutil no header do sidebar — mostra que lite está ativo */
+[data-lite="1"] .sidebar-bg {
+  border-right: 2px solid var(--accent-1) !important;
+}
+[data-lite="1"] .mobile-topbar {
+  border-bottom: 2px solid var(--accent-1) !important;
 }

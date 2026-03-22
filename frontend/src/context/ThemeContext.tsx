@@ -6,7 +6,7 @@ export type ThemeId =
   | 'dark-colina' | 'dark-pixel' | 'light-720' | 'light-blueprint'
   | 'dark-holo' | 'dark-vinganca' | 'dark-eva'
   | 'light-roxo' | 'light-aranha' | 'light-sintetizado' | 'light-grace'
-  | 'light-lab' | 'light-ilha' | 'light-vidro' | 'light-vanilla' | 'light-lite'
+  | 'light-lab' | 'light-ilha' | 'light-vidro' | 'light-vanilla'
   | 'light-punkrock' | 'light-memento'
   | 'dark-chrono'
   | 'light-portatil'
@@ -63,7 +63,6 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-ilha',       name: 'Ilha',         dark: false, emoji: '🏝️', description: 'Kingdom Hearts · Sol',     group: 'games'   },
   { id: 'light-vidro',      name: 'Vidro',        dark: false, emoji: '🔮', description: 'Glassmorphism',             group: 'special' },
   { id: 'light-vanilla',    name: 'Vanilla',      dark: false, emoji: '🍦', description: 'Bege elegante · Minimal',   group: 'base'    },
-  { id: 'light-lite',       name: 'Lite',         dark: false, emoji: '✨', description: 'Leve · Sem efeitos',        group: 'base'    },
   { id: 'light-punkrock',   name: 'Punkrock',     dark: false, emoji: '🦸', description: 'Superman · Azul & Vermelho',group: 'super'   },
   { id: 'light-memento',    name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',       group: 'anime'   },
   { id: 'light-portatil',   name: 'Portátil',     dark: false, emoji: '🎮', description: 'Game Boy · Verde acinzentado', group: 'games' },
