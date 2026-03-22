@@ -106,7 +106,7 @@ export const buildAchievements = (opts: {
     desc: 'Usou o app após meia-noite',             hint: '???',                        color: '#6366f1', unlocked: new Date().getHours() >= 0 && new Date().getHours() < 4 },
 ]
 
-// ── Canvas utilities ───────────────────────────────────────────────────────────
+// ── Canvas utilities ─────────────────────────────────────────────────────────
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r)
@@ -116,380 +116,453 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath()
 }
 
-function addGrain(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count=4000) {
-  for (let i=0;i<count;i++) {
-    const x=rng()*W, y=rng()*H, v=Math.floor(rng()*255)
-    ctx.fillStyle=`rgba(${v},${v},${v},${alpha*rng()})`
-    ctx.fillRect(x,y,1,1)
+function addGrain(ctx: CanvasRenderingContext2D, rng: () => number, W: number, H: number, alpha: number, count = 4000) {
+  for (let i = 0; i < count; i++) {
+    const x = rng()*W, y = rng()*H, v = Math.floor(rng()*255)
+    ctx.fillStyle = `rgba(${v},${v},${v},${alpha*rng()})`
+    ctx.fillRect(x, y, 1, 1)
   }
 }
 
-// Parse hex color to RGB
 function hexToRgb(hex: string): [number,number,number] {
-  const n = parseInt(hex.replace('#',''), 16)
+  const clean = hex.replace('#','').padEnd(6,'0')
+  const n = parseInt(clean.slice(0,6), 16)
   return [(n>>16)&255, (n>>8)&255, n&255]
 }
-function hslToRgb(h:number, s:number, l:number): [number,number,number] {
-  s/=100; l/=100
-  const a = s*Math.min(l,1-l)
-  const f = (n:number) => { const k=(n+h/30)%12; return l-a*Math.max(Math.min(k-3,9-k,1),-1) }
+
+function hslToRgb(h: number, s: number, l: number): [number,number,number] {
+  s /= 100; l /= 100
+  const a = s * Math.min(l, 1-l)
+  const f = (n: number) => { const k = (n + h/30) % 12; return l - a*Math.max(Math.min(k-3, 9-k, 1), -1) }
   return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)]
 }
 
-// ── Card styles — 9 distinct visual concepts ───────────────────────────────────
-// Inspired by: Polish student ID geometric patterns, Tokyo Olympics holographic
-// tickets, boarding passes, all-access badges, gradient layers, geometric waves
+function rgbToHsl(r: number, g: number, b: number): [number,number,number] {
+  r /= 255; g /= 255; b /= 255
+  const max = Math.max(r,g,b), min = Math.min(r,g,b), l = (max+min)/2
+  if (max === min) return [0,0,l*100]
+  const d = max - min, s = d / (l > 0.5 ? 2-max-min : max+min)
+  const h = max === r ? (g-b)/d + (g<b?6:0) : max === g ? (b-r)/d+2 : (r-g)/d+4
+  return [h*60, s*100, l*100]
+}
 
+// ── Color palette derivation from hue ──────────────────────────────────────────
+// Returns 5 colors: primary, shift1, shift2, light accent, dark accent
+function deriveColors(hue: number, sat: number, lit: number) {
+  const h2 = (hue + 40 + Math.floor(sat * 0.2)) % 360
+  const h3 = (hue + 85 + Math.floor(sat * 0.3)) % 360
+  const h4 = (hue - 30 + 360) % 360
+  return {
+    c1:   `hsl(${hue},${sat}%,${lit}%)`,
+    c2:   `hsl(${h2},${sat-8}%,${lit-18}%)`,
+    c3:   `hsl(${h3},${sat-16}%,${Math.max(lit-30,12)}%)`,
+    c4:   `hsl(${h4},${Math.min(sat+10,100)}%,${Math.min(lit+18,88)}%)`,
+    c5:   `hsl(${hue},${sat-25}%,${Math.min(lit+32,92)}%)`,
+    a1:   `hsla(${hue},${sat}%,${lit}%,0)`,
+    a2:   `hsla(${h2},${sat-8}%,${lit-18}%,0)`,
+    hue, sat, lit, h2, h3, h4,
+  }
+}
+
+// ── Card style system — 16 distinct visual concepts ──────────────────────────
 type CardStyle =
-  | 'geometric_rays'    // Polish ID style — radiating ray bands from corner
-  | 'layer_stack'       // Stacked transparent hexagon/rect layers (gradient layers image)
-  | 'wave_lines'        // Parallel curved lines filling the zone (Seoul wave image)
-  | 'checkerboard'      // Bold checker pattern (Brooklyn image)
-  | 'holographic'       // Holographic rainbow gradient + noise (Tokyo Olympics ticket)
-  | 'boarding_pass'     // Barcode strips + gradient ticket (boarding pass images)
-  | 'diagonal_bands'    // Diagonal colored stripes (Polish ID diagonal pattern)
-  | 'concentric_shapes' // Nested shrinking shapes with glow
-  | 'ink_splatter'      // Organic ink-like splashes (original blob but more dramatic)
+  | 'geometric_rays'      // Radiating fan bands from corner (Polish IDs)
+  | 'layer_stack'         // Nested shrinking shapes, translucent layers
+  | 'wave_lines'          // Parallel sine-wave color bands
+  | 'checkerboard'        // Gradient-shifted chess grid
+  | 'holographic'         // Full rainbow prismatic gradient
+  | 'boarding_pass'       // Ticket with barcode strips & perfs
+  | 'diagonal_bands'      // Bold angled color stripes
+  | 'concentric_shapes'   // Polygon rings expanding outward
+  | 'ink_splatter'        // Organic multi-blob shapes
+  | 'grid_mosaic'         // Colored square mosaic/pixel grid
+  | 'circuit'             // Tech circuit-board line pattern
+  | 'halftone'            // Dot halftone gradient
+  | 'topographic'         // Topographic contour lines
+  | 'brush_strokes'       // Wide paint brush sweeps
+  | 'crystal'             // Geometric low-poly crystal facets
+  | 'neon_glow'           // Dark bg with glowing neon shapes
 
 function pickCardStyle(userId: string): CardStyle {
-  const rng = seededRng(userId + '-style')
+  const rng = seededRng(userId + '-stylev2')
   const styles: CardStyle[] = [
     'geometric_rays','layer_stack','wave_lines','checkerboard',
-    'holographic','boarding_pass','diagonal_bands','concentric_shapes','ink_splatter'
+    'holographic','boarding_pass','diagonal_bands','concentric_shapes',
+    'ink_splatter','grid_mosaic','circuit','halftone',
+    'topographic','brush_strokes','crystal','neon_glow',
   ]
   return styles[Math.floor(rng() * styles.length)]
 }
 
-// ── Effect overlays — decoupled from background, applied on top ──────────────
-type CardEffect = 'foil' | 'scanlines' | 'vignette' | 'chromatic' | 'grain_heavy' | 'none'
+// ── Effect overlays ───────────────────────────────────────────────────────────
+type CardEffect =
+  | 'foil_gold'    // diagonal golden shimmer
+  | 'foil_holo'    // full-spectrum prismatic shimmer bands
+  | 'scanlines'    // CRT horizontal scanlines
+  | 'vignette'     // edge darkening
+  | 'chromatic'    // red/blue edge fringe
+  | 'grain_film'   // heavy analog film grain
+  | 'crosshatch'   // diagonal crosshatch lines
+  | 'noise_rgb'    // RGB channel noise
+  | 'none'
 
 function pickCardEffect(userId: string): CardEffect {
-  const rng = seededRng(userId + '-effect')
-  const effects: CardEffect[] = ['foil','scanlines','vignette','chromatic','grain_heavy','none','foil','none']
+  const rng = seededRng(userId + '-effectv2')
+  const effects: CardEffect[] = [
+    'foil_gold','foil_holo','scanlines','vignette','chromatic',
+    'grain_film','crosshatch','noise_rgb','none','foil_holo',
+    'foil_gold','none','vignette','scanlines','none',
+  ]
   return effects[Math.floor(rng() * effects.length)]
 }
 
-// ── Draw background style ─────────────────────────────────────────────────────
+// ── Color scheme variation ─────────────────────────────────────────────────────
+type ColorScheme = 'vivid' | 'pastel' | 'dark_rich' | 'neon' | 'earth' | 'cold'
+
+function pickColorScheme(userId: string): ColorScheme {
+  const rng = seededRng(userId + '-scheme')
+  const schemes: ColorScheme[] = ['vivid','pastel','dark_rich','neon','earth','cold','vivid','vivid']
+  return schemes[Math.floor(rng() * schemes.length)]
+}
+
+function applyColorScheme(hue: number, scheme: ColorScheme): { sat: number; lit: number } {
+  switch(scheme) {
+    case 'vivid':     return { sat: 75 + Math.random()*18, lit: 50 + Math.random()*12 }
+    case 'pastel':    return { sat: 45 + Math.random()*20, lit: 68 + Math.random()*14 }
+    case 'dark_rich': return { sat: 70 + Math.random()*20, lit: 32 + Math.random()*12 }
+    case 'neon':      return { sat: 92 + Math.random()*8,  lit: 55 + Math.random()*10 }
+    case 'earth':     return { sat: 35 + Math.random()*25, lit: 42 + Math.random()*18 }
+    case 'cold':      return { sat: 55 + Math.random()*25, lit: 58 + Math.random()*16 }
+  }
+}
+
+// ── Draw background style ──────────────────────────────────────────────────────
 function drawCardBackground(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, zoneH: number,
   style: CardStyle,
   hue: number, sat: number, lit: number,
   rng: () => number,
-  entityBg: {color:string; name:string} | null
+  entityBg: { color: string; name: string } | null,
 ) {
-  const [r1,g1,b1] = hslToRgb(hue, sat, lit)
-  const [r2,g2,b2] = hslToRgb((hue+40)%360, sat-10, lit-18)
-  const [r3,g3,b3] = hslToRgb((hue+80)%360, sat-20, lit-8)
-  const c1 = `rgb(${r1},${g1},${b1})`
-  const c2 = `rgb(${r2},${g2},${b2})`
-  const c3 = `rgb(${r3},${g3},${b3})`
-  const a1 = `rgba(${r1},${g1},${b1},0)`
-  const a2 = `rgba(${r2},${g2},${b2},0)`
+  const pal = deriveColors(hue, sat, lit)
+  const { c1, c2, c3, c4, c5 } = pal
 
-  // Card base bg
-  const isDark = lit < 45
-  const bgBase = entityBg
-    ? (isDark ? '#0e0e12' : '#f8f7f2')
-    : (isDark ? `hsl(${hue},18%,8%)` : `hsl(${hue},12%,97%)`)
+  // ── Card base background ───────────────────────────────────────────────────
+  // The pattern zone (top ~57%) always uses user's colors.
+  // The info zone (bottom ~43%) is where entityBg actually lives — as solid tinted bg.
+  const isDark = lit < 44
 
-  ctx.fillStyle = bgBase
-  ctx.fillRect(0,0,W,H)
-
-  // Entity background gradient overlay
   if (entityBg) {
+    // Entity: tint the ENTIRE card base (mainly visible in info section)
     const [er,eg,eb] = hexToRgb(entityBg.color)
-    const eg2 = ctx.createLinearGradient(0,0,W,H)
-    eg2.addColorStop(0, `rgba(${er},${eg},${eb},0.18)`)
-    eg2.addColorStop(1, `rgba(${er},${eg},${eb},0.06)`)
-    ctx.fillStyle = eg2
-    ctx.fillRect(0,0,W,H)
+    const [eh,es,el] = rgbToHsl(er,eg,eb)
+    // Light neutral for info zone
+    const infoBg = isDark
+      ? `hsl(${eh},${es*0.4}%,${12}%)`
+      : `hsl(${eh},${es*0.25}%,${96}%)`
+    ctx.fillStyle = infoBg
+    ctx.fillRect(0, 0, W, H)
+    // Subtle entity color wash over entire card
+    const entityWash = ctx.createLinearGradient(0, 0, W*0.6, H)
+    entityWash.addColorStop(0, `rgba(${er},${eg},${eb},0.12)`)
+    entityWash.addColorStop(1, `rgba(${er},${eg},${eb},0.05)`)
+    ctx.fillStyle = entityWash
+    ctx.fillRect(0, 0, W, H)
+    // Strong entity color band at the bottom info strip
+    const infoGrad = ctx.createLinearGradient(0, zoneH, 0, H)
+    infoGrad.addColorStop(0, `rgba(${er},${eg},${eb},0.22)`)
+    infoGrad.addColorStop(1, `rgba(${er},${eg},${eb},0.10)`)
+    ctx.fillStyle = infoGrad
+    ctx.fillRect(0, zoneH, W, H - zoneH)
+    // Entity color accent stripe at very bottom
+    ctx.fillStyle = `rgba(${er},${eg},${eb},0.7)`
+    ctx.fillRect(0, H - 5, W, 5)
+  } else {
+    const bgBase = isDark
+      ? `hsl(${hue},${Math.round(sat*0.18)}%,8%)`
+      : `hsl(${hue},${Math.round(sat*0.12)}%,97%)`
+    ctx.fillStyle = bgBase
+    ctx.fillRect(0, 0, W, H)
   }
 
+  // ── Pattern zone clip ─────────────────────────────────────────────────────
   ctx.save()
-  ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+  ctx.beginPath(); ctx.rect(0, 0, W, zoneH); ctx.clip()
 
-  switch(style) {
+  switch (style) {
 
+    // ─ 1. Geometric rays (Polish student ID) ────────────────────────────────
     case 'geometric_rays': {
-      // Radiating bands from a corner — inspired by Polish student IDs
-      const cx = W * (rng() < 0.5 ? -0.05 : 1.05)
-      const cy = H * (-0.1 + rng() * 0.2)
-      const numRays = 14 + Math.floor(rng() * 8)
-      const totalAngle = Math.PI * (0.55 + rng() * 0.25)
-      const startAngle = cy < H/2 ? 0.1 : -Math.PI + 0.1
+      const side = rng() < 0.5 ? -1 : 1
+      const cx   = side < 0 ? W * -0.06 : W * 1.06
+      const cy   = H * (-0.08 + rng() * 0.22)
+      const nr   = 16 + Math.floor(rng() * 10)
+      const span = Math.PI * (0.50 + rng() * 0.30)
+      const base = side < 0 ? -0.15 : Math.PI - span + 0.15
+      const dist = Math.sqrt(W*W + H*H) * 1.7
 
-      for (let i = 0; i < numRays; i++) {
-        const angle1 = startAngle + (i / numRays) * totalAngle
-        const angle2 = startAngle + ((i+1) / numRays) * totalAngle
-        const dist = Math.sqrt(W*W+H*H) * 1.6
-
+      for (let i = 0; i < nr; i++) {
+        const a1 = base + (i/nr)*span, a2 = base + ((i+1)/nr)*span
         ctx.beginPath()
         ctx.moveTo(cx, cy)
-        ctx.lineTo(cx + Math.cos(angle1)*dist, cy + Math.sin(angle1)*dist)
-        ctx.lineTo(cx + Math.cos(angle2)*dist, cy + Math.sin(angle2)*dist)
+        ctx.lineTo(cx + Math.cos(a1)*dist, cy + Math.sin(a1)*dist)
+        ctx.lineTo(cx + Math.cos(a2)*dist, cy + Math.sin(a2)*dist)
         ctx.closePath()
-
-        const t = i / numRays
-        const alpha = i % 2 === 0 ? 0.85 : 0.65
-        const rayGrad = ctx.createLinearGradient(cx, cy, cx + Math.cos((angle1+angle2)/2)*dist*0.7, cy + Math.sin((angle1+angle2)/2)*dist*0.7)
-        if (i % 2 === 0) {
-          rayGrad.addColorStop(0, c1)
-          rayGrad.addColorStop(1, c2)
-        } else {
-          rayGrad.addColorStop(0, c2)
-          rayGrad.addColorStop(1, c3)
-        }
-        ctx.globalAlpha = alpha
-        ctx.fillStyle = rayGrad
-        ctx.fill()
+        const rg = ctx.createLinearGradient(cx, cy, cx + Math.cos((a1+a2)/2)*dist*0.75, cy + Math.sin((a1+a2)/2)*dist*0.75)
+        rg.addColorStop(0, i%2===0 ? c1 : c2)
+        rg.addColorStop(0.6, i%2===0 ? c2 : c3)
+        rg.addColorStop(1, i%3===0 ? c4 : c3)
+        ctx.globalAlpha = i%2===0 ? 0.9 : 0.72
+        ctx.fillStyle = rg; ctx.fill()
       }
       ctx.globalAlpha = 1
       break
     }
 
+    // ─ 2. Layer stack (nested shapes) ───────────────────────────────────────
     case 'layer_stack': {
-      // Stacked semi-transparent layers shrinking toward center — gradient covers image
-      const numLayers = 7 + Math.floor(rng() * 4)
-      const shapeType = rng() < 0.33 ? 'rect' : rng() < 0.5 ? 'hex' : 'rounded'
-      const baseAlpha = 0.75
-
-      for (let i = numLayers-1; i >= 0; i--) {
-        const t = i / numLayers
-        const margin = (1-t) * W * 0.42
-        const topMargin = (1-t) * zoneH * 0.38
-        const layerAlpha = baseAlpha * (0.4 + t * 0.6)
-        const hShift = (i * 22) % 360
-
-        const lg = ctx.createLinearGradient(margin, topMargin, W-margin, zoneH-topMargin*0.4)
-        lg.addColorStop(0, `hsl(${(hue + hShift*0.8)%360},${sat}%,${lit}%)`)
-        lg.addColorStop(1, `hsl(${(hue + hShift)%360},${sat-15}%,${Math.max(lit-20,15)}%)`)
-
-        ctx.globalAlpha = layerAlpha
+      const nl   = 8 + Math.floor(rng() * 5)
+      const kind = rng() < 0.25 ? 'rect' : rng() < 0.5 ? 'hex' : rng() < 0.75 ? 'rounded' : 'diamond'
+      for (let i = nl-1; i >= 0; i--) {
+        const t  = i / nl
+        const mg = (1-t) * W * 0.40
+        const tm = (1-t) * zoneH * 0.35
+        const hh = (hue + i*28) % 360
+        const ll = isDark ? 20 + t*45 : 35 + t*42
+        const lg = ctx.createLinearGradient(mg, tm, W-mg, zoneH-tm*0.3)
+        lg.addColorStop(0, `hsl(${hh},${sat}%,${ll}%)`)
+        lg.addColorStop(1, `hsl(${(hh+30)%360},${sat-12}%,${Math.max(ll-22,10)}%)`)
+        ctx.globalAlpha = 0.38 + t*0.52
         ctx.fillStyle = lg
-
-        if (shapeType === 'rect') {
-          ctx.fillRect(margin, topMargin, W-margin*2, zoneH-topMargin)
-        } else if (shapeType === 'rounded') {
-          roundRect(ctx, margin, topMargin, W-margin*2, zoneH-topMargin, 18)
-          ctx.fill()
-        } else {
-          // Hexagon-ish
-          const cx2 = W/2, cy2 = topMargin + (zoneH-topMargin)/2
-          const rx = (W-margin*2)/2, ry = (zoneH-topMargin)/2
+        if (kind === 'rect') {
+          ctx.fillRect(mg, tm, W-mg*2, zoneH-tm)
+        } else if (kind === 'rounded') {
+          roundRect(ctx, mg, tm, W-mg*2, zoneH-tm, 22); ctx.fill()
+        } else if (kind === 'hex') {
+          const hcx = W/2, hcy = tm + (zoneH-tm)/2
+          const rx = (W-mg*2)/2, ry = (zoneH-tm)/2
           ctx.beginPath()
           for (let j=0;j<6;j++) {
             const a = (j/6)*Math.PI*2 - Math.PI/6
-            j===0 ? ctx.moveTo(cx2+Math.cos(a)*rx, cy2+Math.sin(a)*ry*0.85)
-                  : ctx.lineTo(cx2+Math.cos(a)*rx, cy2+Math.sin(a)*ry*0.85)
+            j===0 ? ctx.moveTo(hcx+Math.cos(a)*rx, hcy+Math.sin(a)*ry*0.8)
+                  : ctx.lineTo(hcx+Math.cos(a)*rx, hcy+Math.sin(a)*ry*0.8)
           }
-          ctx.closePath()
-          ctx.fill()
+          ctx.closePath(); ctx.fill()
+        } else { // diamond
+          const dcx = W/2, dcy = tm + (zoneH-tm)/2
+          const dx = (W-mg*2)/2, dy = (zoneH-tm)/2
+          ctx.beginPath()
+          ctx.moveTo(dcx, dcy-dy); ctx.lineTo(dcx+dx, dcy)
+          ctx.lineTo(dcx, dcy+dy); ctx.lineTo(dcx-dx, dcy)
+          ctx.closePath(); ctx.fill()
         }
       }
       ctx.globalAlpha = 1
       break
     }
 
+    // ─ 3. Wave lines ────────────────────────────────────────────────────────
     case 'wave_lines': {
-      // Parallel wave lines filling the zone — Seoul psychedelic wave
-      const numWaves = 28 + Math.floor(rng() * 16)
-      const amplitude = 20 + rng() * 50
-      const frequency = 0.008 + rng() * 0.016
-      const phaseShift = rng() * Math.PI * 2
-      const lineW = zoneH / numWaves
-
-      for (let wi = 0; wi < numWaves; wi++) {
-        const t = wi / numWaves
-        const y0 = (wi / numWaves) * zoneH
-        const hh = hue + t * 60
-        const ll = lit - t * 20
-
+      const nw  = 32 + Math.floor(rng() * 20)
+      const amp = 18 + rng() * 58
+      const frq = 0.007 + rng() * 0.018
+      const ph  = rng() * Math.PI * 2
+      const dbl = rng() < 0.4 // double wave interference
+      const frq2 = frq * (1.7 + rng() * 0.8)
+      for (let wi = 0; wi < nw; wi++) {
+        const t  = wi / nw
+        const y0 = t * zoneH
+        const hh = (hue + t*70) % 360
+        const ll = isDark ? 25 + t*38 : 42 + t*32
         ctx.beginPath()
-        ctx.moveTo(-10, y0)
-        for (let x=0; x<=W+10; x+=3) {
-          const wave = Math.sin(x * frequency + phaseShift + wi * 0.3) * amplitude
-          ctx.lineTo(x, y0 + wave)
+        ctx.moveTo(-8, y0)
+        for (let x = 0; x <= W+8; x += 2) {
+          const w1 = Math.sin(x*frq + ph + wi*0.28) * amp
+          const w2 = dbl ? Math.sin(x*frq2 + ph*1.4 + wi*0.1) * amp * 0.4 : 0
+          ctx.lineTo(x, y0 + w1 + w2)
         }
-        ctx.lineTo(W+10, zoneH+10)
-        ctx.lineTo(-10, zoneH+10)
+        ctx.lineTo(W+8, zoneH+8); ctx.lineTo(-8, zoneH+8)
         ctx.closePath()
-
-        ctx.fillStyle = `hsl(${hh%360},${sat}%,${ll}%)`
-        ctx.globalAlpha = 0.9
+        ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
+        ctx.globalAlpha = 0.88
         ctx.fill()
       }
       ctx.globalAlpha = 1
       break
     }
 
+    // ─ 4. Checkerboard ──────────────────────────────────────────────────────
     case 'checkerboard': {
-      // Bold checker + color gradient shift per row/col — Brooklyn image
-      const cols = 8 + Math.floor(rng() * 6)
-      const cellW = W / cols
-      const rows = Math.ceil(zoneH / cellW)
+      const cols = 7 + Math.floor(rng() * 7)
+      const cw   = W / cols
+      const rows = Math.ceil(zoneH / cw)
+      const alt  = rng() < 0.3 // alternating color shift per row
 
-      for (let row=0; row<rows; row++) {
-        for (let col=0; col<cols; col++) {
-          const t = (row + col) / (rows + cols)
-          const isOn = (row + col) % 2 === 0
-          if (!isOn) continue
-          const h2 = (hue + t * 45) % 360
-          ctx.fillStyle = `hsl(${h2},${sat}%,${lit - t*15}%)`
+      // Fill background first
+      ctx.fillStyle = isDark ? c3 : c5; ctx.fillRect(0, 0, W, zoneH)
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          if ((row + col) % 2 !== 0) continue
+          const t   = (row + col) / (rows + cols)
+          const hh  = (hue + t*55 + (alt && row%2===0 ? 30 : 0)) % 360
+          const ll  = isDark ? 28 + t*30 : 52 - t*20
+          ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
           ctx.globalAlpha = 0.9
-          ctx.fillRect(col*cellW, row*cellW, cellW, cellW)
+          ctx.fillRect(col*cw, row*cw, cw, cw)
         }
       }
       ctx.globalAlpha = 1
       break
     }
 
+    // ─ 5. Holographic (full rainbow) ────────────────────────────────────────
     case 'holographic': {
-      // Holographic iridescent gradient — Tokyo Olympics ticket style
-      const numStops = 8
-      const grad = ctx.createLinearGradient(0, 0, W * (0.7 + rng()*0.6), zoneH * (0.6 + rng()*0.5))
-
-      const holoHues = [hue, (hue+45)%360, (hue+90)%360, (hue+135)%360, (hue+180)%360,
-                        (hue+225)%360, (hue+270)%360, (hue+315)%360]
-      for (let i=0; i<numStops; i++) {
-        const t = i / (numStops-1)
-        const hh = holoHues[i]
-        grad.addColorStop(t, `hsl(${hh},${80 + rng()*15}%,${60 + rng()*20}%)`)
+      // Base: angled multi-stop rainbow
+      const angle = rng() * Math.PI / 3
+      const gx2   = Math.cos(angle)*W, gy2 = Math.sin(angle)*zoneH
+      const grad  = ctx.createLinearGradient(0, 0, gx2, gy2)
+      const stops = 10
+      for (let i = 0; i <= stops; i++) {
+        const t  = i / stops
+        const hh = (hue + t*340) % 360
+        const ls = isDark ? 52 : 62
+        grad.addColorStop(t, `hsl(${hh},${85+rng()*12}%,${ls}%)`)
       }
+      ctx.globalAlpha = 0.94
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, zoneH)
 
-      ctx.globalAlpha = 0.92
-      ctx.fillStyle = grad
-      ctx.fillRect(0,0,W,zoneH)
+      // White shimmer band sweeping diagonally
+      const sw  = 180 + rng()*120
+      const sx  = rng() * (W - sw)
+      const shim = ctx.createLinearGradient(sx, 0, sx + sw, zoneH)
+      shim.addColorStop(0,   'rgba(255,255,255,0)')
+      shim.addColorStop(0.3, 'rgba(255,255,255,0.15)')
+      shim.addColorStop(0.5, 'rgba(255,255,255,0.42)')
+      shim.addColorStop(0.7, 'rgba(255,255,255,0.15)')
+      shim.addColorStop(1,   'rgba(255,255,255,0)')
+      ctx.fillStyle = shim; ctx.fillRect(0, 0, W, zoneH)
 
-      // White shimmer overlay
-      const shimmer = ctx.createLinearGradient(W*0.1, 0, W*0.9, zoneH)
-      shimmer.addColorStop(0, 'rgba(255,255,255,0)')
-      shimmer.addColorStop(0.35, 'rgba(255,255,255,0.22)')
-      shimmer.addColorStop(0.5, 'rgba(255,255,255,0.38)')
-      shimmer.addColorStop(0.65, 'rgba(255,255,255,0.22)')
-      shimmer.addColorStop(1, 'rgba(255,255,255,0)')
-      ctx.fillStyle = shimmer
-      ctx.fillRect(0,0,W,zoneH)
+      // Second shimmer at different angle — iridescence
+      const shim2 = ctx.createLinearGradient(0, 0, W, zoneH * 0.4)
+      shim2.addColorStop(0,   'rgba(200,100,255,0.00)')
+      shim2.addColorStop(0.45,'rgba(200,100,255,0.12)')
+      shim2.addColorStop(0.55,'rgba(100,220,255,0.12)')
+      shim2.addColorStop(1,   'rgba(100,220,255,0.00)')
+      ctx.fillStyle = shim2; ctx.fillRect(0, 0, W, zoneH)
+
       ctx.globalAlpha = 1
       break
     }
 
+    // ─ 6. Boarding pass / ticket ────────────────────────────────────────────
     case 'boarding_pass': {
-      // Ticket/boarding pass aesthetic — gradient upper block + info strips
-      const grad = ctx.createLinearGradient(0, 0, W, zoneH)
-      grad.addColorStop(0, c1)
-      grad.addColorStop(0.4, c2)
-      grad.addColorStop(1, c3)
-      ctx.fillStyle = grad
-      ctx.globalAlpha = 0.95
-      ctx.fillRect(0,0,W,zoneH)
-      ctx.globalAlpha = 1
+      // Gradient fill
+      const grad = ctx.createLinearGradient(rng()*W*0.3, 0, W*(0.7+rng()*0.3), zoneH)
+      grad.addColorStop(0,   c1)
+      grad.addColorStop(0.38, c2)
+      grad.addColorStop(0.72, c3)
+      grad.addColorStop(1,   c4)
+      ctx.fillStyle = grad; ctx.globalAlpha = 0.96
+      ctx.fillRect(0, 0, W, zoneH); ctx.globalAlpha = 1
 
-      // Perforated dashed line near bottom of zone
-      const perf = zoneH * 0.85
-      ctx.setLineDash([8, 6])
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)'
-      ctx.lineWidth = 1.5
-      ctx.beginPath(); ctx.moveTo(20, perf); ctx.lineTo(W-20, perf); ctx.stroke()
+      // Perforation line
+      const perf = zoneH * 0.82
+      ctx.setLineDash([9, 7])
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1.5
+      ctx.beginPath(); ctx.moveTo(24, perf); ctx.lineTo(W-24, perf); ctx.stroke()
       ctx.setLineDash([])
 
-      // Mini barcode-style stripes at bottom
-      const barH = zoneH * 0.12
-      const barY = zoneH * 0.87
-      const numBars = 32 + Math.floor(rng() * 16)
-      ctx.fillStyle = 'rgba(0,0,0,0.25)'
-      for (let bi=0; bi<numBars; bi++) {
-        const bw = 1 + Math.floor(rng() * 4)
-        const bx = 40 + rng() * (W-80)
-        ctx.fillRect(bx, barY, bw, barH * (0.5 + rng()*0.5))
+      // Barcode strips in two groups
+      const drawBars = (startX: number, endX: number, y: number, h: number) => {
+        let bx = startX
+        while (bx < endX) {
+          const bw = 1 + Math.floor(rng() * 5)
+          ctx.fillStyle = 'rgba(0,0,0,0.28)'
+          ctx.fillRect(bx, y, bw, h * (0.5 + rng()*0.5))
+          bx += bw + (rng() < 0.3 ? 2 : 1)
+        }
       }
+      drawBars(32, W*0.5 - 20, perf + 8, zoneH - perf - 8)
+      drawBars(W*0.55, W-32, perf + 8, zoneH - perf - 8)
       break
     }
 
+    // ─ 7. Diagonal bands ────────────────────────────────────────────────────
     case 'diagonal_bands': {
-      // Bold diagonal colored bands — Polish ID diagonal variant
-      const numBands = 8 + Math.floor(rng() * 6)
-      const angle = 35 + rng() * 30
-      const rad = (angle * Math.PI) / 180
-      const bandW = (W * 1.8) / numBands
-
-      for (let bi=0; bi<numBands; bi++) {
-        const t = bi / numBands
-        const x = bi * bandW - W * 0.4
-        const h2 = (hue + bi * 18) % 360
-        const l2 = lit - bi * 4
-        const isEven = bi % 2 === 0
-
+      const nb  = 9 + Math.floor(rng() * 7)
+      const ang = (28 + rng()*38) * Math.PI / 180
+      const bw  = W * 1.9 / nb
+      for (let bi = 0; bi < nb; bi++) {
+        const t  = bi / nb
+        const hh = (hue + bi*20 + Math.floor(rng()*8)) % 360
+        const ll = isDark
+          ? 22 + bi*Math.floor(32/nb)
+          : 35 + bi*Math.floor(38/nb)
         ctx.save()
-        ctx.translate(x, -zoneH*0.2)
-        ctx.rotate(rad)
-
-        const bandGrad = ctx.createLinearGradient(0,0,bandW,0)
-        bandGrad.addColorStop(0, `hsl(${h2},${sat}%,${l2}%)`)
-        bandGrad.addColorStop(1, `hsl(${(h2+20)%360},${sat-8}%,${Math.max(l2-15,15)}%)`)
-
-        ctx.fillStyle = bandGrad
-        ctx.globalAlpha = isEven ? 0.88 : 0.72
-        ctx.fillRect(0, 0, bandW*0.82, zoneH*2.5)
+        ctx.translate(bi*bw - W*0.45, -zoneH*0.25)
+        ctx.rotate(ang)
+        const bg2 = ctx.createLinearGradient(0,0,bw,0)
+        bg2.addColorStop(0, `hsl(${hh},${sat}%,${ll}%)`)
+        bg2.addColorStop(1, `hsl(${(hh+24)%360},${sat-10}%,${Math.max(ll-18,8)}%)`)
+        ctx.fillStyle = bg2
+        ctx.globalAlpha = bi%2===0 ? 0.90 : 0.70
+        ctx.fillRect(0, 0, bw*0.85, zoneH*3)
         ctx.restore()
       }
       ctx.globalAlpha = 1
       break
     }
 
+    // ─ 8. Concentric shapes ─────────────────────────────────────────────────
     case 'concentric_shapes': {
-      // Nested concentric shapes shrinking with glow
-      const numRings = 9 + Math.floor(rng() * 5)
-      const shapeN = Math.floor(rng() * 4) + 3 // 3=triangle, 4=diamond, 5=pentagon, 6=hex
-      const cx = W * (0.35 + rng() * 0.30)
-      const cy = zoneH * (0.35 + rng() * 0.25)
-      const maxR = Math.min(W, zoneH) * 0.78
+      const nr    = 10 + Math.floor(rng() * 6)
+      const sides = 3 + Math.floor(rng() * 4) // 3→6 sides
+      const cx    = W * (0.30 + rng()*0.40)
+      const cy    = zoneH * (0.25 + rng()*0.35)
+      const maxR  = Math.min(W, zoneH) * 0.82
+      const rot   = rng() * Math.PI * 2
 
-      // Background solid first
-      const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR)
-      bgGrad.addColorStop(0, c1)
-      bgGrad.addColorStop(1, c3)
-      ctx.fillStyle = bgGrad
-      ctx.fillRect(0,0,W,zoneH)
+      // Base radial gradient fill
+      const bg2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR*1.1)
+      bg2.addColorStop(0, c1); bg2.addColorStop(0.6, c2); bg2.addColorStop(1, c3)
+      ctx.fillStyle = bg2; ctx.fillRect(0, 0, W, zoneH)
 
-      for (let ri=numRings-1; ri>=0; ri--) {
-        const t = ri / numRings
-        const r = maxR * t
-        const hh = (hue + ri * 15) % 360
-        const ll = 30 + ri * (60/numRings)
-        const alpha = 0.15 + (1-t) * 0.5
-
+      // Draw rings from outside in
+      for (let ri = nr; ri >= 0; ri--) {
+        const t  = ri / nr
+        const r  = maxR * t
+        const hh = (hue + ri*18) % 360
+        const ll = isDark ? 18 + ri*(52/nr) : 28 + ri*(55/nr)
         ctx.beginPath()
-        for (let pi=0; pi<shapeN; pi++) {
-          const a = (pi/shapeN)*Math.PI*2 - Math.PI/2
-          const px = cx + Math.cos(a)*r
-          const py = cy + Math.sin(a)*r
-          pi===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py)
+        for (let pi = 0; pi < sides; pi++) {
+          const a = rot + (pi/sides)*Math.PI*2
+          pi===0 ? ctx.moveTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r)
+                 : ctx.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r)
         }
         ctx.closePath()
-
         ctx.strokeStyle = `hsl(${hh},${sat}%,${ll}%)`
-        ctx.lineWidth = 3 + (1-t) * 4
-        ctx.globalAlpha = alpha
+        ctx.lineWidth   = 2.5 + (1-t)*4
+        ctx.globalAlpha = 0.12 + (1-t)*0.55
         ctx.stroke()
       }
       ctx.globalAlpha = 1
       break
     }
 
-    case 'ink_splatter':
-    default: {
-      // Dramatic organic ink splash — evolved from original blob
-      const numSplats = 2 + Math.floor(rng() * 3)
-      for (let si=0; si<numSplats; si++) {
-        const scx = W * (0.1 + rng() * 0.8)
-        const scy = zoneH * (-0.1 + rng() * 0.8)
-        const sr = Math.min(W, zoneH) * (0.45 + rng() * 0.55)
-        const n = 8 + Math.floor(rng()*6)
+    // ─ 9. Ink splatter (evolved organic blobs) ──────────────────────────────
+    case 'ink_splatter': {
+      const ns = 2 + Math.floor(rng()*4)
+      for (let si = 0; si < ns; si++) {
+        const scx = W * (0.05 + rng()*0.90)
+        const scy = zoneH * (-0.08 + rng()*0.85)
+        const sr  = Math.min(W, zoneH) * (0.40 + rng()*0.60)
+        const n   = 9 + Math.floor(rng()*7)
         const pts: [number,number][] = []
         for (let i=0;i<n;i++) {
-          const a = (i/n)*Math.PI*2 - Math.PI/2
-          const rr = sr * (0.35 + rng()*1.0)
+          const a  = (i/n)*Math.PI*2 - Math.PI/2
+          const rr = sr * (0.30 + rng()*1.05)
           pts.push([scx+Math.cos(a)*rr, scy+Math.sin(a)*rr])
         }
         ctx.beginPath()
@@ -501,123 +574,407 @@ function drawCardBackground(
           ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
         }
         ctx.closePath()
-        const sg = ctx.createRadialGradient(scx-sr*0.2,scy-sr*0.2,sr*0.03,scx+sr*0.1,scy+sr*0.1,sr*1.0)
-        sg.addColorStop(0, c1)
-        sg.addColorStop(0.55, c2)
+        const hh = (hue + si*35) % 360
+        const sg = ctx.createRadialGradient(scx-sr*0.2, scy-sr*0.2, sr*0.03, scx+sr*0.1, scy+sr*0.1, sr*1.05)
+        sg.addColorStop(0, `hsl(${hh},${sat}%,${lit}%)`)
+        sg.addColorStop(0.55, `hsl(${(hh+35)%360},${sat-10}%,${lit-18}%)`)
         sg.addColorStop(1, 'rgba(0,0,0,0)')
         ctx.fillStyle = sg
-        ctx.globalAlpha = si === 0 ? 0.92 : 0.65
+        ctx.globalAlpha = si===0 ? 0.94 : 0.62
         ctx.fill()
       }
       ctx.globalAlpha = 1
       break
     }
+
+    // ─ 10. Grid mosaic (pixel grid) ──────────────────────────────────────────
+    case 'grid_mosaic': {
+      const cellS = 36 + Math.floor(rng()*52)
+      const cols2 = Math.ceil(W/cellS) + 1
+      const rows2 = Math.ceil(zoneH/cellS) + 1
+      const rng2  = seededRng('mosaic')
+      for (let row=0; row<rows2; row++) {
+        for (let col=0; col<cols2; col++) {
+          const t  = Math.sqrt((col/cols2)**2 + (row/rows2)**2)
+          const hh = (hue + t*90 + rng2()*25) % 360
+          const ll = isDark ? 22+rng2()*35 : 45+rng2()*38
+          const alpha = 0.55 + rng2()*0.40
+          ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
+          ctx.globalAlpha = alpha
+          ctx.fillRect(col*cellS - 2, row*cellS - 2, cellS-1, cellS-1)
+        }
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    // ─ 11. Circuit board ────────────────────────────────────────────────────
+    case 'circuit': {
+      // Background
+      const bgc = isDark ? `hsl(${hue},${sat*0.3}%,10%)` : `hsl(${hue},${sat*0.15}%,94%)`
+      ctx.fillStyle = bgc; ctx.fillRect(0,0,W,zoneH)
+
+      // Grid of circuit traces
+      const grid = 28 + Math.floor(rng()*24)
+      const rng3 = seededRng('circuit-'+hue)
+      ctx.strokeStyle = c1; ctx.lineWidth = 1.8; ctx.globalAlpha = 0.55
+
+      for (let gx=0; gx<W; gx+=grid) {
+        for (let gy=0; gy<zoneH; gy+=grid) {
+          if (rng3() < 0.4) {
+            ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx+grid,gy); ctx.stroke()
+          }
+          if (rng3() < 0.4) {
+            ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx,gy+grid); ctx.stroke()
+          }
+          // Nodes
+          if (rng3() < 0.25) {
+            ctx.globalAlpha = 0.9
+            ctx.beginPath(); ctx.arc(gx,gy,3.5,0,Math.PI*2)
+            ctx.fillStyle = c4; ctx.fill()
+            ctx.globalAlpha = 0.55
+          }
+          // L-bends
+          if (rng3() < 0.2) {
+            ctx.beginPath()
+            ctx.moveTo(gx,gy); ctx.lineTo(gx+grid*0.5,gy); ctx.lineTo(gx+grid*0.5,gy+grid)
+            ctx.stroke()
+          }
+        }
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    // ─ 12. Halftone dots ────────────────────────────────────────────────────
+    case 'halftone': {
+      // Background gradient
+      const bg2 = ctx.createLinearGradient(0,0,W,zoneH)
+      bg2.addColorStop(0, c1); bg2.addColorStop(1, c3)
+      ctx.fillStyle = bg2; ctx.fillRect(0,0,W,zoneH)
+
+      // Dot grid
+      const spacing = 18 + Math.floor(rng()*18)
+      const maxDot  = spacing * 0.52
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)'
+
+      for (let dy=spacing/2; dy<zoneH; dy+=spacing) {
+        for (let dx=spacing/2; dx<W; dx+=spacing) {
+          // Dot size based on distance from center
+          const distX = (dx/W - 0.5), distY = (dy/zoneH - 0.5)
+          const dist  = Math.sqrt(distX*distX + distY*distY)
+          const r     = maxDot * (0.15 + dist * 1.4)
+          if (r < 0.5) continue
+          ctx.beginPath(); ctx.arc(dx, dy, Math.min(r, maxDot), 0, Math.PI*2)
+          ctx.fill()
+        }
+      }
+      break
+    }
+
+    // ─ 13. Topographic contour lines ────────────────────────────────────────
+    case 'topographic': {
+      // Background fill
+      const bg2 = isDark
+        ? ctx.createLinearGradient(0,0,W,zoneH)
+        : ctx.createLinearGradient(0,0,W,zoneH)
+      if (isDark) {
+        bg2.addColorStop(0,c3); bg2.addColorStop(1,`hsl(${hue},${sat*0.4}%,8%)`)
+      } else {
+        bg2.addColorStop(0,c5); bg2.addColorStop(1,c4)
+      }
+      ctx.fillStyle = bg2; ctx.fillRect(0,0,W,zoneH)
+
+      // Undulating contour lines
+      const nl2  = 12 + Math.floor(rng()*10)
+      const freq = 0.004 + rng()*0.010
+      const freq2 = freq * (1.3 + rng()*0.5)
+      for (let li=0; li<nl2; li++) {
+        const t    = li/nl2
+        const baseY = t * zoneH
+        const hh   = (hue + li*15) % 360
+        ctx.beginPath()
+        ctx.moveTo(0, baseY)
+        for (let x=0; x<=W; x+=4) {
+          const y = baseY
+            + Math.sin(x*freq + li*1.1) * (35 + rng()*25)
+            + Math.sin(x*freq2 + li*0.7) * (15 + rng()*12)
+          ctx.lineTo(x, y)
+        }
+        ctx.strokeStyle = `hsl(${hh},${sat}%,${isDark ? 45+t*30 : 30+t*35}%)`
+        ctx.lineWidth   = 1.5 + (1-t) * 1.5
+        ctx.globalAlpha = 0.55 + (1-t) * 0.35
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    // ─ 14. Brush strokes ────────────────────────────────────────────────────
+    case 'brush_strokes': {
+      const nb2 = 5 + Math.floor(rng()*5)
+      for (let bi=0; bi<nb2; bi++) {
+        const t    = bi / nb2
+        const y0   = rng()*zoneH*0.6
+        const hh   = (hue + bi*30) % 360
+        const bh   = 60 + rng()*120 // brush height
+        const tilt = (rng()-0.5)*0.4 // slight angle
+        const ll   = isDark ? 28+t*35 : 38+t*40
+
+        ctx.save()
+        ctx.translate(0, y0)
+        ctx.rotate(tilt)
+
+        // Brush body — wide, tapering at edges with multiple overlapping fills
+        for (let pass=0; pass<4; pass++) {
+          const wobble = (rng()-0.5)*20
+          const bGrad = ctx.createLinearGradient(0,wobble,W,wobble+bh)
+          bGrad.addColorStop(0,   `hsla(${hh},${sat}%,${ll}%,0)`)
+          bGrad.addColorStop(0.15, `hsla(${hh},${sat}%,${ll}%,${0.55+rng()*0.35})`)
+          bGrad.addColorStop(0.5,  `hsla(${(hh+15)%360},${sat-5}%,${ll-8}%,${0.7+rng()*0.25})`)
+          bGrad.addColorStop(0.85, `hsla(${hh},${sat}%,${ll}%,${0.55+rng()*0.35})`)
+          bGrad.addColorStop(1,   `hsla(${hh},${sat}%,${ll}%,0)`)
+          ctx.fillStyle = bGrad
+          ctx.fillRect(-10, wobble, W+20, bh)
+        }
+        ctx.restore()
+      }
+      // Final gradient overlay to blend
+      const ov = ctx.createLinearGradient(0,0,W,zoneH)
+      ov.addColorStop(0, c1+'80'); ov.addColorStop(1, c3+'40')
+      ctx.globalAlpha = 0.25; ctx.fillStyle = ov; ctx.fillRect(0,0,W,zoneH)
+      ctx.globalAlpha = 1
+      break
+    }
+
+    // ─ 15. Crystal facets (low-poly) ────────────────────────────────────────
+    case 'crystal': {
+      const pts2: [number,number][] = []
+      // Generate random vertices
+      const npts = 12 + Math.floor(rng()*10)
+      pts2.push([0,0],[W,0],[0,zoneH],[W,zoneH])
+      for (let i=0;i<npts;i++) pts2.push([rng()*W, rng()*zoneH])
+
+      // Triangulate naively — connect each point to nearest two
+      for (let i=0; i<pts2.length-2; i++) {
+        for (let j=i+1; j<pts2.length-1; j++) {
+          for (let k=j+1; k<pts2.length; k++) {
+            const [ax,ay]=pts2[i],[bx,by]=pts2[j],[cx2,cy2]=pts2[k]
+            const cx3 = (ax+bx+cx2)/3, cy3 = (ay+by+cy2)/3
+            if (cx3<0||cx3>W||cy3<0||cy3>zoneH) continue
+            const t   = Math.sqrt((cx3/W)**2+(cy3/zoneH)**2)
+            const hh  = (hue + t*110 + i*8) % 360
+            const ll  = isDark ? 18+t*48 : 30+t*52
+            ctx.beginPath()
+            ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(cx2,cy2)
+            ctx.closePath()
+            ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
+            ctx.globalAlpha = 0.75 + (1-t)*0.2
+            ctx.fill()
+            ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
+            ctx.lineWidth = 0.8; ctx.globalAlpha = 0.8; ctx.stroke()
+          }
+        }
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    // ─ 16. Neon glow ────────────────────────────────────────────────────────
+    case 'neon_glow': {
+      // Very dark background
+      ctx.fillStyle = `hsl(${hue},${sat*0.15}%,6%)`
+      ctx.fillRect(0,0,W,zoneH)
+
+      // Multiple glowing orbs
+      const norbs = 3 + Math.floor(rng()*3)
+      for (let oi=0; oi<norbs; oi++) {
+        const ox = rng()*W, oy = rng()*zoneH
+        const or = 80 + rng()*160
+        const hh = (hue + oi*70) % 360
+        const og = ctx.createRadialGradient(ox, oy, 0, ox, oy, or)
+        og.addColorStop(0,   `hsl(${hh},100%,80%)`)
+        og.addColorStop(0.2, `hsl(${hh},90%,55%)`)
+        og.addColorStop(0.6, `hsla(${hh},85%,40%,0.3)`)
+        og.addColorStop(1,   `hsla(${hh},80%,30%,0)`)
+        ctx.fillStyle = og
+        ctx.globalAlpha = 0.65 + rng()*0.30
+        ctx.fillRect(0,0,W,zoneH)
+      }
+
+      // Thin neon lines across
+      const nlines = 3 + Math.floor(rng()*4)
+      for (let li=0; li<nlines; li++) {
+        const ly   = rng()*zoneH
+        const hh   = (hue + li*45) % 360
+        const lgrad = ctx.createLinearGradient(0,ly,W,ly)
+        lgrad.addColorStop(0,'rgba(0,0,0,0)')
+        lgrad.addColorStop(0.3,`hsl(${hh},100%,75%)`)
+        lgrad.addColorStop(0.7,`hsl(${hh},100%,75%)`)
+        lgrad.addColorStop(1,'rgba(0,0,0,0)')
+        ctx.strokeStyle = lgrad; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.7
+        ctx.beginPath(); ctx.moveTo(0,ly); ctx.lineTo(W,ly); ctx.stroke()
+        // Glow halo
+        ctx.lineWidth = 6; ctx.globalAlpha = 0.15
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+      break
+    }
+
+    default:
+      ctx.fillStyle = c1; ctx.fillRect(0,0,W,zoneH)
   }
-  ctx.restore()
+
+  ctx.restore() // restore pattern zone clip
 }
 
-// ── Draw effect overlay (independent of background) ───────────────────────────
+// ── Effect overlays ───────────────────────────────────────────────────────────
 function drawCardEffect(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, zoneH: number,
   effect: CardEffect,
   hue: number,
-  rng: () => number
+  rng: () => number,
 ) {
+  ctx.save()
+  ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
+
   switch(effect) {
-    case 'foil': {
-      // Gold/silver foil shimmer in diagonal
-      const foilGrad = ctx.createLinearGradient(0, 0, W, zoneH)
-      foilGrad.addColorStop(0.00, 'rgba(255,255,255,0.00)')
-      foilGrad.addColorStop(0.30, 'rgba(255,255,255,0.06)')
-      foilGrad.addColorStop(0.42, 'rgba(255,240,180,0.28)')
-      foilGrad.addColorStop(0.50, 'rgba(255,255,255,0.38)')
-      foilGrad.addColorStop(0.58, 'rgba(200,220,255,0.22)')
-      foilGrad.addColorStop(0.70, 'rgba(255,255,255,0.06)')
-      foilGrad.addColorStop(1.00, 'rgba(255,255,255,0.00)')
-      ctx.save()
-      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
-      ctx.fillStyle = foilGrad; ctx.fillRect(0,0,W,zoneH)
-      ctx.restore()
+    case 'foil_gold': {
+      // Diagonal golden foil shimmer
+      const g = ctx.createLinearGradient(0, 0, W, zoneH)
+      g.addColorStop(0.00, 'rgba(255,255,255,0.00)')
+      g.addColorStop(0.28, 'rgba(255,255,255,0.04)')
+      g.addColorStop(0.40, 'rgba(255,235,140,0.30)')
+      g.addColorStop(0.48, 'rgba(255,255,255,0.44)')
+      g.addColorStop(0.56, 'rgba(220,200,255,0.24)')
+      g.addColorStop(0.68, 'rgba(255,255,255,0.06)')
+      g.addColorStop(1.00, 'rgba(255,255,255,0.00)')
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,zoneH)
       break
     }
-    case 'scanlines': {
-      // Horizontal scanlines CRT effect
-      ctx.save()
-      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
-      for (let y=0; y<zoneH; y+=3) {
-        ctx.fillStyle = 'rgba(0,0,0,0.12)'
-        ctx.fillRect(0,y,W,1)
+
+    case 'foil_holo': {
+      // Full-spectrum prismatic shimmer — multiple bands
+      const nbands = 5 + Math.floor(rng()*4)
+      for (let bi=0; bi<nbands; bi++) {
+        const t   = bi / nbands
+        const bx  = t * W + rng()*40-20
+        const bw  = 40 + rng()*80
+        const hh  = (bi * 55 + hue*0.5) % 360
+        const sg  = ctx.createLinearGradient(bx, 0, bx+bw, zoneH)
+        sg.addColorStop(0, `hsla(${hh},80%,75%,0)`)
+        sg.addColorStop(0.35, `hsla(${hh},80%,75%,0.20)`)
+        sg.addColorStop(0.5,  `hsla(${(hh+40)%360},85%,80%,0.32)`)
+        sg.addColorStop(0.65, `hsla(${(hh+80)%360},80%,75%,0.20)`)
+        sg.addColorStop(1, `hsla(${hh},80%,75%,0)`)
+        ctx.fillStyle = sg; ctx.fillRect(bx, 0, bw, zoneH)
       }
-      ctx.restore()
       break
     }
+
+    case 'scanlines': {
+      for (let y=0; y<zoneH; y+=3) {
+        ctx.fillStyle = 'rgba(0,0,0,0.10)'; ctx.fillRect(0,y,W,1)
+      }
+      break
+    }
+
     case 'vignette': {
-      const vgGrad = ctx.createRadialGradient(W/2, zoneH/2, zoneH*0.2, W/2, zoneH/2, zoneH*0.85)
-      vgGrad.addColorStop(0, 'rgba(0,0,0,0)')
-      vgGrad.addColorStop(1, 'rgba(0,0,0,0.45)')
-      ctx.save()
-      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
-      ctx.fillStyle = vgGrad; ctx.fillRect(0,0,W,zoneH)
-      ctx.restore()
+      const vg = ctx.createRadialGradient(W/2,zoneH/2,zoneH*0.15, W/2,zoneH/2,zoneH*0.88)
+      vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.48)')
+      ctx.fillStyle = vg; ctx.fillRect(0,0,W,zoneH)
       break
     }
+
     case 'chromatic': {
-      // Chromatic aberration fringe at edges
-      ctx.save()
-      ctx.beginPath(); ctx.rect(0,0,W,zoneH); ctx.clip()
-      const cg1 = ctx.createLinearGradient(0,0,W*0.15,0)
-      cg1.addColorStop(0,'rgba(255,0,0,0.08)'); cg1.addColorStop(1,'rgba(255,0,0,0)')
-      ctx.fillStyle = cg1; ctx.fillRect(0,0,W,zoneH)
-      const cg2 = ctx.createLinearGradient(W,0,W*0.85,0)
-      cg2.addColorStop(0,'rgba(0,80,255,0.08)'); cg2.addColorStop(1,'rgba(0,80,255,0)')
-      ctx.fillStyle = cg2; ctx.fillRect(0,0,W,zoneH)
-      ctx.restore()
+      const cgl = ctx.createLinearGradient(0,0,W*0.18,0)
+      cgl.addColorStop(0,'rgba(255,0,0,0.10)'); cgl.addColorStop(1,'rgba(255,0,0,0)')
+      ctx.fillStyle = cgl; ctx.fillRect(0,0,W,zoneH)
+      const cgr = ctx.createLinearGradient(W,0,W*0.82,0)
+      cgr.addColorStop(0,'rgba(0,60,255,0.10)'); cgr.addColorStop(1,'rgba(0,60,255,0)')
+      ctx.fillStyle = cgr; ctx.fillRect(0,0,W,zoneH)
+      // Top/bottom fringe too
+      const cgt = ctx.createLinearGradient(0,0,0,zoneH*0.12)
+      cgt.addColorStop(0,'rgba(0,255,120,0.06)'); cgt.addColorStop(1,'rgba(0,255,120,0)')
+      ctx.fillStyle = cgt; ctx.fillRect(0,0,W,zoneH)
       break
     }
-    case 'grain_heavy': {
-      addGrain(ctx, rng, W, zoneH, 0.09, 12000)
+
+    case 'grain_film': {
+      // Heavy analog film grain
+      addGrain(ctx, rng, W, zoneH, 0.10, 14000)
       break
     }
-    case 'none':
-    default:
+
+    case 'crosshatch': {
+      // Diagonal crosshatch lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 0.8
+      for (let x=-zoneH; x<W+zoneH; x+=8) {
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x+zoneH,zoneH); ctx.stroke()
+      }
+      ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 0.8
+      for (let x=-zoneH; x<W+zoneH; x+=8) {
+        ctx.beginPath(); ctx.moveTo(x,zoneH); ctx.lineTo(x+zoneH,0); ctx.stroke()
+      }
       break
+    }
+
+    case 'noise_rgb': {
+      // RGB channel noise — each channel shifted slightly
+      const rng2 = seededRng('rgb-noise')
+      for (let i=0; i<8000; i++) {
+        const x  = rng2()*W, y = rng2()*zoneH
+        const ch = Math.floor(rng2()*3)
+        const a  = 0.04 + rng2()*0.08
+        ctx.fillStyle = ch===0 ? `rgba(255,0,0,${a})` : ch===1 ? `rgba(0,255,0,${a})` : `rgba(0,0,255,${a})`
+        ctx.fillRect(x + (ch-1)*1.5, y, 2, 2)
+      }
+      break
+    }
+
+    case 'none': default: break
   }
+
+  ctx.restore()
 }
 
-// ── Draw info section (bottom of card) ───────────────────────────────────────
+// ── Card info section ─────────────────────────────────────────────────────────
 function drawCardInfo(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, zoneH: number,
-  user: {full_name:string; email:string; nusp?:string; id:string; avatar_url?:string},
+  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
   activeAchievements: Achievement[],
   area: string, language: string,
-  hue: number, sat: number,
-  entityBg: {color:string; name:string} | null,
+  hue: number, sat: number, lit: number,
+  entityBg: { color: string; name: string } | null,
   style: CardStyle,
+  scheme: ColorScheme,
 ) {
-  const isDark = style === 'checkerboard' || style === 'holographic' || style === 'diagonal_bands'
-  const onDark = hslToRgb(hue, sat, 15)
-  const inkColor  = entityBg
-    ? `hsl(${hue},55%,12%)`
-    : isDark ? `rgba(${onDark[0]},${onDark[1]},${onDark[2]},0.9)` : `hsl(${hue},55%,12%)`
-  const inkFaint  = entityBg
-    ? `hsl(${hue},30%,45%)`
-    : isDark ? `rgba(255,255,255,0.65)` : `hsl(${hue},30%,45%)`
-  const accentPill= `hsl(${hue},${sat}%,${Math.max(40-sat*0.1,20)}%)`
+  // Determine if the pattern zone is dark (needs light text) or light
+  const patternDark = lit < 44 || style === 'neon_glow' || style === 'checkerboard'
+  const infoDark    = entityBg
+    ? (lit < 44) // follow user's overall darkness
+    : lit < 44
+
+  const inkColor  = infoDark  ? `hsl(${hue},40%,90%)`  : `hsl(${hue},55%,12%)`
+  const inkFaint  = infoDark  ? `hsl(${hue},25%,72%)`  : `hsl(${hue},30%,45%)`
+  const accentClr = entityBg
+    ? entityBg.color
+    : `hsl(${hue},${sat}%,${Math.max(lit-18,18)}%)`
 
   const textX = 44
-  const nameY = H * 0.606
+  const nameY = H * 0.608
 
   // Name
   const parts     = user.full_name.trim().split(/\s+/)
   const firstName = parts[0] ?? ''
   const lastName  = parts.slice(1).join(' ')
 
-  ctx.textAlign    = 'left'
-  ctx.textBaseline = 'alphabetic'
-  ctx.font         = '800 52px sans-serif'
-  ctx.fillStyle    = inkColor
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
+  ctx.font      = '800 52px sans-serif'
+  ctx.fillStyle = inkColor
   ctx.fillText(firstName, textX, nameY)
   const fnW = ctx.measureText(firstName).width
 
@@ -625,149 +982,148 @@ function drawCardInfo(
     ctx.font      = '300 52px sans-serif'
     ctx.fillStyle = inkFaint
     const spW = ctx.measureText(' ').width
-    if (fnW + spW + ctx.measureText(lastName).width < W - textX * 2)
+    if (fnW + spW + ctx.measureText(lastName).width < W - textX*2)
       ctx.fillText(lastName, textX + fnW + spW, nameY)
     else
       ctx.fillText(lastName, textX, nameY + 58)
   }
 
   // Title
-  const titleRng  = seededRng(user.id + '-title')
-  const titleText = TITLES[Math.floor(titleRng() * TITLES.length)]
-  const titleY    = nameY + 42
-  ctx.font        = '400 17px sans-serif'
-  ctx.fillStyle   = inkFaint
-  ctx.fillText(titleText, textX, titleY)
+  const trng    = seededRng(user.id + '-title')
+  const titleTx = TITLES[Math.floor(trng() * TITLES.length)]
+  const titleY  = nameY + 42
+  ctx.font      = '400 17px sans-serif'
+  ctx.fillStyle = inkFaint
+  ctx.fillText(titleTx, textX, titleY)
 
-  // USP + email
+  // Email + NUSP
   const infoY   = titleY + 30
   const nuspStr = user.nusp ? `#${user.nusp}` : ''
   ctx.font      = '400 12px monospace'
   ctx.fillStyle = inkFaint
-  ctx.globalAlpha = 0.6
+  ctx.globalAlpha = 0.58
   ctx.fillText([nuspStr, user.email].filter(Boolean).join('  ·  '), textX, infoY)
   ctx.globalAlpha = 1
 
-  // Style badge — small watermark top-right showing the card style
-  ctx.font = '500 9px monospace'
-  ctx.fillStyle = inkFaint
-  ctx.globalAlpha = 0.28
-  ctx.textAlign = 'right'
-  const styleLabel: Record<CardStyle,string> = {
+  // Style code watermark — top-right corner inside pattern zone
+  const styleCode: Record<CardStyle,string> = {
     geometric_rays:'GEO', layer_stack:'LAY', wave_lines:'WAV',
     checkerboard:'CHK', holographic:'HOL', boarding_pass:'TKT',
     diagonal_bands:'DIA', concentric_shapes:'CON', ink_splatter:'INK',
+    grid_mosaic:'MOS', circuit:'CKT', halftone:'DOT',
+    topographic:'TOP', brush_strokes:'BSH', crystal:'CRY', neon_glow:'NEO',
   }
-  ctx.fillText(styleLabel[style] ?? 'USP', W-textX, 32)
-  ctx.textAlign = 'left'
+  ctx.save()
+  // Place inside pattern zone — top-right
+  ctx.font      = '500 9px monospace'
+  ctx.fillStyle = patternDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.22)'
   ctx.globalAlpha = 1
+  ctx.textAlign = 'right'
+  ctx.fillText(styleCode[style] ?? '···', W - textX, 32)
+  ctx.textAlign = 'left'
+  ctx.restore()
 
-  // Bottom: area|language pill
+  // Area | Language pill
   const bottomY = H - 64
   const aLabel  = area || '', lLabel = language || ''
   if (aLabel || lLabel) {
     const pillH = 38
-    ctx.font = '600 13px sans-serif'
-    const aW    = aLabel ? ctx.measureText(aLabel).width + 22 : 0
-    const lW    = lLabel ? ctx.measureText(lLabel).width + 22 : 0
-    const sepW  = (aLabel && lLabel) ? 12 : 0
-    const totalW = aW + sepW + lW
+    ctx.font    = '600 13px sans-serif'
+    const aW   = aLabel ? ctx.measureText(aLabel).width + 22 : 0
+    const lW   = lLabel ? ctx.measureText(lLabel).width + 22 : 0
+    const sepW = aLabel && lLabel ? 12 : 0
 
-    ctx.strokeStyle = accentPill; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5
-    roundRect(ctx, textX, bottomY, totalW, pillH, pillH/2); ctx.stroke()
+    ctx.strokeStyle = accentClr; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5
+    roundRect(ctx, textX, bottomY, aW+sepW+lW, pillH, pillH/2); ctx.stroke()
     ctx.globalAlpha = 1
 
     if (aLabel && lLabel) {
       ctx.save()
-      ctx.beginPath()
-      roundRect(ctx, textX+aW, bottomY+4, sepW, pillH-8, 2); ctx.clip()
-      ctx.fillStyle = accentPill; ctx.globalAlpha = 0.10
+      ctx.beginPath(); roundRect(ctx, textX+aW, bottomY+4, sepW, pillH-8, 2); ctx.clip()
+      ctx.fillStyle   = accentClr; ctx.globalAlpha = 0.10
       ctx.fillRect(textX+aW, bottomY+4, sepW, pillH-8)
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = accentPill; ctx.lineWidth = 1
-      for (let sx = -pillH; sx < sepW + pillH; sx += 4) {
+      ctx.globalAlpha = 0.30; ctx.strokeStyle = accentClr; ctx.lineWidth = 1
+      for (let sx=-pillH; sx<sepW+pillH; sx+=4) {
         ctx.beginPath()
-        ctx.moveTo(textX+aW+sx, bottomY+4)
-        ctx.lineTo(textX+aW+sx+pillH, bottomY+4+pillH)
+        ctx.moveTo(textX+aW+sx, bottomY+4); ctx.lineTo(textX+aW+sx+pillH, bottomY+4+pillH)
         ctx.stroke()
       }
       ctx.globalAlpha = 1; ctx.restore()
     }
 
-    ctx.fillStyle = accentPill; ctx.textAlign = 'center'
-    if (aLabel) ctx.fillText(aLabel, textX + aW/2, bottomY + pillH/2 + 5)
-    if (lLabel) ctx.fillText(lLabel, textX + aW + sepW + lW/2, bottomY + pillH/2 + 5)
+    ctx.fillStyle = accentClr; ctx.textAlign = 'center'
+    if (aLabel) ctx.fillText(aLabel, textX+aW/2, bottomY+pillH/2+5)
+    if (lLabel) ctx.fillText(lLabel, textX+aW+sepW+lW/2, bottomY+pillH/2+5)
     ctx.textAlign = 'left'
   }
 
-  // Achievements — right-aligned
+  // Achievements
   const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 5)
   if (displayA.length > 0) {
-    let bx = W - textX
     ctx.textAlign = 'right'; ctx.font = '26px serif'
+    let bx = W - textX
     for (const ach of [...displayA].reverse()) {
-      ctx.globalAlpha = 1; ctx.fillText(ach.emoji, bx, bottomY + 30); bx -= 30
+      ctx.globalAlpha = 1; ctx.fillText(ach.emoji, bx, bottomY+30); bx -= 30
     }
     ctx.textAlign = 'left'; ctx.globalAlpha = 1
   }
 
   // ID watermark
-  ctx.font = '400 9px monospace'; ctx.fillStyle = inkColor; ctx.globalAlpha = 0.18
+  ctx.font = '400 9px monospace'; ctx.fillStyle = inkColor; ctx.globalAlpha = 0.16
   ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), textX, H-22)
   ctx.globalAlpha = 1
 }
 
-// ── Main card draw function ─────────────────────────────────────────────────
+// ── Main draw function ────────────────────────────────────────────────────────
 function drawPortraitCard(
   canvas: HTMLCanvasElement,
-  user: {full_name:string; email:string; nusp?:string; id:string; avatar_url?:string},
+  user: { full_name: string; email: string; nusp?: string; id: string; avatar_url?: string },
   activeAchievements: Achievement[],
   area: string, language: string,
-  entityBg: {color:string; name:string} | null,
+  entityBg: { color: string; name: string } | null,
 ) {
   const W = 680, H = 920
-  canvas.width  = W * 2; canvas.height = H * 2
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
+  canvas.width = W*2; canvas.height = H*2
+  canvas.style.width = W+'px'; canvas.style.height = H+'px'
   const ctx = canvas.getContext('2d')!
-  ctx.scale(2, 2)
+  ctx.scale(2,2)
 
-  const rngColor  = seededRng(user.id + '-hue')
-  const rngBg     = seededRng(user.id + '-bg-rng')
-  const hue       = Math.floor(rngColor() * 360)
-  const sat       = 70 + Math.floor(rngColor() * 20)
-  const lit       = 48 + Math.floor(rngColor() * 20)
+  // User's unique color identity (never changes with entityBg)
+  const rngColor = seededRng(user.id+'-hue')
+  const hue      = Math.floor(rngColor() * 360)
+  const scheme   = pickColorScheme(user.id)
+  const { sat, lit } = applyColorScheme(hue, scheme)
 
-  const style     = pickCardStyle(user.id)
-  const effect    = pickCardEffect(user.id)
-  const zoneH     = H * 0.57
+  const style  = pickCardStyle(user.id)
+  const effect = pickCardEffect(user.id)
+  const rngBg  = seededRng(user.id+'-bgv3')
+  const zoneH  = H * 0.57
 
   ctx.clearRect(0, 0, W, H)
 
-  // ── [1] Rounded card clip
+  // ── Rounded card clip (applied to everything) ────────────────────────────
   ctx.save()
   roundRect(ctx, 0, 0, W, H, 32); ctx.clip()
 
-  // ── [2] Draw background pattern
+  // ── Background: user pattern + entity bg in info zone ───────────────────
   drawCardBackground(ctx, W, H, zoneH, style, hue, sat, lit, rngBg, entityBg)
 
-  // ── [3] Grain over background zone
-  addGrain(ctx, seededRng(user.id + '-grain'), W, zoneH, 0.04, 5000)
+  // ── Subtle grain over pattern zone ───────────────────────────────────────
+  addGrain(ctx, seededRng(user.id+'-grainv3'), W, zoneH, 0.038, 5500)
 
-  // ── [4] Draw effect overlay (foil / scanlines / etc)
-  drawCardEffect(ctx, W, H, zoneH, effect, hue, seededRng(user.id + '-efx'))
+  // ── Effect overlay on pattern zone ───────────────────────────────────────
+  drawCardEffect(ctx, W, H, zoneH, effect, hue, seededRng(user.id+'-efxv3'))
 
-  // ── [5] Grain over whole card (subtle)
-  addGrain(ctx, seededRng(user.id + '-bg-g'), W, H, 0.010, 1800)
+  // ── Card-wide subtle grain (ties zones together) ─────────────────────────
+  addGrain(ctx, seededRng(user.id+'-bggrainv3'), W, H, 0.009, 1600)
 
-  ctx.restore() // restore [1]
+  // ── Text info ────────────────────────────────────────────────────────────
+  drawCardInfo(ctx, W, H, zoneH, user, activeAchievements, area, language, hue, sat, lit, entityBg, style, scheme)
 
-  // ── [6] Draw text info section (outside card clip for text sharpness)
-  ctx.save()
-  roundRect(ctx, 0, 0, W, H, 32); ctx.clip()
-  drawCardInfo(ctx, W, H, zoneH, user, activeAchievements, area, language, hue, sat, entityBg, style)
-
-  // ── [7] Border
-  ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.globalAlpha = 1; ctx.lineWidth = 1.5
+  // ── Border ───────────────────────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1.5; ctx.globalAlpha = 1
   roundRect(ctx, 0.75, 0.75, W-1.5, H-1.5, 32); ctx.stroke()
+
   ctx.restore()
 }
 
