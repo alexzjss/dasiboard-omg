@@ -284,38 +284,44 @@ function drawCardBackground(
   // White base inside zone (blobs paint over this)
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
 
-  // 1–3 organic amorphous blobs (cardinal-spline)
-  const nBlobs = 1 + Math.floor(rng() * 2)
+  // 1–2 large exotic organic blobs — each totally unique shape
+  const nBlobs = 1 + Math.floor(rng() * 1.8)
   for (let bi = 0; bi < nBlobs; bi++) {
-    const blobCx = W     * (0.10 + rng() * 0.80)
-    const blobCy = zoneH * (-0.15 + rng() * 0.75)
-    const blobR  = Math.min(W, zoneH) * (0.45 + rng() * 0.50)
-    const n = 7 + Math.floor(rng() * 6)
+    // Center can be partially off-canvas for more dramatic shapes
+    const blobCx = W     * (-0.05 + rng() * 1.10)
+    const blobCy = zoneH * (-0.25 + rng() * 0.80)
+    // Much bigger radius — fills more of the zone
+    const blobR  = Math.min(W, zoneH) * (0.70 + rng() * 0.60)
+    // More control points = more exotic, irregular shape
+    const n = 9 + Math.floor(rng() * 8)
     const pts: [number,number][] = []
     for (let i = 0; i < n; i++) {
       const angle = (i / n) * Math.PI * 2 - Math.PI / 2
-      const r = blobR * (0.42 + rng() * 0.90)
+      // High variance in radius per point = very irregular, amoeba-like
+      const r = blobR * (0.30 + rng() * 1.10)
       pts.push([blobCx + Math.cos(angle)*r, blobCy + Math.sin(angle)*r])
     }
     ctx.beginPath()
     for (let i = 0; i < pts.length; i++) {
       const p0 = pts[(i-1+n)%n], p1 = pts[i]
       const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
-      const cp1x = p1[0]+(p2[0]-p0[0])/5, cp1y = p1[1]+(p2[1]-p0[1])/5
-      const cp2x = p2[0]-(p3[0]-p1[0])/5, cp2y = p2[1]-(p3[1]-p1[1])/5
+      // Looser tension = more fluid, organic curves
+      const tension = 0.28 + rng() * 0.18
+      const cp1x = p1[0]+(p2[0]-p0[0])*tension, cp1y = p1[1]+(p2[1]-p0[1])*tension
+      const cp2x = p2[0]-(p3[0]-p1[0])*tension, cp2y = p2[1]-(p3[1]-p1[1])*tension
       if (i === 0) ctx.moveTo(p1[0], p1[1])
       ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
     }
     ctx.closePath()
-    const grad = ctx.createRadialGradient(
-      blobCx - blobR*0.25, blobCy - blobR*0.20, blobR*0.04,
-      blobCx + blobR*0.06, blobCy + blobR*0.06, blobR*1.1
-    )
+    // Offset gradient center for more interesting lighting
+    const gox = blobCx - blobR*(0.15 + rng()*0.30)
+    const goy = blobCy - blobR*(0.10 + rng()*0.25)
+    const grad = ctx.createRadialGradient(gox, goy, blobR*0.04, blobCx, blobCy, blobR*1.2)
     grad.addColorStop(0,    blobMain)
-    grad.addColorStop(0.55, blobShift)
+    grad.addColorStop(0.50, blobShift)
     grad.addColorStop(1,    `hsla(${(blobH+28)%360},${Math.max(blobS-10,20)}%,${Math.max(blobL-14,20)}%,0)`)
     ctx.fillStyle = grad
-    ctx.globalAlpha = bi === 0 ? 1 : 0.60
+    ctx.globalAlpha = bi === 0 ? 1 : 0.55
     ctx.fill(); ctx.globalAlpha = 1
   }
   ctx.restore()
@@ -523,8 +529,7 @@ function drawLandscapeCard(
 
   // Draw pattern in left zone
   drawCardBackground(ctx, leftW, H, H, style, hue, sat, lit, rngBg, null)
-  addGrain(ctx, seededRng(user.id+'-grainv3'), leftW, H, 0.038, 3000)
-  drawCardEffect(ctx, leftW, H, H, effect, hue, seededRng(user.id+'-efxv3'))
+  addGrain(ctx, seededRng(user.id+'-grainv3'), leftW, H, 0.018, 1500)
 
   // Right zone: always pure white
   ctx.fillStyle = '#ffffff'; ctx.fillRect(leftW, 0, W-leftW, H)
@@ -657,9 +662,7 @@ function drawPortraitCard(
   ctx.clearRect(0,0,W,H)
   ctx.save(); roundRect(ctx,0,0,W,H,32); ctx.clip()
   drawCardBackground(ctx,W,H,zoneH,style,hue,sat,lit,rngBg,entityBg)
-  addGrain(ctx,seededRng(user.id+'-grainv3'),W,zoneH,0.038,5500)
-  drawCardEffect(ctx,W,H,zoneH,effect,hue,seededRng(user.id+'-efxv3'))
-  addGrain(ctx,seededRng(user.id+'-bggrainv3'),W,H,0.009,1600)
+  addGrain(ctx,seededRng(user.id+'-grainv3'),W,zoneH,0.018,2000)
   drawPortraitInfo(ctx,W,H,zoneH,user,avatarImg,activeAchievements,area,language,hue,sat,lit,entityBg,style)
   ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1.5; ctx.globalAlpha=1
   roundRect(ctx,0.75,0.75,W-1.5,H-1.5,32); ctx.stroke()
@@ -1063,26 +1066,26 @@ export default function ProfilePage() {
       {showEntityPicker&&<EntityBgPicker entities={entities} currentEntityId={entityBgId} onSave={saveEntityBg} onClose={()=>setShowEntityPicker(false)}/>}
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-7 animate-in">
+      <div className="flex items-center gap-5 mb-7 animate-in">
         <div className="relative shrink-0">
-          <div className="w-16 h-16 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 4px 20px var(--accent-glow)"}}>
+          <div className="w-24 h-24 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 4px 24px var(--accent-glow)"}}>
             <div className="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
                  style={{background:user.avatar_url?"transparent":"var(--bg-card)"}}>
               {user.avatar_url?<img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover"/>
-                :<span className="text-xl font-bold text-white font-display">{initials}</span>}
+                :<span className="text-3xl font-bold text-white font-display">{initials}</span>}
             </div>
           </div>
-          {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={14} className="animate-spin text-white"/></div>}
+          {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={16} className="animate-spin text-white"/></div>}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-xl font-bold truncate" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
-          <p className="text-xs mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold"
+          <h1 className="font-display text-2xl font-bold truncate" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
+          <p className="text-sm mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold"
                   style={{background:"rgba(245,158,11,0.12)",color:"#f59e0b",border:"1px solid rgba(245,158,11,0.25)"}}>
-              <Trophy size={9}/> {unlockedCount} conquistas
+              <Trophy size={11}/> {unlockedCount} conquistas
             </span>
-            {entityBgData&&<span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+            {entityBgData&&<span className="text-xs px-2.5 py-1 rounded-full font-semibold"
                   style={{background:entityBgData.color+"18",color:entityBgData.color,border:`1px solid ${entityBgData.color}30`}}>{entityBgData.name}</span>}
           </div>
         </div>
