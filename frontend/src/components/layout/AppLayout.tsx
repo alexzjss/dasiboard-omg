@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, CalendarRange, User, GraduationCap, Sun, Moon, Users, X,
-  LogOut, Palette, Search, BookMarked, ChevronDown, Monitor,
+  CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
+  LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
@@ -32,14 +32,14 @@ import { useClockEasterEggs } from '@/hooks/useEasterEggs'
 import clsx from 'clsx'
 
 const nav = [
-  { to: '/',          label: 'Início',      icon: LayoutDashboard, end: true  },
-  { to: '/kanban',    label: 'Kanban',      icon: KanbanSquare,    end: false },
-  { to: '/grades',    label: 'Disciplinas', icon: BookOpen,        end: false },
-  { to: '/schedule',  label: 'Cronograma',  icon: CalendarRange,   end: false },
-  { to: '/calendar',  label: 'Calendário',  icon: CalendarDays,    end: false },
-  { to: '/entities',  label: 'Entidades',   icon: Users,           end: false },
-  { to: '/docentes',  label: 'Docentes',    icon: BookMarked,      end: false },
-  { to: '/profile',   label: 'Perfil',      icon: User,            end: false },
+  { to: '/',          label: 'Início',        icon: LayoutDashboard, end: true  },
+  { to: '/kanban',    label: 'Kanban',        icon: KanbanSquare,    end: false },
+  { to: '/grades',    label: 'Disciplinas',   icon: BookOpen,        end: false },
+  { to: '/calendar',  label: 'Calendário',    icon: CalendarDays,    end: false },
+  { to: '/entities',  label: 'Entidades',     icon: Users,           end: false },
+  { to: '/docentes',  label: 'Docentes',      icon: BookMarked,      end: false },
+  { to: '/profile',   label: 'Perfil',        icon: User,            end: false },
+  { to: '/settings',  label: 'Configurações', icon: Settings,        end: false },
 ]
 
 // ── Theme preview colors for visual picker ───────────────────────────────────
@@ -515,6 +515,7 @@ export default function AppLayout() {
     { key: 'd', description: 'Ir para Docentes',         group: 'Navegação', action: () => navigate('/docentes') },
     { key: 'p', description: 'Ir para Perfil',           group: 'Navegação', action: () => navigate('/profile') },
     { key: 'h', description: 'Ir para Início',           group: 'Navegação', action: () => navigate('/') },
+    { key: 's', description: 'Ir para Configurações',    group: 'Navegação', action: () => navigate('/settings') },
     // Interface — NOTE: 'b' removed to avoid breaking Konami code (↑↑↓↓←→←→BA)
     { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
     { key: '?',             description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
@@ -536,11 +537,11 @@ export default function AppLayout() {
     { key: 'f', ctrl: true, description: 'Focar busca na página',           group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
     // Por página
     { key: 'ArrowRight', description: 'Próxima página (navegação)',  group: 'Navegação rápida', action: () => {
-      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile']
+      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile', '/settings']
       const idx = routes.indexOf(location.pathname); if (idx < routes.length - 1) navigate(routes[idx + 1])
     }},
     { key: 'ArrowLeft',  description: 'Página anterior (navegação)', group: 'Navegação rápida', action: () => {
-      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile']
+      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile', '/settings']
       const idx = routes.indexOf(location.pathname); if (idx > 0) navigate(routes[idx - 1])
     }},
   ]
