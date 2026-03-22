@@ -1,3 +1,4 @@
+import React from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { format } from 'date-fns'
@@ -616,15 +617,27 @@ export default function ProfilePage() {
       })
       setHasPassedSubject(passed); setHasFailedSubject(failed)
       setEventCount((evtRes.data as any[]).length)
+      setSubjectsData(subjects)
+      setSubjectsData(subjects)
     })
   },[])
+
+  // New achievement tracking
+  const kanbanOpenedEmpty = parseInt(localStorage.getItem('dasiboard-kanban-ghost') ?? '0', 10)
+  const dailyFCKey = `dasiboard-daily-fc-${new Date().toISOString().slice(0,10)}`
+  const dailyFlashcards = parseInt(localStorage.getItem(dailyFCKey) ?? '0', 10)
+  const [subjectsData, setSubjectsData] = useState<any[]>([])
+  const hasPerfectGrade = subjectsData.some((s: any) =>
+    (s.grades ?? []).some((g: any) => Number(g.value) >= 10)
+  )
 
   const achievements=useMemo(()=>buildAchievements({
     hasBoards, hasMultipleBoards:hasMultiBoards, hasLanguage:!!language,
     hasArea:!!area, hasPassedSubject, hasFailedSubject, hasAvatar:!!user?.avatar_url,
     hasNusp:!!user?.nusp, eventCount, subjectCount, gradeCount,
     loginCount:1, easterEggFound,
-  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound])
+    hasPerfectGrade, dailyFlashcards, kanbanOpenedEmpty,
+  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound,hasPerfectGrade,dailyFlashcards,kanbanOpenedEmpty])
 
   const activeAchievements=useMemo(
     ()=>achievements.filter(a=>activeAchievIds.includes(a.id)&&a.unlocked),
@@ -894,7 +907,7 @@ export default function ProfilePage() {
             <div className="card p-4">
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{color:'var(--text-muted)'}}>Recordes de flashcard</p>
               <div className="space-y-1.5">
-                {Object.entries(studyStats.highScores).sort(([,a],[,b])=>b-a).slice(0,5).map(([sub,hs])=>{ const score=hs as number; return (
+                {Object.entries(studyStats.highScores).sort(([,a],[,b])=>(b as number)-(a as number)).slice(0,5).map(([sub,hs])=>{ const score=hs as number; return (
                   <div key={sub} className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
                       <div className="h-full rounded-full" style={{width:`${score}%`,background:score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444'}}/>
