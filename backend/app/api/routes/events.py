@@ -6,6 +6,7 @@ from app.db.session import get_db
 from app.api.routes.auth import get_current_user
 from app.schemas.schemas import EventCreate, EventOut
 from app.core.config import settings
+from app.core.rate_limit import rate_create_event, rate_create_global_event
 
 router = APIRouter()
 
@@ -97,14 +98,20 @@ def create_event(
     x_global_key: Optional[str] = Header(None),
 ):
     eid = str(body.entity_id) if body.entity_id else None
+    uid = str(user["id"])
+    if body.is_global:
+        rate_create_global_event(uid)
+    else:
+        rate_create_event(uid)
     if body.is_global:
         require_global_key(x_global_key)
         db.execute(
             "INSERT INTO global_events (title, description, event_type, start_at, end_at, "
-            "all_day, color, location, class_code, entity_id, members_only) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *, TRUE AS is_global",
+            "all_day, color, location, class_code, entity_id, members_only, recurring, recur_weeks) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *, TRUE AS is_global",
             (body.title, body.description, body.event_type, body.start_at, body.end_at,
-             body.all_day, body.color, body.location, body.class_code, eid, body.members_only),
+             body.all_day, body.color, body.location, body.class_code, eid, body.members_only,
+             body.recurring, body.recur_weeks),
         )
         row = dict(db.fetchone())
         row["owner_id"] = "00000000-0000-0000-0000-000000000000"
@@ -112,8 +119,8 @@ def create_event(
     else:
         db.execute(
             "INSERT INTO events (owner_id, title, description, event_type, start_at, end_at, "
-            "all_day, color, location, class_code, entity_id, members_only) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *, FALSE AS is_global",
+            "all_day, color, location, class_code, entity_id, members_only, recurring, recur_weeks) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *, FALSE AS is_global",
             (str(user["id"]), body.title, body.description, body.event_type,
              body.start_at, body.end_at, body.all_day, body.color, body.location,
              body.class_code, eid, body.members_only),
@@ -139,7 +146,8 @@ def update_event(
             "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s "
             "WHERE id=%s RETURNING *, FALSE AS is_global",
             (body.title, body.description, body.event_type, body.start_at,
-             body.end_at, body.all_day, body.color, body.location, body.class_code, eid, event_id),
+             body.end_at, body.all_day, body.color, body.location, body.class_code, eid,
+             body.recurring, body.recur_weeks, event_id),
         )
         row = db.fetchone()
         if not row.get("owner_id"):
@@ -155,7 +163,8 @@ def update_event(
             "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s "
             "WHERE id=%s RETURNING *, TRUE AS is_global",
             (body.title, body.description, body.event_type, body.start_at,
-             body.end_at, body.all_day, body.color, body.location, body.class_code, eid, event_id),
+             body.end_at, body.all_day, body.color, body.location, body.class_code, eid,
+             body.recurring, body.recur_weeks, event_id),
         )
         row = dict(db.fetchone())
         row["owner_id"] = "00000000-0000-0000-0000-000000000000"

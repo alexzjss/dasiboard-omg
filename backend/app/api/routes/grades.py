@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from psycopg2.extras import RealDictCursor
+from app.core.rate_limit import rate_grades
 from typing import List
 from app.db.session import get_db
 from app.api.routes.auth import get_current_user
@@ -21,6 +22,7 @@ def list_subjects(db: RealDictCursor = Depends(get_db), user=Depends(get_current
 
 @router.post("/subjects", response_model=SubjectOut, status_code=201)
 def create_subject(body: SubjectCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    rate_grades(str(user["id"]))
     # Default attended = total_classes (start fully attended, track absences via -=)
     attended = body.attended if body.attended is not None else body.total_classes
     db.execute(

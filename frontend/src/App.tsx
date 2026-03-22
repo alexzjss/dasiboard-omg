@@ -14,7 +14,8 @@ const ProfilePage   = lazy(() => import('@/pages/ProfilePage'))
 const DocentesPage  = lazy(() => import('@/pages/DocentesPage'))
 const EntitiesPage  = lazy(() => import('@/pages/EntitiesPage'))
 const FluxogramPage = lazy(() => import('@/pages/FluxogramPage'))
-const SettingsPage  = lazy(() => import('@/pages/SettingsPage'))
+const SettingsPage    = lazy(() => import('@/pages/SettingsPage'))
+const StudyRoomPage   = lazy(() => import('@/pages/StudyRoomPage'))
 
 // ── Skeleton fallback ─────────────────────────────────────────────────────────
 function PageSkeleton() {
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="docentes" element={<Suspense fallback={<PageSkeleton />}><DocentesPage /></Suspense>} />
         <Route path="fluxogram" element={<Suspense fallback={<PageSkeleton />}><FluxogramPage /></Suspense>} />
         <Route path="settings"  element={<Suspense fallback={<PageSkeleton />}><SettingsPage /></Suspense>} />
+        <Route path="study"     element={<Suspense fallback={<PageSkeleton />}><StudyRoomPage /></Suspense>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

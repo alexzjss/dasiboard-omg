@@ -21,7 +21,7 @@ import { useFocusMode, FocusModeBar } from '@/components/FocusMode'
 import { ColorBlindFilters, ColorBlindButton, useColorBlindMode } from '@/components/ColorBlindMode'
 import { useLiteMode, LiteModeButton } from '@/components/LiteMode'
 import { ExpBar } from '@/components/ExpCounter'
-import { OfflineBanner } from '@/components/OfflineBanner'
+import { OfflineBanner, PWAInstallBanner } from '@/components/OfflineBanner'
 import { useChronoPortalSound } from '@/hooks/useChronoPortal'
 import { BlueprintRuler } from '@/components/BlueprintRuler'
 import { ShellPrompt } from '@/components/ShellPrompt'
@@ -516,6 +516,7 @@ export default function AppLayout() {
     { key: 'p', description: 'Ir para Perfil',           group: 'Navegação', action: () => navigate('/profile') },
     { key: 'h', description: 'Ir para Início',           group: 'Navegação', action: () => navigate('/') },
     { key: 's', description: 'Ir para Configurações',    group: 'Navegação', action: () => navigate('/settings') },
+    { key: 'r', description: 'Abrir Study Room',          group: 'Navegação', action: () => navigate('/study') },
     // Interface — NOTE: 'b' removed to avoid breaking Konami code (↑↑↓↓←→←→BA)
     { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
     { key: '?',             description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
@@ -606,9 +607,10 @@ export default function AppLayout() {
       {/* Floating keyboard help button — keyboard users only */}
       <KeyboardHelpButton onClick={() => setShowKeyHelp(k => !k)} />
 
-      {/* Global: color blind SVG filters, offline banner */}
+      {/* Global: color blind SVG filters, offline banner, PWA install */}
       <ColorBlindFilters />
       <OfflineBanner />
+      <PWAInstallBanner />
       <BlueprintRuler />
       <ShellPrompt />
       <PortatilSaveState />

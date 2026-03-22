@@ -5,6 +5,7 @@ from app.db.session import get_db
 from app.api.routes.auth import get_current_user
 from app.schemas.schemas import EntityOut, EntityJoin, EntityEventCreate, EventOut
 from app.core.config import settings
+from app.core.rate_limit import rate_entity_event
 
 router = APIRouter()
 
@@ -144,6 +145,7 @@ def create_entity_event(
     if not db.fetchone():
         raise HTTPException(403, "Apenas membros podem criar eventos para esta entidade")
 
+    rate_entity_event(str(user["id"]))
     db.execute(
         """INSERT INTO events
                (owner_id, title, description, event_type, start_at, end_at,
