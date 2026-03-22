@@ -565,7 +565,8 @@ export default function ProfilePage() {
   const [showAchievPicker,setShowAchievPicker]=useState(false)
   const [showEntityPicker,setShowEntityPicker]=useState(false)
   const [avatarLoading,setAvatarLoading]=useState(false)
-  const [activeTab,setActiveTab]=useState<"conquistas"|"conta">("conquistas")
+  const [activeTab,setActiveTab]=useState<"conquistas"|"stats"|"conta">("conquistas")
+  const stats = useStudyStats()
 
   const [entities,setEntities]=useState<Entity[]>([])
   const [memberSlugs,setMemberSlugs]=useState<string[]>([])
@@ -771,10 +772,10 @@ export default function ProfilePage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 p-1 rounded-2xl animate-in-delay-1" style={{background:"var(--bg-elevated)",border:"1px solid var(--border)"}}>
-        {(["conquistas","conta"] as const).map(t=>(
+        {(["conquistas","stats","conta"] as const).map(t=>(
           <button key={t} onClick={()=>setActiveTab(t)} className="flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all"
                   style={{background:activeTab===t?"var(--bg-card)":"transparent",color:activeTab===t?"var(--text-primary)":"var(--text-muted)",boxShadow:activeTab===t?"0 2px 8px rgba(0,0,0,0.12)":"none"}}>
-            {t==="conquistas"?`🏆 Conquistas (${unlockedCount})`:"👤 Conta"}
+            {t==="conquistas"?`🏆 Conquistas (${unlockedCount})`:t==="stats"?"📊 Stats":"👤 Conta"}
           </button>
         ))}
       </div>
@@ -882,7 +883,7 @@ export default function ProfilePage() {
             <div className="card p-4">
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{color:'var(--text-muted)'}}>Recordes de flashcard</p>
               <div className="space-y-1.5">
-                {Object.entries(stats.highScores).sort(([,a],[,b])=>b-a).slice(0,5).map(([sub,hs])=>(
+                {(Object.entries(stats.highScores) as [string, number][]).sort(([,a],[,b])=>b-a).slice(0,5).map(([sub,hs])=>(
                   <div key={sub} className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{background:'var(--border)'}}>
                       <div className="h-full rounded-full" style={{width:`${hs}%`,background:hs>=80?'#22c55e':hs>=60?'#f59e0b':'#ef4444'}}/>
