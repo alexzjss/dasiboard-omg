@@ -15,7 +15,11 @@ const DocentesPage  = lazy(() => import('@/pages/DocentesPage'))
 const EntitiesPage  = lazy(() => import('@/pages/EntitiesPage'))
 const FluxogramPage = lazy(() => import('@/pages/FluxogramPage'))
 const SettingsPage    = lazy(() => import('@/pages/SettingsPage'))
-const StudyRoomPage   = lazy(() => import('@/pages/StudyRoomPage'))
+const StudyRoomPage            = lazy(() => import('@/pages/StudyRoomPage'))
+const PublicProfilePage        = lazy(() => import('@/pages/PublicProfilePage'))
+const TurmaPage                = lazy(() => import('@/pages/TurmaPage'))
+const SharedNotePage           = lazy(() => import('@/pages/SharedNotePage'))
+const StudyRoomPersistentPage  = lazy(() => import('@/pages/StudyRoomPersistentPage'))
 
 // ── Skeleton fallback ─────────────────────────────────────────────────────────
 function PageSkeleton() {
@@ -58,7 +62,14 @@ export default function App() {
         <Route path="fluxogram" element={<Suspense fallback={<PageSkeleton />}><FluxogramPage /></Suspense>} />
         <Route path="settings"  element={<Suspense fallback={<PageSkeleton />}><SettingsPage /></Suspense>} />
         <Route path="study"     element={<Suspense fallback={<PageSkeleton />}><StudyRoomPage /></Suspense>} />
+        <Route path="room"       element={<Suspense fallback={<PageSkeleton />}><StudyRoomPersistentPage /></Suspense>} />
+        <Route path="room/:code" element={<Suspense fallback={<PageSkeleton />}><StudyRoomPersistentPage /></Suspense>} />
+        <Route path="turma"      element={<Suspense fallback={<PageSkeleton />}><TurmaPage /></Suspense>} />
+        <Route path="turma/:year" element={<Suspense fallback={<PageSkeleton />}><TurmaPage /></Suspense>} />
       </Route>
+      {/* Public routes — no auth required */}
+      <Route path="/u/:nusp"             element={<Suspense fallback={<PageSkeleton />}><PublicProfilePage /></Suspense>} />
+      <Route path="/notes/shared/:token" element={<Suspense fallback={<PageSkeleton />}><SharedNotePage /></Suspense>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

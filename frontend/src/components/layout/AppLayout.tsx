@@ -37,6 +37,8 @@ const nav = [
   { to: '/grades',    label: 'Disciplinas',   icon: BookOpen,        end: false },
   { to: '/calendar',  label: 'Calendário',    icon: CalendarDays,    end: false },
   { to: '/entities',  label: 'Entidades',     icon: Users,           end: false },
+  { to: '/turma',     label: 'Turma',         icon: GraduationCap,   end: false },
+  { to: '/room',      label: 'Salas',         icon: Monitor,         end: false },
   { to: '/docentes',  label: 'Docentes',      icon: BookMarked,      end: false },
   { to: '/profile',   label: 'Perfil',        icon: User,            end: false },
   { to: '/settings',  label: 'Configurações', icon: Settings,        end: false },

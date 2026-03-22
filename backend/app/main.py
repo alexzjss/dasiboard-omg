@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import auth, users, kanban, grades, events, entities
+from app.api.routes import auth, users, kanban, grades, events, entities, social
 from app.db.session import init_db
 
 app = FastAPI(
@@ -32,6 +32,7 @@ app.include_router(kanban.router,   prefix="/kanban",   tags=["Kanban"])
 app.include_router(grades.router,   prefix="/grades",   tags=["Grades"])
 app.include_router(events.router,   prefix="/events",   tags=["Events"])
 app.include_router(entities.router, prefix="/entities", tags=["Entities"])
+app.include_router(social.router,   prefix="/social",   tags=["Social"])
 
 
 @app.get("/health", tags=["Health"])

@@ -6,6 +6,9 @@ import {
   ChevronRight, Check, AlertTriangle, BellOff, BellRing, Moon,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useEffect } from 'react'
+import { useAuthStore } from '@/store/authStore'
+import api from '@/utils/api'
 import { useSettings } from '@/hooks/useSettings'
 import { useNotifications, setDnd, getDndUntil } from '@/hooks/useNotifications'
 import { useLocale, Locale } from '@/hooks/useI18n'
@@ -133,6 +136,106 @@ function importData(file: File, onDone: () => void) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
+
+
+// ── Privacy Section — perfil público ─────────────────────────────────────────
+function PrivacySection() {
+  const { user } = useAuthStore()
+  const [ps, setPs] = useState<{
+    public_profile: boolean; public_bio: string; entry_year: string
+    public_subjects: boolean; public_achievements: boolean
+  }>({ public_profile:false, public_bio:'', entry_year:'', public_subjects:false, public_achievements:false })
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    api.get('/social/profile/settings')
+      .then(({ data }) => {
+        setPs({
+          public_profile:      data.public_profile ?? false,
+          public_bio:          data.public_bio ?? '',
+          entry_year:          data.entry_year ? String(data.entry_year) : '',
+          public_subjects:     data.public_subjects ?? false,
+          public_achievements: data.public_achievements ?? false,
+        })
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [])
+
+  const save = async (patch: Partial<typeof ps>) => {
+    const next = { ...ps, ...patch }
+    setPs(next)
+    try {
+      await api.patch('/social/profile/settings', {
+        public_profile:      next.public_profile,
+        public_bio:          next.public_bio || null,
+        entry_year:          next.entry_year ? parseInt(next.entry_year) : null,
+        public_subjects:     next.public_subjects,
+        public_achievements: next.public_achievements,
+      })
+      toast.success('Salvo!')
+    } catch { toast.error('Erro ao salvar') }
+  }
+
+  if (!loaded) return (
+    <div className="space-y-3 animate-in">
+      {[0,1,2].map(i => <div key={i} className="skeleton h-14 rounded-xl" />)}
+    </div>
+  )
+
+  const profileUrl = user?.nusp ? `/u/${user.nusp}` : null
+
+  return (
+    <div className="animate-in space-y-4">
+      <Section icon={Shield} title="Perfil público">
+        <Row label="Exibir perfil público"
+             hint={profileUrl ? `Visível em /u/${user?.nusp}` : 'Requer Nº USP cadastrado'}>
+          <Toggle value={ps.public_profile} onChange={v => save({ public_profile: v })} />
+        </Row>
+        {ps.public_profile && (
+          <>
+            <Row label="Bio pública" hint="Descrição curta (até 300 caracteres)">
+              <input className="input text-sm w-52" maxLength={300}
+                     placeholder="Ex: Backend dev · 4º sem."
+                     value={ps.public_bio}
+                     onChange={e => setPs(s => ({ ...s, public_bio: e.target.value }))}
+                     onBlur={() => save({ public_bio: ps.public_bio })} />
+            </Row>
+            <Row label="Turma (ano de entrada)" hint="Para agrupamento em /turma">
+              <input className="input text-sm w-24" maxLength={4} placeholder="2023"
+                     value={ps.entry_year}
+                     onChange={e => setPs(s => ({ ...s, entry_year: e.target.value.replace(/[^0-9]/g,'') }))}
+                     onBlur={() => save({ entry_year: ps.entry_year })} />
+            </Row>
+            <Row label="Exibir disciplinas" hint="Médias ficam visíveis no perfil público">
+              <Toggle value={ps.public_subjects} onChange={v => save({ public_subjects: v })} />
+            </Row>
+            <Row label="Exibir conquistas" hint="Conquistas desbloqueadas ficam visíveis">
+              <Toggle value={ps.public_achievements} onChange={v => save({ public_achievements: v })} />
+            </Row>
+            {profileUrl && (
+              <Row label="" hint="">
+                <a href={profileUrl} target="_blank" rel="noreferrer"
+                   className="text-xs flex items-center gap-1.5 hover:opacity-70 transition-opacity"
+                   style={{ color: 'var(--accent-3)' }}>
+                  Ver perfil público →
+                </a>
+              </Row>
+            )}
+          </>
+        )}
+      </Section>
+      <Section icon={Shield} title="Dados de estudo">
+        <Row label="Compartilhar estatísticas anonimamente"
+             hint="Ajuda a melhorar o DaSIboard sem identificar você">
+          <Toggle value={false} onChange={() => {}} />
+        </Row>
+      </Section>
+    </div>
+  )
+}
+
+
 export default function SettingsPage() {
   const { settings, update }   = useSettings()
   const { locale, setLang }    = useLocale()
@@ -334,25 +437,7 @@ export default function SettingsPage() {
 
       {/* ── Privacidade ─────────────────────────────────────────────────── */}
       {activeSection === 'privacy' && (
-        <div className="animate-in space-y-4">
-          <Section icon={Shield} title="Perfil público">
-            <Row label="Exibir perfil público" hint="Permite que outros vejam seu cartão em /u/[id]">
-              <Toggle value={false} onChange={() => toast('Em breve!')} />
-            </Row>
-            <Row label="Exibir conquistas no perfil público" hint="Conquistas selecionadas ficam visíveis">
-              <Toggle value={false} onChange={() => toast('Em breve!')} />
-            </Row>
-            <Row label="Participar do ranking de EXP" hint="Seu nome aparece no leaderboard opt-in">
-              <Toggle value={false} onChange={() => toast('Em breve!')} />
-            </Row>
-          </Section>
-
-          <Section icon={Shield} title="Dados de estudo">
-            <Row label="Compartilhar estatísticas anonimamente" hint="Ajuda a melhorar o DaSIboard sem identificar você">
-              <Toggle value={false} onChange={() => {}} />
-            </Row>
-          </Section>
-        </div>
+        <PrivacySection />
       )}
 
       {/* ── Dados ───────────────────────────────────────────────────────── */}
