@@ -114,7 +114,9 @@ function DndPicker({ dndUntil, onActivate, onDeactivate }: {
 // ── Main NotificationCenter ───────────────────────────────────────────────────
 export function NotificationCenter({ align = "right" }: { align?: "left" | "right" }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos]   = useState({ top: 0, left: 0 })
   const ref             = useRef<HTMLDivElement>(null)
+  const btnRef          = useRef<HTMLButtonElement>(null)
   const navigate        = useNavigate()
   const {
     notifications, unread, markRead, markAllRead,
@@ -125,11 +127,24 @@ export function NotificationCenter({ align = "right" }: { align?: "left" | "righ
   useEffect(() => {
     if (!open) return
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node) &&
+          btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [open])
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({
+        top:  r.bottom + 8,
+        left: align === 'left' ? r.left : r.right - 340,
+      })
+    }
+    setOpen(v => !v)
+    if (!open) markAllRead()
+  }
 
   const handleNavigate = (href?: string) => {
     setOpen(false)
@@ -137,11 +152,12 @@ export function NotificationCenter({ align = "right" }: { align?: "left" | "righ
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       {/* Bell button */}
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => { setOpen(v => !v); if (!open) markAllRead() }}
+        onClick={handleOpen}
         className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         style={{
           background: open ? 'var(--accent-soft)' : 'var(--border)',
@@ -161,17 +177,23 @@ export function NotificationCenter({ align = "right" }: { align?: "left" | "righ
         )}
       </button>
 
-      {/* Dropdown panel */}
+      {/* Dropdown panel — fixed so it escapes sidebar overflow */}
       {open && (
-        <div className={`absolute ${align === "left" ? "left-0" : "right-0"} top-full mt-2 rounded-2xl overflow-hidden z-[80]`}
+        <div ref={ref}
              style={{
+               position: 'fixed',
+               top: pos.top,
+               left: Math.max(8, Math.min(pos.left, window.innerWidth - 348)),
                width: 340,
                maxHeight: '72dvh',
                background: 'var(--bg-card)',
                border: '1px solid var(--border)',
                boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
+               borderRadius: 16,
+               overflow: 'hidden',
                display: 'flex',
                flexDirection: 'column',
+               zIndex: 9999,
              }}>
 
           {/* Header */}
