@@ -72,7 +72,7 @@ export const buildAchievements = (opts: {
   hasArea: boolean; hasPassedSubject: boolean; hasFailedSubject: boolean
   hasAvatar: boolean; hasNusp: boolean; eventCount: number
   subjectCount: number; gradeCount: number; loginCount: number
-  easterEggFound: boolean; memberSlugs: string[]
+  easterEggFound: boolean
 }): Achievement[] => [
   { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',       rarity: 'legendary', category: 'system',
     desc: 'Membro fundador do DaSIboard',          hint: 'Crie sua conta',          color: '#f59e0b', unlocked: true },
@@ -98,28 +98,6 @@ export const buildAchievements = (opts: {
     desc: 'Cadastrou 6+ disciplinas',               hint: 'Adicione 6 matérias',       color: '#6366f1', unlocked: opts.subjectCount >= 6 },
   { id: 'annotator',  emoji: '✏️', label: 'Anotador',       rarity: 'common',    category: 'academic',
     desc: 'Registrou 10+ notas',                   hint: 'Adicione notas',             color: '#f97316', unlocked: opts.gradeCount >= 10 },
-  { id: 'dasi',       emoji: '🎓', label: 'DASI',           rarity: 'rare',      category: 'social',
-    desc: 'Membro do Diretório Acadêmico',          hint: 'Entre para o DASI',          color: '#ec4899', unlocked: opts.memberSlugs.includes('dasi') },
-  { id: 'hype',       emoji: '🤖', label: 'HypE',           rarity: 'rare',      category: 'social',
-    desc: 'Membro do HypE (Dados & IA)',            hint: 'Entre para o HypE',          color: '#f97316', unlocked: opts.memberSlugs.includes('hype') },
-  { id: 'conway',     emoji: '🎮', label: 'Conway',         rarity: 'rare',      category: 'social',
-    desc: 'Membro do Conway Game Studio',           hint: 'Entre para o Conway',        color: '#10b981', unlocked: opts.memberSlugs.includes('conway') },
-  { id: 'sintese',    emoji: '💼', label: 'Síntese Jr.',    rarity: 'rare',      category: 'social',
-    desc: 'Membro da Síntese Jr.',                  hint: 'Entre para a Síntese',       color: '#ef4444', unlocked: opts.memberSlugs.includes('sintese') },
-  { id: 'shell',      emoji: '💀', label: 'Shell',          rarity: 'rare',      category: 'social',
-    desc: 'Membro da EACH in the Shell',            hint: 'Entre para a Shell',         color: '#00cc44', unlocked: opts.memberSlugs.includes('each-in-shell') },
-  { id: 'pet',        emoji: '📚', label: 'PET-SI',         rarity: 'epic',      category: 'social',
-    desc: 'Membro do PET-SI',                       hint: 'Entre para o PET-SI',        color: '#4d67f5', unlocked: opts.memberSlugs.includes('pet-si') },
-  { id: 'lab_minas',  emoji: '🔬', label: 'Lab Minas',      rarity: 'rare',      category: 'social',
-    desc: 'Membro do Lab das Minas',                hint: 'Entre para o Lab',           color: '#f472b6', unlocked: opts.memberSlugs.includes('lab-minas') },
-  { id: 'grace',      emoji: '🌸', label: 'GrACE',          rarity: 'rare',      category: 'social',
-    desc: 'Membro do GrACE',                        hint: 'Entre para o GrACE',         color: '#e879f9', unlocked: opts.memberSlugs.includes('grace') },
-  { id: 'semana_si',  emoji: '🎪', label: 'Semana SI',      rarity: 'epic',      category: 'social',
-    desc: 'Membro da Semana de SI',                 hint: 'Participe da Semana',        color: '#a855f7', unlocked: opts.memberSlugs.includes('semana-si') },
-  { id: 'codelab',    emoji: '⚙️', label: 'CodeLab',        rarity: 'rare',      category: 'social',
-    desc: 'Membro do CodeLab Leste',                hint: 'Entre para o CodeLab',       color: '#06b6d4', unlocked: opts.memberSlugs.includes('codelab') },
-  { id: 'networker',  emoji: '🌐', label: 'Networker',      rarity: 'epic',      category: 'social',
-    desc: 'Membro de 3+ entidades',                 hint: 'Participe de 3 entidades',   color: '#8b5cf6', unlocked: opts.memberSlugs.length >= 3 },
   { id: 'easter_egg', emoji: '🥚', label: 'Caçador',        rarity: 'legendary', category: 'secret',
     desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
   { id: 'night_coder',emoji: '🌙', label: 'Coder Noturno',  rarity: 'epic',      category: 'secret',
@@ -190,10 +168,12 @@ function drawPortraitCard(
 
   ctx.clearRect(0,0,W,H)
 
-  // Card bg
-  ctx.save()
+  // ── Card bg + blob — all inside card rounded-rect clip ──
+  ctx.save()          // save [1] — card clip
   roundRect(ctx,0,0,W,H,32)
   ctx.clip()
+
+  // Background fill
   if (entityBg) {
     const g = ctx.createLinearGradient(0,0,W,H)
     g.addColorStop(0, entityBg.color+"28")
@@ -203,32 +183,38 @@ function drawPortraitCard(
   } else { ctx.fillStyle = bgColor }
   ctx.fillRect(0,0,W,H)
 
-  // Blob in upper 57%
+  // Blob in upper zone
   const blobZoneH = H*0.57
-  ctx.save()
-  ctx.rect(0,0,W,blobZoneH)
-  ctx.clip()
   const blobCx = W*(0.42+rngBlob()*0.28)
   const blobCy = H*(-0.04+rngBlob()*0.12)
   const blobR  = H*(0.55+rngBlob()*0.18)
+
+  ctx.save()          // save [2] — blob zone clip
+  ctx.beginPath(); ctx.rect(0,0,W,blobZoneH); ctx.clip()
+
   const blobGrad = ctx.createRadialGradient(
     blobCx-blobR*0.25,blobCy-blobR*0.20,blobR*0.04,
     blobCx+blobR*0.10,blobCy+blobR*0.10,blobR*1.05
   )
   blobGrad.addColorStop(0, blobMain)
   blobGrad.addColorStop(0.5, blobShift)
-  blobGrad.addColorStop(1, blobShift.includes("hsl(") ? `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%,0)` : blobShift+"00")
+  // Safe transparent stop — works for both hsl and hex
+  blobGrad.addColorStop(1, "rgba(0,0,0,0)")
   drawBlob(ctx,rngBlob,blobCx,blobCy,blobR)
   ctx.fillStyle = blobGrad; ctx.fill()
-  ctx.save()
+
+  // Grain inside blob
+  ctx.save()          // save [3] — grain clip inside blob
   drawBlob(ctx,seededRng(user.id+"-blob"),blobCx,blobCy,blobR)
   ctx.clip()
   addNoise(ctx,seededRng(user.id+"-grain"),W,blobZoneH,0.055,7000)
-  ctx.restore()
-  ctx.restore()
+  ctx.restore()       // restore [3]
+  ctx.restore()       // restore [2] — back to card clip only
 
+  // Background grain over full card
   addNoise(ctx,seededRng(user.id+"-bg"),W,H,0.012,2000)
-  ctx.restore()
+
+  ctx.restore()       // restore [1] — back to no clip
 
   // Entity label top-left
   if (entityBg) {
@@ -337,71 +323,163 @@ function AchievementPicker({achievements,selected,onSave,onClose}: {
 }) {
   const [sel,setSel]=useState<string[]>(selected)
   const [filterCat,setFilterCat]=useState<string>("all")
+  const [search,setSearch]=useState("")
   const MAX=5
   const toggle=(id:string)=>setSel(p=>p.includes(id)?p.filter(x=>x!==id):p.length<MAX?[...p,id]:p)
   const cats=["all",...Array.from(new Set(achievements.map(a=>a.category)))]
-  const shown=filterCat==="all" ? achievements : achievements.filter(a=>a.category===filterCat)
+
+  const shown = achievements.filter(a => {
+    const catOk = filterCat === "all" || a.category === filterCat
+    const searchOk = !search.trim() || a.label.toLowerCase().includes(search.toLowerCase()) || a.desc.toLowerCase().includes(search.toLowerCase())
+    return catOk && searchOk
+  })
+
   const unlockedCount=achievements.filter(a=>a.unlocked).length
+  const selectedObjects=achievements.filter(a=>sel.includes(a.id)&&a.unlocked)
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-         style={{background:"rgba(0,0,0,0.72)",backdropFilter:"blur(8px)"}}
+         style={{background:"rgba(0,0,0,0.72)",backdropFilter:"blur(10px)"}}
          onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
-           style={{background:"var(--bg-card)",border:"1px solid var(--border)",maxHeight:"90dvh",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
+      <div className="w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
+           style={{background:"var(--bg-card)",border:"1px solid var(--border)",maxHeight:"92dvh",display:"flex",flexDirection:"column",boxShadow:"0 32px 80px rgba(0,0,0,0.6)"}}>
+
+        {/* Handle */}
         <div className="flex justify-center pt-3 sm:hidden">
-          <div className="w-10 h-1 rounded-full" style={{background:"var(--border-light)"}} />
+          <div className="w-10 h-1 rounded-full" style={{background:"var(--border-light)"}}/>
         </div>
+
+        {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-start justify-between" style={{borderBottom:"1px solid var(--border)"}}>
           <div>
-            <h3 className="font-display font-bold flex items-center gap-2" style={{color:"var(--text-primary)"}}>
-              <Trophy size={16} style={{color:"#f59e0b"}} /> Conquistas no cartão
+            <h3 className="font-display font-bold text-base flex items-center gap-2" style={{color:"var(--text-primary)"}}>
+              <Trophy size={17} style={{color:"#f59e0b"}}/> Conquistas no cartão
             </h3>
-            <p className="text-xs mt-0.5" style={{color:"var(--text-muted)"}}>{sel.length}/{MAX} selecionadas · {unlockedCount}/{achievements.length} desbloqueadas</p>
+            <p className="text-xs mt-1" style={{color:"var(--text-muted)"}}>
+              {unlockedCount} desbloqueadas · selecione até {MAX} para exibir no cartão
+            </p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center"
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ml-3"
                   style={{background:"var(--border)",color:"var(--text-muted)"}}><X size={15}/></button>
         </div>
-        <div className="px-4 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide" style={{borderBottom:"1px solid var(--border)"}}>
+
+        {/* Selected preview strip */}
+        {selectedObjects.length > 0 && (
+          <div className="px-5 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-hide"
+               style={{background:"var(--bg-elevated)",borderBottom:"1px solid var(--border)"}}>
+            <span className="text-[10px] font-semibold shrink-0" style={{color:"var(--text-muted)"}}>No cartão:</span>
+            {selectedObjects.map(a=>(
+              <button key={a.id} onClick={()=>toggle(a.id)}
+                      className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:opacity-80"
+                      style={{background:a.color+"22",border:`1px solid ${a.color}55`,color:a.color}}>
+                <span>{a.emoji}</span>
+                <span>{a.label}</span>
+                <X size={9}/>
+              </button>
+            ))}
+            <span className="shrink-0 text-[10px]" style={{color:"var(--text-muted)",opacity:0.6}}>{sel.length}/{MAX}</span>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="px-4 pt-3 pb-1">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{color:"var(--text-muted)"}}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text" placeholder="Buscar conquistas..." value={search}
+              onChange={e=>setSearch(e.target.value)}
+              className="w-full pl-8 pr-3 py-2 rounded-xl text-sm"
+              style={{background:"var(--bg-elevated)",border:"1px solid var(--border)",color:"var(--text-primary)",outline:"none"}}
+            />
+          </div>
+        </div>
+
+        {/* Category filter chips */}
+        <div className="px-4 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
           {cats.map(cat=>(
             <button key={cat} onClick={()=>setFilterCat(cat)}
-                    className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all"
+                    className="shrink-0 px-3 py-1 rounded-full text-[11px] font-semibold transition-all"
                     style={{
                       background:filterCat===cat?"var(--accent-soft)":"var(--bg-elevated)",
                       border:`1px solid ${filterCat===cat?"var(--accent-1)":"var(--border)"}`,
                       color:filterCat===cat?"var(--accent-3)":"var(--text-muted)",
                     }}>
-              {cat==="all"?"✨ Todas":CATEGORY_LABELS[cat]??cat}
+              {cat==="all"
+                ? `✨ Todas (${achievements.filter(a=>a.unlocked).length})`
+                : `${CATEGORY_LABELS[cat]??cat} (${achievements.filter(a=>a.category===cat&&a.unlocked).length})`}
             </button>
           ))}
         </div>
-        <div className="px-4 py-3 grid grid-cols-2 gap-2 overflow-y-auto flex-1">
-          {shown.map(a=>{
-            const isSelected=sel.includes(a.id)
-            const rarityColor=RARITY_COLOR[a.rarity]
-            return (
-              <button key={a.id} onClick={()=>a.unlocked&&toggle(a.id)} disabled={!a.unlocked&&!isSelected}
-                      className="flex items-center gap-3 p-3 rounded-xl text-left transition-all active:scale-[0.97] relative overflow-hidden"
-                      style={{
-                        border:`2px solid ${isSelected?a.color:a.unlocked?"var(--border-light)":"var(--border)"}`,
-                        background:isSelected?a.color+"18":a.unlocked?"var(--bg-elevated)":"var(--bg-base)",
-                        opacity:a.unlocked?1:0.45, cursor:a.unlocked?"pointer":"not-allowed",
-                      }}>
-                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-                     style={{background:rarityColor,opacity:a.unlocked?1:0.4}} />
-                <span className="text-2xl shrink-0" style={{filter:a.unlocked?"none":"grayscale(1)"}}>{a.unlocked?a.emoji:"🔒"}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold truncate" style={{color:isSelected?a.color:"var(--text-primary)"}}>{a.label}</p>
-                  <p className="text-[9px] leading-tight mt-0.5" style={{color:"var(--text-muted)"}}>{a.unlocked?a.desc:a.hint}</p>
-                  <p className="text-[8px] mt-1 font-semibold" style={{color:rarityColor,opacity:0.8}}>{RARITY_LABEL[a.rarity]}</p>
-                </div>
-                {isSelected&&<div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{background:a.color}}><Check size={9} color="white"/></div>}
-              </button>
-            )
-          })}
+
+        {/* Achievement grid */}
+        <div className="px-4 pb-2 overflow-y-auto flex-1">
+          {shown.length === 0 && (
+            <div className="text-center py-10" style={{color:"var(--text-muted)"}}>
+              <p className="text-sm">Nenhuma conquista encontrada</p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {shown.map(a=>{
+              const isSelected=sel.includes(a.id)
+              const rarityColor=RARITY_COLOR[a.rarity]
+              const cantSelect=!a.unlocked && !isSelected
+              return (
+                <button key={a.id} onClick={()=>a.unlocked&&toggle(a.id)} disabled={cantSelect}
+                        className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all"
+                        style={{
+                          border:`2px solid ${isSelected?a.color:a.unlocked?"var(--border-light)":"var(--border)"}`,
+                          background:isSelected?a.color+"15":a.unlocked?"var(--bg-elevated)":"var(--bg-base)",
+                          opacity:a.unlocked?1:0.5,
+                          cursor:a.unlocked?"pointer":"not-allowed",
+                          transform:isSelected?"scale(1.01)":"scale(1)",
+                          boxShadow:isSelected?`0 4px 16px ${a.color}25`:"none",
+                        }}>
+                  {/* Emoji + rarity dot */}
+                  <div className="relative shrink-0">
+                    <span className="text-2xl" style={{filter:a.unlocked?"none":"grayscale(1)"}}>{a.unlocked?a.emoji:"🔒"}</span>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+                         style={{background:rarityColor,borderColor:"var(--bg-elevated)",opacity:a.unlocked?1:0.4}}/>
+                  </div>
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <p className="text-sm font-bold truncate" style={{color:isSelected?a.color:"var(--text-primary)"}}>{a.label}</p>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                            style={{background:rarityColor+"20",color:rarityColor}}>{RARITY_LABEL[a.rarity]}</span>
+                    </div>
+                    <p className="text-[11px] leading-snug" style={{color:"var(--text-muted)"}}>
+                      {a.unlocked ? a.desc : `🔒 ${a.hint}`}
+                    </p>
+                  </div>
+                  {/* Check mark */}
+                  {isSelected && (
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                         style={{background:a.color,boxShadow:`0 2px 8px ${a.color}60`}}>
+                      <Check size={12} color="white"/>
+                    </div>
+                  )}
+                  {!a.unlocked && (
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                         style={{background:"var(--bg-elevated)",border:"1px solid var(--border)"}}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{color:"var(--text-muted)"}}>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
+
+        {/* Footer */}
         <div className="px-4 py-4 flex gap-2" style={{borderTop:"1px solid var(--border)"}}>
-          <button className="btn-primary flex-1 justify-center" onClick={()=>{onSave(sel);onClose()}}><Check size={14}/> Salvar</button>
-          <button className="btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn-primary flex-1 justify-center" onClick={()=>{onSave(sel);onClose()}}>
+            <Check size={14}/> Salvar seleção
+          </button>
+          <button className="btn-ghost" onClick={()=>{onSave(selected);onClose()}}>Cancelar</button>
         </div>
       </div>
     </div>
@@ -541,8 +619,8 @@ export default function ProfilePage() {
     hasBoards, hasMultipleBoards:hasMultiBoards, hasLanguage:!!language,
     hasArea:!!area, hasPassedSubject, hasFailedSubject, hasAvatar:!!user?.avatar_url,
     hasNusp:!!user?.nusp, eventCount, subjectCount, gradeCount,
-    loginCount:1, easterEggFound, memberSlugs,
-  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound,memberSlugs])
+    loginCount:1, easterEggFound,
+  }),[hasBoards,hasMultiBoards,language,area,hasPassedSubject,hasFailedSubject,user,eventCount,subjectCount,gradeCount,easterEggFound])
 
   const activeAchievements=useMemo(
     ()=>achievements.filter(a=>activeAchievIds.includes(a.id)&&a.unlocked),
@@ -657,8 +735,16 @@ export default function ProfilePage() {
           </div>
         </div>
         <div className="flex justify-center">
-          <div className="relative overflow-hidden rounded-3xl" style={{width:"100%",maxWidth:340,lineHeight:0,boxShadow:"0 24px 64px rgba(0,0,0,0.22),0 6px 16px rgba(0,0,0,0.14)"}}>
-            <canvas ref={canvasRef} style={{display:"block",width:"100%",height:"auto",cursor:"pointer",borderRadius:24}} onClick={handleDownload} title="Clique para baixar"/>
+          {/* Aspect-ratio container for 680:920 portrait card */}
+          <div style={{width:"100%",maxWidth:320,position:"relative"}}>
+            <div style={{position:"relative",paddingBottom:`${(920/680)*100}%`,borderRadius:24,overflow:"hidden",boxShadow:"0 24px 64px rgba(0,0,0,0.22),0 6px 16px rgba(0,0,0,0.14)"}}>
+              <canvas
+                ref={canvasRef}
+                onClick={handleDownload}
+                title="Clique para baixar"
+                style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",cursor:"pointer",borderRadius:24,display:"block"}}
+              />
+            </div>
           </div>
         </div>
         <p className="text-[10px] text-center mt-2.5" style={{color:"var(--text-muted)"}}>Único por conta · clique para baixar · blob gerado pelo seu ID</p>

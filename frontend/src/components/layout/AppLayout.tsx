@@ -18,7 +18,7 @@ import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
 import { LofiPlayer } from '@/components/LofiPlayer'
 import { useFocusMode, FocusModeBar } from '@/components/FocusMode'
-import { ColorBlindFilters, ColorBlindToggle, useColorBlindMode } from '@/components/ColorBlindMode'
+import { ColorBlindFilters, ColorBlindButton, useColorBlindMode } from '@/components/ColorBlindMode'
 import { ExpBar } from '@/components/ExpCounter'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { useChronoPortalSound } from '@/hooks/useChronoPortal'
@@ -335,11 +335,7 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }
           <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
         </div>
-        <button onClick={toggleDarkLight} title={isDark ? 'Modo claro' : 'Modo escuro'}
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
-          {isDark ? <Sun size={12} /> : <Moon size={12} />}
-        </button>
+
       </div>
 
       {/* Theme button — visual pill */}
@@ -367,21 +363,14 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }
       <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.4 }} />
 
       {/* Search + Presentation shortcuts */}
-      <div className="px-3 pt-2 space-y-1">
+      {/* Search */}
+      <div className="px-3 pt-2">
         <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
           <Search size={13} />
           <span className="flex-1 text-left">Buscar...</span>
           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⌘K</span>
-        </button>
-        <button onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-                title="Oculta sidebar/nav, fontes maiores (Ctrl+Shift+P)">
-          <Monitor size={13} />
-          <span className="flex-1 text-left">Apresentação</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⇧P</span>
         </button>
       </div>
 
@@ -398,27 +387,46 @@ function SidebarContent({ onOpenPicker, onToggleFocus, focusActive, colorBlind }
         ))}
       </nav>
 
-      {/* Study Mode widget + Focus Mode + Lofi + Accessibility — grouped */}
+      {/* Tools panel: Presentation + Focus + ColorBlind — grouped as icon strip */}
       <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
-        {/* Focus Mode + Daltonismo — compact row */}
-        <div className="px-3 pt-2 pb-1 space-y-1">
-          <button
-            onClick={onToggleFocus}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: focusActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-              border: `1px solid ${focusActive ? 'var(--accent-1)' : 'var(--border)'}`,
-              color: focusActive ? 'var(--accent-3)' : 'var(--text-muted)',
-            }}
-            title="Modo Foco — oculta sidebar e nav (Ctrl+Shift+F)"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-            </svg>
-            <span className="flex-1 text-left">{focusActive ? 'Sair do foco' : 'Modo Foco'}</span>
-            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⇧F</span>
-          </button>
-          <ColorBlindToggle mode={colorBlind.mode} apply={colorBlind.apply} />
+        <div className="px-3 pt-2 pb-1">
+          {/* Row of 3 tool toggles */}
+          <div className="flex gap-1.5 mb-1">
+            {/* Apresentação */}
+            <button
+              onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
+              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+              }}
+              title="Modo Apresentação (Ctrl+Shift+P)"
+            >
+              <Monitor size={14} />
+              <span>Apresentar</span>
+            </button>
+
+            {/* Modo Foco */}
+            <button
+              onClick={onToggleFocus}
+              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
+              style={{
+                background: focusActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                border: `1px solid ${focusActive ? 'var(--accent-1)' : 'var(--border)'}`,
+                color: focusActive ? 'var(--accent-3)' : 'var(--text-muted)',
+              }}
+              title="Modo Foco — oculta UI (Ctrl+Shift+F)"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+              </svg>
+              <span>{focusActive ? 'Sair foco' : 'Foco'}</span>
+            </button>
+
+            {/* Daltonismo */}
+            <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
+          </div>
         </div>
         {/* Lo-fi player — shown for DLC, Pixel, 720, Portátil */}
         <LofiPlayer />
@@ -498,7 +506,6 @@ export default function AppLayout() {
     { key: '?',             description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
     { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false); setShowKeyHelp(false) } },
     // Claro/escuro via Alt+B para não conflitar com Konami 'b'
-    { key: 'b', alt: true,  description: 'Alternar claro/escuro',    group: 'Interface', action: () => toggleDarkLight() },
     // Temas — ciclar com Alt+← / Alt+→
     { key: 'ArrowRight', alt: true, description: 'Próximo tema',    group: 'Temas', action: () => cycleTheme() },
     { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => {
@@ -604,11 +611,7 @@ export default function AppLayout() {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={toggleDarkLight}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
-                  style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}>
-            {isDark ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
+
           <button onClick={() => setSearchOpen(true)}
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
                   style={{ background: 'var(--border)', color: 'var(--text-secondary)' }}
