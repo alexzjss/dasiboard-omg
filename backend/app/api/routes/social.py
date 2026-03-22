@@ -171,7 +171,7 @@ def get_turma(
 @router.get("/turma")
 def list_turmas(db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
     db.execute(
-        "SELECT entry_year, COUNT(*) AS member_count "
+        "SELECT entry_year AS year, COUNT(*) AS member_count "
         "FROM users "
         "WHERE entry_year IS NOT NULL AND public_profile = TRUE AND is_active = TRUE "
         "GROUP BY entry_year ORDER BY entry_year DESC"

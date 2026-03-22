@@ -221,7 +221,33 @@ export default function TurmaPage() {
   }
 
   // ── Detail view ────────────────────────────────────────────────────────────
-  if (!turma) return null
+  if (!turma) return (
+    <div className="max-w-3xl mx-auto px-4 py-6 page-mobile space-y-4 animate-in">
+      <div className="flex items-center gap-3">
+        <Link to="/turma" className="btn-ghost p-2"><ArrowLeft size={16} /></Link>
+        <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          Turma {year}
+        </h1>
+      </div>
+      <div className="card flex flex-col items-center py-16 gap-4 text-center">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+          <Users size={28} style={{ opacity: 0.3, color: 'var(--text-muted)' }} />
+        </div>
+        <div>
+          <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Turma não encontrada
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            Não foi possível carregar os dados desta turma
+          </p>
+        </div>
+        <Link to="/turma" className="btn-primary text-sm gap-2">
+          <ArrowLeft size={14} /> Voltar para turmas
+        </Link>
+      </div>
+    </div>
+  )
 
   const ranked  = [...turma.members].sort((a, b) => b.ach_count - a.ach_count)
   const filtered = search.trim()
