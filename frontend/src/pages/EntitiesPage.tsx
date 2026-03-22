@@ -478,6 +478,69 @@ function ChatTab({ entity, user }: { entity: Entity; user: string }) {
   )
 }
 
+// ── Members Tab ──────────────────────────────────────────────────────────────
+function MembersTab({ entity }: { entity: Entity }) {
+  const [members, setMembers] = useState<{ id: string; full_name: string; avatar_url?: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get(`/entities/${entity.slug}/members`)
+      .then(({ data }) => setMembers(data))
+      .catch(() => toast.error('Erro ao carregar membros'))
+      .finally(() => setLoading(false))
+  }, [entity.slug])
+
+  if (loading) return (
+    <div className="p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="skeleton h-20 rounded-2xl" />
+      ))}
+    </div>
+  )
+
+  if (members.length === 0) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3" style={{ color: 'var(--text-muted)' }}>
+      <Users size={36} style={{ opacity: 0.25 }} />
+      <p className="text-sm">Nenhum membro encontrado</p>
+    </div>
+  )
+
+  return (
+    <div className="p-4 sm:p-6">
+      <p className="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2"
+         style={{ color: 'var(--text-muted)' }}>
+        <Users size={12} /> {members.length} membro{members.length !== 1 ? 's' : ''}
+      </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {members.map((m) => {
+          const initials = m.full_name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+          return (
+            <div key={m.id}
+                 className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-all hover:scale-[1.03] active:scale-[0.97]"
+                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              {m.avatar_url ? (
+                <img src={m.avatar_url} alt={m.full_name}
+                     className="w-12 h-12 rounded-xl object-cover"
+                     style={{ border: `2px solid ${entity.color}44` }} />
+              ) : (
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold font-display"
+                     style={{ background: entity.color + '22', color: entity.color, border: `2px solid ${entity.color}44` }}>
+                  {initials}
+                </div>
+              )}
+              <p className="text-xs font-medium text-center leading-snug line-clamp-2"
+                 style={{ color: 'var(--text-primary)' }}>
+                {m.full_name}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+
 function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
   entity: Entity; onBack: () => void; onMembershipChange: (slug: string, is_member: boolean) => void
 }) {
@@ -617,6 +680,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
           ['mural',    '📢', 'Mural'],
           ['galeria',  '🖼️', 'Galeria'],
           ['chat',     '💬', 'Chat'],
+          ['membros',  '👥', 'Membros'],
         ] as const).map(([t, emoji, label]) => (
           <button key={t} onClick={() => setActiveTab(t)}
                   className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all"
@@ -636,6 +700,8 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
       {activeTab === 'galeria' && <GalleryTab entity={entity} isMember={entity.is_member} />}
       {/* Chat tab */}
       {activeTab === 'chat' && <ChatTab entity={entity} user={currentUser} />}
+      {/* Members tab */}
+      {activeTab === 'membros' && <MembersTab entity={entity} />}
 
       {/* Events tab */}
       {activeTab === 'eventos' && <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 max-w-5xl">

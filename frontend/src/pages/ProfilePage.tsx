@@ -76,34 +76,115 @@ export const buildAchievements = (opts: {
   subjectCount: number; gradeCount: number; loginCount: number
   easterEggFound: boolean
 }): Achievement[] => [
-  { id: 'pioneer',    emoji: '🚀', label: 'Pioneiro',       rarity: 'legendary', category: 'system',
-    desc: 'Membro fundador do DaSIboard',          hint: 'Crie sua conta',          color: '#f59e0b', unlocked: true },
-  { id: 'coder',      emoji: '💻', label: 'Desenvolvedor',  rarity: 'common',    category: 'profile',
-    desc: 'Selecionou uma linguagem principal',     hint: 'Escolha sua linguagem',    color: '#6366f1', unlocked: opts.hasLanguage },
-  { id: 'specialist', emoji: '🎯', label: 'Especialista',   rarity: 'common',    category: 'profile',
-    desc: 'Selecionou uma área de atuação',         hint: 'Escolha sua área',          color: '#06b6d4', unlocked: opts.hasArea },
-  { id: 'face',       emoji: '📸', label: 'Fotogênico',     rarity: 'common',    category: 'profile',
+
+  // ── PERFIL ─────────────────────────────────────────────────────────────────
+  { id: 'pioneer',      emoji: '🚀', label: 'Pioneiro',        rarity: 'legendary', category: 'profile',
+    desc: 'Membro fundador do DaSIboard',           hint: 'Crie sua conta',            color: '#f59e0b', unlocked: true },
+  { id: 'face',         emoji: '📸', label: 'Fotogênico',      rarity: 'common',    category: 'profile',
     desc: 'Adicionou foto de perfil',               hint: 'Faça upload de uma foto',   color: '#ec4899', unlocked: opts.hasAvatar },
-  { id: 'identified', emoji: '🪪', label: 'Identificado',   rarity: 'common',    category: 'profile',
+  { id: 'identified',   emoji: '🪪', label: 'Identificado',    rarity: 'common',    category: 'profile',
     desc: 'Adicionou número USP',                   hint: 'Informe seu Nº USP',         color: '#8b5cf6', unlocked: opts.hasNusp },
-  { id: 'eisenhower', emoji: '📋', label: 'Eisenhower',     rarity: 'common',    category: 'kanban',
+  { id: 'coder',        emoji: '💻', label: 'Desenvolvedor',   rarity: 'common',    category: 'profile',
+    desc: 'Selecionou uma linguagem principal',     hint: 'Escolha sua linguagem',    color: '#6366f1', unlocked: opts.hasLanguage },
+  { id: 'specialist',   emoji: '🎯', label: 'Especialista',    rarity: 'common',    category: 'profile',
+    desc: 'Selecionou uma área de atuação',         hint: 'Escolha sua área',          color: '#06b6d4', unlocked: opts.hasArea },
+  { id: 'polyglot',     emoji: '🌐', label: 'Poliglota',       rarity: 'rare',      category: 'profile',
+    desc: 'Tem linguagem E área configuradas',      hint: 'Configure perfil completo', color: '#0ea5e9', unlocked: opts.hasLanguage && opts.hasArea },
+  { id: 'complete',     emoji: '⭐', label: 'Perfil Completo', rarity: 'epic',      category: 'profile',
+    desc: 'Foto, USP, linguagem e área preenchidos',hint: 'Complete todos os campos',  color: '#f59e0b', unlocked: opts.hasAvatar && opts.hasNusp && opts.hasLanguage && opts.hasArea },
+
+  // ── KANBAN ─────────────────────────────────────────────────────────────────
+  { id: 'eisenhower',   emoji: '📋', label: 'Eisenhower',      rarity: 'common',    category: 'kanban',
     desc: 'Criou o primeiro quadro Kanban',         hint: 'Crie um quadro em Kanban',  color: '#22c55e', unlocked: opts.hasBoards },
-  { id: 'organizer',  emoji: '🗂️', label: 'Organizador',   rarity: 'rare',      category: 'kanban',
+  { id: 'organizer',    emoji: '🗂️', label: 'Organizador',     rarity: 'rare',      category: 'kanban',
     desc: 'Criou 3 ou mais quadros Kanban',         hint: 'Crie pelo menos 3 quadros', color: '#10b981', unlocked: opts.hasMultipleBoards },
-  { id: 'planner',    emoji: '🗓️', label: 'Planejador',    rarity: 'common',    category: 'kanban',
-    desc: 'Criou 5+ eventos no calendário',         hint: 'Adicione eventos',           color: '#f59e0b', unlocked: opts.eventCount >= 5 },
-  { id: 'night_owl',  emoji: '🦉', label: 'Coruja',         rarity: 'rare',      category: 'academic',
+  { id: 'architect',    emoji: '🏗️', label: 'Arquiteto',       rarity: 'epic',      category: 'kanban',
+    desc: 'Mestre da gestão de projetos',           hint: 'Use o Kanban por semanas',  color: '#14b8a6', unlocked: opts.hasMultipleBoards && opts.hasBoards },
+
+  // ── CALENDÁRIO ─────────────────────────────────────────────────────────────
+  { id: 'planner',      emoji: '🗓️', label: 'Planejador',      rarity: 'common',    category: 'kanban',
+    desc: 'Criou 5+ eventos no calendário',         hint: 'Adicione 5 eventos',        color: '#f59e0b', unlocked: opts.eventCount >= 5 },
+  { id: 'scheduler',    emoji: '📆', label: 'Agendista',       rarity: 'rare',      category: 'kanban',
+    desc: 'Criou 15+ eventos no calendário',        hint: 'Adicione 15 eventos',       color: '#f97316', unlocked: opts.eventCount >= 15 },
+  { id: 'chronicler',   emoji: '📜', label: 'Cronista',        rarity: 'epic',      category: 'kanban',
+    desc: 'Criou 30+ eventos no calendário',        hint: 'Adicione 30 eventos',       color: '#ef4444', unlocked: opts.eventCount >= 30 },
+
+  // ── ACADÊMICO ──────────────────────────────────────────────────────────────
+  { id: 'freshman',     emoji: '🎒', label: 'Calouro',         rarity: 'common',    category: 'academic',
+    desc: 'Cadastrou a primeira disciplina',        hint: 'Adicione uma matéria',      color: '#6366f1', unlocked: opts.subjectCount >= 1 },
+  { id: 'annotator',    emoji: '✏️', label: 'Anotador',        rarity: 'common',    category: 'academic',
+    desc: 'Registrou 10+ notas',                   hint: 'Adicione 10 notas',          color: '#f97316', unlocked: opts.gradeCount >= 10 },
+  { id: 'scholar',      emoji: '📚', label: 'Estudioso',       rarity: 'rare',      category: 'academic',
+    desc: 'Cadastrou 6+ disciplinas',               hint: 'Adicione 6 matérias',       color: '#8b5cf6', unlocked: opts.subjectCount >= 6 },
+  { id: 'dean',         emoji: '🏛️', label: 'Decano',          rarity: 'epic',      category: 'academic',
+    desc: 'Cadastrou 10+ disciplinas',              hint: 'Adicione 10 matérias',      color: '#6366f1', unlocked: opts.subjectCount >= 10 },
+  { id: 'night_owl',    emoji: '🦉', label: 'Coruja',          rarity: 'rare',      category: 'academic',
     desc: 'Aprovado em pelo menos uma disciplina',  hint: 'Registre notas e passe',    color: '#a855f7', unlocked: opts.hasPassedSubject },
-  { id: 'survivor',   emoji: '💀', label: 'Sobrevivente',   rarity: 'rare',      category: 'academic',
+  { id: 'honor_roll',   emoji: '🏅', label: 'Honra ao Mérito', rarity: 'epic',      category: 'academic',
+    desc: 'Aprovado em 5+ disciplinas',             hint: 'Passe em várias matérias',  color: '#f59e0b', unlocked: opts.hasPassedSubject && opts.subjectCount >= 5 },
+  { id: 'survivor',     emoji: '💀', label: 'Sobrevivente',    rarity: 'rare',      category: 'academic',
     desc: 'Reprovado e voltou mais forte',          hint: 'Registre uma reprovação',   color: '#ef4444', unlocked: opts.hasFailedSubject },
-  { id: 'scholar',    emoji: '📚', label: 'Estudioso',      rarity: 'epic',      category: 'academic',
-    desc: 'Cadastrou 6+ disciplinas',               hint: 'Adicione 6 matérias',       color: '#6366f1', unlocked: opts.subjectCount >= 6 },
-  { id: 'annotator',  emoji: '✏️', label: 'Anotador',       rarity: 'common',    category: 'academic',
-    desc: 'Registrou 10+ notas',                   hint: 'Adicione notas',             color: '#f97316', unlocked: opts.gradeCount >= 10 },
-  { id: 'easter_egg', emoji: '🥚', label: 'Caçador',        rarity: 'legendary', category: 'secret',
-    desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
-  { id: 'night_coder',emoji: '🌙', label: 'Coder Noturno',  rarity: 'epic',      category: 'secret',
+  { id: 'phoenix',      emoji: '🔥', label: 'Fênix',           rarity: 'epic',      category: 'academic',
+    desc: 'Reprovado E aprovado — persistência total', hint: 'Passe após reprovar',   color: '#f97316', unlocked: opts.hasPassedSubject && opts.hasFailedSubject },
+  { id: 'grademaster',  emoji: '📊', label: 'Mestre das Notas',rarity: 'legendary', category: 'academic',
+    desc: 'Registrou 30+ avaliações',              hint: 'Adicione muitas notas',      color: '#a855f7', unlocked: opts.gradeCount >= 30 },
+  { id: 'semester_all', emoji: '📖', label: 'Semestral',       rarity: 'common',    category: 'academic',
+    desc: 'Disciplinas de todo um semestre',        hint: 'Cadastre 5 matérias',       color: '#06b6d4', unlocked: opts.subjectCount >= 5 },
+
+  // ── TEMPO & DEDICAÇÃO ──────────────────────────────────────────────────────
+  { id: 'night_coder',  emoji: '🌙', label: 'Coder Noturno',   rarity: 'rare',      category: 'secret',
     desc: 'Usou o app após meia-noite',             hint: '???',                        color: '#6366f1', unlocked: new Date().getHours() >= 0 && new Date().getHours() < 4 },
+  { id: 'early_bird',   emoji: '🌅', label: 'Madrugador',      rarity: 'rare',      category: 'secret',
+    desc: 'Usou o app antes das 6h da manhã',       hint: '???',                        color: '#f59e0b', unlocked: new Date().getHours() >= 4 && new Date().getHours() < 6 },
+  { id: 'weekend',      emoji: '🎉', label: 'Sem Fins',        rarity: 'common',    category: 'secret',
+    desc: 'Acessou no fim de semana',               hint: '???',                        color: '#ec4899', unlocked: new Date().getDay() === 0 || new Date().getDay() === 6 },
+  { id: 'friday',       emoji: '🍻', label: 'TGIF',            rarity: 'common',    category: 'secret',
+    desc: 'Acessou numa sexta-feira',               hint: '???',                        color: '#22c55e', unlocked: new Date().getDay() === 5 },
+
+  // ── ESPECIAL / SECRETO ─────────────────────────────────────────────────────
+  { id: 'easter_egg',   emoji: '🥚', label: 'Caçador',         rarity: 'legendary', category: 'secret',
+    desc: 'Encontrou um easter egg!',               hint: '???',                        color: '#f59e0b', unlocked: opts.easterEggFound },
+  { id: 'hacker',       emoji: '👾', label: 'Hacker',          rarity: 'epic',      category: 'secret',
+    desc: 'Explorou além do esperado',              hint: '???',                        color: '#00ff41', unlocked: opts.easterEggFound },
+  { id: 'collector',    emoji: '💎', label: 'Colecionador',    rarity: 'legendary', category: 'profile',
+    desc: 'Desbloqueou 15+ conquistas',             hint: 'Continue explorando!',       color: '#a855f7',
+    unlocked: (() => {
+      const base = [opts.hasAvatar, opts.hasNusp, opts.hasLanguage, opts.hasArea,
+                    opts.hasBoards, opts.hasMultipleBoards, opts.hasPassedSubject,
+                    opts.eventCount >= 5, opts.subjectCount >= 6, opts.gradeCount >= 10].filter(Boolean).length
+      return base >= 8
+    })() },
+  { id: 'veteran',      emoji: '🎖️', label: 'Veterano',        rarity: 'epic',      category: 'profile',
+    desc: 'Usuário experiente do DaSIboard',        hint: 'Use o app extensamente',    color: '#f59e0b',
+    unlocked: opts.subjectCount >= 8 && opts.eventCount >= 10 && opts.gradeCount >= 15 },
+  { id: 'all_rounder',  emoji: '🌟', label: 'Completo',        rarity: 'legendary', category: 'profile',
+    desc: 'Usou todas as seções do DaSIboard',      hint: 'Explore tudo!',              color: '#f59e0b',
+    unlocked: opts.hasBoards && opts.eventCount >= 5 && opts.subjectCount >= 3 && opts.hasLanguage },
+  { id: 'si_spirit',    emoji: '🎓', label: 'Espírito SI',     rarity: 'legendary', category: 'academic',
+    desc: 'A essência de Sistemas de Informação',   hint: 'Seja o SI',                  color: '#4d67f5',
+    unlocked: opts.hasNusp && opts.hasLanguage && opts.hasArea && opts.hasPassedSubject },
+
+  // ── MARCOS NUMÉRICOS ───────────────────────────────────────────────────────
+  { id: 'event5',       emoji: '📅', label: 'Primeiro Prazo',  rarity: 'common',    category: 'kanban',
+    desc: 'Primeiro evento criado',                 hint: 'Crie um evento',             color: '#06b6d4', unlocked: opts.eventCount >= 1 },
+  { id: 'grade5',       emoji: '✅', label: 'Primeira Nota',   rarity: 'common',    category: 'academic',
+    desc: 'Primeira avaliação registrada',          hint: 'Registre uma nota',          color: '#22c55e', unlocked: opts.gradeCount >= 1 },
+  { id: 'subject1',     emoji: '📗', label: 'Primeira Aula',   rarity: 'common',    category: 'academic',
+    desc: 'Primeira disciplina cadastrada',         hint: 'Cadastre uma matéria',       color: '#10b981', unlocked: opts.subjectCount >= 1 },
+  { id: 'marathon',     emoji: '🏃', label: 'Maratonista',     rarity: 'epic',      category: 'academic',
+    desc: 'Cadastrou disciplinas de 3+ semestres',  hint: 'Avance nos semestres',       color: '#f97316',
+    unlocked: opts.subjectCount >= 12 },
+  { id: 'centurion',    emoji: '💯', label: 'Centurião',       rarity: 'legendary', category: 'academic',
+    desc: 'Registrou 100+ avaliações',              hint: 'Registre 100 notas',         color: '#ef4444',
+    unlocked: opts.gradeCount >= 100 },
+
+  // ── ESTÉTICA / TEMAS ───────────────────────────────────────────────────────
+  { id: 'themehunter',  emoji: '🎨', label: 'Caçador de Temas',rarity: 'rare',      category: 'profile',
+    desc: 'Explorou a paleta de temas',             hint: 'Troque de tema',             color: '#ec4899', unlocked: true },
+  { id: 'minimalist',   emoji: '⬜', label: 'Minimalista',     rarity: 'common',    category: 'profile',
+    desc: 'Menos é mais',                           hint: 'Use um tema claro',          color: '#6b7280', unlocked: true },
+  { id: 'darkside',     emoji: '🌑', label: 'Lado Sombrio',    rarity: 'common',    category: 'profile',
+    desc: 'Do lado escuro da força',                hint: 'Use um tema escuro',         color: '#1e1e2e', unlocked: true },
 ]
 
 // ── Canvas utilities ─────────────────────────────────────────────────────────
@@ -529,19 +610,14 @@ function drawPortraitInfo(
   entityBg: { color: string; name: string } | null,
   style: CardStyle,
 ) {
-  // ── Colors — ALWAYS based on user hue, never on entity ───────────────────
+  // Colors always from user hue
   const ink      = `hsl(${hue}, 55%, 12%)`
   const inkMid   = `hsl(${hue}, 30%, 40%)`
   const inkFaint = `hsl(${hue}, 20%, 58%)`
-  const accent   = `hsl(${hue}, ${Math.max(sat,52)}%, ${Math.max(lit-8,26)}%)`
+  const accent   = `hsl(${hue}, ${Math.max(sat, 52)}%, ${Math.max(lit - 8, 26)}%)`
 
-  // ── Layout grid ───────────────────────────────────────────────────────────
-  const padX   = W * 0.085          // left margin
-  const padR   = W - padX           // right margin x
-  const gap    = H * 0.018          // vertical rhythm unit
-
-  // Info zone starts just below the shape zone
-  const nameY   = zoneH + gap * 3.2  // baseline of first name
+  const padX = W * 0.085
+  const padR = W - padX
 
   // ── Name block ────────────────────────────────────────────────────────────
   const nameParts = user.full_name.trim().split(/\s+/)
@@ -552,22 +628,22 @@ function drawPortraitInfo(
   ctx.textBaseline = 'alphabetic'
   ctx.globalAlpha  = 1
 
-  // First name — large bold
+  const infoTop = zoneH + H * 0.042
+
   let fnSize = Math.round(W * 0.113)
   ctx.font = `700 ${fnSize}px sans-serif`
-  while (ctx.measureText(firstName).width > W - padX * 2 && fnSize > 28) {
+  while (ctx.measureText(firstName).width > W - padX * 2.2 && fnSize > 28) {
     fnSize -= 2
     ctx.font = `700 ${fnSize}px sans-serif`
   }
   ctx.fillStyle = ink
-  ctx.fillText(firstName, padX, nameY)
+  ctx.fillText(firstName, padX, infoTop + fnSize * 0.92)
 
-  // Last name — regular weight, clearly below first name
-  const lastNameY = nameY + fnSize * 0.82
+  const lastNameY = infoTop + fnSize * 0.92 + fnSize * 0.78
   if (lastName) {
     let lnSize = Math.round(W * 0.068)
     ctx.font = `400 ${lnSize}px sans-serif`
-    while (ctx.measureText(lastName).width > W - padX * 2 && lnSize > 20) {
+    while (ctx.measureText(lastName).width > W - padX * 2.2 && lnSize > 20) {
       lnSize -= 2
       ctx.font = `400 ${lnSize}px sans-serif`
     }
@@ -575,82 +651,67 @@ function drawPortraitInfo(
     ctx.fillText(lastName, padX, lastNameY)
   }
 
-  // ── Title / tagline — monospace uppercase, below name block ──────────────
+  // Title tagline
   const trng   = seededRng(user.id + '-title')
   const title  = TITLES[Math.floor(trng() * TITLES.length)]
-  const titleY = (lastName ? lastNameY : nameY) + gap * 3.0
-  const titleSize = Math.round(W * 0.036)
-  ctx.font      = `500 ${titleSize}px monospace`
+  const titleY = (lastName ? lastNameY : infoTop + fnSize * 0.92) + H * 0.045
+  const titleSz = Math.round(W * 0.036)
+  ctx.font      = `500 ${titleSz}px monospace`
   ctx.fillStyle = inkFaint
-  ctx.globalAlpha = 0.85
+  ctx.globalAlpha = 0.82
   ctx.fillText(title.toUpperCase(), padX, titleY)
   ctx.globalAlpha = 1
 
-  // ── Bottom strip — two rows, clearly separated ────────────────────────────
-  // Row 1 (tag row): ARC-style tag + achievements  — at H * 0.858
-  // Row 2 (meta row): language / area info + EACH label — at H * 0.920
-  // ID watermark — at very bottom H * 0.965
-
-  const row1Y = H * 0.862   // tag strip baseline-ish
-  const row2Y = H * 0.926   // secondary info
-  const idY   = H * 0.966   // ID watermark
-
+  // ── Bottom: Row 1 = tag + achievements, Row 2 = nUSP + EACH label ────────
   const tagH  = H * 0.048
-  const tagY  = row1Y - tagH * 0.75
+  const row1Y = H * 0.858
+  const tagY  = row1Y - tagH * 0.78
+  const row2Y = H * 0.924
+  const idY   = H * 0.965
 
-  // ── ARC tag (left side of row 1) ─────────────────────────────────────────
-  const tagLabel  = area || 'SI · EACH'
-  const tagSize   = Math.round(W * 0.034)
-  ctx.font        = `600 ${tagSize}px monospace`
-  const labelW    = ctx.measureText(tagLabel).width
-  const divLabel  = user.nusp ?? String(new Date().getFullYear())
-  const divW      = ctx.measureText(divLabel).width
-  const hatchSpan = tagH * 0.55   // width of the diagonal hatch block
-  const tagPadH   = tagH * 0.22   // horizontal padding inside tag
-  const tagTotalW = tagPadH + labelW + hatchSpan + divW + tagPadH
+  // ── Tag: [  area | language  ] ────────────────────────────────────────────
+  // Left segment = area (or 'SI'), Right segment = language (or year)
+  // Plain vertical divider — no diagonal hatch lines
+  const tagSz  = Math.round(W * 0.034)
+  ctx.font     = `600 ${tagSz}px monospace`
+  const leftLabel  = area || 'SI'
+  const rightLabel = language || String(new Date().getFullYear())
+  const leftW  = ctx.measureText(leftLabel).width
+  ctx.font     = `500 ${tagSz}px monospace`
+  const rightW = ctx.measureText(rightLabel).width
+  const tPad   = tagH * 0.48    // horizontal padding inside each segment
+  const divW   = Math.max(1.5, W * 0.0022)  // divider width
+  const tagTW  = tPad + leftW + tPad + divW + tPad + rightW + tPad
 
-  // Outer rounded rect
+  // Tag outer box
   ctx.strokeStyle = accent
   ctx.lineWidth   = Math.max(1.5, W * 0.0022)
   ctx.globalAlpha = 1
-  roundRect(ctx, padX, tagY, tagTotalW, tagH, tagH * 0.38)
+  roundRect(ctx, padX, tagY, tagTW, tagH, tagH * 0.38)
   ctx.stroke()
 
-  // Hatch block (divider between label and date/nusp)
-  const hatchX = padX + tagPadH + labelW
-  ctx.save()
+  // Vertical divider line (plain, no hatch)
+  const divX = padX + tPad + leftW + tPad
   ctx.beginPath()
-  roundRect(ctx, padX, tagY, tagTotalW, tagH, tagH * 0.38)
-  ctx.clip()
-  // Background fill for hatch zone
-  ctx.fillStyle   = accent
-  ctx.globalAlpha = 0.15
-  ctx.fillRect(hatchX, tagY, hatchSpan, tagH)
-  // Diagonal lines
+  ctx.moveTo(divX, tagY + tagH * 0.18)
+  ctx.lineTo(divX, tagY + tagH * 0.82)
   ctx.strokeStyle = accent
-  ctx.lineWidth   = Math.max(1, W * 0.0014)
-  ctx.globalAlpha = 0.50
-  const hSpacing  = hatchSpan / 4
-  for (let hx = hatchX - tagH; hx < hatchX + hatchSpan + tagH; hx += hSpacing) {
-    ctx.beginPath()
-    ctx.moveTo(hx,         tagY)
-    ctx.lineTo(hx + tagH,  tagY + tagH)
-    ctx.stroke()
-  }
-  ctx.restore()
+  ctx.lineWidth   = divW
+  ctx.globalAlpha = 0.5
+  ctx.stroke()
+  ctx.globalAlpha = 1
 
-  // Tag text — left label
+  // Left text: area
+  ctx.font         = `600 ${tagSz}px monospace`
+  ctx.fillStyle    = accent
   ctx.textBaseline = 'middle'
   ctx.textAlign    = 'left'
-  ctx.font         = `600 ${tagSize}px monospace`
-  ctx.fillStyle    = accent
-  ctx.globalAlpha  = 1
-  ctx.fillText(tagLabel, padX + tagPadH, tagY + tagH / 2)
+  ctx.fillText(leftLabel, padX + tPad, tagY + tagH / 2)
 
-  // Tag text — right value (nusp / year)
-  ctx.font      = `500 ${tagSize}px monospace`
+  // Right text: language
+  ctx.font      = `500 ${tagSz}px monospace`
   ctx.textAlign = 'left'
-  ctx.fillText(divLabel, hatchX + hatchSpan + tagPadH * 0.6, tagY + tagH / 2)
+  ctx.fillText(rightLabel, divX + divW + tPad, tagY + tagH / 2)
 
   ctx.textAlign    = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -658,36 +719,34 @@ function drawPortraitInfo(
   // ── Achievements (right side of row 1) ───────────────────────────────────
   const displayA = activeAchievements.filter(a => a.unlocked).slice(0, 5)
   if (displayA.length > 0) {
-    const emojiSize = Math.round(W * 0.052)
-    ctx.font         = `${emojiSize}px serif`
+    const emojiSz = Math.round(W * 0.052)
+    ctx.font         = `${emojiSz}px serif`
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'right'
     ctx.globalAlpha  = 1
     let ax = padR
     for (const ach of [...displayA].reverse()) {
       ctx.fillText(ach.emoji, ax, tagY + tagH / 2)
-      ax -= emojiSize * 1.25
+      ax -= emojiSz * 1.22
     }
     ctx.textAlign    = 'left'
     ctx.textBaseline = 'alphabetic'
   }
 
-  // ── Row 2: language badge (left) + institution (right) ───────────────────
-  const metaSize = Math.round(W * 0.030)
-
-  if (language) {
-    ctx.font      = `500 ${metaSize}px monospace`
-    ctx.fillStyle = inkFaint
-    ctx.globalAlpha = 0.75
+  // ── Row 2: Nº USP (left) + EACH · USP (right) ────────────────────────────
+  const metaSz = Math.round(W * 0.030)
+  if (user.nusp) {
+    ctx.font         = `600 ${metaSz}px monospace`
+    ctx.fillStyle    = accent
+    ctx.globalAlpha  = 0.80
     ctx.textBaseline = 'alphabetic'
-    ctx.fillText(language.toUpperCase(), padX, row2Y)
-    ctx.globalAlpha = 1
+    ctx.fillText(`Nº USP  ${user.nusp}`, padX, row2Y)
+    ctx.globalAlpha  = 1
   }
 
-  // Institution — right-aligned
-  ctx.font         = `600 ${Math.round(W * 0.032)}px sans-serif`
+  ctx.font         = `600 ${Math.round(W * 0.030)}px sans-serif`
   ctx.fillStyle    = ink
-  ctx.globalAlpha  = 0.45
+  ctx.globalAlpha  = 0.40
   ctx.textAlign    = 'right'
   ctx.textBaseline = 'alphabetic'
   ctx.fillText('EACH · USP', padR, row2Y)
@@ -699,7 +758,7 @@ function drawPortraitInfo(
   ctx.fillStyle    = ink
   ctx.globalAlpha  = 0.09
   ctx.textBaseline = 'alphabetic'
-  ctx.fillText(user.id.replace(/-/g,'').slice(0,8).toUpperCase(), padX, idY)
+  ctx.fillText(user.id.replace(/-/g, '').slice(0, 8).toUpperCase(), padX, idY)
   ctx.globalAlpha  = 1
 }
 

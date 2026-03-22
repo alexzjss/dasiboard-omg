@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, KanbanSquare, BookOpen,
-  CalendarDays, User, GraduationCap, Sun, Moon, Users, X,
+  CalendarDays, User, GraduationCap, Users, X,
   LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -12,7 +12,7 @@ import { usePresentationMode, PresentationControls, PresentationButton } from '@
 import { GlobalSearch, useGlobalSearch } from '@/components/GlobalSearch'
 import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
 import { NotificationBanner } from '@/hooks/usePushNotifications'
-import { useSwipeNavigation, useKeyboardShortcuts, KeyboardHelpModal, KeyboardHelpButton } from '@/hooks/useInteractions'
+import { useSwipeNavigation, useKeyboardShortcuts } from '@/hooks/useInteractions'
 import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
@@ -346,7 +346,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
   liteMode: { active: boolean; toggle: () => void }
 }) {
   const { user, logout } = useAuthStore()
-  const { theme, isDark, toggleDarkLight } = useTheme()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const initials = user?.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U'
 
@@ -361,11 +361,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
           <p className="font-display font-bold text-sm leading-tight" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
           <p className="text-[10px] font-mono opacity-50 leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
         </div>
-        <button onClick={toggleDarkLight} title={isDark ? 'Modo claro' : 'Modo escuro'}
-                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110 active:scale-90"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-          {isDark ? <Sun size={13} /> : <Moon size={13} />}
-        </button>
+
       </div>
 
       {/* Theme picker button */}
@@ -470,10 +466,9 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
 export default function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { theme, isDark, toggleDarkLight, cycleTheme, setTheme, chronoEra } = useTheme()
+  const { theme, isDark, cycleTheme, setTheme, chronoEra } = useTheme()
   const [showPicker,      setShowPicker]   = useState(false)
   const [showPokeball,    setShowPokeball] = useState(false)
-  const [showKeyHelp,     setShowKeyHelp]  = useState(false)
   const [starter,         setStarter]      = useState<string>(() => localStorage.getItem('dasiboard-starter') ?? '')
   const { show: showOnboarding, markDone: doneOnboarding } = useOnboarding()
 
@@ -543,8 +538,7 @@ export default function AppLayout() {
     { key: 'y', ctrl: true, shift: true, description: 'Abrir Study Room',      group: 'Navegação', action: () => navigate('/study') },
     // Interface
     { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
-    { key: '/', ctrl: true, description: 'Mostrar atalhos',          group: 'Interface', action: () => setShowKeyHelp(k => !k) },
-    { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false); setShowKeyHelp(false) } },
+    { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false) } },
     // Temas — ciclar com Alt+← / Alt+→
     { key: 'ArrowRight', alt: true, description: 'Próximo tema',    group: 'Temas', action: () => cycleTheme() },
     { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => {
@@ -611,32 +605,27 @@ export default function AppLayout() {
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ backgroundColor: 'var(--bg-base)' }}>
 
-      {/* Theme system — cursor & canvas effects */}
-      <ThemeCursorStyle />
-      <GlowCursor />
-      <DLCCanvas />
-
-      {showOnboarding && <Onboarding onClose={doneOnboarding} />}
-      {showPicker && <ThemePicker onClose={() => setShowPicker(false)} />}
-      {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
-      <EasterEggRenderer active={activeEgg} onClose={closeAnyEgg} />
-      {presentation.active && <PresentationControls fontSize={presentation.fontSize} setFontSize={presentation.setFontSize} onExit={presentation.exit} />}
-      {showKeyHelp && <KeyboardHelpModal shortcuts={shortcuts} onClose={() => setShowKeyHelp(false)} />}
-      {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
-      <NotificationBanner />
-
-      {/* Floating keyboard help button — keyboard users only */}
-      <KeyboardHelpButton onClick={() => setShowKeyHelp(k => !k)} />
-
-      {/* Global: color blind SVG filters, offline banner, PWA install */}
-      <ColorBlindFilters />
-      <OfflineBanner />
-      <PWAInstallBanner />
-      <BlueprintRuler />
-      <ShellPrompt />
-      <PortatilSaveState />
-      {achPending && <AchievementToast achievement={achPending} onDismiss={achDismiss} />}
-      {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
+      {/* ── Overlays & portals — display:contents keeps them outside flex flow ── */}
+      <div style={{ display: 'contents' }}>
+        <ThemeCursorStyle />
+        <GlowCursor />
+        <DLCCanvas />
+        {showOnboarding && <Onboarding onClose={doneOnboarding} />}
+        {showPicker && <ThemePicker onClose={() => setShowPicker(false)} />}
+        {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />}
+        <EasterEggRenderer active={activeEgg} onClose={closeAnyEgg} />
+        {presentation.active && <PresentationControls fontSize={presentation.fontSize} setFontSize={presentation.setFontSize} onExit={presentation.exit} />}
+        {showPokeball && <StarterPicker onClose={() => setShowPokeball(false)} onSelect={saveStarter} current={starter} />}
+        <NotificationBanner />
+        <ColorBlindFilters />
+        <OfflineBanner />
+        <PWAInstallBanner />
+        <BlueprintRuler />
+        <ShellPrompt />
+        <PortatilSaveState />
+        {achPending && <AchievementToast achievement={achPending} onDismiss={achDismiss} />}
+        {isPixel && <PokeballButton onClick={() => setShowPokeball(true)} />}
+      </div>
 
       {/* Chrono era badge — floating, only in Chrono theme */}
       {isChrono && chronoEra && (
