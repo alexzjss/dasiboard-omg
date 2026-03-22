@@ -4,14 +4,17 @@ import {
   LayoutDashboard, Rss, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Users, X,
   LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings,
+  MoreHorizontal,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
-import { useEasterEggs, EasterEggRenderer, triggerEasterEgg, useExternalEasterEgg, EasterEggId } from '@/hooks/useEasterEggs'
+import { useEasterEggs, SafeEasterEggRenderer as EasterEggRenderer, triggerEasterEgg, useExternalEasterEgg, EasterEggId } from '@/hooks/useEasterEggs'
 import { usePresentationMode, PresentationControls, PresentationButton } from '@/components/PresentationMode'
 import { GlobalSearch, useGlobalSearch } from '@/components/GlobalSearch'
 import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
 import { NotificationBanner } from '@/hooks/usePushNotifications'
+import storage, { STORAGE_KEYS } from '@/utils/storage'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { useSwipeNavigation, useKeyboardShortcuts } from '@/hooks/useInteractions'
 import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
@@ -32,19 +35,24 @@ import { useClockEasterEggs } from '@/hooks/useEasterEggs'
 import clsx from 'clsx'
 import toast from 'react-hot-toast'
 
-const nav = [
+// Primary nav — always visible in bottom bar (max 5)
+const NAV_PRIMARY = [
   { to: '/',          label: 'Início',        icon: LayoutDashboard, end: true  },
   { to: '/kanban',    label: 'Kanban',        icon: KanbanSquare,    end: false },
   { to: '/grades',    label: 'Disciplinas',   icon: BookOpen,        end: false },
   { to: '/calendar',  label: 'Calendário',    icon: CalendarDays,    end: false },
+  { to: '/profile',   label: 'Perfil',        icon: User,            end: false },
+]
+// Secondary nav — shown in desktop sidebar + overflow menu on mobile
+const NAV_SECONDARY = [
   { to: '/entities',  label: 'Entidades',     icon: Users,           end: false },
   { to: '/turma',     label: 'Turma',         icon: GraduationCap,   end: false },
   { to: '/room',      label: 'Salas',         icon: Monitor,         end: false },
   { to: '/feed',      label: 'Feed',          icon: Rss,             end: false },
   { to: '/docentes',  label: 'Docentes',      icon: BookMarked,      end: false },
-  { to: '/profile',   label: 'Perfil',        icon: User,            end: false },
   { to: '/settings',  label: 'Configurações', icon: Settings,        end: false },
 ]
+const nav = [...NAV_PRIMARY, ...NAV_SECONDARY]
 
 // ── Theme preview colors for visual picker ───────────────────────────────────
 const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string }> = {
@@ -166,7 +174,7 @@ function PokeballButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      title="Escolher inicial Pokémon"
+      title="Escolher inicial Pokémon" aria-label="Escolher inicial Pokémon"
       className="fixed z-40 transition-all active:scale-90"
       style={{
         bottom: 72, right: 16,
@@ -411,7 +419,7 @@ function DasiLogoClickable({ onEgg }: { onEgg: () => void }) {
   return (
     <button onClick={handle} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform active:scale-90"
             style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 12px var(--accent-glow)' }}
-            title="DaSIboard">
+            title="DaSIboard" aria-label="DaSIboard">
       <GraduationCap size={16} className="text-white" />
     </button>
   )
@@ -541,6 +549,95 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
 }
 
 // ── App Layout ────────────────────────────────────────────────────────────────
+
+// ── Mobile Bottom Nav — 5 primary + overflow "..." drawer ─────────────────────
+function MobileBottomNav() {
+  const location  = useLocation()
+  const [showMore, setShowMore] = useState(false)
+  const isSecondaryActive = NAV_SECONDARY.some(n => location.pathname.startsWith(n.to))
+
+  return (
+    <>
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 flex items-stretch mobile-bottomnav"
+        style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', zIndex: 'var(--z-nav, 30)' }}
+        aria-label="Navegação principal"
+      >
+        {NAV_PRIMARY.map(({ to, label, icon: Icon, end }) => (
+          <NavLink key={to} to={to} end={end}
+                   aria-label={label}
+                   className={({ isActive }) => clsx(
+                     'flex-1 flex items-center justify-center transition-all duration-200 active:scale-75 select-none',
+                     isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
+                   )}>
+            {({ isActive }) => (
+              <div className="relative flex items-center justify-center" style={{ width: 48, height: 40 }}>
+                {isActive && (
+                  <div className="absolute inset-0 rounded-2xl transition-all duration-200"
+                       style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
+                )}
+                <Icon size={isActive ? 18 : 20} className="relative z-10 transition-all duration-200"
+                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', strokeWidth: isActive ? 2.5 : 1.8 }}
+                      aria-hidden="true" />
+              </div>
+            )}
+          </NavLink>
+        ))}
+        {/* More button */}
+        <button
+          onClick={() => setShowMore(m => !m)}
+          aria-label="Mais páginas"
+          aria-expanded={showMore}
+          className={clsx(
+            'flex-1 flex items-center justify-center transition-all duration-200 active:scale-75 select-none',
+            (showMore || isSecondaryActive) ? 'nav-bottom-active' : 'nav-bottom-inactive'
+          )}
+        >
+          <div className="relative flex items-center justify-center" style={{ width: 48, height: 40 }}>
+            {(showMore || isSecondaryActive) && (
+              <div className="absolute inset-0 rounded-2xl"
+                   style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
+            )}
+            <MoreHorizontal size={20} className="relative z-10"
+              style={{ color: (showMore || isSecondaryActive) ? 'var(--accent-3)' : 'var(--text-muted)' }}
+              aria-hidden="true" />
+          </div>
+        </button>
+      </nav>
+
+      {/* Overflow drawer */}
+      {showMore && (
+        <>
+          <div className="fixed inset-0 z-[var(--z-overlay,90)]" onClick={() => setShowMore(false)} aria-hidden="true" />
+          <div
+            className="lg:hidden fixed bottom-[60px] inset-x-3 rounded-2xl p-3 animate-in grid grid-cols-3 gap-2"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 -8px 40px rgba(0,0,0,0.3)', zIndex: 'var(--z-overlay, 90)' }}
+            role="menu" aria-label="Mais navegação"
+          >
+            {NAV_SECONDARY.map(({ to, label, icon: Icon }) => {
+              const isActive = location.pathname.startsWith(to)
+              return (
+                <NavLink key={to} to={to}
+                         role="menuitem"
+                         aria-label={label}
+                         onClick={() => setShowMore(false)}
+                         className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all active:scale-95"
+                         style={{ background: isActive ? 'var(--accent-soft)' : 'var(--bg-elevated)', border: `1px solid ${isActive ? 'var(--accent-1)' : 'var(--border)'}` }}>
+                  <Icon size={18} style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }} aria-hidden="true" />
+                  <span className="text-[10px] font-medium leading-none"
+                        style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }}>
+                    {label}
+                  </span>
+                </NavLink>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
 export default function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -548,11 +645,12 @@ export default function AppLayout() {
   const { exams, active: panicAlert, panicOn, activate: activatePanic, dismiss: dismissPanic, deactivate: deactivatePanic } = usePanicMode()
   const [showPicker,      setShowPicker]   = useState(false)
   const [showPokeball,    setShowPokeball] = useState(false)
-  const [starter,         setStarter]      = useState<string>(() => localStorage.getItem('dasiboard-starter') ?? '')
+  const [starter,         setStarter]      = useState<string>(() => localStorage.getItem(STORAGE_KEYS.starter) ?? '')
   const { show: showOnboarding, markDone: doneOnboarding } = useOnboarding()
 
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
 
+  useScrollRestoration()
   useSwipeNavigation()
   const { active: easterActive, close: closeEaster } = useEasterEggs()
   const [externalEgg, setExternalEgg] = useState<EasterEggId>(null)
@@ -577,7 +675,7 @@ export default function AppLayout() {
       toast('🌋 O chão é lava! Abra o Kanban em 30s para ganhar a conquista!', { duration: 30000, icon: '🌋' })
       setTimeout(() => {
         if (window.location.pathname === '/kanban') {
-          localStorage.setItem('dasiboard-easter-found', '1')
+          localStorage.setItem(STORAGE_KEYS.easterFound, '1')
           triggerAchievementToast({ id:'ninja', emoji:'🥷', label:'Reflexos de Ninja',
             rarity:'legendary', category:'secret', desc:'Abriu o Kanban no chão de lava',
             hint:'???', color:'#ef4444', unlocked:true })
@@ -646,7 +744,7 @@ export default function AppLayout() {
 
   const isPixel  = theme.id === 'dark-pixel'
   const isChrono = theme.id === 'dark-chrono'
-  const saveStarter = (id: string) => { localStorage.setItem('dasiboard-starter', id); setStarter(id) }
+  const saveStarter = (id: string) => { localStorage.setItem(STORAGE_KEYS.starter, id); setStarter(id) }
   const colorBlind = useColorBlindMode()
   const liteMode  = useLiteMode()
   useChronoPortalSound()
@@ -723,7 +821,7 @@ export default function AppLayout() {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
         <SidebarContent onOpenPicker={() => setShowPicker(true)} colorBlind={colorBlind} liteMode={liteMode}
-                        onLogoEgg={() => { localStorage.setItem('dasiboard-easter-found','1'); setExternalEgg('dasi-flip') }} />
+                        onLogoEgg={() => { localStorage.setItem(STORAGE_KEYS.easterFound,'1'); setExternalEgg('dasi-flip') }} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">
@@ -776,29 +874,8 @@ export default function AppLayout() {
         <div className="lg:hidden main-mobile-pad-bottom" />
       </main>
 
-      {/* Mobile bottom nav — icons only */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch mobile-bottomnav"
-           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-        {nav.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} title={label}
-                   className={({ isActive }) => clsx(
-                     'flex-1 flex items-center justify-center transition-all duration-200',
-                     'active:scale-75 select-none',
-                     isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
-                   )}>
-            {({ isActive }) => (
-              <div className="relative flex items-center justify-center" style={{ width: 48, height: 40 }}>
-                {isActive && (
-                  <div className="absolute inset-0 rounded-2xl transition-all duration-200"
-                       style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
-                )}
-                <Icon size={isActive ? 18 : 20} className="relative z-10 transition-all duration-200"
-                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', strokeWidth: isActive ? 2.5 : 1.8 }} />
-              </div>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+      {/* Mobile bottom nav — 5 primary items + overflow drawer */}
+      <MobileBottomNav />
     </div>
   )
 }

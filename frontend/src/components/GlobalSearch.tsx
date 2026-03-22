@@ -1,23 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type ElementType } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, BookOpen, KanbanSquare, CalendarDays, Users, User, Clock, Hash, ArrowRight, FileText, Brain, Zap } from 'lucide-react'
 import api from '@/utils/api'
+import { STORAGE_KEYS } from '@/utils/storage'
 import { triggerEasterEgg } from '@/hooks/useEasterEggs'
 
 // ── Result types ──────────────────────────────────────────────────────────────
 type ResultKind = 'subject'|'card'|'event'|'entity'|'docente'|'nav'|'note'|'flashcard'
 
 interface SearchResult {
-  id: string
-  kind: ResultKind
-  title: string
-  subtitle?: string
-  href: string
-  color?: string
-  score: number
+  id: string; kind: ResultKind; title: string; subtitle?: string
+  href: string; color?: string; score: number
 }
 
-const KIND_META: Record<ResultKind, { icon: any; label: string; color: string }> = {
+const KIND_META: Record<ResultKind, { icon: ElementType; label: string; color: string }> = {
   subject:  { icon: BookOpen,     label: 'Disciplina',  color: '#8b5cf6' },
   card:     { icon: KanbanSquare, label: 'Card',        color: '#3b82f6' },
   event:    { icon: CalendarDays, label: 'Evento',      color: '#f59e0b' },
@@ -28,7 +24,6 @@ const KIND_META: Record<ResultKind, { icon: any; label: string; color: string }>
   flashcard:{ icon: Brain,        label: 'Flashcard',   color: '#22c55e' },
 }
 
-// Static nav pages always in results
 const NAV_ITEMS: SearchResult[] = [
   { id:'nav-home',     kind:'nav', title:'Início',      subtitle:'Dashboard principal', href:'/',          score:0 },
   { id:'nav-kanban',   kind:'nav', title:'Kanban',      subtitle:'Quadros e tarefas',   href:'/kanban',    score:0 },
@@ -39,304 +34,202 @@ const NAV_ITEMS: SearchResult[] = [
   { id:'nav-profile',  kind:'nav', title:'Perfil',      subtitle:'Seu perfil e cartão', href:'/profile',   score:0 },
 ]
 
-// ── Fuzzy match score ─────────────────────────────────────────────────────────
-function score(text: string, query: string): number {
-  const t = text.toLowerCase()
-  const q = query.toLowerCase().trim()
+function scoreText(text: string, query: string): number {
+  const t = text.toLowerCase(), q = query.toLowerCase().trim()
   if (!q) return 0
   if (t === q) return 100
   if (t.startsWith(q)) return 80
   if (t.includes(q)) return 60
-  // Check every word
-  const words = q.split(/\s+/)
-  if (words.every(w => t.includes(w))) return 50
-  // Fuzzy — every char present in order
+  if (q.split(/\s+/).every(w => t.includes(w))) return 50
   let qi = 0
   for (const c of t) { if (c === q[qi]) qi++ }
   return qi === q.length ? 20 : 0
 }
 
-// ── Global search hook ────────────────────────────────────────────────────────
+// ── Module-level cache — shared across renders, invalidated on open ───────────
 let cachedData: {
-  subjects: any[]
-  cards: any[]
-  events: any[]
-  entities: any[]
-  docentes: any[]
-  notes: any[]
-  flashcards: any[]
-  fetchedAt: number
+  subjects: any[]; cards: any[]; events: any[]; entities: any[]; docentes: any[]
+  notes: any[]; flashcards: any[]; fetchedAt: number
 } | null = null
 
-// Load notes from localStorage (no API needed)
 function loadNotesFromStorage() {
-  try {
-    const raw = localStorage.getItem('dasiboard-notes')
-    return raw ? JSON.parse(raw) : []
-  } catch { return [] }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.notes) ?? '[]') } catch { return [] }
 }
 
-async function fetchAll() {
+// Single fetch with AbortController support
+async function fetchAll(signal?: AbortSignal) {
   if (cachedData && Date.now() - cachedData.fetchedAt < 60_000) return cachedData
 
   const [subjects, boards, events, entities, docentes] = await Promise.allSettled([
-    api.get('/grades/subjects'),
-    api.get('/kanban/boards'),
-    api.get('/events/'),
-    api.get('/entities/'),
-    api.get('/docentes/'),
+    api.get('/grades/subjects', { signal }),
+    api.get('/kanban/boards', { signal }),
+    api.get('/events/', { signal }),
+    api.get('/entities/', { signal }),
+    api.get('/docentes/', { signal }),
   ])
+
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
 
   const cards: any[] = []
   if (boards.status === 'fulfilled') {
     for (const board of boards.value.data) {
       try {
-        const { data } = await api.get(`/kanban/boards/${board.id}/columns`)
-        for (const col of data) {
-          for (const card of (col.cards ?? [])) {
-            cards.push({ ...card, board_name: board.name })
-          }
-        }
+        const { data } = await api.get(`/kanban/boards/${board.id}/columns`, { signal })
+        for (const col of data) for (const card of (col.cards ?? []))
+          cards.push({ ...card, board_name: board.name })
       } catch {}
     }
   }
 
-  // Load notes from localStorage
   const notesRaw = loadNotesFromStorage()
   const flashcardsRaw: any[] = []
   for (const note of notesRaw) {
-    // Parse Q/A patterns from note content
     const lines = (note.content || '').split('\n')
     for (let i = 0; i < lines.length; i++) {
       const qm = lines[i].trim().match(/^[Qq][:：]\s*(.+)/)
-      if (qm) {
-        for (let j = i+1; j < Math.min(i+5, lines.length); j++) {
-          const am = lines[j].trim().match(/^[Aa][:：]\s*(.+)/)
-          if (am) { flashcardsRaw.push({ id: note.id+'-'+i, front: qm[1], back: am[1], noteId: note.id, subjectId: note.subjectId }); break }
-        }
+      if (qm) for (let j = i+1; j < Math.min(i+5, lines.length); j++) {
+        const am = lines[j].trim().match(/^[Aa][:：]\s*(.+)/)
+        if (am) { flashcardsRaw.push({ id: `${note.id}-${i}`, front: qm[1], back: am[1] }); break }
       }
       const bm = lines[i].trim().match(/^\*\*(.+?)\*\*\s*[—–-]\s*(.+)/)
-      if (bm) flashcardsRaw.push({ id: note.id+'-b-'+i, front: bm[1], back: bm[2], noteId: note.id, subjectId: note.subjectId })
+      if (bm) flashcardsRaw.push({ id: `${note.id}-b-${i}`, front: bm[1], back: bm[2] })
     }
   }
 
   cachedData = {
     subjects: subjects.status === 'fulfilled' ? subjects.value.data : [],
-    cards,
-    events:   events.status === 'fulfilled'   ? events.value.data  : [],
+    cards, events: events.status === 'fulfilled' ? events.value.data : [],
     entities: entities.status === 'fulfilled' ? entities.value.data : [],
     docentes: docentes.status === 'fulfilled' ? docentes.value.data : [],
-    notes: notesRaw,
-    flashcards: flashcardsRaw,
-    fetchedAt: Date.now(),
+    notes: notesRaw, flashcards: flashcardsRaw, fetchedAt: Date.now(),
   }
   return cachedData
 }
 
 function buildResults(data: typeof cachedData, query: string): SearchResult[] {
   if (!data) return []
-
   const results: SearchResult[] = []
   const q = query.trim()
 
-  // Nav pages — always shown when empty, filtered when typed
   for (const nav of NAV_ITEMS) {
-    const s = q ? Math.max(score(nav.title, q), score(nav.subtitle ?? '', q)) : 5
+    const s = q ? Math.max(scoreText(nav.title, q), scoreText(nav.subtitle ?? '', q)) : 5
     if (s > 0 || !q) results.push({ ...nav, score: s || 5 })
   }
-
   if (!q) return results.sort((a, b) => b.score - a.score).slice(0, 8)
 
-  // Subjects
-  for (const s of data.subjects) {
-    const sc = Math.max(score(s.name ?? '', q), score(s.code ?? '', q))
-    if (sc > 0) results.push({
-      id: `subject-${s.id}`,
-      kind: 'subject',
-      title: s.name,
-      subtitle: `${s.code} · ${s.semester}`,
-      href: '/grades',
-      color: s.color,
-      score: sc,
-    })
+  const push = (id: string, kind: ResultKind, title: string, subtitle: string, href: string, sc: number, color?: string) => {
+    if (sc > 0) results.push({ id, kind, title, subtitle, href, color, score: sc })
   }
 
-  // Cards
-  for (const c of data.cards) {
-    const sc = Math.max(score(c.title ?? '', q), score(c.board_name ?? '', q))
-    if (sc > 0) results.push({
-      id: `card-${c.id}`,
-      kind: 'card',
-      title: c.title,
-      subtitle: `Kanban · ${c.board_name}`,
-      href: '/kanban',
-      score: sc,
-    })
-  }
-
-  // Events
-  for (const e of data.events) {
-    const sc = score(e.title ?? '', q)
-    if (sc > 0) results.push({
-      id: `event-${e.id}`,
-      kind: 'event',
-      title: e.title,
-      subtitle: e.start_at ? new Date(e.start_at).toLocaleDateString('pt-BR') : undefined,
-      href: '/calendar',
-      color: e.color,
-      score: sc,
-    })
-  }
-
-  // Entities
-  for (const e of data.entities) {
-    const sc = Math.max(score(e.name ?? '', q), score(e.description ?? '', q))
-    if (sc > 0) results.push({
-      id: `entity-${e.id}`,
-      kind: 'entity',
-      title: e.name,
-      subtitle: e.type,
-      href: '/entities',
-      score: sc,
-    })
-  }
-
-  // Docentes
-  for (const d of data.docentes) {
-    const sc = Math.max(score(d.name ?? '', q), score(d.area ?? '', q))
-    if (sc > 0) results.push({
-      id: `docente-${d.id}`,
-      kind: 'docente',
-      title: d.name,
-      subtitle: d.area,
-      href: '/docentes',
-      score: sc,
-    })
-  }
-
-  // Notes
-  for (const n of data.notes) {
-    const sc = Math.max(score(n.title ?? '', q), score(n.content ?? '', q))
-    if (sc > 0) results.push({
-      id: `note-${n.id}`,
-      kind: 'note',
-      title: n.title || 'Nota sem título',
-      subtitle: `Nota · ${n.subjectId ? n.subjectId : 'Geral'}`,
-      href: '/grades',
-      score: sc,
-    })
-  }
-
-  // Flashcards
+  for (const s of data.subjects)
+    push(`subject-${s.id}`, 'subject', s.name, `${s.code} · ${s.semester}`, '/grades',
+         Math.max(scoreText(s.name ?? '', q), scoreText(s.code ?? '', q)), s.color)
+  for (const c of data.cards)
+    push(`card-${c.id}`, 'card', c.title, `Kanban · ${c.board_name}`, '/kanban',
+         Math.max(scoreText(c.title ?? '', q), scoreText(c.board_name ?? '', q)))
+  for (const e of data.events)
+    push(`event-${e.id}`, 'event', e.title,
+         e.start_at ? new Date(e.start_at).toLocaleDateString('pt-BR') : '', '/calendar',
+         scoreText(e.title ?? '', q), e.color)
+  for (const e of data.entities)
+    push(`entity-${e.id}`, 'entity', e.name, e.type ?? '', '/entities',
+         Math.max(scoreText(e.name ?? '', q), scoreText(e.description ?? '', q)))
+  for (const d of data.docentes)
+    push(`docente-${d.id}`, 'docente', d.name, d.area ?? '', '/docentes',
+         Math.max(scoreText(d.name ?? '', q), scoreText(d.area ?? '', q)))
+  for (const n of data.notes)
+    push(`note-${n.id}`, 'note', n.title || 'Nota sem título', 'Nota', '/grades',
+         Math.max(scoreText(n.title ?? '', q), scoreText(n.content ?? '', q)))
   for (const f of data.flashcards) {
-    const sc = Math.max(score(f.front ?? '', q), score(f.back ?? '', q))
-    if (sc > 0) results.push({
-      id: `flashcard-${f.id}`,
-      kind: 'flashcard',
-      title: f.front,
-      subtitle: `Flashcard → ${f.back.slice(0, 60)}${f.back.length > 60 ? '…' : ''}`,
-      href: '/grades',
-      score: sc + 5, // boost flashcards slightly
-    })
+    const sc = Math.max(scoreText(f.front ?? '', q), scoreText(f.back ?? '', q))
+    if (sc > 0) results.push({ id: `fc-${f.id}`, kind: 'flashcard', title: f.front,
+      subtitle: `Flashcard → ${String(f.back).slice(0, 60)}…`, href: '/grades', score: sc + 5 })
   }
 
-  return results
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 14)
+  return results.sort((a, b) => b.score - a.score).slice(0, 14)
 }
 
 // ── Spotlight UI ──────────────────────────────────────────────────────────────
 export function GlobalSearch({ onClose }: { onClose: () => void }) {
-  const navigate = useNavigate()
-  const [query,   setQuery]   = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [selected, setSelected] = useState(0)
+  const navigate  = useNavigate()
+  const [query,   setQuery]    = useState('')
+  const [results, setResults]  = useState<SearchResult[]>([])
+  const [selected, setSelected]= useState(0)
   const [loading, setLoading]  = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const dataRef  = useRef<typeof cachedData>(null)
+  const inputRef  = useRef<HTMLInputElement>(null)
+  const dataRef   = useRef<typeof cachedData>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef  = useRef<AbortController | null>(null)
 
-  // Load data on mount — also refresh notes cache
+  // Load data once on mount
   useEffect(() => {
-    cachedData = null  // invalidate so notes are always fresh
+    cachedData = null // always refresh notes
     setLoading(true)
-    fetchAll().then(d => {
-      dataRef.current = d
-      setResults(buildResults(d, ''))
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    abortRef.current = new AbortController()
+    fetchAll(abortRef.current.signal)
+      .then(d => { dataRef.current = d; setResults(buildResults(d, '')); setLoading(false) })
+      .catch(e => { if (e?.name !== 'AbortError') setLoading(false) })
     inputRef.current?.focus()
+    return () => abortRef.current?.abort()
   }, [])
 
-  // Update results on query change
-  useEffect(() => {
-    setSelected(0)
-    setResults(buildResults(dataRef.current, query))
-  }, [query])
+  // Debounced result update — 150ms for local search (no API calls)
+  const handleQuery = useCallback((val: string) => {
+    setQuery(val)
+    // Easter egg keywords — immediate
+    const lower = val.toLowerCase().trim()
+    if (lower === 'matrix' || lower === 'sudo' || lower === 'hype') {
+      localStorage.setItem('dasiboard-easter-found', '1')
+      triggerEasterEgg(lower === 'matrix' ? 'matrix' : lower === 'sudo' ? 'hacker' : 'hype-particles')
+      setQuery(''); return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setSelected(0)
+      setResults(buildResults(dataRef.current, val))
+    }, 120)
+  }, [])
 
-  const go = useCallback((result: SearchResult) => {
-    navigate(result.href)
-    onClose()
-  }, [navigate, onClose])
+  const go = useCallback((result: SearchResult) => { navigate(result.href); onClose() }, [navigate, onClose])
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return }
-      if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, results.length - 1)) }
-      if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)) }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s+1, results.length-1)) }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s-1, 0)) }
       if (e.key === 'Enter' && results[selected]) go(results[selected])
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [results, selected, go, onClose])
 
-  // Group by kind for display
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
     const g = r.kind === 'nav' ? 'Páginas' : KIND_META[r.kind].label + 's'
-    ;(acc[g] ??= []).push(r)
-    return acc
+    ;(acc[g] ??= []).push(r); return acc
   }, {})
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[10dvh] sm:pt-[12dvh] px-4"
-         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)' }}
-         onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="fixed inset-0 flex items-start justify-center pt-[10dvh] sm:pt-[12dvh] px-4"
+         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)', zIndex: 'var(--z-search, 300)' }}
+         onClick={e => { if (e.target === e.currentTarget) onClose() }}
+         role="dialog" aria-modal="true" aria-label="Busca global">
       <div className="w-full max-w-xl rounded-2xl overflow-hidden animate-in"
            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 24px 80px rgba(0,0,0,0.55)' }}>
-        {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3.5"
-             style={{ borderBottom: '1px solid var(--border)' }}>
-          <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+        <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden="true" />
           <input
             ref={inputRef}
+            role="combobox" aria-expanded={results.length > 0} aria-autocomplete="list"
+            aria-activedescendant={results[selected] ? `sr-${results[selected].id}` : undefined}
             className="flex-1 bg-transparent outline-none text-base"
             style={{ color: 'var(--text-primary)', caretColor: 'var(--accent-3)' }}
-            placeholder="Buscar disciplinas, cards, eventos, docentes..."
+            placeholder="Buscar disciplinas, cards, eventos…"
             value={query}
-            onChange={e => {
-              const val = e.target.value
-              setQuery(val)
-              // ── Easter egg keywords ──────────────────────────
-              const lower = val.toLowerCase().trim()
-              if (lower === 'matrix') {
-                localStorage.setItem('dasiboard-easter-found', '1')
-                triggerEasterEgg('matrix')
-                setQuery('')
-              } else if (lower === 'sudo') {
-                localStorage.setItem('dasiboard-easter-found', '1')
-                triggerEasterEgg('hacker')
-                setQuery('')
-              } else if (lower === 'hype') {
-                localStorage.setItem('dasiboard-easter-found', '1')
-                triggerEasterEgg('hype-particles')
-                setQuery('')
-              }
-            }}
-            autoComplete="off"
-            spellCheck={false}
+            onChange={e => handleQuery(e.target.value)}
+            autoComplete="off" spellCheck={false}
           />
           {query && (
-            <button onClick={() => setQuery('')} className="shrink-0"
+            <button onClick={() => handleQuery('')} aria-label="Limpar busca"
                     style={{ color: 'var(--text-muted)' }}>
               <X size={15} />
             </button>
@@ -347,17 +240,16 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
           </kbd>
         </div>
 
-        {/* Results */}
-        <div className="max-h-[55dvh] overflow-y-auto">
+        <div className="max-h-[55dvh] overflow-y-auto" role="listbox" aria-label="Resultados da busca">
           {loading ? (
-            <div className="px-4 py-8 text-center">
+            <div className="px-4 py-8 text-center" aria-live="polite" aria-label="Carregando…">
               <div className="shimmer w-full h-10 rounded-xl mb-2" />
               <div className="shimmer w-3/4 h-10 rounded-xl mb-2 mx-auto" />
               <div className="shimmer w-5/6 h-10 rounded-xl mx-auto" />
             </div>
           ) : results.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <Search size={28} className="mx-auto mb-3 opacity-20" style={{ color: 'var(--text-muted)' }} />
+              <Search size={28} className="mx-auto mb-3 opacity-20" style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nenhum resultado para "{query}"</p>
             </div>
           ) : (
@@ -365,34 +257,33 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
               {Object.entries(grouped).map(([group, items]) => (
                 <div key={group}>
                   <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest"
-                     style={{ color: 'var(--text-muted)' }}>
+                     style={{ color: 'var(--text-muted)' }} aria-hidden="true">
                     {group}
                   </p>
-                  {items.map((r) => {
+                  {items.map(r => {
                     const globalIdx = results.indexOf(r)
                     const isSelected = globalIdx === selected
                     const meta = KIND_META[r.kind]
                     const Icon = meta.icon
                     return (
-                      <button key={r.id}
+                      <button key={r.id} id={`sr-${r.id}`}
+                              role="option" aria-selected={isSelected}
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all"
                               style={{
                                 background: isSelected ? 'var(--accent-soft)' : 'transparent',
-                                borderLeft: isSelected ? `2px solid var(--accent-1)` : '2px solid transparent',
+                                borderLeft: isSelected ? '2px solid var(--accent-1)' : '2px solid transparent',
                               }}
                               onMouseEnter={() => setSelected(globalIdx)}
                               onClick={() => go(r)}>
                         <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
                              style={{ background: (r.color ?? meta.color) + '22', border: `1px solid ${(r.color ?? meta.color)}33` }}>
-                          <Icon size={14} style={{ color: r.color ?? meta.color }} />
+                          <Icon size={14} style={{ color: r.color ?? meta.color }} aria-hidden="true" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{r.title}</p>
-                          {r.subtitle && (
-                            <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{r.subtitle}</p>
-                          )}
+                          {r.subtitle && <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{r.subtitle}</p>}
                         </div>
-                        {isSelected && <ArrowRight size={13} style={{ color: 'var(--accent-3)', flexShrink: 0 }} />}
+                        {isSelected && <ArrowRight size={13} style={{ color: 'var(--accent-3)', flexShrink: 0 }} aria-hidden="true" />}
                         <span className="text-[9px] font-medium px-1.5 py-0.5 rounded shrink-0"
                               style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
                           {meta.label}
@@ -406,15 +297,14 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-4 py-2.5 flex items-center gap-4 text-[10px]"
              style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
           <span className="flex items-center gap-1"><kbd style={{ fontFamily:'monospace', background:'var(--bg-elevated)', border:'1px solid var(--border-light)', padding:'1px 5px', borderRadius:4, fontSize:10 }}>↑↓</kbd> navegar</span>
           <span className="flex items-center gap-1"><kbd style={{ fontFamily:'monospace', background:'var(--bg-elevated)', border:'1px solid var(--border-light)', padding:'1px 5px', borderRadius:4, fontSize:10 }}>↵</kbd> abrir</span>
           <span className="flex items-center gap-1"><kbd style={{ fontFamily:'monospace', background:'var(--bg-elevated)', border:'1px solid var(--border-light)', padding:'1px 5px', borderRadius:4, fontSize:10 }}>Esc</kbd> fechar</span>
           <span className="ml-auto flex items-center gap-1">
-            <Clock size={10} />
-            {loading ? 'buscando...' : `${results.length} resultado${results.length !== 1 ? 's' : ''}`}
+            <Clock size={10} aria-hidden="true" />
+            {loading ? 'buscando…' : `${results.length} resultado${results.length !== 1 ? 's' : ''}`}
           </span>
         </div>
       </div>
@@ -422,20 +312,14 @@ export function GlobalSearch({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ── Hook for managing open/close + global Ctrl+K shortcut ────────────────────
 export function useGlobalSearch() {
   const [open, setOpen] = useState(false)
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault()
-        setOpen(v => !v)
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setOpen(v => !v) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
-
   return { open, setOpen }
 }

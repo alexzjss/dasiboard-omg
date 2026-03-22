@@ -38,7 +38,7 @@ def list_events(
         "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
         "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only "
-        "FROM events WHERE owner_id = %s"
+        "FROM events WHERE owner_id = %s LIMIT 500"
     )
     p_params: list = [uid]
     if start:      personal_q += " AND start_at >= %s"; p_params.append(start)

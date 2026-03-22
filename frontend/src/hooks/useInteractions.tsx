@@ -13,7 +13,14 @@ export function useSwipeNavigation() {
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement
-      if (target.closest('.kanban-scroll') || target.closest('.grades-fluxo') || target.closest('[data-no-swipe]')) return
+      // Block swipe on entire kanban route and explicit opt-out zones
+      if (
+        location.pathname === '/kanban' ||
+        target.closest('.kanban-scroll') ||
+        target.closest('.grades-fluxo') ||
+        target.closest('[data-no-swipe]') ||
+        target.closest('[data-kanban-col]')
+      ) return
       touchStart.current = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,

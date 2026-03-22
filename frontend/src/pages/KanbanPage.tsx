@@ -15,6 +15,7 @@ import {
 import { format, isPast, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
+import { useConfirm } from '@/components/ConfirmDialog'
 import api from '@/utils/api'
 import clsx from 'clsx'
 import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
@@ -246,10 +247,10 @@ function KanbanCard({ card, colAccent, onEdit, columns, onMove }: {
               style={{ color: 'var(--text-muted)', touchAction: 'none' }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = colAccent)}
               onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
-              <GripVertical size={14} />
+              <GripVertical size={14} aria-hidden="true" />
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
+              <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>
                 {card.title}
               </p>
               {card.description && (
@@ -352,8 +353,9 @@ function KanbanColumn({
       className={`shrink-0 flex flex-col rounded-2xl transition-all${className ? ' ' + className : ''}`}
       style={{width:"min(288px,80vw)",
         background: isOver ? style.bg : 'var(--bg-surface)',
-        border: `1px solid ${isOver ? style.accent + '66' : 'var(--border)'}`,
-        boxShadow: isOver ? `0 0 0 2px ${style.accent}33, 0 4px 24px ${style.accent}11` : 'none',
+        border: `2px solid ${isOver ? style.accent + '99' : 'transparent'}`,
+        boxShadow: isOver ? `0 0 0 3px ${style.accent}44, 0 8px 32px ${style.accent}22` : 'none',
+        transition: 'border-color 0.12s, box-shadow 0.12s, background 0.12s',
       }}
     >
       {/* Column header */}
@@ -549,6 +551,13 @@ export default function KanbanPage() {
   }
 
   const deleteCard = async (cardId: string) => {
+    const ok = await confirm({
+      title: 'Excluir card?',
+      message: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    })
+    if (!ok) return
     await api.delete(`/kanban/cards/${cardId}`)
     setBoards((prev) => prev.map((b) => ({
       ...b, columns: b.columns.map((c) => ({ ...c, cards: c.cards.filter((x) => x.id !== cardId) })),
@@ -665,6 +674,8 @@ export default function KanbanPage() {
     }
   }
 
+  const { confirm, Dialog: ConfirmDialogEl } = useConfirm()
+
   if (loading) return (
     <div className="p-4 md:p-6 flex flex-col gap-5 animate-in">
       <div className="flex items-center gap-3">
@@ -688,6 +699,7 @@ export default function KanbanPage() {
 
   return (
     <div className="flex flex-col" style={{height:"100%",minHeight:0}}>
+      {ConfirmDialogEl}
       {/* Modal */}
       {editingCard && (
         <CardModal
@@ -734,7 +746,18 @@ export default function KanbanPage() {
           )}
         </div>
         {currentBoard && (
-          <button onClick={() => deleteBoard(currentBoard.id)} className="btn-danger text-xs shrink-0">
+          <button
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Excluir "${currentBoard.title}"?`,
+                message: 'Todos os cards e colunas serão removidos permanentemente.',
+                confirmLabel: 'Excluir board',
+                variant: 'danger',
+              })
+              if (ok) deleteBoard(currentBoard.id)
+            }}
+            className="btn-danger text-xs shrink-0"
+          >
             <Trash2 size={13} /> <span className="hidden sm:inline">Excluir board</span>
           </button>
         )}
@@ -780,11 +803,13 @@ export default function KanbanPage() {
               const style = COL_STYLES[idx % 3] ?? COL_STYLES[0]
               const prioConfig = PRIORITY[activeCard.priority as keyof typeof PRIORITY] ?? PRIORITY.medium
               return (
-                <div className="rounded-xl p-3 rotate-2"
+                <div className="rounded-xl p-3 dnd-drag-overlay"
                      style={{width:"min(288px,80vw)",
                        background: 'var(--bg-card)',
-                       border: `1px solid ${style.accent}66`,
-                       boxShadow: `0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px ${style.accent}33`,
+                       border: `2px solid ${style.accent}99`,
+                       boxShadow: `0 24px 60px rgba(0,0,0,0.5), 0 0 0 2px ${style.accent}44, 0 0 24px ${style.accent}22`,
+                       transform: 'rotate(2deg) scale(1.04)',
+                       cursor: 'grabbing',
                      }}>
                   <div className="w-full h-0.5 rounded-full mb-2.5" style={{ background: prioConfig.bg }}>
                     <div className="h-full rounded-full w-full" style={{ background: prioConfig.color, opacity: 0.5 }} />

@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/authStore'
-import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
+import storage, { STORAGE_KEYS } from '@/utils/storage'
+import { useRef, useEffect, useCallback, useState, useMemo, type ChangeEvent } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -1345,12 +1346,12 @@ export default function ProfilePage() {
   const [avatarImg,   setAvatarImg]    = useState<HTMLImageElement|null>(null)
   const fileInputRef=useRef<HTMLInputElement>(null)
 
-  const [area,setAreaState]=useState<string>(()=>localStorage.getItem("dasiboard-area")??"")
-  const [language,setLanguageState]=useState<string>(()=>localStorage.getItem("dasiboard-lang")??"")
+  const [area,setAreaState]=useState<string>(()=>localStorage.getItem(STORAGE_KEYS.area)??"")
+  const [language,setLanguageState]=useState<string>(()=>localStorage.getItem(STORAGE_KEYS.lang)??"")
   const [activeAchievIds,setActiveAchievIds]=useState<string[]>(()=>{
-    try{return JSON.parse(localStorage.getItem("dasiboard-achievements")??"[]")}catch{return[]}
+    try{return JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements)??"[]")}catch{return[]}
   })
-  const [entityBgId,setEntityBgId]=useState<string|null>(()=>localStorage.getItem("dasiboard-card-entity")??null)
+  const [entityBgId,setEntityBgId]=useState<string|null>(()=>localStorage.getItem(STORAGE_KEYS.cardEntity)??null)
   const [showAchievPicker,setShowAchievPicker]=useState(false)
   const [showCardFullscreen,setShowCardFullscreen]=useState(false)
   const [showEntityPicker,setShowEntityPicker]=useState(false)
@@ -1370,14 +1371,14 @@ export default function ProfilePage() {
   const [easterEggFound,setEasterEggFound]=useState(false)
 
   useEffect(()=>{
-    setEasterEggFound(!!localStorage.getItem("dasiboard-easter-found"))
+    setEasterEggFound(!!localStorage.getItem(STORAGE_KEYS.easterFound))
     // Load server-persisted achievements (merge with localStorage)
     api.get('/users/me/achievements').then(({ data }) => {
       const serverIds: string[] = data.map((a: { id: string }) => a.id)
-      const localIds: string[] = JSON.parse(localStorage.getItem("dasiboard-achievements") ?? "[]")
+      const localIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) ?? "[]")
       const merged = Array.from(new Set([...localIds, ...serverIds]))
       if (merged.length !== localIds.length) {
-        localStorage.setItem("dasiboard-achievements", JSON.stringify(merged))
+        localStorage.setItem(STORAGE_KEYS.achievements, JSON.stringify(merged))
         setActiveAchievIds(merged)
       }
       // If easter egg found server-side, mark locally too
@@ -1466,7 +1467,7 @@ export default function ProfilePage() {
 
   useEffect(() => { draw() }, [draw])
 
-  const handleAvatarChange=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+  const handleAvatarChange=async(e:ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0]; if(!file)return
     if(file.size>2*1024*1024){toast.error("Imagem muito grande. Máximo 2MB.");return}
     setAvatarLoading(true)
@@ -1496,16 +1497,16 @@ export default function ProfilePage() {
   }
 
   const saveAchievements=(ids:string[])=>{
-    localStorage.setItem("dasiboard-achievements",JSON.stringify(ids))
+    localStorage.setItem(STORAGE_KEYS.achievements,JSON.stringify(ids))
     setActiveAchievIds(ids)
   }
   // Sync newly unlocked achievements to server
   const persistUnlock = (id: string) => {
     api.post('/users/me/achievements', { ids: [id] }).catch(() => {})
   }
-  const saveEntityBg=(id:string|null)=>{if(id)localStorage.setItem("dasiboard-card-entity",id);else localStorage.removeItem("dasiboard-card-entity");setEntityBgId(id)}
-  const saveArea=(v:string)=>{localStorage.setItem("dasiboard-area",v);setAreaState(v)}
-  const saveLang=(v:string)=>{localStorage.setItem("dasiboard-lang",v);setLanguageState(v)}
+  const saveEntityBg=(id:string|null)=>{if(id)localStorage.setItem(STORAGE_KEYS.cardEntity,id);else localStorage.removeItem(STORAGE_KEYS.cardEntity);setEntityBgId(id)}
+  const saveArea=(v:string)=>{localStorage.setItem(STORAGE_KEYS.area,v);setAreaState(v)}
+  const saveLang=(v:string)=>{localStorage.setItem(STORAGE_KEYS.lang,v);setLanguageState(v)}
 
   if(!user)return null
 

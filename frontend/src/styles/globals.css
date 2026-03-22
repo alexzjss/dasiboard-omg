@@ -3,6 +3,138 @@
 @tailwind utilities;
 
 @layer base {
+
+/* ══════════════════════════════════════════════════════════════════
+   Z-INDEX SYSTEM — single source of truth
+   Prevents stacking conflicts across all overlay layers.
+   Usage: style={{ zIndex: 'var(--z-modal)' }}  or  z-[var(--z-modal)]
+══════════════════════════════════════════════════════════════════ */
+:root {
+  --z-base:     1;      /* Normal content */
+  --z-sticky:   10;     /* Sticky headers, sidebar */
+  --z-nav:      30;     /* Mobile bottom nav, desktop sidebar */
+  --z-dropdown: 60;     /* Dropdowns, tooltips */
+  --z-search:   90;     /* GlobalSearch spotlight */
+  --z-modal:    200;    /* Modals, dialogs */
+  --z-pwa:      250;    /* PWA install banner */
+  --z-toast:    300;    /* Toast notifications */
+  --z-overlay:  400;    /* Full-screen overlays (easter eggs, onboarding) */
+  --z-top:      999;    /* Absolute top (crisis mode, error boundary) */
+}
+
+/* ── Sidebar scroll indicator ─────────────────────────────────────────────── */
+/* Shows a fade gradient at bottom of sidebar when content overflows */
+.sidebar-scroll-container {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.sidebar-scroll-container::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  display: block;
+  background: linear-gradient(to bottom, transparent, var(--bg-surface, #0d0a1a));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  margin-top: -48px;
+}
+.sidebar-scroll-container.can-scroll-down::after {
+  opacity: 1;
+}
+
+/* ── Safari-compatible 720 sidebar neon border ────────────────────────────── */
+/* Replaces box-shadow spread-negative (broken in Safari) with border-image */
+[data-theme="light-720"] .sidebar-bg {
+  border-right: none !important;
+  position: relative;
+}
+[data-theme="light-720"] .sidebar-bg::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 2px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(111,190,0,0.9) 20%,
+    rgba(111,190,0,1)   50%,
+    rgba(111,190,0,0.9) 80%,
+    transparent 100%
+  );
+  /* Safari-safe glow: outline instead of box-shadow spread */
+  filter: blur(1px) drop-shadow(0 0 4px #6fbe00);
+  animation: nxeLedSafe 2.5s ease-in-out infinite;
+}
+@keyframes nxeLedSafe {
+  0%,100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* ── prefers-reduced-motion: global killswitch ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Keep functional transitions (opacity for show/hide) but kill decorative ones */
+  .animate-in { animation: none !important; }
+}
+
+/* ── text-muted contrast fix for light themes ────────────────────────────── */
+/* WCAG AA minimum 4.5:1 for normal text on light backgrounds */
+[data-theme="light-vidro"]  { --text-muted: #5a5a6e; }
+[data-theme="light-papel"]  { --text-muted: #5c5a52; }
+[data-theme="light-720"]    { --text-muted: #4a4a3a; }
+[data-theme="light-blueprint"] { --text-muted: #3a5070; }
+[data-theme="light-memento"] { --text-muted: #5a4a38; }
+[data-theme="light-ilha"]   { --text-muted: #3a5060; }
+[data-theme="light-aranha"] { --text-muted: #3a3a5a; }
+
+/* ── Spacing system — 4 canonical sizes for modal/card padding ───────────── */
+:root {
+  --space-xs:  8px;   /* Compact elements: badge, tag pill */
+  --space-sm:  12px;  /* Inner padding: list items, small cards */
+  --space-md:  20px;  /* Standard card body, modal content */
+  --space-lg:  28px;  /* Page sections, large card headers */
+}
+
+/* ── iPhone SE: smaller modal max-height ─────────────────────────────────── */
+/* 375×667 — reduce maxHeight so footer stays in view */
+@media (max-height: 680px) and (max-width: 390px) {
+  .modal-mobile-sheet {
+    max-height: 82dvh !important;
+  }
+}
+
+/* ── Kanban DnD: drag overlay enhancements ──────────────────────────────── */
+.dnd-drag-overlay {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 8px 24px rgba(0,0,0,0.3) !important;
+  transform: rotate(2deg) scale(1.04) !important;
+  border-color: var(--accent-1) !important;
+  opacity: 0.96;
+  cursor: grabbing !important;
+}
+.dnd-column-over {
+  border-color: var(--accent-1) !important;
+  background: var(--accent-soft) !important;
+  box-shadow: 0 0 0 2px var(--accent-1), 0 4px 24px var(--accent-glow) !important;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+
   :root {
     --sidebar-w: 0px;
     --topbar-h: 60px;

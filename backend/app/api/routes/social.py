@@ -50,6 +50,16 @@ def update_profile_settings(
     if not fields:
         return {"ok": True}
 
+    # ── Security: whitelist allowed column names (prevents SQL injection) ──
+    ALLOWED_COLUMNS = {
+        "public_profile", "public_bio", "entry_year",
+        "public_subjects", "public_achievements",
+    }
+    col_names = [f.split(" =")[0].strip() for f in fields]
+    for col in col_names:
+        if col not in ALLOWED_COLUMNS:
+            raise HTTPException(400, f"Campo não permitido: {col}")
+
     vals.append(uid)
     db.execute(
         f"UPDATE users SET {', '.join(fields)}, updated_at = NOW() WHERE id = %s RETURNING "

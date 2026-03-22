@@ -51,35 +51,37 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label">Nome completo</label>
+            <label htmlFor="reg-name" className="label">Nome completo</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-              <input type="text" className="input pl-10" placeholder="Seu nome" value={form.full_name} onChange={set('full_name')} required />
+              <input type="text" id="reg-name" className="input pl-10" placeholder="Seu nome" autoComplete="name" value={form.full_name} onChange={set('full_name')} required />
             </div>
           </div>
 
           <div>
-            <label className="label">E-mail USP</label>
+            <label htmlFor="reg-email" className="label">E-mail USP</label>
             <div className="relative">
               <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-              <input type="email" className="input pl-10" placeholder="seunome@usp.br" value={form.email} onChange={set('email')} required />
+              <input type="email" id="reg-email" className="input pl-10" placeholder="seunome@usp.br" autoComplete="email" inputMode="email" value={form.email} onChange={set('email')} required />
             </div>
           </div>
 
           <div>
-            <label className="label">Nº USP <span className="normal-case" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
+            <label htmlFor="reg-nusp" className="label">Nº USP <span className="normal-case" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
             <div className="relative">
               <Hash size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-              <input type="text" className="input pl-10" placeholder="12345678" value={form.nusp} onChange={set('nusp')} />
+              <input type="text" id="reg-nusp" className="input pl-10" placeholder="12345678" inputMode="numeric" autoComplete="off" value={form.nusp} onChange={set('nusp')} />
             </div>
           </div>
 
           <div>
-            <label className="label">Senha</label>
+            <label htmlFor="reg-password" className="label">Senha</label>
             <div className="relative">
               <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input
+                id="reg-password"
                 type={show ? 'text' : 'password'}
+                autoComplete="new-password"
                 className="input pl-10 pr-10"
                 placeholder="Mínimo 8 caracteres"
                 value={form.password}

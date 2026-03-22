@@ -13,14 +13,14 @@ def _board_with_cols(db, board_id: str):
     columns = db.fetchall()
     cols_out = []
     for col in columns:
-        db.execute("SELECT * FROM kanban_cards WHERE column_id = %s ORDER BY position, created_at", (str(col["id"]),))
+        db.execute("SELECT * FROM kanban_cards WHERE column_id = %s ORDER BY position, created_at LIMIT 200", (str(col["id"]),))
         cols_out.append({**col, "cards": db.fetchall()})
     return cols_out
 
 
 @router.get("/boards", response_model=List[BoardOut])
 def list_boards(db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT * FROM kanban_boards WHERE owner_id = %s ORDER BY created_at", (str(user["id"]),))
+    db.execute("SELECT * FROM kanban_boards WHERE owner_id = %s ORDER BY created_at LIMIT 50", (str(user["id"]),))
     boards = db.fetchall()
     return [{**b, "columns": _board_with_cols(db, str(b["id"]))} for b in boards]
 

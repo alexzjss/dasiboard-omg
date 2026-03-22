@@ -9,6 +9,8 @@ import {
   GitBranch, FileText, Brain,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useConfirm } from '@/components/ConfirmDialog'
+import { useModalBack } from '@/hooks/useModalBack'
 import api from '@/utils/api'
 import clsx from 'clsx'
 
@@ -154,6 +156,7 @@ function AttendanceWidget({ subject, onUpdate }: {
 
   return (
     <div className="rounded-2xl p-3 space-y-3"
+      {ConfirmDialogEl}
          style={{ background: draftFF ? 'rgba(239,68,68,0.05)' : 'var(--bg-elevated)', border: `1px solid ${draftFF ? 'rgba(239,68,68,0.2)' : 'var(--border)'}` }}>
       <div className="flex items-center gap-4">
         {/* Ring */}
@@ -268,8 +271,9 @@ function FluxoPopup({ def, fluxoStates, subject, onSave, onClose }: {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+         role="dialog" aria-modal="true" aria-label="Detalhes da disciplina"
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-y-auto animate-in"
+      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-y-auto animate-in modal-mobile-sheet"
            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', maxHeight: '92dvh', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
         <div className="flex justify-center pt-3 sm:hidden">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }}/>
@@ -364,18 +368,18 @@ function FluxoPopup({ def, fluxoStates, subject, onSave, onClose }: {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="label">Nota final (0–10)</label>
-                <input type="number" min="0" max="10" step="0.1" className="input text-sm"
+                <input type="number" min="0" max="10" step="0.1" inputMode="decimal" className="input text-sm"
                        placeholder="Ex: 7.5" value={grade} onChange={e => setGrade(e.target.value)}/>
               </div>
               <div>
                 <label className="label">Total de aulas</label>
-                <input type="number" min="0" className="input text-sm" value={totalClasses} onChange={e => setTotalCls(e.target.value)}/>
+                <input type="number" min="0" inputMode="numeric" className="input text-sm" value={totalClasses} onChange={e => setTotalCls(e.target.value)}/>
               </div>
               <div>
                 <label className="label">Faltas</label>
                 <div className="flex items-center gap-1">
                   <button className="btn-ghost p-2" onClick={() => setAbsences(v => String(Math.max(0,(parseInt(v)||0)-1)))}><Minus size={12}/></button>
-                  <input type="number" min="0" className="input text-sm text-center flex-1" value={absences} onChange={e => setAbsences(e.target.value)}/>
+                  <input type="number" min="0" inputMode="numeric" className="input text-sm text-center flex-1" value={absences} onChange={e => setAbsences(e.target.value)}/>
                   <button className="btn-ghost p-2" onClick={() => setAbsences(v => String((parseInt(v)||0)+1))}><Plus size={12}/></button>
                 </div>
               </div>
@@ -457,7 +461,7 @@ function SubjectCard({ subject, fluxoDef, fluxoStates, onDelete, onAddGrade, onD
             <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>média</p>
           </div>
           {fluxoDef && (
-            <button onClick={() => onOpenFluxo(fluxoDef)} title="Ver no fluxograma"
+            <button onClick={() => onOpenFluxo(fluxoDef)} title="Ver no fluxograma" aria-label="Ver no fluxograma"
                     className="p-1.5 rounded-lg transition-colors"
                     style={{ color: 'var(--text-muted)' }}
                     onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--accent-3)')}
@@ -507,9 +511,9 @@ function SubjectCard({ subject, fluxoDef, fluxoStates, onDelete, onAddGrade, onD
           {adding ? (
             <div className="grid grid-cols-2 gap-2 mt-2 p-3 rounded-xl animate-in" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
               <input className="input text-sm col-span-2" placeholder="Ex: P1, Trabalho" value={form.label} onChange={e => setForm(f => ({...f, label: e.target.value}))}/>
-              <input className="input text-sm" type="number" step="0.1" placeholder="Nota" value={form.value} onChange={e => setForm(f => ({...f, value: e.target.value}))}/>
-              <input className="input text-sm" type="number" step="0.1" placeholder="Nota máx (10)" value={form.max_value} onChange={e => setForm(f => ({...f, max_value: e.target.value}))}/>
-              <input className="input text-sm" type="number" step="0.1" placeholder="Peso (1)" value={form.weight} onChange={e => setForm(f => ({...f, weight: e.target.value}))}/>
+              <input className="input text-sm" type="number" step="0.1" inputMode="decimal" placeholder="Nota" value={form.value} onChange={e => setForm(f => ({...f, value: e.target.value}))}/>
+              <input className="input text-sm" type="number" step="0.1" inputMode="decimal" placeholder="Nota máx (10)" value={form.max_value} onChange={e => setForm(f => ({...f, max_value: e.target.value}))}/>
+              <input className="input text-sm" type="number" step="0.1" inputMode="decimal" placeholder="Peso (1)" value={form.weight} onChange={e => setForm(f => ({...f, weight: e.target.value}))}/>
               <div className="flex gap-2"><button className="btn-primary text-xs flex-1 justify-center" onClick={submit}>Salvar</button><button className="btn-ghost text-xs" onClick={() => setAdding(false)}>✕</button></div>
             </div>
           ) : (
@@ -577,7 +581,8 @@ function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete,
   saveFluxoState: (s: FluxoState) => void
   onEditSchedule?: (subject: Subject) => void
 }) {
-  const [activeSection, setActiveSection] = useState<'info'|'notes'>('info')
+  useModalBack(true, onClose)
+    const [activeSection, setActiveSection] = useState<'info'|'notes'>('info')
   const [addingGrade, setAddingGrade]     = useState(false)
   const [gradeForm, setGradeForm]         = useState({ label: '', value: '', weight: '1', max_value: '10' })
   const avg = weightedAvg(subject.grades)
@@ -599,8 +604,9 @@ function SubjectDetailPopup({ subject, fluxoDef, fluxoStates, onClose, onDelete,
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+         role="dialog" aria-modal="true" aria-label={`Disciplina: ${subject.name}`}
          onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in flex flex-col"
+      <div className="w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in flex flex-col modal-mobile-sheet"
            style={{ background: 'var(--bg-card)', border: `1px solid ${subject.color}33`, maxHeight: '92dvh', boxShadow: `0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px ${subject.color}18` }}>
 
         {/* Handle */}
@@ -876,7 +882,7 @@ function SubjectPickerModal({ existingCodes, onAdd, onClose }: {
               </div>
               <div>
                 <label className="label text-[10px]">Total de aulas</label>
-                <input type="number" className="input text-sm" placeholder="60" value={totalClasses} onChange={e => setTotalClasses(e.target.value)}/>
+                <input type="number" inputMode="numeric" className="input text-sm" placeholder="60" value={totalClasses} onChange={e => setTotalClasses(e.target.value)}/>
               </div>
               <div className="col-span-2">
                 <label className="label text-[10px]">Professor(a)</label>
@@ -1019,11 +1025,24 @@ export default function GradesPage() {
       return next
     })
   }
-  const deleteSubject      = async (id: string) => { await api.delete(`/grades/subjects/${id}`); setSubjects(p => p.filter(s => s.id !== id)); toast.success('Disciplina removida') }
+  const { confirm: confirmAction, Dialog: ConfirmDialogEl } = useConfirm()
+
+  const deleteSubject      = async (id: string) => {
+    const ok = await confirmAction({ title: 'Remover disciplina?', message: 'Todas as notas desta disciplina serão apagadas.', confirmLabel: 'Remover', variant: 'danger' })
+    if (!ok) return
+    await api.delete(`/grades/subjects/${id}`)
+    setSubjects(p => p.filter(s => s.id !== id))
+    toast.success('Disciplina removida')
+  }
   const addGrade           = async (subjectId: string, grade: Partial<Grade>) => {
     try { const { data } = await api.post(`/grades/subjects/${subjectId}/grades`, grade); setSubjects(p => p.map(s => s.id === subjectId ? { ...s, grades: [...s.grades, data] } : s)) } catch { toast.error('Erro ao adicionar nota') }
   }
-  const deleteGrade        = async (sid: string, gid: string) => { await api.delete(`/grades/grades/${gid}`); setSubjects(p => p.map(s => s.id === sid ? { ...s, grades: s.grades.filter(g => g.id !== gid) } : s)) }
+  const deleteGrade        = async (sid: string, gid: string) => {
+    const ok = await confirmAction({ title: 'Excluir nota?', message: 'Esta ação não pode ser desfeita.', confirmLabel: 'Excluir', variant: 'danger' })
+    if (!ok) return
+    await api.delete(`/grades/grades/${gid}`)
+    setSubjects(p => p.map(s => s.id === sid ? { ...s, grades: s.grades.filter(g => g.id !== gid) } : s))
+  }
   const updateAttendance   = async (subjectId: string, total: number, att: number) => {
     const clamped = Math.max(0, Math.min(att, total))
     try { const { data } = await api.patch(`/grades/subjects/${subjectId}`, { total_classes: total, attended: clamped }); setSubjects(p => p.map(s => s.id === subjectId ? { ...s, ...data } : s)) } catch { toast.error('Erro ao atualizar') }

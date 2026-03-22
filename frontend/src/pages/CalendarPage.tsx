@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { smartDate } from '@/utils/formatRelative'
 import api from '@/utils/api'
 import clsx from 'clsx'
 import { useEventReminders } from '@/hooks/usePushNotifications'
@@ -184,6 +185,25 @@ function EventForm({
         <input type="datetime-local" className="input text-sm" value={form.end_at}
                onChange={e => set('end_at', e.target.value)}/>
       </div>
+      {/* ── Event time preview ───────────────────────── */}
+      {form.start_at && (
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+             style={{ background: (form.color || 'var(--accent-1)') + '15', border: `1px solid ${form.color || 'var(--accent-1)'}33` }}>
+          <div className="w-2.5 h-full min-h-[36px] rounded-full shrink-0" style={{ background: form.color || 'var(--accent-3)' }} />
+          <div>
+            <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{form.title || 'Evento sem título'}</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              {new Date(form.start_at).toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
+              {form.end_at && ` → ${new Date(form.end_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`}
+              {form.start_at && form.end_at && (() => {
+                const mins = Math.round((new Date(form.end_at).getTime() - new Date(form.start_at).getTime()) / 60000)
+                if (mins > 0) return ` (${mins >= 60 ? `${Math.floor(mins/60)}h${mins%60 ? `${mins%60}min` : ''}` : `${mins}min`})`
+                return ''
+              })()}
+            </p>
+          </div>
+        </div>
+      )}
       <div>
         <label className="label">Local</label>
         <input className="input text-sm" placeholder="Local (opcional)" value={form.location}
@@ -409,6 +429,7 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
              style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
+         role="dialog" aria-modal="true"
              onClick={e => { if (e.target === e.currentTarget) setSelectedEvent(null) }}>
           <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl animate-in"
                style={{ background: 'var(--bg-card)', border: `1px solid ${selectedEvent.color}44`, boxShadow: `0 24px 64px rgba(0,0,0,0.5)` }}>
@@ -437,7 +458,7 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
                 <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
                   <Clock size={13} style={{ flexShrink: 0 }} />
                   <span className="text-sm">
-                    {format(parseISO(selectedEvent.start_at), "EEEE, d 'de' MMMM · HH:mm", { locale: ptBR })}
+                    {smartDate(selectedEvent.start_at)}
                     {selectedEvent.end_at && ` – ${format(parseISO(selectedEvent.end_at), 'HH:mm')}`}
                   </span>
                 </div>
@@ -886,7 +907,7 @@ export default function CalendarPage() {
                     </h3>
                     <p className="text-xs" style={{ color:'var(--text-muted)' }}>{daySelected.length} evento(s)</p>
                   </div>
-                  <button onClick={() => openForm(false)} className="btn-ghost p-1.5 text-xs" title="Novo evento neste dia">
+                  <button onClick={() => openForm(false)} className="btn-ghost p-1.5 text-xs" title="Novo evento neste dia" aria-label="Novo evento neste dia">
                     <Plus size={13}/>
                   </button>
                 </div>

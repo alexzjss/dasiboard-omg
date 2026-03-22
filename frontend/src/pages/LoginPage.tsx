@@ -119,11 +119,14 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label">E-mail USP</label>
+              <label htmlFor="login-email" className="label">E-mail USP</label>
               <div className="relative">
                 <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: emailError ? '#f87171' : emailValid ? '#22c55e' : 'var(--text-muted)' }} />
                 <input
                   type="email"
+                  id="login-email"
+                  autoComplete="email"
+                  inputMode="email"
                   className="input pl-10 pr-10"
                   placeholder="seunome@usp.br"
                   value={email}
@@ -153,11 +156,13 @@ export default function LoginPage() {
               )}
             </div>
             <div>
-              <label className="label">Senha</label>
+              <label htmlFor="login-password" className="label">Senha</label>
               <div className="relative">
                 <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                 <input
                   type={show ? 'text' : 'password'}
+                  id="login-password"
+                  autoComplete="current-password"
                   className="input pl-10 pr-10"
                   placeholder="••••••••"
                   value={password}

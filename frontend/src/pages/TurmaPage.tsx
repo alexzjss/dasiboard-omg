@@ -1,4 +1,5 @@
 // ── Turma — agrupamento por ano de entrada ─────────────────────────────────────
+import Avatar from '@/components/Avatar'
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
@@ -55,7 +56,7 @@ function MemberCard({ m, rank }: { m: TurmaMember; rank: number }) {
 
       {/* Avatar */}
       {m.avatar_url ? (
-        <img src={m.avatar_url} alt={m.full_name} className="w-10 h-10 rounded-xl object-cover shrink-0" />
+        <Avatar name={m.full_name} url={m.avatar_url} size={10} />
       ) : (
         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
              style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }}>

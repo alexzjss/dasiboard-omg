@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import AppLayout from '@/components/layout/AppLayout'
@@ -42,6 +43,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="/login"    element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -74,5 +76,6 @@ export default function App() {
       <Route path="/notes/shared/:token" element={<Suspense fallback={<PageSkeleton />}><SharedNotePage /></Suspense>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </ErrorBoundary>
   )
 }

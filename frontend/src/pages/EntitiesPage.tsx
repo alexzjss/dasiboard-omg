@@ -1,3 +1,4 @@
+import Avatar from '@/components/Avatar'
 import { useEffect, useState, useRef } from 'react'
 import {
   Users, Globe, Instagram, Mail, Lock, Unlock, Plus, X, Calendar,
@@ -5,11 +6,13 @@ import {
   Shield, Clock, MapPin, MessageSquare, Newspaper, Image as ImageIcon,
   Send, Heart, Trash2, Camera,
 } from 'lucide-react'
+import { eventDate } from '@/utils/formatRelative'
 import { format, parseISO, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import { emitNotification } from '@/hooks/useNotifications'
 import api from '@/utils/api'
+import { useModalBack } from '@/hooks/useModalBack'
 
 interface Entity {
   id: string; slug: string; name: string; short_name: string; description: string
@@ -131,7 +134,7 @@ function EventModal({ entity, onClose, onCreated }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+         role="dialog" aria-modal="true"         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto",background:"var(--bg-card)",border:`1px solid ${entity.color}33`,boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex items-center justify-between">
@@ -256,7 +259,7 @@ function JoinModal({ entity, onClose, onJoined }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+         role="dialog" aria-modal="true"         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto",background:"var(--bg-card)",border:`1px solid ${entity.color}33`,boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex items-center gap-3">
@@ -471,6 +474,7 @@ function GalleryTab({ entity, isMember }: { entity: Entity; isMember: boolean })
       )}
       {lightbox && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+         role="dialog" aria-modal="true"         role="dialog" aria-modal="true"
              style={{ background: 'rgba(0,0,0,0.88)' }}
              onClick={() => setLightbox(null)}>
           <img src={lightbox.url} alt={lightbox.caption} className="max-w-full max-h-full rounded-2xl object-contain" />
@@ -807,7 +811,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
             <div className="flex gap-2 flex-wrap sm:shrink-0">
               {entity.is_member ? (
                 <>
-                  <button onClick={() => setShowEvent(true)} className="btn-primary text-sm"
+                  <button onClick={() => setShowEvent(true)} aria-label="Criar novo evento" className="btn-primary text-sm"
                           style={{ background: `linear-gradient(135deg, ${entity.color}, ${entity.color}cc)` }}>
                     <Plus size={14} /> Criar evento
                   </button>
@@ -932,7 +936,7 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
                       </div>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                         <Clock size={9} className="inline mr-1" />
-                        {format(parseISO(ev.start_at), "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                        {eventDate(ev.start_at, ev.all_day)}
                       </p>
                       {ev.location && (
                         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
