@@ -372,7 +372,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode }: {
 
       {/* Search + Notifications row */}
       <div className="px-3 pt-2 flex gap-1.5">
-        <NotificationCenter />
+        <NotificationCenter align="left" />
         <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
                 className="flex-1 flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
