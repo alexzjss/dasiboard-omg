@@ -623,14 +623,20 @@ export default function KanbanPage() {
   }
 
   if (loading) return (
-    <div className="p-4 md:p-8 flex flex-col gap-6">
-      <div className="shimmer h-8 w-48 rounded-xl" />
-      <div className="flex gap-5">
+    <div className="p-4 md:p-6 flex flex-col gap-5 animate-in">
+      <div className="flex items-center gap-3">
+        <div className="skeleton h-7 w-28 rounded-xl" />
+        <div className="flex gap-2">
+          {[0,1,2].map(i => <div key={i} className="skeleton h-7 w-20 rounded-lg" />)}
+        </div>
+      </div>
+      <div className="flex gap-4">
         {[0,1,2].map((i) => (
           <div key={i} className="w-72 shrink-0 rounded-2xl p-4 space-y-3"
                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
-            <div className="shimmer h-5 w-32 rounded" />
-            {[0,1].map((j) => <div key={j} className="shimmer h-20 rounded-xl" />)}
+            <div className="skeleton h-5 w-32 rounded-lg" />
+            <div className="skeleton h-6 w-10 rounded-full" />
+            {[0,1,2].map((j) => <div key={j} className="skeleton h-[72px] rounded-xl" />)}
           </div>
         ))}
       </div>
@@ -650,9 +656,9 @@ export default function KanbanPage() {
       )}
 
       {/* Header */}
-      <div className="px-3 py-2 md:px-6 md:py-4 flex items-center gap-2 shrink-0 overflow-hidden kanban-header"
-           style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
-        <h1 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Kanban</h1>
+      <div className="px-4 py-3 md:px-6 md:py-3.5 flex items-center gap-3 shrink-0 overflow-hidden kanban-header"
+           style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', backdropFilter: 'blur(8px)' }}>
+        <h1 className="font-display text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Kanban</h1>
         <div className="w-px h-5" style={{ background: 'var(--border)' }} />
         <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-hide min-w-0 kanban-board-tabs">
           {boards.map((b) => (

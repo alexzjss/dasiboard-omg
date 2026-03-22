@@ -123,7 +123,7 @@ def create_event(
             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *, FALSE AS is_global",
             (str(user["id"]), body.title, body.description, body.event_type,
              body.start_at, body.end_at, body.all_day, body.color, body.location,
-             body.class_code, eid, body.members_only),
+             body.class_code, eid, body.members_only, body.recurring, body.recur_weeks),
         )
         return db.fetchone()
 
@@ -143,7 +143,8 @@ def update_event(
     if db.fetchone():
         db.execute(
             "UPDATE events SET title=%s, description=%s, event_type=%s, start_at=%s, "
-            "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s "
+            "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s, "
+            "recurring=%s, recur_weeks=%s "
             "WHERE id=%s RETURNING *, FALSE AS is_global",
             (body.title, body.description, body.event_type, body.start_at,
              body.end_at, body.all_day, body.color, body.location, body.class_code, eid,
@@ -160,7 +161,8 @@ def update_event(
         require_global_key(x_global_key)
         db.execute(
             "UPDATE global_events SET title=%s, description=%s, event_type=%s, start_at=%s, "
-            "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s "
+            "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s, "
+            "recurring=%s, recur_weeks=%s "
             "WHERE id=%s RETURNING *, TRUE AS is_global",
             (body.title, body.description, body.event_type, body.start_at,
              body.end_at, body.all_day, body.color, body.location, body.class_code, eid,

@@ -263,106 +263,138 @@ function drawCardBackground(
   rng: () => number,
   entityBg: { color: string; name: string } | null,
 ) {
-  // White area — pure white for default, very lightly tinted for entity
+  // White base
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
-    // Paint white area with a very subtle tint (3% opacity)
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = `rgba(${er},${eg},${eb},0.04)`
+    ctx.fillStyle = `rgba(${er},${eg},${eb},0.035)`
     ctx.fillRect(0, 0, W, H)
   } else {
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, W, H)
   }
 
-  // Blob color — entity color (corrected) or user hue
+  // Blob color
   let blobH = hue, blobS = sat, blobL = lit
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
-    const [eh,es,el] = rgbToHsl(er,eg,eb) // already returns h:0-360, s:0-100, l:0-100
+    const [eh,es,el] = rgbToHsl(er,eg,eb)
     blobH = eh
-    blobS = Math.max(es, 55)  // ensure vivid saturation
-    blobL = Math.min(Math.max(el, 38), 62)  // clamp lightness so blob is always visible
+    blobS = Math.max(es, 58)
+    blobL = Math.min(Math.max(el, 38), 60)
   }
-  // Slightly lighter/shifted secondary color for gradient depth
-  const blobMain  = `hsl(${blobH},${blobS}%,${blobL}%)`
-  const blobLight = `hsl(${blobH},${Math.max(blobS-15,30)}%,${Math.min(blobL+20,80)}%)`
-  const blobShift = `hsl(${(blobH+22)%360},${Math.max(blobS-8,30)}%,${Math.max(blobL-12,22)}%)`
 
-  // Clip strictly to colored zone — nothing bleeds into white area
+  const blobMain  = `hsl(${blobH},${blobS}%,${blobL}%)`
+  const blobLight = `hsl(${blobH},${Math.max(blobS-10,35)}%,${Math.min(blobL+24,82)}%)`
+  const blobShift = `hsl(${(blobH+28)%360},${Math.max(blobS-5,40)}%,${Math.max(blobL-16,22)}%)`
+  const blobDeep  = `hsl(${(blobH+14)%360},${Math.min(blobS+10,90)}%,${Math.max(blobL-22,18)}%)`
+
+  // Helper: smooth organic blob
+  function drawBlob(
+    cx: number, cy: number, baseR: number, nPts: number, tilt: number,
+    topRange: [number, number], botRange: [number, number], smooth: number,
+  ) {
+    const pts: [number,number][] = []
+    for (let i = 0; i < nPts; i++) {
+      const base = (i / nPts) * Math.PI * 2 - Math.PI / 2 + tilt
+      const isBot = Math.sin(base - tilt) > 0
+      const [vMin, vMax] = isBot ? botRange : topRange
+      const wobble = isBot ? (rng() - 0.5) * 0.18 : 0
+      pts.push([
+        cx + Math.cos(base + wobble) * baseR * (vMin + rng() * (vMax - vMin)),
+        cy + Math.sin(base + wobble) * baseR * (vMin + rng() * (vMax - vMin)),
+      ])
+    }
+    const n = pts.length
+    ctx.beginPath()
+    for (let i = 0; i < n; i++) {
+      const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n]
+      const t = smooth + rng() * 0.06
+      const cp1x=p1[0]+(p2[0]-p0[0])*t, cp1y=p1[1]+(p2[1]-p0[1])*t
+      const cp2x=p2[0]-(p3[0]-p1[0])*t, cp2y=p2[1]-(p3[1]-p1[1])*t
+      if (i===0) ctx.moveTo(p1[0],p1[1])
+      ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
+    }
+    ctx.closePath()
+  }
+
   ctx.save()
   ctx.beginPath(); ctx.rect(0, 0, W, zoneH); ctx.clip()
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, zoneH)
 
-  // ── Organic blob: large, anchored to top, wavy bottom edge ────────────────
-  // Slight random tilt so each card looks different even at same position
-  const tiltAngle = (rng() - 0.5) * 0.4  // -0.2 to +0.2 radians
-  const mainCx = W * (0.30 + rng() * 0.40)
-  const mainCy = zoneH * (-0.08 + rng() * 0.15)
-  const mainR  = Math.min(W, zoneH) * (0.88 + rng() * 0.35)
+  // Main blob
+  const tiltAngle = (rng() - 0.5) * 0.5
+  const mainCx = W * (0.22 + rng() * 0.56)
+  const mainCy = zoneH * (-0.12 + rng() * 0.12)
+  const mainR  = Math.min(W, zoneH) * (0.96 + rng() * 0.40)
+  const nPts   = 12 + Math.floor(rng() * 6)
 
-  const n = 11 + Math.floor(rng() * 5)
-  const pts: [number,number][] = []
-  for (let i = 0; i < n; i++) {
-    // Rotate the base angle by tiltAngle for organic inclination
-    const baseAngle = (i / n) * Math.PI * 2 - Math.PI / 2 + tiltAngle
-    const isBottom = Math.sin(baseAngle - tiltAngle) > 0
-    // Bottom: very wavy and irregular; top: tighter to form solid top edge
-    const variance = isBottom
-      ? (0.25 + rng() * 0.95)   // big variance = dramatic organic bottom
-      : (0.80 + rng() * 0.28)   // small variance = solid top
-    const r = mainR * variance
-    pts.push([mainCx + Math.cos(baseAngle)*r, mainCy + Math.sin(baseAngle)*r])
-  }
+  drawBlob(mainCx, mainCy, mainR, nPts, tiltAngle, [0.82, 0.98], [0.28, 1.05], 0.28)
 
-  ctx.beginPath()
-  for (let i = 0; i < pts.length; i++) {
-    const p0 = pts[(i-1+n)%n], p1 = pts[i]
-    const p2 = pts[(i+1)%n],   p3 = pts[(i+2)%n]
-    const t = 0.30 + rng() * 0.10
-    const cp1x = p1[0]+(p2[0]-p0[0])*t, cp1y = p1[1]+(p2[1]-p0[1])*t
-    const cp2x = p2[0]-(p3[0]-p1[0])*t, cp2y = p2[1]-(p3[1]-p1[1])*t
-    if (i === 0) ctx.moveTo(p1[0], p1[1])
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
-  }
-  ctx.closePath()
-
-  // Gradient: bright highlight near top-left, main color in center, shift at edges
-  const gInnerX = mainCx - mainR*0.30, gInnerY = mainCy - mainR*0.15
-  const grad = ctx.createRadialGradient(gInnerX, gInnerY, mainR*0.05, mainCx, mainCy, mainR*1.10)
+  const gx = mainCx - mainR * (0.20 + rng() * 0.20)
+  const gy = mainCy - mainR * (0.08 + rng() * 0.14)
+  const grad = ctx.createRadialGradient(gx, gy, mainR * 0.03, mainCx, mainCy, mainR * 1.15)
   grad.addColorStop(0,    blobLight)
-  grad.addColorStop(0.30, blobMain)
-  grad.addColorStop(0.70, blobShift)
-  grad.addColorStop(1,    `hsla(${(blobH+22)%360},${Math.max(blobS-8,30)}%,${Math.max(blobL-12,22)}%,0)`)
+  grad.addColorStop(0.22, blobMain)
+  grad.addColorStop(0.58, blobShift)
+  grad.addColorStop(0.85, blobDeep)
+  grad.addColorStop(1, `hsla(${(blobH+28)%360},${Math.max(blobS-5,30)}%,${Math.max(blobL-22,16)}%,0)`)
   ctx.fillStyle = grad
   ctx.globalAlpha = 1
   ctx.fill()
+
+  // Gloss sheen
+  const sheenX = mainCx - mainR * (0.35 + rng() * 0.15)
+  const sheenY = mainCy - mainR * 0.12
+  const sheenR = mainR * (0.45 + rng() * 0.20)
+  drawBlob(mainCx, mainCy, mainR, nPts, tiltAngle, [0.82, 0.98], [0.28, 1.05], 0.28)
+  const sheenG = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, sheenR)
+  sheenG.addColorStop(0, `rgba(255,255,255,${0.22 + rng() * 0.16})`)
+  sheenG.addColorStop(0.5, `rgba(255,255,255,${0.05 + rng() * 0.06})`)
+  sheenG.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = sheenG
+  ctx.globalAlpha = 0.55
+  ctx.fill()
   ctx.globalAlpha = 1
 
-  // Optional secondary small accent blob for depth
-  if (rng() > 0.4) {
-    const ax = W * (0.55 + rng() * 0.50), ay = zoneH * (-0.05 + rng() * 0.30)
-    const ar = Math.min(W, zoneH) * (0.25 + rng() * 0.25)
+  // Secondary accent blobs
+  const numSecondary = rng() > 0.3 ? (rng() > 0.6 ? 2 : 1) : 0
+  for (let si = 0; si < numSecondary; si++) {
+    const ax = W  * (0.45 + rng() * 0.65)
+    const ay = zoneH * (-0.08 + rng() * 0.38)
+    const ar = Math.min(W, zoneH) * (0.20 + rng() * 0.28)
     const an = 7 + Math.floor(rng() * 5)
-    const apts: [number,number][] = []
-    for (let i = 0; i < an; i++) {
-      const angle = (i/an)*Math.PI*2 - Math.PI/2
-      apts.push([ax + Math.cos(angle)*ar*(0.5+rng()*0.9), ay + Math.sin(angle)*ar*(0.5+rng()*0.9)])
-    }
-    ctx.beginPath()
-    for (let i = 0; i < apts.length; i++) {
-      const p0=apts[(i-1+an)%an],p1=apts[i],p2=apts[(i+1)%an],p3=apts[(i+2)%an]
-      const cp1x=p1[0]+(p2[0]-p0[0])*0.3,cp1y=p1[1]+(p2[1]-p0[1])*0.3
-      const cp2x=p2[0]-(p3[0]-p1[0])*0.3,cp2y=p2[1]-(p3[1]-p1[1])*0.3
-      if(i===0)ctx.moveTo(p1[0],p1[1])
-      ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1])
-    }
-    ctx.closePath()
-    const ag = ctx.createRadialGradient(ax,ay,ar*0.05,ax,ay,ar)
-    ag.addColorStop(0, blobMain); ag.addColorStop(1, `hsla(${blobH},${blobS}%,${blobL}%,0)`)
-    ctx.fillStyle = ag; ctx.globalAlpha = 0.50; ctx.fill(); ctx.globalAlpha = 1
+    drawBlob(ax, ay, ar, an, rng() * Math.PI * 2, [0.65, 1.05], [0.55, 1.10], 0.30)
+    const aHue = (blobH + 20 + si * 35 + rng() * 30) % 360
+    const ag = ctx.createRadialGradient(ax, ay, ar * 0.02, ax, ay, ar * 1.05)
+    ag.addColorStop(0, `hsla(${aHue},${Math.min(blobS+8,95)}%,${Math.min(blobL+15,78)}%,${0.55 + rng() * 0.25})`)
+    ag.addColorStop(0.6, `hsla(${aHue},${blobS}%,${blobL}%,${0.18 + rng() * 0.14})`)
+    ag.addColorStop(1, `hsla(${aHue},${blobS}%,${blobL}%,0)`)
+    ctx.fillStyle = ag
+    ctx.globalAlpha = 0.62 - si * 0.12
+    ctx.fill()
+    ctx.globalAlpha = 1
   }
+
+  // Grain texture
+  if (rng() > 0.25) {
+    const imgData = ctx.createImageData(W, Math.ceil(zoneH))
+    const d = imgData.data
+    for (let i = 0; i < d.length; i += 4) {
+      const v = (rng() - 0.5) * 28
+      d[i]=d[i+1]=d[i+2] = 128 + v
+      d[i+3] = 12 + rng() * 10
+    }
+    ctx.putImageData(imgData, 0, 0)
+  }
+
+  // Subtle edge glow
+  drawBlob(mainCx, mainCy, mainR, nPts, tiltAngle, [0.82, 0.98], [0.28, 1.05], 0.28)
+  ctx.strokeStyle = `hsla(${blobH},${Math.max(blobS-10,30)}%,${Math.min(blobL+30,88)}%,0.28)`
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
   ctx.restore()
 }
 function drawCardEffect(ctx: CanvasRenderingContext2D, W: number, H: number, zoneH: number, effect: CardEffect, hue: number, rng: () => number) {
@@ -1132,14 +1164,14 @@ export default function ProfilePage() {
   )
 
   return (
-    <div className="px-3 py-4 sm:px-5 md:px-8 md:py-8 max-w-3xl mx-auto w-full page-mobile">
+    <div className="px-4 py-5 sm:px-6 md:px-8 md:py-7 max-w-5xl mx-auto w-full page-mobile">
       {showAchievPicker&&<AchievementPicker achievements={achievements} selected={activeAchievIds} onSave={saveAchievements} onClose={()=>setShowAchievPicker(false)}/>}
       {showEntityPicker&&<EntityBgPicker entities={entities} currentEntityId={entityBgId} onSave={saveEntityBg} onClose={()=>setShowEntityPicker(false)}/>}
 
       {/* Header */}
-      <div className="flex items-center gap-5 mb-7 animate-in">
+      <div className="flex items-center gap-5 mb-6 animate-in">
         <div className="relative shrink-0">
-          <div className="w-24 h-24 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 4px 24px var(--accent-glow)"}}>
+          <div className="w-28 h-28 rounded-2xl p-0.5" style={{background:"var(--gradient-btn)",boxShadow:"0 6px 32px var(--accent-glow), 0 0 0 1px var(--accent-1)"}}>
             <div className="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
                  style={{background:user.avatar_url?"transparent":"var(--bg-card)"}}>
               {user.avatar_url?<img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover"/>
@@ -1149,7 +1181,7 @@ export default function ProfilePage() {
           {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={16} className="animate-spin text-white"/></div>}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-2xl font-bold truncate" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
+          <h1 className="font-display text-2xl md:text-3xl font-bold truncate tracking-tight" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
           <p className="text-sm mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold"
@@ -1163,7 +1195,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ── Card section — flip + variant ────────────────────────────── */}
-      <div className="mb-6 animate-in">
+      <div className="mb-5 animate-in">
 
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-3">
@@ -1219,6 +1251,7 @@ export default function ProfilePage() {
             }}>
               {/* Portrait canvas */}
               <canvas ref={canvasRef} onClick={handleDownload} title="Clique para baixar"
+                      className="profile-card-canvas"
                       style={{
                         position:'absolute', inset:0, width:'100%', height:'100%',
                         display: cardVariant==='portrait' ? 'block' : 'none',
@@ -1226,6 +1259,7 @@ export default function ProfilePage() {
                       }}/>
               {/* Landscape canvas */}
               <canvas ref={canvasLandRef} onClick={handleDownload} title="Clique para baixar"
+                      className="profile-card-canvas"
                       style={{
                         position:'absolute', inset:0, width:'100%', height:'100%',
                         display: cardVariant==='landscape' ? 'block' : 'none',

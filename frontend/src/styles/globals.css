@@ -764,8 +764,15 @@
   background: var(--accent-soft);
   border: 1px solid var(--accent-1);
   color: var(--accent-3);
+  position: relative;
+  overflow: hidden;
 }
-.nav-inactive { color: var(--text-secondary); }
+.nav-inactive {
+  color: var(--text-secondary);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
 .nav-inactive:hover {
   color: var(--text-primary);
   background-color: var(--border);
@@ -6758,4 +6765,192 @@ html { font-size: var(--app-font-size); }
   box-shadow: 0 1px 0 var(--border);
   letter-spacing: 0.02em;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ✨  DASIBOARD UI REFRESH — Animações, Layout e Polimento Global
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar refinements ─────────────────────────────────────────── */
+.sidebar-bg {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Nav items — smoother transition and indicator line */
+.nav-active {
+  background: var(--accent-soft) !important;
+  border: 1px solid var(--accent-1) !important;
+  color: var(--accent-3) !important;
+  box-shadow: 0 0 0 0 var(--accent-glow);
+  animation: navPop 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes navPop {
+  from { transform: scale(0.96); opacity: 0.7; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.nav-inactive {
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+.nav-inactive:hover {
+  color: var(--text-primary);
+  background-color: var(--border);
+  border-color: var(--border-light);
+}
+
+/* ── Mobile bottom nav — icon-only refinements ───────────────────── */
+.nav-bottom-active {
+  color: var(--accent-3) !important;
+}
+.nav-bottom-inactive {
+  color: var(--text-muted) !important;
+  opacity: 0.75;
+}
+@media (max-width: 1023px) {
+  .mobile-bottomnav {
+    height: calc(56px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  .main-mobile-pad-bottom { height: calc(64px + env(safe-area-inset-bottom)); }
+}
+
+/* ── Animation system — richer & smoother ───────────────────────── */
+@keyframes slideUpFresh {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
+.animate-in           { animation: slideUpFresh 0.32s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-in-delay-1   { animation: slideUpFresh 0.32s 0.04s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-in-delay-2   { animation: slideUpFresh 0.32s 0.08s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-in-delay-3   { animation: slideUpFresh 0.32s 0.12s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-in-delay-4   { animation: slideUpFresh 0.32s 0.16s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-in-delay-5   { animation: slideUpFresh 0.32s 0.20s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-scale   { animation: fadeInScale  0.28s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-slide-right  { animation: slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ── Cards — more polished ───────────────────────────────────────── */
+.card {
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+.card-hover:hover {
+  transform: translateY(-3px) scale(1.005) !important;
+  box-shadow: 0 8px 40px var(--accent-glow), 0 0 0 1px var(--accent-1) !important;
+}
+
+/* ── Buttons — spring on click ───────────────────────────────────── */
+.btn-primary:active { transform: scale(0.94) !important; }
+.btn-ghost:active   { transform: scale(0.96) !important; }
+
+/* ── Input focus — glowing ring ─────────────────────────────────── */
+.input:focus {
+  border-color: var(--accent-1) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 12px var(--accent-glow) !important;
+  transition: all 0.15s cubic-bezier(0.16,1,0.3,1) !important;
+}
+
+/* ── Page transitions ────────────────────────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-mobile > *:first-child {
+  animation: pageEnter 0.3s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Skeleton shimmer for loading states ─────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--border) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ── Floating action button ──────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  right: 16px;
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  background: var(--gradient-btn);
+  box-shadow: 0 4px 20px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 30;
+}
+.fab:hover  { transform: scale(1.08); box-shadow: 0 8px 32px var(--accent-glow); }
+.fab:active { transform: scale(0.92); }
+
+/* ── Section headers with gradient line ─────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-light), transparent);
+}
+
+/* ── Accent orb — more lively pulse ─────────────────────────────── */
+.accent-orb {
+  animation: orbPulse2 7s ease-in-out infinite !important;
+}
+@keyframes orbPulse2 {
+  0%,100% { opacity: 0.10; transform: scale(1) translate(0,0); }
+  33%     { opacity: 0.22; transform: scale(1.15) translate(4px,-4px); }
+  66%     { opacity: 0.16; transform: scale(1.05) translate(-3px,5px); }
+}
+
+/* ── Toast — better look ─────────────────────────────────────────── */
+[class*="react-hot-toast"] > div {
+  border-radius: 16px !important;
+  font-family: var(--font-body) !important;
+}
+
+/* ── Scrollbar — thinner, theme-aware ───────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent-1); }
+
+/* ── Dashboard: stat cards grid ─────────────────────────────────── */
+@media (min-width: 1024px) {
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+}
+
+/* ── Theme-specific sidebar widths ───────────────────────────────── */
+:root { --sidebar-w: 236px; }
 

@@ -991,13 +991,13 @@ export default function GradesPage() {
   const linkedSubject = (code: string) => subjects.find(s => s.code === code)
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100dvh - 52px - 60px)' }}>
+    <div className="flex flex-col" style={{ height: '100dvh' }}>
       {/* ── Header ── */}
       <div className="px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-3"
-           style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+           style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', backdropFilter: 'blur(8px)' }}>
         <div>
-          <h1 className="font-display font-bold text-lg flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-            <BookOpen size={18} style={{ color: 'var(--accent-3)' }}/> Disciplinas & Fluxograma
+          <h1 className="font-display font-bold text-xl flex items-center gap-2 tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <BookOpen size={17} style={{ color: 'var(--accent-3)' }}/> Disciplinas & Fluxograma
           </h1>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
             {subjects.length} cadastrada{subjects.length !== 1 ? 's' : ''} · {fluxoPassed + fluxoWeak}/{fluxoTotal} concluídas no fluxo

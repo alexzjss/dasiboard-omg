@@ -352,22 +352,27 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
 
   return (
     <>
-      <div className="accent-orb" style={{ width: 120, height: 120, top: -40, left: -40 }} />
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 relative z-10" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="accent-orb" style={{ width: 160, height: 160, top: -60, left: -60 }} />
+
+      {/* Logo + Brand */}
+      <div className="flex items-center gap-3 px-4 py-4 relative z-10" style={{ borderBottom: '1px solid var(--border)' }}>
         <DasiLogoClickable onEgg={onLogoEgg} />
         <div className="flex-1 min-w-0">
-          <p className="font-display font-bold text-sm leading-none" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
-          <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
+          <p className="font-display font-bold text-sm leading-tight" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
+          <p className="text-[10px] font-mono opacity-50 leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
         </div>
+        <button onClick={toggleDarkLight} title={isDark ? 'Modo claro' : 'Modo escuro'}
+                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-110 active:scale-90"
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+          {isDark ? <Sun size={13} /> : <Moon size={13} />}
+        </button>
       </div>
 
-      {/* Theme button — visual pill */}
+      {/* Theme picker button */}
       <div className="px-3 pt-3 relative z-10">
         <button onClick={onOpenPicker}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)' }}>
-          {/* Mini preview swatch */}
           <div className="flex gap-0.5 shrink-0">
             {[THEME_PREVIEWS[theme.id]?.bg ?? '#111',
               THEME_PREVIEWS[theme.id]?.accent ?? '#888',
@@ -380,90 +385,76 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
             <span>{theme.emoji}</span>
             <span className="truncate">{theme.name}</span>
           </span>
-          <span style={{ opacity: 0.5, fontSize: 10 }}>▼</span>
+          <Palette size={11} style={{ opacity: 0.6 }} />
         </button>
       </div>
 
-      <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.4 }} />
-
-      {/* Search + Presentation shortcuts */}
       {/* Search */}
-      <div className="px-3 pt-2">
+      <div className="px-3 pt-2 relative z-10">
         <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-          <Search size={13} />
+          <Search size={12} />
           <span className="flex-1 text-left">Buscar...</span>
           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⌘K</span>
         </button>
       </div>
 
+      <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.35 }} />
+
       {/* Nav */}
-      <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10">
+      <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10 overflow-y-auto">
         {nav.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
                    className={({ isActive }) => clsx(
-                     'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                     'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
                      isActive ? 'nav-active' : 'nav-inactive'
                    )}>
-            <Icon size={17} />{label}
+            {({ isActive }) => (
+              <>
+                <Icon size={16} style={{ strokeWidth: isActive ? 2.5 : 2 }} />
+                <span>{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Tools panel: Presentation + Focus + ColorBlind + Lite — 2×2 grid */}
-      <div className="relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
-        <div className="px-3 pt-2 pb-1">
-          <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5 px-0.5" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>Ferramentas</p>
-          {/* 2×2 grid of tool toggles */}
-          <div className="grid grid-cols-2 gap-1.5 mb-1">
-            {/* Apresentação */}
-            <button
-              onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
-              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.02] active:scale-[0.97]"
-              style={{
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
-              }}
-              title="Modo Apresentação (Ctrl+Shift+P)"
-            >
-              <Monitor size={14} />
-              <span>Apresentar</span>
-            </button>
-
-
-
-            {/* Daltonismo */}
-            <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
-            {/* Lite Mode */}
-            <LiteModeButton active={liteMode.active} onToggle={liteMode.toggle} />
-          </div>
+      {/* Tools */}
+      <div className="relative z-10 px-3 pb-2" style={{ borderTop: '1px solid var(--border)' }}>
+        <p className="text-[9px] font-bold uppercase tracking-widest mt-2 mb-1.5 px-0.5" style={{ color: 'var(--text-muted)', opacity: 0.55 }}>Ferramentas</p>
+        <div className="grid grid-cols-3 gap-1 mb-1">
+          <button
+            onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
+            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.04] active:scale-[0.97]"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+            title="Modo Apresentação (Ctrl+Shift+P)"
+          >
+            <Monitor size={13} />
+            <span>Apresentar</span>
+          </button>
+          <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
+          <LiteModeButton active={liteMode.active} onToggle={liteMode.toggle} />
         </div>
-        {/* Lo-fi player — shown for DLC, Pixel, 720, Portátil */}
         <LofiPlayer />
-        {/* Eva sync rate bar */}
         <EvaSyncBar />
-        {/* Pomodoro / Study mode */}
         <StudyMode />
       </div>
 
-      {/* User + EXP bar */}
-      <div className="p-3 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
-        {/* EXP bar — Pixel / 720 / Portátil themes only */}
+      {/* User */}
+      <div className="px-3 pb-3 pt-2 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
         <ExpBar />
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl transition-all cursor-default"
-             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
-             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}>
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl transition-all cursor-default group"
+             style={{ marginTop: '4px' }}>
           <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-btn)' }}>
             <span className="text-xs font-bold text-white font-display">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
+            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
             <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
           </div>
           <button onClick={() => { logout(); navigate('/login') }} title="Sair"
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                   style={{ color: 'var(--text-muted)' }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; (e.currentTarget as HTMLElement).style.backgroundColor = '#f8717120' }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
@@ -715,31 +706,25 @@ export default function AppLayout() {
         <div className="lg:hidden main-mobile-pad-bottom" />
       </main>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — icons only */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch mobile-bottomnav"
-           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+           style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
         {nav.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end}
+          <NavLink key={to} to={to} end={end} title={label}
                    className={({ isActive }) => clsx(
-                     'flex-1 flex flex-col items-center justify-center gap-0.5 transition-all',
-                     'active:scale-90 select-none',
+                     'flex-1 flex items-center justify-center transition-all duration-200',
+                     'active:scale-75 select-none',
                      isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
                    )}>
             {({ isActive }) => (
-              <>
-                <div className="relative flex items-center justify-center" style={{ width: 44, height: 26 }}>
-                  {isActive && (
-                    <div className="absolute inset-0 rounded-xl transition-all"
-                         style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
-                  )}
-                  <Icon size={isActive ? 16 : 19} className="relative z-10 transition-all"
-                        style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }} />
-                </div>
-                <span className="text-[9px] font-medium leading-none transition-all"
-                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', opacity: isActive ? 1 : 0.65 }}>
-                  {label}
-                </span>
-              </>
+              <div className="relative flex items-center justify-center" style={{ width: 48, height: 40 }}>
+                {isActive && (
+                  <div className="absolute inset-0 rounded-2xl transition-all duration-200"
+                       style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
+                )}
+                <Icon size={isActive ? 18 : 20} className="relative z-10 transition-all duration-200"
+                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', strokeWidth: isActive ? 2.5 : 1.8 }} />
+              </div>
             )}
           </NavLink>
         ))}

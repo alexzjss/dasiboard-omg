@@ -18,9 +18,9 @@ function Section({ icon: Icon, title, children }: {
   icon: React.ElementType; title: string; children: React.ReactNode
 }) {
   return (
-    <div className="card mb-4 animate-in">
-      <h2 className="font-display font-bold text-sm flex items-center gap-2 mb-4"
-          style={{ color: 'var(--text-primary)' }}>
+    <div className="card mb-3 animate-in">
+      <h2 className="font-display font-bold text-sm flex items-center gap-2 mb-4 pb-3"
+          style={{ color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}>
         <Icon size={15} style={{ color: 'var(--accent-3)' }} />
         {title}
       </h2>
@@ -180,7 +180,7 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="px-3 py-4 sm:px-5 md:px-8 md:py-8 max-w-3xl mx-auto w-full page-mobile">
+    <div className="px-4 py-5 sm:px-6 md:px-10 md:py-8 max-w-4xl mx-auto w-full page-mobile">
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 animate-in">
@@ -189,7 +189,7 @@ export default function SettingsPage() {
           <Settings size={18} style={{ color: 'var(--accent-3)' }} />
         </div>
         <div>
-          <h1 className="font-display font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="font-display font-bold text-2xl tracking-tight" style={{ color: 'var(--text-primary)' }}>
             Configurações
           </h1>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Personalize sua experiência no DaSIboard</p>

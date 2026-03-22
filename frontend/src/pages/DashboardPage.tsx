@@ -317,28 +317,39 @@ function QuickLink({ to, label, icon: Icon, color, count, desc, badge }: {
 }) {
   return (
     <Link to={to}
-          className="group relative flex flex-col gap-3 p-4 rounded-2xl transition-all active:scale-[0.97] overflow-hidden"
+          className="quick-link-card group relative flex flex-col gap-2.5 p-3.5 md:p-4 rounded-2xl overflow-hidden select-none"
           style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color + '66'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${color}22` }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '' }}>
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-           style={{ background: `radial-gradient(ellipse at top left, ${color}08 0%, transparent 60%)` }} />
-      <div className="flex items-start justify-between">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
-             style={{ background: color + '18', border: `1px solid ${color}33` }}>
-          <Icon size={18} style={{ color }} />
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.borderColor = color + '55'
+            el.style.boxShadow = `0 8px 28px ${color}18, 0 0 0 1px ${color}22`
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.borderColor = 'var(--border)'
+            el.style.boxShadow = ''
+          }}>
+      {/* Background glow on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+           style={{ background: `radial-gradient(ellipse at 30% 0%, ${color}10 0%, transparent 65%)` }} />
+      {/* Icon + count */}
+      <div className="flex items-start justify-between relative z-10">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:rotate-[-4deg]"
+             style={{ background: color + '15', border: `1px solid ${color}30` }}>
+          <Icon size={17} style={{ color }} />
         </div>
         {badge && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ background: color + '22', color }}>{badge}</span>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                style={{ background: color + '20', color, border: `1px solid ${color}30` }}>{badge}</span>
         )}
         {count !== null && count !== undefined && count > 0 && (
-          <span className="font-display font-bold text-lg leading-none" style={{ color }}>{count}</span>
+          <span className="font-display font-bold text-base leading-none" style={{ color }}>{count}</span>
         )}
       </div>
-      <div>
-        <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{label}</p>
-        <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+      {/* Label */}
+      <div className="relative z-10">
+        <p className="text-xs font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{label}</p>
+        <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>{desc}</p>
       </div>
     </Link>
   )
@@ -736,7 +747,7 @@ export default function DashboardPage() {
   const latestTag = latestNL?.tag ? NL_TAGS[latestNL.tag] : NL_TAGS['geral']
 
   return (
-    <div className="px-3 py-4 sm:px-4 md:px-6 md:py-6 max-w-5xl mx-auto w-full page-mobile space-y-5">
+    <div className="px-4 py-4 sm:px-5 md:px-8 md:py-6 max-w-6xl mx-auto w-full page-mobile space-y-4 md:space-y-5">
 
       {showCreateNL && (
         <NewsletterCreateModal
@@ -758,9 +769,10 @@ export default function DashboardPage() {
              border: '1px solid var(--border)',
              boxShadow: '0 4px 40px var(--accent-glow)',
            }}>
-        <div className="accent-orb" style={{ width: 220, height: 220, top: -90, right: -60, opacity: 0.12 }} />
-        <div className="accent-orb" style={{ width: 100, height: 100, bottom: -30, left: 20, opacity: 0.06, animationDelay: '3s' }} />
-        <div className="relative z-10 p-5 md:p-6">
+        <div className="accent-orb" style={{ width: 300, height: 300, top: -120, right: -80, opacity: 0.10 }} />
+        <div className="accent-orb" style={{ width: 140, height: 140, bottom: -40, left: 10, opacity: 0.05, animationDelay: '3.5s' }} />
+
+        <div className="relative z-10 p-5 md:p-7">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
               <p className="text-xs font-medium mb-0.5 capitalize" style={{ color: 'var(--text-muted)' }}>
@@ -832,7 +844,7 @@ export default function DashboardPage() {
 
       {/* ── QUICK LINKS ─────────────────────────────────────────────────── */}
       <div className="animate-in-delay-1">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
           {quickLinks.map(ql => (
             <QuickLink key={ql.to} {...ql} />
           ))}
@@ -840,7 +852,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── MAIN GRID: 48h timeline + stats ─────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-in-delay-2">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-5 animate-in-delay-2">
 
         {/* 48h Timeline — 3 cols */}
         <div className="lg:col-span-3">

@@ -93,11 +93,11 @@ export default function DocentesPage() {
   }, [query])
 
   return (
-    <div className="p-3 sm:p-6 md:p-8 max-w-7xl mx-auto page-mobile">
+    <div className="px-4 py-5 sm:px-6 md:px-8 md:py-6 max-w-7xl mx-auto page-mobile">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div
-        className="relative mb-8 overflow-hidden rounded-2xl p-7 animate-in"
+        className="relative mb-5 overflow-hidden rounded-2xl p-6 animate-in"
         style={{
           background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
           border: '1px solid var(--border)',
@@ -205,8 +205,8 @@ export default function DocentesPage() {
         </div>
       ) : (
         <div
-          className="grid gap-4 docentes-grid"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+          className="grid gap-3 md:gap-4 docentes-grid animate-in-delay-1"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
         >
           {filtered.map((doc, i) => (
             <DocenteCard key={doc.email} doc={doc} index={i} highlight={query.trim() || undefined} />
@@ -256,13 +256,13 @@ function DocenteCard({ doc, index, highlight }: { doc: Docente; index: number; h
       style={{
         animationDelay: `${Math.min(index * 0.035, 0.5)}s`,
         animationFillMode: 'both',
-        borderLeft: `3px solid hsla(${hue}, 60%, 55%, 0.4)`,
+        borderLeft: `3px solid hsla(${hue}, 70%, 58%, 0.55)`,
       }}
     >
       {/* Top row: avatar + name/email/room */}
       <div className="flex items-start gap-3">
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold font-display"
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold font-display"
           style={{
             background: avatarBg,
             border: `1px solid ${avatarBorder}`,
