@@ -168,28 +168,21 @@ function deriveColors(hue: number, sat: number, lit: number) {
 type CardStyle =
   | 'geometric_rays'      // Radiating fan bands from corner (Polish IDs)
   | 'layer_stack'         // Nested shrinking shapes, translucent layers
-  | 'wave_lines'          // Parallel sine-wave color bands
-  | 'checkerboard'        // Gradient-shifted chess grid
-  | 'holographic'         // Full rainbow prismatic gradient
+  | 'wave_lines'          // Parallel sine-wave color bands (Seoul)
+  | 'holographic'         // Full rainbow prismatic gradient (Tokyo ticket)
   | 'boarding_pass'       // Ticket with barcode strips & perfs
-  | 'diagonal_bands'      // Bold angled color stripes
   | 'concentric_shapes'   // Polygon rings expanding outward
   | 'ink_splatter'        // Organic multi-blob shapes
-  | 'grid_mosaic'         // Colored square mosaic/pixel grid
-  | 'circuit'             // Tech circuit-board line pattern
   | 'halftone'            // Dot halftone gradient
   | 'topographic'         // Topographic contour lines
-  | 'brush_strokes'       // Wide paint brush sweeps
-  | 'crystal'             // Geometric low-poly crystal facets
   | 'neon_glow'           // Dark bg with glowing neon shapes
 
 function pickCardStyle(userId: string): CardStyle {
-  const rng = seededRng(userId + '-stylev2')
+  const rng = seededRng(userId + '-stylev3')
   const styles: CardStyle[] = [
-    'geometric_rays','layer_stack','wave_lines','checkerboard',
-    'holographic','boarding_pass','diagonal_bands','concentric_shapes',
-    'ink_splatter','grid_mosaic','circuit','halftone',
-    'topographic','brush_strokes','crystal','neon_glow',
+    'geometric_rays','layer_stack','wave_lines',
+    'holographic','boarding_pass','concentric_shapes',
+    'ink_splatter','halftone','topographic','neon_glow',
   ]
   return styles[Math.floor(rng() * styles.length)]
 }
@@ -225,14 +218,14 @@ function pickColorScheme(userId: string): ColorScheme {
   return schemes[Math.floor(rng() * schemes.length)]
 }
 
-function applyColorScheme(hue: number, scheme: ColorScheme): { sat: number; lit: number } {
+function applyColorScheme(hue: number, scheme: ColorScheme, rng: () => number): { sat: number; lit: number } {
   switch(scheme) {
-    case 'vivid':     return { sat: 75 + Math.random()*18, lit: 50 + Math.random()*12 }
-    case 'pastel':    return { sat: 45 + Math.random()*20, lit: 68 + Math.random()*14 }
-    case 'dark_rich': return { sat: 70 + Math.random()*20, lit: 32 + Math.random()*12 }
-    case 'neon':      return { sat: 92 + Math.random()*8,  lit: 55 + Math.random()*10 }
-    case 'earth':     return { sat: 35 + Math.random()*25, lit: 42 + Math.random()*18 }
-    case 'cold':      return { sat: 55 + Math.random()*25, lit: 58 + Math.random()*16 }
+    case 'vivid':     return { sat: 75 + rng()*18, lit: 50 + rng()*12 }
+    case 'pastel':    return { sat: 42 + rng()*20, lit: 68 + rng()*14 }
+    case 'dark_rich': return { sat: 68 + rng()*22, lit: 30 + rng()*14 }
+    case 'neon':      return { sat: 90 + rng()*10, lit: 54 + rng()*12 }
+    case 'earth':     return { sat: 32 + rng()*28, lit: 40 + rng()*20 }
+    case 'cold':      return { sat: 52 + rng()*28, lit: 56 + rng()*18 }
   }
 }
 
@@ -392,31 +385,6 @@ function drawCardBackground(
       break
     }
 
-    // ─ 4. Checkerboard ──────────────────────────────────────────────────────
-    case 'checkerboard': {
-      const cols = 7 + Math.floor(rng() * 7)
-      const cw   = W / cols
-      const rows = Math.ceil(zoneH / cw)
-      const alt  = rng() < 0.3 // alternating color shift per row
-
-      // Fill background first
-      ctx.fillStyle = isDark ? c3 : c5; ctx.fillRect(0, 0, W, zoneH)
-
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          if ((row + col) % 2 !== 0) continue
-          const t   = (row + col) / (rows + cols)
-          const hh  = (hue + t*55 + (alt && row%2===0 ? 30 : 0)) % 360
-          const ll  = isDark ? 28 + t*30 : 52 - t*20
-          ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
-          ctx.globalAlpha = 0.9
-          ctx.fillRect(col*cw, row*cw, cw, cw)
-        }
-      }
-      ctx.globalAlpha = 1
-      break
-    }
-
     // ─ 5. Holographic (full rainbow) ────────────────────────────────────────
     case 'holographic': {
       // Base: angled multi-stop rainbow
@@ -486,32 +454,6 @@ function drawCardBackground(
       }
       drawBars(32, W*0.5 - 20, perf + 8, zoneH - perf - 8)
       drawBars(W*0.55, W-32, perf + 8, zoneH - perf - 8)
-      break
-    }
-
-    // ─ 7. Diagonal bands ────────────────────────────────────────────────────
-    case 'diagonal_bands': {
-      const nb  = 9 + Math.floor(rng() * 7)
-      const ang = (28 + rng()*38) * Math.PI / 180
-      const bw  = W * 1.9 / nb
-      for (let bi = 0; bi < nb; bi++) {
-        const t  = bi / nb
-        const hh = (hue + bi*20 + Math.floor(rng()*8)) % 360
-        const ll = isDark
-          ? 22 + bi*Math.floor(32/nb)
-          : 35 + bi*Math.floor(38/nb)
-        ctx.save()
-        ctx.translate(bi*bw - W*0.45, -zoneH*0.25)
-        ctx.rotate(ang)
-        const bg2 = ctx.createLinearGradient(0,0,bw,0)
-        bg2.addColorStop(0, `hsl(${hh},${sat}%,${ll}%)`)
-        bg2.addColorStop(1, `hsl(${(hh+24)%360},${sat-10}%,${Math.max(ll-18,8)}%)`)
-        ctx.fillStyle = bg2
-        ctx.globalAlpha = bi%2===0 ? 0.90 : 0.70
-        ctx.fillRect(0, 0, bw*0.85, zoneH*3)
-        ctx.restore()
-      }
-      ctx.globalAlpha = 1
       break
     }
 
@@ -587,65 +529,6 @@ function drawCardBackground(
       break
     }
 
-    // ─ 10. Grid mosaic (pixel grid) ──────────────────────────────────────────
-    case 'grid_mosaic': {
-      const cellS = 36 + Math.floor(rng()*52)
-      const cols2 = Math.ceil(W/cellS) + 1
-      const rows2 = Math.ceil(zoneH/cellS) + 1
-      const rng2  = seededRng('mosaic')
-      for (let row=0; row<rows2; row++) {
-        for (let col=0; col<cols2; col++) {
-          const t  = Math.sqrt((col/cols2)**2 + (row/rows2)**2)
-          const hh = (hue + t*90 + rng2()*25) % 360
-          const ll = isDark ? 22+rng2()*35 : 45+rng2()*38
-          const alpha = 0.55 + rng2()*0.40
-          ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
-          ctx.globalAlpha = alpha
-          ctx.fillRect(col*cellS - 2, row*cellS - 2, cellS-1, cellS-1)
-        }
-      }
-      ctx.globalAlpha = 1
-      break
-    }
-
-    // ─ 11. Circuit board ────────────────────────────────────────────────────
-    case 'circuit': {
-      // Background
-      const bgc = isDark ? `hsl(${hue},${sat*0.3}%,10%)` : `hsl(${hue},${sat*0.15}%,94%)`
-      ctx.fillStyle = bgc; ctx.fillRect(0,0,W,zoneH)
-
-      // Grid of circuit traces
-      const grid = 28 + Math.floor(rng()*24)
-      const rng3 = seededRng('circuit-'+hue)
-      ctx.strokeStyle = c1; ctx.lineWidth = 1.8; ctx.globalAlpha = 0.55
-
-      for (let gx=0; gx<W; gx+=grid) {
-        for (let gy=0; gy<zoneH; gy+=grid) {
-          if (rng3() < 0.4) {
-            ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx+grid,gy); ctx.stroke()
-          }
-          if (rng3() < 0.4) {
-            ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx,gy+grid); ctx.stroke()
-          }
-          // Nodes
-          if (rng3() < 0.25) {
-            ctx.globalAlpha = 0.9
-            ctx.beginPath(); ctx.arc(gx,gy,3.5,0,Math.PI*2)
-            ctx.fillStyle = c4; ctx.fill()
-            ctx.globalAlpha = 0.55
-          }
-          // L-bends
-          if (rng3() < 0.2) {
-            ctx.beginPath()
-            ctx.moveTo(gx,gy); ctx.lineTo(gx+grid*0.5,gy); ctx.lineTo(gx+grid*0.5,gy+grid)
-            ctx.stroke()
-          }
-        }
-      }
-      ctx.globalAlpha = 1
-      break
-    }
-
     // ─ 12. Halftone dots ────────────────────────────────────────────────────
     case 'halftone': {
       // Background gradient
@@ -705,76 +588,6 @@ function drawCardBackground(
         ctx.lineWidth   = 1.5 + (1-t) * 1.5
         ctx.globalAlpha = 0.55 + (1-t) * 0.35
         ctx.stroke()
-      }
-      ctx.globalAlpha = 1
-      break
-    }
-
-    // ─ 14. Brush strokes ────────────────────────────────────────────────────
-    case 'brush_strokes': {
-      const nb2 = 5 + Math.floor(rng()*5)
-      for (let bi=0; bi<nb2; bi++) {
-        const t    = bi / nb2
-        const y0   = rng()*zoneH*0.6
-        const hh   = (hue + bi*30) % 360
-        const bh   = 60 + rng()*120 // brush height
-        const tilt = (rng()-0.5)*0.4 // slight angle
-        const ll   = isDark ? 28+t*35 : 38+t*40
-
-        ctx.save()
-        ctx.translate(0, y0)
-        ctx.rotate(tilt)
-
-        // Brush body — wide, tapering at edges with multiple overlapping fills
-        for (let pass=0; pass<4; pass++) {
-          const wobble = (rng()-0.5)*20
-          const bGrad = ctx.createLinearGradient(0,wobble,W,wobble+bh)
-          bGrad.addColorStop(0,   `hsla(${hh},${sat}%,${ll}%,0)`)
-          bGrad.addColorStop(0.15, `hsla(${hh},${sat}%,${ll}%,${0.55+rng()*0.35})`)
-          bGrad.addColorStop(0.5,  `hsla(${(hh+15)%360},${sat-5}%,${ll-8}%,${0.7+rng()*0.25})`)
-          bGrad.addColorStop(0.85, `hsla(${hh},${sat}%,${ll}%,${0.55+rng()*0.35})`)
-          bGrad.addColorStop(1,   `hsla(${hh},${sat}%,${ll}%,0)`)
-          ctx.fillStyle = bGrad
-          ctx.fillRect(-10, wobble, W+20, bh)
-        }
-        ctx.restore()
-      }
-      // Final gradient overlay to blend
-      const ov = ctx.createLinearGradient(0,0,W,zoneH)
-      ov.addColorStop(0, c1+'80'); ov.addColorStop(1, c3+'40')
-      ctx.globalAlpha = 0.25; ctx.fillStyle = ov; ctx.fillRect(0,0,W,zoneH)
-      ctx.globalAlpha = 1
-      break
-    }
-
-    // ─ 15. Crystal facets (low-poly) ────────────────────────────────────────
-    case 'crystal': {
-      const pts2: [number,number][] = []
-      // Generate random vertices
-      const npts = 12 + Math.floor(rng()*10)
-      pts2.push([0,0],[W,0],[0,zoneH],[W,zoneH])
-      for (let i=0;i<npts;i++) pts2.push([rng()*W, rng()*zoneH])
-
-      // Triangulate naively — connect each point to nearest two
-      for (let i=0; i<pts2.length-2; i++) {
-        for (let j=i+1; j<pts2.length-1; j++) {
-          for (let k=j+1; k<pts2.length; k++) {
-            const [ax,ay]=pts2[i],[bx,by]=pts2[j],[cx2,cy2]=pts2[k]
-            const cx3 = (ax+bx+cx2)/3, cy3 = (ay+by+cy2)/3
-            if (cx3<0||cx3>W||cy3<0||cy3>zoneH) continue
-            const t   = Math.sqrt((cx3/W)**2+(cy3/zoneH)**2)
-            const hh  = (hue + t*110 + i*8) % 360
-            const ll  = isDark ? 18+t*48 : 30+t*52
-            ctx.beginPath()
-            ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(cx2,cy2)
-            ctx.closePath()
-            ctx.fillStyle = `hsl(${hh},${sat}%,${ll}%)`
-            ctx.globalAlpha = 0.75 + (1-t)*0.2
-            ctx.fill()
-            ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
-            ctx.lineWidth = 0.8; ctx.globalAlpha = 0.8; ctx.stroke()
-          }
-        }
       }
       ctx.globalAlpha = 1
       break
@@ -1008,10 +821,8 @@ function drawCardInfo(
   // Style code watermark — top-right corner inside pattern zone
   const styleCode: Record<CardStyle,string> = {
     geometric_rays:'GEO', layer_stack:'LAY', wave_lines:'WAV',
-    checkerboard:'CHK', holographic:'HOL', boarding_pass:'TKT',
-    diagonal_bands:'DIA', concentric_shapes:'CON', ink_splatter:'INK',
-    grid_mosaic:'MOS', circuit:'CKT', halftone:'DOT',
-    topographic:'TOP', brush_strokes:'BSH', crystal:'CRY', neon_glow:'NEO',
+    holographic:'HOL', boarding_pass:'TKT', concentric_shapes:'CON',
+    ink_splatter:'INK', halftone:'DOT', topographic:'TOP', neon_glow:'NEO',
   }
   ctx.save()
   // Place inside pattern zone — top-right
@@ -1084,7 +895,7 @@ function drawPortraitCard(
 ) {
   const W = 680, H = 920
   canvas.width = W*2; canvas.height = H*2
-  canvas.style.width = W+'px'; canvas.style.height = H+'px'
+  // ⚠️  Do NOT set canvas.style.width/height here — CSS controls display size
   const ctx = canvas.getContext('2d')!
   ctx.scale(2,2)
 
@@ -1092,7 +903,8 @@ function drawPortraitCard(
   const rngColor = seededRng(user.id+'-hue')
   const hue      = Math.floor(rngColor() * 360)
   const scheme   = pickColorScheme(user.id)
-  const { sat, lit } = applyColorScheme(hue, scheme)
+  const rngScheme = seededRng(user.id+'-scheme-vals')
+  const { sat, lit } = applyColorScheme(hue, scheme, rngScheme)
 
   const style  = pickCardStyle(user.id)
   const effect = pickCardEffect(user.id)
@@ -1547,20 +1359,43 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+        {/* Portrait card — full profile preview, 3:4 aspect, responsive */}
         <div className="flex justify-center">
-          {/* Aspect-ratio container for 680:920 portrait card */}
-          <div style={{width:"100%",maxWidth:320,position:"relative"}}>
-            <div style={{position:"relative",paddingBottom:`${(920/680)*100}%`,borderRadius:24,overflow:"hidden",boxShadow:"0 24px 64px rgba(0,0,0,0.22),0 6px 16px rgba(0,0,0,0.14)"}}>
+          <div style={{
+            width: '100%',
+            maxWidth: 400,
+            position: 'relative',
+          }}>
+            {/* Aspect-ratio box: H/W = 920/680 ≈ 135.3% */}
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              paddingBottom: '135.3%',
+              borderRadius: 28,
+              overflow: 'hidden',
+              boxShadow: '0 28px 72px rgba(0,0,0,0.28), 0 8px 20px rgba(0,0,0,0.16)',
+            }}>
               <canvas
                 ref={canvasRef}
                 onClick={handleDownload}
                 title="Clique para baixar"
-                style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",cursor:"pointer",borderRadius:24,display:"block"}}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'block',
+                  cursor: 'pointer',
+                  borderRadius: 28,
+                  // canvas internal px → CSS px scaling is handled by object-fit
+                }}
               />
             </div>
           </div>
         </div>
-        <p className="text-[10px] text-center mt-2.5" style={{color:"var(--text-muted)"}}>Único por conta · clique para baixar · blob gerado pelo seu ID</p>
+        <p className="text-[10px] text-center mt-2.5" style={{color:"var(--text-muted)"}}>
+          Único por conta · clique para baixar
+        </p>
       </div>
 
       {/* Área & Linguagem */}
