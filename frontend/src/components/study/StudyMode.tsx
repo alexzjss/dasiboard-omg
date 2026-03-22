@@ -328,10 +328,10 @@ export default function StudyMode() {
     const btn = btnRefs.current[id]
     if (btn) {
       const r = btn.getBoundingClientRect()
-      setPanelPos({
-        top:  r.top,
-        left: r.right + 8,  // opens to the right of the sidebar
-      })
+      const estimatedH = id === 'pomodoro' ? 560 : 260
+      const idealTop = r.top + r.height / 2 - estimatedH / 2
+      const top = Math.max(8, Math.min(idealTop, window.innerHeight - estimatedH - 8))
+      setPanelPos({ top, left: r.right + 8 })
     }
     setPanel(id)
   }
@@ -347,9 +347,11 @@ export default function StudyMode() {
                className="animate-in"
                style={{
                  position: 'fixed',
-                 top: Math.max(8, Math.min(panelPos.top, window.innerHeight - 420)),
+                 top: panelPos.top,
                  left: panelPos.left,
-                 width: 320,
+                 width: 340,
+                 maxHeight: 'calc(100dvh - 16px)',
+                 overflowY: 'auto',
                  zIndex: 999,
                  background: 'var(--bg-card)',
                  border: '1px solid var(--border)',
