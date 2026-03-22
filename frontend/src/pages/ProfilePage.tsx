@@ -263,11 +263,20 @@ function drawCardBackground(
   rng: () => number,
   entityBg: { color: string; name: string } | null,
 ) {
-  // Full card: always pure white
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, W, H)
+  // White area — pure white for default, very lightly tinted for entity
+  if (entityBg) {
+    const [er,eg,eb] = hexToRgb(entityBg.color)
+    // Paint white area with a very subtle tint (3% opacity)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = `rgba(${er},${eg},${eb},0.04)`
+    ctx.fillRect(0, 0, W, H)
+  } else {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, W, H)
+  }
 
-  // Blob color — follows hue for default, entity color for entity bg
+  // Blob color — entity color if set, otherwise random hue
   let blobH = hue, blobS = sat, blobL = lit
   if (entityBg) {
     const [er,eg,eb] = hexToRgb(entityBg.color)
