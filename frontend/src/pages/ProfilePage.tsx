@@ -150,75 +150,70 @@ function drawPortraitCard(
 ) {
   const W=680, H=920
   canvas.width=W*2; canvas.height=H*2
-  canvas.style.width=W+"px"; canvas.style.height=H+"px"
+  canvas.style.width="100%"; canvas.style.height="100%"
   const ctx = canvas.getContext("2d")!
   ctx.scale(2,2)
 
-  const rngBlob  = seededRng(user.id+"-blob")
+  const rngWave  = seededRng(user.id+"-wave")
   const rngColor = seededRng(user.id+"-hue")
   const hue      = Math.floor(rngColor()*360)
-  const sat      = 72 + Math.floor(rngColor()*18)
-  const blobLit  = 52 + Math.floor(rngColor()*18)
+  const sat      = 78 + Math.floor(rngColor()*14)
 
-  // Blob always uses the user's own seeded colors — entityBg only changes the card background
-  const bgColor   = entityBg ? "#f8f7f2" : `hsl(${hue},${Math.floor(sat*0.10)}%,97%)`
-  const inkColor  = `hsl(${hue},60%,14%)`
-  const inkFaint  = `hsl(${hue},35%,52%)`
-  const blobMain  = `hsl(${hue},${sat}%,${blobLit}%)`
-  const blobShift = `hsl(${(hue+28)%360},${sat-8}%,${blobLit-14}%)`
-  const accentPill= `hsl(${hue},${sat}%,${Math.max(blobLit-26,18)}%)`
+  // Solid vivid color for top zone; white for bottom
+  const solidColor = entityBg ? entityBg.color : `hsl(${hue},${sat}%,52%)`
+  const inkColor   = `hsl(${hue},55%,12%)`
+  const inkFaint   = `hsl(${hue},28%,40%)`
+  const accentPill = entityBg ? entityBg.color : `hsl(${hue},${sat}%,42%)`
 
   ctx.clearRect(0,0,W,H)
 
-  // ── Card bg + blob — all inside card rounded-rect clip ──
-  ctx.save()          // save [1] — card clip
+  // ── All drawing clipped to card rounded-rect ───────────────────────────────
+  ctx.save()            // [1] card clip
   roundRect(ctx,0,0,W,H,32)
   ctx.clip()
 
-  // Background fill — light neutral
-  if (entityBg) {
-    const g = ctx.createLinearGradient(0,0,W,H)
-    g.addColorStop(0, entityBg.color+"28")
-    g.addColorStop(0.5,"#f9f9f5")
-    g.addColorStop(1, entityBg.color+"14")
-    ctx.fillStyle = g
-  } else { ctx.fillStyle = bgColor }
+  // White background (full card)
+  ctx.fillStyle = "#ffffff"
   ctx.fillRect(0,0,W,H)
 
-  // ── Organic diagonal blob flowing from top-right ──────────────────────────
-  // Blob center anchored to upper-right quadrant, large enough to cover
-  // the whole right side and flow into a wave across the middle
-  const blobCx = W * (0.55 + rngBlob() * 0.20)   // 55–75% from left
-  const blobCy = H * (-0.05 + rngBlob() * 0.10)   // slightly above top
-  const blobR  = H * (0.72 + rngBlob() * 0.14)    // big organic shape
+  // ── Solid color top zone, separated by an organic wave ────────────────────
+  // Wave baseline ~52–62% of card height, shape varies per user ID
+  const waveY   = H * (0.52 + rngWave()*0.10)
+  const waveAmp = H * (0.07 + rngWave()*0.05)
+  const cp1x    = W * (0.18 + rngWave()*0.18)
+  const cp1y    = waveY - waveAmp
+  const cp2x    = W * (0.52 + rngWave()*0.24)
+  const cp2y    = waveY + waveAmp
+  const cp3x    = W * (0.76 + rngWave()*0.14)
+  const cp3y    = waveY - waveAmp * 0.4
 
-  // Draw blob with radial gradient (vibrant center → transparent edge)
-  const blobGrad = ctx.createRadialGradient(
-    blobCx - blobR*0.18, blobCy - blobR*0.08, blobR*0.02,
-    blobCx + blobR*0.08, blobCy + blobR*0.12, blobR*1.08
-  )
-  blobGrad.addColorStop(0,   blobMain)
-  blobGrad.addColorStop(0.45, blobShift)
-  blobGrad.addColorStop(1,   "rgba(0,0,0,0)")
-
-  drawBlob(ctx, rngBlob, blobCx, blobCy, blobR)
-  ctx.fillStyle = blobGrad
+  // Top colored zone path
+  ctx.beginPath()
+  ctx.moveTo(0, 0)
+  ctx.lineTo(W, 0)
+  ctx.lineTo(W, waveY + waveAmp * 0.5)
+  ctx.bezierCurveTo(cp3x, cp3y, cp2x, cp2y, cp1x, cp1y)
+  ctx.lineTo(0, waveY - waveAmp * 0.5)
+  ctx.closePath()
+  ctx.fillStyle = solidColor
   ctx.fill()
 
-  // Grain inside blob for texture
-  ctx.save()          // save [2] — grain clip inside blob
-  drawBlob(ctx, seededRng(user.id+"-blob"), blobCx, blobCy, blobR)
+  // Subtle grain inside the color zone
+  ctx.save()            // [2] grain clip
+  ctx.beginPath()
+  ctx.moveTo(0, 0); ctx.lineTo(W, 0)
+  ctx.lineTo(W, waveY + waveAmp * 0.5)
+  ctx.bezierCurveTo(cp3x, cp3y, cp2x, cp2y, cp1x, cp1y)
+  ctx.lineTo(0, waveY - waveAmp * 0.5)
+  ctx.closePath()
   ctx.clip()
-  addNoise(ctx, seededRng(user.id+"-grain"), W, H, 0.050, 8000)
-  ctx.restore()       // restore [2]
+  addNoise(ctx, seededRng(user.id+"-grain"), W, H, 0.030, 5000)
+  ctx.restore()         // [2]
 
-  // Background grain over full card (subtle)
-  addNoise(ctx, seededRng(user.id+"-bg"), W, H, 0.010, 2000)
+  ctx.restore()         // [1]
 
-  ctx.restore()       // restore [1] — back to no clip
-
-  // Name
-  const textX=44, nameY=H*0.604
+  // Name — sits just below the wave
+  const textX=44, nameY=H*0.670
   const parts=user.full_name.trim().split(/\s+/)
   const firstName=parts[0]??"", lastName=parts.slice(1).join(" ")
   ctx.textAlign="left"; ctx.textBaseline="alphabetic"
