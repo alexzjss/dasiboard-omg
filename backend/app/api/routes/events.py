@@ -37,14 +37,16 @@ def list_events(
     personal_q = (
         "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
-        "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only "
-        "FROM events WHERE owner_id = %s LIMIT 500"
+        "class_code, FALSE AS is_global, entity_id, members_only, "
+        "recurring, recur_weeks "
+        "FROM events WHERE owner_id = %s"
     )
     p_params: list = [uid]
     if start:      personal_q += " AND start_at >= %s"; p_params.append(start)
     if end:        personal_q += " AND start_at <= %s"; p_params.append(end)
     if event_type: personal_q += " AND event_type = %s"; p_params.append(event_type)
     if class_code: personal_q += " AND class_code ILIKE %s"; p_params.append(f"%{class_code}%")
+    personal_q += " LIMIT 500"
 
     entity_parts: list = []
     e_all_params: list = []
@@ -53,7 +55,8 @@ def list_events(
         eq = (
             "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
             "all_day, color, location, created_at, "
-            "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only "
+            "class_code, FALSE AS is_global, entity_id, members_only, "
+            "recurring, recur_weeks "
             f"FROM events WHERE entity_id IN ({placeholders}) AND owner_id != %s"
         )
         e_params: list = entity_ids + [uid]
@@ -66,7 +69,8 @@ def list_events(
     global_q = (
         "SELECT id, NULL::uuid AS owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
-        "class_code, TRUE AS is_global, entity_id, members_only "
+        "class_code, TRUE AS is_global, entity_id, members_only, "
+        "recurring, recur_weeks "
         "FROM global_events WHERE 1=1"
     )
     g_params: list = []
@@ -144,11 +148,11 @@ def update_event(
         db.execute(
             "UPDATE events SET title=%s, description=%s, event_type=%s, start_at=%s, "
             "end_at=%s, all_day=%s, color=%s, location=%s, class_code=%s, entity_id=%s, "
-            "recurring=%s, recur_weeks=%s "
+            "members_only=%s, recurring=%s, recur_weeks=%s "
             "WHERE id=%s RETURNING *, FALSE AS is_global",
             (body.title, body.description, body.event_type, body.start_at,
              body.end_at, body.all_day, body.color, body.location, body.class_code, eid,
-             body.recurring, body.recur_weeks, event_id),
+             body.members_only, body.recurring, body.recur_weeks, event_id),
         )
         row = db.fetchone()
         if not row.get("owner_id"):
