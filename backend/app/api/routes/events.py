@@ -38,7 +38,7 @@ def list_events(
         "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
         "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only "
-        "FROM events WHERE owner_id = %s LIMIT 500"
+        "FROM events WHERE owner_id = %s"
     )
     p_params: list = [uid]
     if start:      personal_q += " AND start_at >= %s"; p_params.append(start)
@@ -75,7 +75,7 @@ def list_events(
     if event_type: global_q += " AND event_type = %s"; g_params.append(event_type)
 
     parts = [f"({personal_q})"] + entity_parts + [f"({global_q})"]
-    combined = " UNION ALL ".join(parts) + " ORDER BY start_at"
+    combined = " UNION ALL ".join(parts) + " ORDER BY start_at LIMIT 500"
     all_params = p_params + e_all_params + g_params
 
     db.execute(combined, all_params)
