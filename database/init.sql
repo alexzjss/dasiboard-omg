@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS events (
     class_code  VARCHAR(20),
     entity_id   UUID        REFERENCES entities(id) ON DELETE SET NULL,
     members_only BOOLEAN    NOT NULL DEFAULT FALSE,
+    recurring    BOOLEAN    NOT NULL DEFAULT FALSE,
+    recur_weeks  INTEGER,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_events_owner    ON events (owner_id);
@@ -147,6 +149,8 @@ CREATE TABLE IF NOT EXISTS global_events (
     class_code  VARCHAR(20),
     entity_id   UUID        REFERENCES entities(id) ON DELETE SET NULL,
     members_only BOOLEAN    NOT NULL DEFAULT FALSE,
+    recurring    BOOLEAN    NOT NULL DEFAULT FALSE,
+    recur_weeks  INTEGER,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_global_events_start_at ON global_events (start_at);
