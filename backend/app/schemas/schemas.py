@@ -169,6 +169,8 @@ class EventCreate(BaseModel):
     is_global: bool = False
     entity_id: Optional[UUID] = None
     members_only: bool = False
+    recurring: bool = False
+    recur_weeks: Optional[int] = None
 
 
 class EventOut(BaseModel):
@@ -186,6 +188,8 @@ class EventOut(BaseModel):
     is_global: bool = False
     entity_id: Optional[UUID] = None
     members_only: bool = False
+    recurring: bool = False
+    recur_weeks: Optional[int] = None
     created_at: datetime
     model_config = {"from_attributes": True}
 
