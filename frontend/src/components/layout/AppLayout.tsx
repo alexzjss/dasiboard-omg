@@ -63,8 +63,6 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'dark-dlc':         { bg: '#08020f', accent: '#ff0080', card: '#160625' },
   'dark-shell':       { bg: '#000000', accent: '#00ff41', card: '#060606' },
   'dark-colina':      { bg: '#181818', accent: '#8a7060', card: '#2a2a2c' },
-  'dark-pixel':       { bg: '#000000', accent: '#ffcc00', card: '#181818' },
-  'light-720':        { bg: '#0d1a00', accent: '#6fbe00', card: '#163000' },
   'light-blueprint':  { bg: '#0a2540', accent: '#4499ff', card: '#123d6a' },
   // Escuros novos
   'dark-holo':        { bg: '#0a0812', accent: '#a855f7', card: '#1a1430' },
@@ -80,19 +78,14 @@ const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string 
   'light-vidro':      { bg: '#b8d8f8', accent: '#3b82f6', card: 'rgba(255,255,255,0.45)' },
   'light-vanilla':    { bg: '#faf7f2', accent: '#c8a060', card: '#ffffff' },
   // Claros novos
-  'light-punkrock':   { bg: '#1a1f8f', accent: '#e60000', card: '#ffffff' },
   'light-memento':    { bg: '#f2f4f8', accent: '#0a3080', card: '#ffffff' },
-  'light-portatil':   { bg: '#9bbc0f', accent: '#306230', card: '#8bac0f' },
   'dark-aqua':        { bg: '#0a1a3a', accent: '#00aaff', card: '#0d2050' },
-  'dark-k7':          { bg: '#1a0e00', accent: '#ff8800', card: '#3d2200' },
   'light-papiro':     { bg: '#fafaf5', accent: '#0050a0', card: '#f5f5ee' },
   // Chrono Trigger (usa preview base escuro)
   'dark-chrono':      { bg: '#0a0c10', accent: '#ffcc44', card: '#1c2430' },
   'light-usp':        { bg: '#f4f7fb', accent: '#004A8F', card: '#ffffff' },
   'light-stardew':    { bg: '#e8d5a3', accent: '#4a7c59', card: '#fdf0cc' },
   'dark-2077':        { bg: '#000000', accent: '#f5e642', card: '#0a0a0a' },
-  'light-cubo':       { bg: '#c6b37d', accent: '#5d8a22', card: '#d4c090' },
-  'light-cafe':       { bg: '#f5f0e8', accent: '#8b4513', card: '#fefcf7' },
   'light-sakura':     { bg: '#fef5f7', accent: '#e8758a', card: '#ffffff' },
   'dark-matrix':      { bg: '#000800', accent: '#00ff41', card: '#010a01' },
   'dark-crt':         { bg: '#0a0500', accent: '#ff8800', card: '#120800' },
@@ -742,7 +735,7 @@ export default function AppLayout() {
 
   useKeyboardShortcuts(shortcuts)
 
-  const isPixel  = theme.id === 'dark-pixel'
+  const isPixel  = false
   const isChrono = theme.id === 'dark-chrono'
   const saveStarter = (id: string) => { localStorage.setItem(STORAGE_KEYS.starter, id); setStarter(id) }
   const colorBlind = useColorBlindMode()
