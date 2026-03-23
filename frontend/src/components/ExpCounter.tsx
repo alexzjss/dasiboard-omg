@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom'
 
 const EXP_KEY = 'dasiboard-exp'
 // EXP bar visible on retro themes; level shown everywhere in profile
-const EXP_THEMES = new Set([])
+const EXP_THEMES = new Set<import('@/context/ThemeContext').ThemeId>([])
 
 // Thresholds for levels 1–20
 const LEVEL_THRESHOLDS = [
