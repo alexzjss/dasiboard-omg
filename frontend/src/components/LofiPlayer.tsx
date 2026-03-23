@@ -4,13 +4,10 @@ import { useTheme } from '@/context/ThemeContext'
 import { Music, Volume2, VolumeX } from 'lucide-react'
 
 // Themes that get the lofi player
-const LOFI_THEMES = new Set(['dark-pixel', 'light-720', 'light-portatil', 'dark-dlc'])
+const LOFI_THEMES = new Set(['dark-dlc'])
 
 // Theme-specific styles for the player
 const PLAYER_STYLES: Record<string, { bg: string; border: string; activeColor: string; font?: string }> = {
-  'dark-pixel':    { bg: 'rgba(0,0,0,0.4)',      border: 'rgba(255,204,0,0.3)',   activeColor: '#ffcc00', font: '"Press Start 2P", monospace' },
-  'light-720':     { bg: 'rgba(0,30,0,0.4)',      border: 'rgba(111,190,0,0.35)',  activeColor: '#6fbe00', font: '"Rajdhani", sans-serif' },
-  'light-portatil':{ bg: 'rgba(15,56,15,0.25)',   border: 'rgba(15,56,15,0.5)',    activeColor: '#0f380f', font: '"Press Start 2P", monospace' },
   'dark-dlc':      { bg: 'rgba(136,0,255,0.12)',  border: 'rgba(136,0,255,0.3)',   activeColor: '#ff0080' },
 }
 
@@ -130,8 +127,7 @@ export function LofiPlayer() {
 
   if (!isApplicable) return null
 
-  const isPixelStyle = theme.id === 'dark-pixel' || theme.id === 'light-portatil'
-
+  const isPixelStyle = false
   return (
     <div className="px-3 pb-2">
       <div className="rounded-xl px-3 py-2 flex items-center gap-2"
