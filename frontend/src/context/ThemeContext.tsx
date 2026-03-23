@@ -3,21 +3,17 @@ import { useLocation } from 'react-router-dom'
 
 export type ThemeId =
   | 'dark-roxo' | 'dark-hypado' | 'dark-minas' | 'dark-dlc' | 'dark-shell'
-  | 'dark-colina' | 'dark-pixel' | 'light-720' | 'light-blueprint'
+  | 'dark-colina' | 'light-blueprint'
   | 'dark-holo' | 'dark-vinganca' | 'dark-eva'
   | 'light-roxo' | 'light-aranha' | 'light-sintetizado' | 'light-grace'
   | 'light-lab' | 'light-ilha' | 'light-vidro' | 'light-vanilla'
-  | 'light-punkrock' | 'light-memento'
+  | 'light-memento'
   | 'dark-chrono'
-  | 'light-portatil'
   | 'dark-aqua'
-  | 'dark-k7'
   | 'light-papiro'
   | 'light-usp'
   | 'light-stardew'
   | 'dark-2077'
-  | 'light-cubo'
-  | 'light-cafe'
   | 'light-sakura'
   | 'dark-matrix'
   | 'dark-crt'
@@ -57,8 +53,6 @@ export const THEMES: ThemeMeta[] = [
   { id: 'dark-dlc',         name: 'DLC',          dark: true,  emoji: '🕹️', description: 'RGB Gaming',                group: 'games'   },
   { id: 'dark-shell',       name: 'Shell',        dark: true,  emoji: '💀', description: 'CLI · Matrix',              group: 'tech'    },
   { id: 'dark-colina',      name: 'Colina',       dark: true,  emoji: '🌫️', description: 'Silent Hill · Névoa',       group: 'vibes'   },
-  { id: 'dark-pixel',       name: 'Pixel',        dark: true,  emoji: '👾', description: 'SNES · NES · Pixel Art',    group: 'games'   },
-  { id: 'light-720',        name: '720',          dark: true,  emoji: '🎮', description: 'Xbox 360 · Verde',          group: 'games'   },
   { id: 'light-blueprint',  name: 'Blueprint',    dark: true,  emoji: '📐', description: 'Plantas Técnicas',          group: 'tech'    },
   { id: 'dark-holo',        name: 'Holográfico',  dark: true,  emoji: '🌈', description: 'Iridescente · Prisma',      group: 'special' },
   { id: 'dark-vinganca',    name: 'Vingança',     dark: true,  emoji: '🦇', description: 'Batman TAS · Noir',         group: 'super'   },
@@ -73,17 +67,12 @@ export const THEMES: ThemeMeta[] = [
   { id: 'light-ilha',       name: 'Ilha',         dark: false, emoji: '🏝️', description: 'Kingdom Hearts · Sol',     group: 'games'   },
   { id: 'light-vidro',      name: 'Vidro',        dark: false, emoji: '🔮', description: 'Glassmorphism',             group: 'special' },
   { id: 'light-vanilla',    name: 'Vanilla',      dark: false, emoji: '🍦', description: 'Bege elegante · Minimal',   group: 'base'    },
-  { id: 'light-punkrock',   name: 'Punkrock',     dark: false, emoji: '🦸', description: 'Superman · Azul & Vermelho',group: 'super'   },
   { id: 'light-memento',    name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',       group: 'anime'   },
-  { id: 'light-portatil',   name: 'Portátil',     dark: false, emoji: '🎮', description: 'Game Boy · Verde acinzentado', group: 'games' },
   { id: 'dark-aqua',        name: 'Aqua',         dark: true,  emoji: '💧', description: 'Windows XP Luna · Azul vitrificado', group: 'special' },
-  { id: 'dark-k7',          name: 'K7',           dark: true,  emoji: '📼', description: 'Cassette · Marrom/Laranja · 80s',    group: 'vibes'   },
   { id: 'light-papiro',     name: 'Papiro',       dark: false, emoji: '📋', description: 'Caderno de engenharia · Milimetrado', group: 'tech'    },
   { id: 'light-usp',        name: 'USP Oficial',  dark: false, emoji: '🏛️', description: 'Identidade visual oficial · Azul & Ouro', group: 'special' },
   { id: 'light-stardew',    name: 'Stardew',      dark: false, emoji: '🌾', description: 'Vida no campo pixel · Terroso & Verde', group: 'games'   },
   { id: 'dark-2077',        name: '2077',          dark: true,  emoji: '🏙️', description: 'Night City · Neon Amarelo',           group: 'neon'    },
-  { id: 'light-cubo',       name: 'Cubo',          dark: false, emoji: '⛏️', description: 'Survival · Slots de inventário',      group: 'games'   },
-  { id: 'light-cafe',       name: 'Café',          dark: false, emoji: '☕', description: 'Livraria · Playfair · Sepia',          group: 'vibes'   },
   { id: 'light-sakura',     name: 'Sakura',        dark: false, emoji: '🌸', description: 'Primavera japonesa · Rosa pétala',    group: 'vibes'   },
   { id: 'dark-matrix',      name: 'Matrix',        dark: true,  emoji: '💚', description: 'CRT Verde · Terminal · 80s',          group: 'neon'    },
   { id: 'dark-crt',         name: 'CRT',           dark: true,  emoji: '🟡', description: 'Monitor Âmbar · IBM · Anos 70',       group: 'neon'    },
