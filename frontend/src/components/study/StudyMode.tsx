@@ -13,10 +13,10 @@ export default function StudyMode() {
   const openRoom = () => navigate('/study')
 
   return (
-    <div className="px-3 pb-3">
+    <div>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
         style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
