@@ -50,30 +50,8 @@
 
 /* ── Safari-compatible 720 sidebar neon border ────────────────────────────── */
 /* Replaces box-shadow spread-negative (broken in Safari) with border-image */
-[data-theme="light-720"] .sidebar-bg {
-  border-right: none !important;
-  position: relative;
-}
-[data-theme="light-720"] .sidebar-bg::before {
-  content: '';
-  position: absolute;
-  top: 0; right: 0;
-  width: 2px;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(111,190,0,0.9) 20%,
-    rgba(111,190,0,1)   50%,
-    rgba(111,190,0,0.9) 80%,
-    transparent 100%
-  );
-  /* Safari-safe glow: outline instead of box-shadow spread */
-  filter: blur(1px) drop-shadow(0 0 4px #6fbe00);
-  animation: nxeLedSafe 2.5s ease-in-out infinite;
-}
+
+
 @keyframes nxeLedSafe {
   0%,100% { opacity: 0.7; }
   50%      { opacity: 1; }
@@ -97,7 +75,7 @@
 /* WCAG AA minimum 4.5:1 for normal text on light backgrounds */
 [data-theme="light-vidro"]  { --text-muted: #5a5a6e; }
 [data-theme="light-papel"]  { --text-muted: #5c5a52; }
-[data-theme="light-720"]    { --text-muted: #4a4a3a; }
+
 [data-theme="light-blueprint"] { --text-muted: #3a5070; }
 [data-theme="light-memento"] { --text-muted: #5a4a38; }
 [data-theme="light-ilha"]   { --text-muted: #3a5060; }
@@ -465,39 +443,8 @@
      Verde lima saturado, branco, cinza metalizado
      Blades, tiles arredondados, glow de LED verde
   ═══════════════════════════════════════════════════════ */
-  [data-theme="light-720"] {
-    --bg-base:        #0c1e00;
-    --bg-surface:     #122400;
-    --bg-elevated:    #182c00;
-    --bg-card:        #1e3600;
-    --border:         rgba(111,190,0,0.22);
-    --border-light:   rgba(111,190,0,0.38);
-    --text-primary:   #f0ffcc;
-    --text-secondary: #aaee44;
-    --text-muted:     rgba(111,190,0,0.35);
-    --accent-1:       #6fbe00;
-    --accent-2:       #52a000;
-    --accent-3:       #c8f07a;
-    --accent-glow:    rgba(111,190,0,0.55);
-    --accent-soft:    rgba(111,190,0,0.12);
-    --gradient-hero:  linear-gradient(160deg, #b2e04a 0%, #6fbe00 30%, #2a5c00 70%, #0c1e00 100%);
-    --gradient-btn:   linear-gradient(180deg, #99dd22 0%, #6fbe00 40%, #3a7800 100%);
-    --noise-opacity:  0.018;
-    --card-blur:      0px;
-    --sidebar-overlay: none;
-    font-family: "Rajdhani", "DM Sans", sans-serif;
-  }
-  [data-theme="light-720"] h1,
-  [data-theme="light-720"] h2,
-  [data-theme="light-720"] h3,
-  [data-theme="light-720"] h4 {
-    font-family: "Rajdhani", sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #c8f07a;
-    text-shadow: 0 0 20px rgba(111,190,0,0.70), 0 0 40px rgba(111,190,0,0.30);
-  }
+  
+  
 
   /* ═══════════════════════════════════════════════════════
      🏝️  LIGHT — Ilha (Destiny Islands · KH · Sol · Mar)
@@ -679,39 +626,8 @@
   /* ═══════════════════════════════════════════════════════
      🎮  DARK — Pixel (SNES · NES · GBA · Pixel Art)
   ═══════════════════════════════════════════════════════ */
-  [data-theme="dark-pixel"] {
-    --bg-base:        #000000;
-    --bg-surface:     #080808;
-    --bg-elevated:    #101010;
-    --bg-card:        #181818;
-    --border:         #282828;
-    --border-light:   #383838;
-    --text-primary:   #f8f8f8;
-    --text-secondary: #c8c8ff;
-    --text-muted:     #484848;
-    --accent-1:       #ff4444;
-    --accent-2:       #cc2222;
-    --accent-3:       #ffcc00;
-    --accent-glow:    rgba(255,68,68,0.35);
-    --accent-soft:    rgba(255,204,0,0.12);
-    --gradient-hero:  linear-gradient(135deg, #ff4444 0%, #ffcc00 50%, #4488ff 100%);
-    --gradient-btn:   linear-gradient(135deg, #ff4444, #cc2222);
-    --noise-opacity:  0.0;
-    --card-blur:      0px;
-    --sidebar-overlay: none;
-    font-family: "Press Start 2P", "JetBrains Mono", monospace;
-    image-rendering: pixelated;
-  }
-  [data-theme="dark-pixel"] h1,
-  [data-theme="dark-pixel"] h2,
-  [data-theme="dark-pixel"] h3,
-  [data-theme="dark-pixel"] h4 {
-    font-family: "Press Start 2P", monospace;
-    font-weight: 400;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    image-rendering: pixelated;
-  }
+  
+  
 
   /* ═══════════════════════════════════════════════════════
      ✨  LIGHT — Lite (Ultra leve · Sem efeitos · Performance)
@@ -2092,300 +2008,70 @@
 }
 
 /* ── Background: piso cinza-esverdeado do NXE ── */
-[data-theme="light-720"] body {
-  background: radial-gradient(ellipse 140% 80% at 60% 110%, #1a3c00 0%, #0c1e00 50%, #060e00 100%);
-}
+
 /* Reflexo de chão — como o piso do dashboard 360 */
-[data-theme="light-720"] body::before {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    /* Glow central do avatar/tile principal */
-    radial-gradient(ellipse 55% 40% at 58% 48%, rgba(111,190,0,0.14) 0%, transparent 65%),
-    /* Reflexo de chão suave */
-    radial-gradient(ellipse 120% 30% at 50% 100%, rgba(111,190,0,0.10) 0%, rgba(40,80,0,0.05) 60%, transparent 100%),
-    /* Glow de fundo lateral */
-    radial-gradient(ellipse 40% 60% at 5% 50%, rgba(80,160,0,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 30% 50% at 95% 30%, rgba(111,190,0,0.05) 0%, transparent 70%);
-  animation: nxeBubble 10s ease-in-out infinite;
-}
+
 /* Bolhas circulares do background NXE */
-[data-theme="light-720"] body::after {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    radial-gradient(circle 36px at center, rgba(111,190,0,0.07) 0%, transparent 100%),
-    radial-gradient(circle 20px at center, rgba(170,238,68,0.05) 0%, transparent 100%),
-    radial-gradient(circle 12px at center, rgba(111,190,0,0.04) 0%, transparent 100%);
-  background-size: 96px 96px, 60px 60px, 38px 38px;
-  background-position: 0 0, 28px 20px, 14px 44px;
-  animation: nxeBubble 7s 2s ease-in-out infinite;
-}
+
 
 /* ── Sidebar: blade panel NXE verde escuro ── */
-[data-theme="light-720"] .sidebar-bg {
-  background: linear-gradient(165deg,
-    #2c5800 0%, #1e3e00 20%,
-    #162c00 45%, #0e1e00 70%,
-    #0a1600 100%);
-  border-right: 1px solid rgba(111,190,0,0.30);
-  position: relative; overflow: hidden;
-  animation: nxeBlade 12s ease-in-out infinite;
-}
+
 /* Reflexo glossy no topo da sidebar */
-[data-theme="light-720"] .sidebar-bg::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 50%;
-  background: linear-gradient(180deg,
-    rgba(178,224,74,0.12) 0%,
-    rgba(111,190,0,0.05) 55%,
-    transparent 100%);
-  pointer-events: none; z-index: 1;
-}
+
 /* Orb Xbox (círculo verde) no rodapé da sidebar */
-[data-theme="light-720"] .sidebar-bg::after {
-  content: '';
-  position: absolute; bottom: 56px; left: 50%;
-  transform: translateX(-50%);
-  width: 48px; height: 48px; border-radius: 50%;
-  background: radial-gradient(circle at 36% 30%,
-    rgba(220,255,140,0.95) 0%,
-    rgba(111,190,0,1) 28%,
-    rgba(40,90,0,1) 68%,
-    rgba(10,30,0,1) 100%);
-  box-shadow:
-    0 0 0 3px rgba(111,190,0,0.3),
-    0 0 20px rgba(111,190,0,0.7),
-    0 0 40px rgba(111,190,0,0.35),
-    inset 0 2px 3px rgba(255,255,255,0.35),
-    inset 0 -2px 3px rgba(0,0,0,0.5);
-  pointer-events: none; z-index: 3;
-  animation: nxeOrb 4s ease-in-out infinite, nxeLed 2.5s ease-in-out infinite;
-}
+
 
 /* ── Nav: blade tabs NXE ── */
-[data-theme="light-720"] .nav-active {
-  background: linear-gradient(90deg,
-    rgba(111,190,0,0.32) 0%,
-    rgba(82,160,0,0.18) 60%,
-    rgba(40,90,0,0.08) 100%);
-  border-left: 3px solid #6fbe00 !important;
-  border-color: transparent;
-  color: #c8f07a;
-  font-weight: 700;
-  text-shadow: 0 0 10px rgba(111,190,0,0.9), 0 0 22px rgba(111,190,0,0.4);
-  box-shadow: inset 0 1px 0 rgba(200,240,122,0.10), 0 0 12px rgba(111,190,0,0.08);
-  animation: nxeLed 3s ease-in-out infinite;
-}
-[data-theme="light-720"] .nav-inactive { color: rgba(170,220,100,0.50); font-weight: 500; }
-[data-theme="light-720"] .nav-inactive:hover {
-  background: rgba(111,190,0,0.10);
-  color: rgba(200,255,120,0.75);
-  box-shadow: inset 2px 0 0 rgba(111,190,0,0.35);
-}
+
+
 /* Texto na sidebar em verde claro */
-[data-theme="light-720"] .sidebar-bg .font-display { color: rgba(220,255,160,0.95) !important; }
-[data-theme="light-720"] .sidebar-bg p,
-[data-theme="light-720"] .sidebar-bg .text-muted   { color: rgba(111,190,0,0.45) !important; }
+
 
 /* ── Cards: tiles blade do NXE ── */
-[data-theme="light-720"] .card {
-  background: linear-gradient(150deg,
-    rgba(34,68,0,0.96) 0%,
-    rgba(22,48,0,0.92) 50%,
-    rgba(14,30,0,0.88) 100%);
-  border: 1px solid rgba(111,190,0,0.20);
-  border-top: 1px solid rgba(178,224,74,0.22);
-  border-radius: 8px !important;
-  box-shadow:
-    0 4px 28px rgba(0,0,0,0.55),
-    0 1px 0 rgba(200,240,122,0.10),
-    inset 0 1px 0 rgba(178,224,74,0.07),
-    inset 0 -1px 0 rgba(0,0,0,0.25);
-  position: relative; overflow: hidden;
-}
+
 /* Reflexo glossy no topo do tile */
-[data-theme="light-720"] .card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 42%;
-  background: linear-gradient(180deg,
-    rgba(178,224,74,0.10) 0%,
-    rgba(111,190,0,0.04) 65%,
-    transparent 100%);
-  border-radius: inherit;
-  pointer-events: none;
-}
+
 /* Orb bubble no canto inferior direito */
-[data-theme="light-720"] .card::after {
-  content: '';
-  position: absolute; bottom: -28px; right: -28px;
-  width: 80px; height: 80px; border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(111,190,0,0.10) 0%,
-    rgba(111,190,0,0.04) 50%,
-    transparent 100%);
-  pointer-events: none;
-}
-[data-theme="light-720"] .card-hover:hover {
-  border-color: rgba(111,190,0,0.50);
-  border-top-color: rgba(200,240,122,0.45);
-  box-shadow:
-    0 8px 40px rgba(0,0,0,0.65),
-    0 0 0 1px rgba(111,190,0,0.35),
-    0 2px 0 rgba(200,240,122,0.18),
-    inset 0 1px 0 rgba(200,240,122,0.12);
-  transform: translateY(-2px);
-}
+
+
 /* Hero card — blade principal com slide animation */
-[data-theme="light-720"] .hero-card {
-  animation: nxeTileSlide 0.5s cubic-bezier(0.22,1,0.36,1) both !important;
-}
+
 
 /* ── Buttons: pill glossy verde Xbox ── */
-[data-theme="light-720"] .btn-primary {
-  background: linear-gradient(180deg,
-    #b2e04a 0%,
-    #6fbe00 25%,
-    #52a000 65%,
-    #3a7800 100%) !important;
-  border: 1px solid rgba(200,240,122,0.55);
-  border-bottom-color: rgba(20,60,0,0.85);
-  border-radius: 26px !important;
-  box-shadow:
-    0 4px 22px rgba(111,190,0,0.50),
-    inset 0 1px 0 rgba(255,255,255,0.28),
-    inset 0 -2px 0 rgba(0,0,0,0.25) !important;
-  color: #fff;
-  font-family: "Rajdhani", sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  text-transform: uppercase;
-}
-[data-theme="light-720"] .btn-primary:hover {
-  filter: brightness(1.14) saturate(1.12);
-  box-shadow: 0 6px 30px rgba(111,190,0,0.65), inset 0 1px 0 rgba(255,255,255,0.32);
-  transform: translateY(-1px);
-}
-[data-theme="light-720"] .btn-ghost {
-  border: 1px solid rgba(111,190,0,0.32);
-  color: #aaee44;
-  border-radius: 18px !important;
-  background: rgba(111,190,0,0.07);
-  font-family: "Rajdhani", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-[data-theme="light-720"] .btn-ghost:hover {
-  border-color: rgba(111,190,0,0.55);
-  background: rgba(111,190,0,0.13);
-  color: #c8f07a;
-}
+
 
 /* ── Inputs ── */
-[data-theme="light-720"] .input {
-  background: rgba(14,30,0,0.88) !important;
-  border: 1px solid rgba(111,190,0,0.22) !important;
-  color: #c8f07a !important;
-  border-radius: 8px !important;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(111,190,0,0.06) !important;
-  font-family: "Rajdhani", sans-serif;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-}
-[data-theme="light-720"] .input:focus {
-  border-color: rgba(111,190,0,0.60) !important;
-  box-shadow: 0 0 0 2px rgba(111,190,0,0.18), inset 0 1px 4px rgba(0,0,0,0.3) !important;
-}
-[data-theme="light-720"] .input::placeholder { color: rgba(111,190,0,0.30); }
+
 
 /* ── Label e badges ── */
-[data-theme="light-720"] .label {
-  color: rgba(111,190,0,0.65);
-  font-family: "Rajdhani", sans-serif;
-  letter-spacing: 0.08em;
-}
-[data-theme="light-720"] .badge {
-  border-radius: 4px !important;
-  font-family: "Rajdhani", sans-serif;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
+
 
 /* ── Accent orb ── */
-[data-theme="light-720"] .accent-orb {
-  background: radial-gradient(circle at 35% 30%,
-    rgba(210,255,130,0.90) 0%,
-    rgba(111,190,0,0.80) 32%,
-    rgba(40,80,0,0.40) 100%);
-  box-shadow: 0 0 40px rgba(111,190,0,0.55), 0 0 80px rgba(111,190,0,0.22);
-  animation: nxeOrb 5s ease-in-out infinite;
-}
+
 
 /* ── Scrollbar verde ── */
-[data-theme="light-720"] ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #88cc00, #52a000);
-  border-radius: 4px;
-  box-shadow: 0 0 6px rgba(111,190,0,0.5);
-}
-[data-theme="light-720"] ::-webkit-scrollbar-track { background: #0a1400; }
+
 
 /* ── LED strip no topo do conteúdo principal ── */
-[data-theme="light-720"] main { position: relative; }
-[data-theme="light-720"] main::before {
-  content: '';
-  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(111,190,0,0.15) 5%,
-    #6fbe00 25%, #aaee44 50%, #6fbe00 75%,
-    rgba(111,190,0,0.15) 95%, transparent 100%);
-  box-shadow: 0 0 10px rgba(111,190,0,0.7), 0 0 22px rgba(111,190,0,0.35);
-  pointer-events: none; z-index: 5;
-  animation: nxeLed 2.5s ease-in-out infinite;
-}
+
+
 /* Glow bubble no canto inferior direito */
-[data-theme="light-720"] main::after {
-  content: '';
-  position: fixed; bottom: -80px; right: -50px;
-  width: 320px; height: 320px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(111,190,0,0.07) 0%, transparent 70%);
-  pointer-events: none; z-index: 0;
-  animation: nxeBubble 8s 1.5s ease-in-out infinite;
-}
+
 
 /* ── Section headers Xbox style ── */
-[data-theme="light-720"] .section-header {
-  font-family: "Rajdhani", sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6fbe00;
-  text-shadow: 0 0 10px rgba(111,190,0,0.5);
-}
+
 
 /* ── Focus ring ── */
-[data-theme="light-720"] :focus-visible {
-  outline: 2px solid #6fbe00;
-  outline-offset: 2px;
-  border-radius: 6px;
-  box-shadow: 0 0 8px rgba(111,190,0,0.4);
-}
+
 
 /* ── shimmer Xbox ── */
-[data-theme="light-720"] .shimmer {
-  background: linear-gradient(90deg, #142800 0%, #203c00 40%, #142800 80%);
-  background-size: 300% 100%;
-  animation: shimmer-wave 1.8s linear infinite;
-}
+
 
 /* Mobile */
 @media (max-width: 1023px) {
-  [data-theme="light-720"] main::before { left: 0 !important; }
-  [data-theme="light-720"] .sidebar-bg { animation: none !important; }
-  [data-theme="light-720"] body::after { animation: none; }
+  
+  
+  
 }
 
 /* ────────────────────────────────────────────────────────
@@ -3387,170 +3073,31 @@
   100% { transform: translateY(-200px); }
 }
 
-[data-theme="dark-pixel"] * { image-rendering: pixelated; }
-[data-theme="dark-pixel"] body { background: #000000; }
 
 /* SNES-style starfield / purple sky */
-[data-theme="dark-pixel"] body::before {
-  content: '';
-  position: fixed; inset: 0;
-  pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(circle 1px at 10% 20%, #ffffff 0%, transparent 100%),
-    radial-gradient(circle 1px at 30% 8%,  #ffffff 0%, transparent 100%),
-    radial-gradient(circle 1px at 55% 15%, #ffffff 0%, transparent 100%),
-    radial-gradient(circle 1px at 70% 5%,  #ffffff 0%, transparent 100%),
-    radial-gradient(circle 1px at 88% 25%, #ffffff 0%, transparent 100%),
-    radial-gradient(circle 1px at 45% 3%,  #ffffff 0%, transparent 100%),
-    radial-gradient(ellipse 100% 40% at 50% 0%, rgba(60,20,80,0.6) 0%, transparent 100%),
-    linear-gradient(180deg, #1a0030 0%, #000000 60%);
-}
+
 /* Checkerboard / tiled floor pattern */
-[data-theme="dark-pixel"] body::after {
-  content: '';
-  position: fixed; bottom: 0; left: 0; right: 0; height: 40%;
-  pointer-events: none; z-index: 0;
-  background-image:
-    repeating-conic-gradient(rgba(50,20,80,0.15) 0% 25%, transparent 0% 50%);
-  background-size: 16px 16px;
-}
+
 
 /* Sidebar — NES/SNES HUD panel */
-[data-theme="dark-pixel"] .sidebar-bg {
-  background: #181818;
-  border-right: 4px solid #282828;
-  position: relative; overflow: hidden;
-  image-rendering: pixelated;
-}
+
 /* 8-bit dashed border on right */
-[data-theme="dark-pixel"] .sidebar-bg::before {
-  content: '';
-  position: absolute; top: 0; right: -4px; bottom: 0; width: 4px;
-  background: repeating-linear-gradient(
-    180deg,
-    #ff4444 0px, #ff4444 4px,
-    #000000 4px, #000000 8px
-  );
-  pointer-events: none;
-}
+
 /* Blinking cursor at bottom */
-[data-theme="dark-pixel"] .sidebar-bg::after {
-  content: '▶';
-  position: absolute; bottom: 44px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px; color: #ffcc00;
-  font-family: "Press Start 2P", monospace;
-  animation: pixelBlink 1s step-end infinite;
-  pointer-events: none;
-}
+
 
 /* Nav — SNES command menu style */
-[data-theme="dark-pixel"] .nav-active {
-  background: #0000cc;
-  border: 2px solid #8888ff;
-  border-radius: 0 !important;
-  color: #ffffff;
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  box-shadow: inset -2px -2px 0 rgba(0,0,0,0.5), inset 2px 2px 0 rgba(255,255,255,0.2);
-}
-[data-theme="dark-pixel"] .nav-inactive {
-  color: rgba(200,200,200,0.6);
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
-  border-radius: 0 !important;
-}
-[data-theme="dark-pixel"] .nav-inactive:hover {
-  background: rgba(0,0,204,0.3);
-  color: #8888ff;
-}
+
 
 /* Cards — retro UI boxes */
-[data-theme="dark-pixel"] .card {
-  background: #181818;
-  border: 2px solid #484848;
-  border-radius: 0 !important;
-  box-shadow: 4px 4px 0 #000000, inset 1px 1px 0 rgba(255,255,255,0.08);
-  position: relative;
-}
+
 /* Pixel corner decorations */
-[data-theme="dark-pixel"] .card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, #ff4444 0%, #ffcc00 33%, #44ff44 66%, #4488ff 100%);
-  pointer-events: none;
-}
-[data-theme="dark-pixel"] .card-hover:hover {
-  border-color: #ffcc00;
-  box-shadow: 4px 4px 0 #000000, 0 0 0 1px #ffcc00;
-}
+
 
 /* Buttons — NES style */
-[data-theme="dark-pixel"] .btn-primary {
-  background: #cc0000;
-  border: 2px solid #ff4444;
-  border-bottom-color: #880000;
-  border-right-color: #880000;
-  border-radius: 0 !important;
-  color: #ffffff;
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
-  text-transform: uppercase;
-  box-shadow: 2px 2px 0 #000000;
-}
-[data-theme="dark-pixel"] .btn-primary:hover {
-  background: #ee0000;
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0 #000000;
-}
-[data-theme="dark-pixel"] .btn-ghost {
-  border: 2px solid #484848;
-  border-radius: 0 !important;
-  color: #aaaaaa;
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
-}
-[data-theme="dark-pixel"] .btn-ghost:hover { border-color: #ffcc00; color: #ffcc00; }
 
-[data-theme="dark-pixel"] .input {
-  background: #000000;
-  border: 2px solid #484848;
-  border-radius: 0 !important;
-  color: #f8f8f8;
-  font-family: "Press Start 2P", monospace;
-  font-size: 10px;
-  caret-color: #ffcc00;
-}
-[data-theme="dark-pixel"] .input:focus { border-color: #ffcc00; }
 
-[data-theme="dark-pixel"] .badge { border-radius: 0 !important; font-family: "Press Start 2P", monospace; font-size: 7px; }
-[data-theme="dark-pixel"] .card { border-radius: 0 !important; }
-
-[data-theme="dark-pixel"] .accent-orb {
-  background: conic-gradient(#ff4444, #ffcc00, #44ff44, #4488ff, #ff44ff, #ff4444);
-  border-radius: 0;
-  animation: orbPulse 1s step-end infinite;
-  image-rendering: pixelated;
-}
-[data-theme="dark-pixel"] ::-webkit-scrollbar-thumb { background: #ff4444; border-radius: 0; border: 2px solid #000; }
-[data-theme="dark-pixel"] ::-webkit-scrollbar-track { background: #181818; }
-
-[data-theme="dark-pixel"] main { position: relative; }
-[data-theme="dark-pixel"] main::before {
-  content: '';
-  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 4px;
-  background: repeating-linear-gradient(
-    90deg, #ff4444 0px, #ff4444 8px,
-    #ffcc00 8px, #ffcc00 16px,
-    #44ff44 16px, #44ff44 24px,
-    #4488ff 24px, #4488ff 32px
-  );
-  pointer-events: none; z-index: 5;
-  image-rendering: pixelated;
-}
-[data-theme="dark-pixel"] main::after { display: none; }
-@media (max-width: 1023px) { [data-theme="dark-pixel"] main::before { left: 0 !important; } }
+@media (max-width: 1023px) {  }
 /* ════════════════════════════════════════════════════════
    MODO APRESENTAÇÃO — esconde sidebar/nav, fontes grandes
 ════════════════════════════════════════════════════════ */
@@ -3923,140 +3470,29 @@ html.presentation-mode .grades-fluxo-node {
    All Star Superman, All Seasons, Reeve, Smallville, 2025
    Tipografia bold de impacto, cores vivas, textura de impresso
 ═══════════════════════════════════════════════════════════════════ */
-[data-theme="light-punkrock"] {
-  --bg-base:        #1a1f8f;
-  --bg-surface:     #1e24a0;
-  --bg-elevated:    #2530b8;
-  --bg-card:        #ffffff;
-  --border:         rgba(255,255,255,0.25);
-  --border-light:   rgba(255,255,255,0.45);
-  --text-primary:   #ffffff;
-  --text-secondary: #ffe066;
-  --text-muted:     rgba(255,255,255,0.50);
-  --accent-1:       #e60000;
-  --accent-2:       #cc0000;
-  --accent-3:       #ffe066;
-  --accent-glow:    rgba(230,0,0,0.40);
-  --accent-soft:    rgba(230,0,0,0.15);
-  --gradient-hero:  linear-gradient(135deg, #e60000 0%, #cc0000 40%, #1a1f8f 100%);
-  --gradient-btn:   linear-gradient(135deg, #e60000, #cc0000);
-  --noise-opacity:  0.035;
-  --card-blur:      0px;
-  --sidebar-overlay: none;
-  font-family: "DM Sans", sans-serif;
-}
-[data-theme="light-punkrock"] h1,
-[data-theme="light-punkrock"] h2,
-[data-theme="light-punkrock"] h3,
-[data-theme="light-punkrock"] h4 {
-  font-family: "Bangers", "Syne", sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: #ffe066;
-  text-shadow: 3px 3px 0 rgba(230,0,0,0.8), 5px 5px 0 rgba(0,0,0,0.3);
-}
+
 
 /* Fundo azul royal com textura halftone sutil */
-[data-theme="light-punkrock"] body::before {
-  content: '';
-  position: fixed; inset: 0;
-  pointer-events: none; z-index: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 16px 16px;
-  opacity: 1;
-}
+
 
 /* Cards punkrock — papel branco com sombra forte */
-[data-theme="light-punkrock"] .card {
-  background: #ffffff;
-  border: 2px solid rgba(230,0,0,0.20);
-  box-shadow: 4px 4px 0 rgba(230,0,0,0.35), 8px 8px 0 rgba(26,31,143,0.25);
-  color: #1a0000;
-}
-[data-theme="light-punkrock"] .card .text-primary,
-[data-theme="light-punkrock"] .card p,
-[data-theme="light-punkrock"] .card span,
-[data-theme="light-punkrock"] .card h1,
-[data-theme="light-punkrock"] .card h2,
-[data-theme="light-punkrock"] .card h3 {
-  color: #1a0000 !important;
-}
-[data-theme="light-punkrock"] .card h1,
-[data-theme="light-punkrock"] .card h2,
-[data-theme="light-punkrock"] .card h3 {
-  text-shadow: 2px 2px 0 rgba(230,0,0,0.4) !important;
-}
-[data-theme="light-punkrock"] .card-hover:hover {
-  border-color: #e60000;
-  box-shadow: 6px 6px 0 rgba(230,0,0,0.5), 10px 10px 0 rgba(26,31,143,0.3);
-  transform: translate(-2px, -2px);
-}
+
 
 /* Sidebar azul royal com S estilizado */
-[data-theme="light-punkrock"] .sidebar-bg {
-  background: linear-gradient(180deg, #1e24a0 0%, #1a1f8f 60%, #13178a 100%);
-  border-right: 3px solid #e60000;
-}
-[data-theme="light-punkrock"] .sidebar-bg::before {
-  content: 'S';
-  position: absolute; bottom: 24px; right: 16px;
-  font-family: "Bangers", sans-serif;
-  font-size: 80px; letter-spacing: 0;
-  color: rgba(255,255,255,0.04);
-  pointer-events: none; line-height: 1;
-  text-shadow: 3px 3px 0 rgba(230,0,0,0.05);
-}
+
 
 /* Nav active */
-[data-theme="light-punkrock"] .nav-active {
-  background: rgba(230,0,0,0.18) !important;
-  border: 2px solid rgba(230,0,0,0.5) !important;
-  color: #ffe066 !important;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-}
-[data-theme="light-punkrock"] .nav-inactive { color: rgba(255,255,255,0.70); }
-[data-theme="light-punkrock"] .nav-inactive:hover {
-  color: #ffe066;
-  background: rgba(255,255,255,0.08);
-}
+
 
 /* btn-primary punkrock */
-[data-theme="light-punkrock"] .btn-primary {
-  font-family: "Bangers", sans-serif;
-  font-size: 15px;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  box-shadow: 3px 3px 0 rgba(0,0,0,0.4), 0 0 20px rgba(230,0,0,0.4) !important;
-}
-[data-theme="light-punkrock"] .btn-primary:active {
-  transform: translate(2px, 2px) scale(0.98) !important;
-  box-shadow: 1px 1px 0 rgba(0,0,0,0.4) !important;
-}
+
 
 /* Input punkrock */
-[data-theme="light-punkrock"] .input {
-  background: rgba(255,255,255,0.92) !important;
-  border: 2px solid rgba(230,0,0,0.25) !important;
-  color: #1a0000 !important;
-}
-[data-theme="light-punkrock"] .input:focus {
-  border-color: #e60000 !important;
-  box-shadow: 0 0 0 3px rgba(230,0,0,0.15), 3px 3px 0 rgba(230,0,0,0.2) !important;
-}
+
 
 /* Top bar / bottom nav mobile */
 @media (max-width: 1023px) {
-  [data-theme="light-punkrock"] body::after {
-    content: '';
-    position: fixed; inset: 0;
-    pointer-events: none; z-index: 0;
-    background: linear-gradient(180deg,
-      rgba(230,0,0,0.06) 0%,
-      transparent 20%,
-      transparent 80%,
-      rgba(230,0,0,0.06) 100%);
-  }
+  
 }
 
 
@@ -5442,9 +4878,7 @@ html { scroll-behavior: smooth; }
 /* ═══════════════════════════════════════════════════════════════════
    🖱️  Custom cursor themes — ensure cursor applies to children
 ═══════════════════════════════════════════════════════════════════ */
-[data-theme="dark-pixel"] *:not(input):not(textarea):not(select) {
-  cursor: inherit;
-}
+
 [data-theme="light-blueprint"] *:not(input):not(textarea):not(select):not(button):not(a) {
   cursor: inherit;
 }
@@ -5452,15 +4886,7 @@ html { scroll-behavior: smooth; }
   cursor: inherit;
 }
 /* Pointer still works on interactive elements */
-[data-theme="dark-pixel"] button,
-[data-theme="dark-pixel"] a,
-[data-theme="dark-pixel"] [role="button"],
-[data-theme="light-blueprint"] button,
-[data-theme="light-blueprint"] a,
-[data-theme="dark-eva"] button,
-[data-theme="dark-eva"] a {
-  cursor: pointer;
-}
+
 
 /* ═══════════════════════════════════════════════════════════════════
    📱  Mobile accessibility — larger touch targets
@@ -5493,260 +4919,61 @@ html { scroll-behavior: smooth; }
    Paleta original DMG: #9bbc0f / #8bac0f / #306230 / #0f380f
    Pixel font, scanlines de LCD, borda física do console
 ═══════════════════════════════════════════════════════════════════ */
-[data-theme="light-portatil"] {
-  /* Game Boy DMG 4-shade palette */
-  --gb-lightest: #9bbc0f;
-  --gb-light:    #8bac0f;
-  --gb-dark:     #306230;
-  --gb-darkest:  #0f380f;
 
-  --bg-base:        #9bbc0f;
-  --bg-surface:     #8bac0f;
-  --bg-elevated:    #8bac0f;
-  --bg-card:        #9bbc0f;
-  --border:         #306230;
-  --border-light:   #306230;
-  --text-primary:   #0f380f;
-  --text-secondary: #306230;
-  --text-muted:     #306230;
-  --accent-1:       #0f380f;
-  --accent-2:       #306230;
-  --accent-3:       #0f380f;
-  --accent-glow:    rgba(15,56,15,0.35);
-  --accent-soft:    rgba(15,56,15,0.15);
-  --gradient-hero:  linear-gradient(135deg, #0f380f 0%, #306230 50%, #8bac0f 100%);
-  --gradient-btn:   linear-gradient(135deg, #0f380f, #306230);
-  --noise-opacity:  0;
-  --card-blur:      0px;
-  --sidebar-overlay: none;
-  font-family: "Press Start 2P", "JetBrains Mono", monospace;
-  image-rendering: pixelated;
-}
 
 /* All headings — pixel font */
-[data-theme="light-portatil"] h1,
-[data-theme="light-portatil"] h2,
-[data-theme="light-portatil"] h3,
-[data-theme="light-portatil"] h4 {
-  font-family: "Press Start 2P", monospace;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: #0f380f;
-  text-shadow: 2px 2px 0 rgba(15,56,15,0.3);
-  line-height: 1.6;
-}
-[data-theme="light-portatil"] h1 { font-size: clamp(0.85rem, 2vw, 1.1rem); }
-[data-theme="light-portatil"] h2 { font-size: 0.8rem; }
-[data-theme="light-portatil"] h3 { font-size: 0.7rem; }
+
 
 /* LCD scanlines overlay */
-[data-theme="light-portatil"] body::before {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(15,56,15,0.04) 2px,
-    rgba(15,56,15,0.04) 3px
-  );
-  image-rendering: pixelated;
-}
+
 
 /* Pixel-grid texture on background */
-[data-theme="light-portatil"] body::after {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    linear-gradient(rgba(15,56,15,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15,56,15,0.06) 1px, transparent 1px);
-  background-size: 8px 8px;
-}
+
 
 /* Cards — DMG screen border style */
-[data-theme="light-portatil"] .card {
-  background: #8bac0f;
-  border: 3px solid #0f380f !important;
-  border-radius: 2px !important;
-  box-shadow: 3px 3px 0 #0f380f !important;
-  image-rendering: pixelated;
-}
-[data-theme="light-portatil"] .card-hover:hover {
-  background: #9bbc0f;
-  box-shadow: 4px 4px 0 #0f380f !important;
-  transform: translate(-1px, -1px) !important;
-}
+
 
 /* Sidebar — Game Boy body dark plastic */
-[data-theme="light-portatil"] .sidebar-bg {
-  background: linear-gradient(180deg, #0f380f 0%, #1a4a1a 100%);
-  border-right: 3px solid #0f380f;
-}
+
 
 /* Sidebar text overrides for dark sidebar */
-[data-theme="light-portatil"] .sidebar-bg * {
-  font-family: "Press Start 2P", monospace !important;
-}
+
 
 /* Nav links on dark sidebar */
-[data-theme="light-portatil"] .nav-active {
-  background: rgba(139,172,15,0.3) !important;
-  border: 2px solid #8bac0f !important;
-  border-radius: 2px !important;
-  color: #9bbc0f !important;
-}
-[data-theme="light-portatil"] .nav-inactive {
-  color: rgba(139,172,15,0.55);
-}
-[data-theme="light-portatil"] .nav-inactive:hover {
-  color: #9bbc0f;
-  background: rgba(139,172,15,0.15);
-}
+
 
 /* Buttons */
-[data-theme="light-portatil"] .btn-primary {
-  background: #0f380f !important;
-  border: 2px solid #0f380f !important;
-  border-radius: 2px !important;
-  color: #9bbc0f !important;
-  font-family: "Press Start 2P", monospace !important;
-  font-size: 9px !important;
-  letter-spacing: 0.05em !important;
-  box-shadow: 3px 3px 0 #306230 !important;
-  text-transform: uppercase;
-}
-[data-theme="light-portatil"] .btn-primary:hover {
-  background: #306230 !important;
-  transform: translate(-1px, -1px) !important;
-  box-shadow: 4px 4px 0 #0f380f !important;
-}
-[data-theme="light-portatil"] .btn-primary:active {
-  transform: translate(2px, 2px) !important;
-  box-shadow: 1px 1px 0 #0f380f !important;
-}
 
-[data-theme="light-portatil"] .btn-ghost {
-  color: #0f380f;
-  border: 2px solid #306230 !important;
-  border-radius: 2px !important;
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
-  box-shadow: 2px 2px 0 #306230;
-}
-[data-theme="light-portatil"] .btn-ghost:hover {
-  background: rgba(15,56,15,0.1);
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0 #306230;
-}
 
 /* Inputs */
-[data-theme="light-portatil"] .input {
-  background: #8bac0f !important;
-  border: 2px solid #0f380f !important;
-  border-radius: 2px !important;
-  color: #0f380f !important;
-  font-family: "Press Start 2P", monospace !important;
-  font-size: 9px !important;
-  box-shadow: inset 2px 2px 0 rgba(15,56,15,0.2) !important;
-}
-[data-theme="light-portatil"] .input:focus {
-  background: #9bbc0f !important;
-  border-color: #0f380f !important;
-  box-shadow: inset 2px 2px 0 rgba(15,56,15,0.2), 0 0 0 2px rgba(15,56,15,0.15) !important;
-  outline: none !important;
-}
-[data-theme="light-portatil"] .input::placeholder {
-  color: rgba(15,56,15,0.4) !important;
-}
+
 
 /* Labels */
-[data-theme="light-portatil"] .label {
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
-  letter-spacing: 0.08em;
-  color: #0f380f;
-  text-transform: uppercase;
-}
+
 
 /* Badge */
-[data-theme="light-portatil"] .badge {
-  font-family: "Press Start 2P", monospace !important;
-  font-size: 7px !important;
-  border-radius: 2px !important;
-  border: 2px solid currentColor !important;
-  box-shadow: 2px 2px 0 currentColor;
-}
+
 
 /* Scrollbar — pixel style */
-[data-theme="light-portatil"] ::-webkit-scrollbar { width: 8px; }
-[data-theme="light-portatil"] ::-webkit-scrollbar-track { background: #8bac0f; }
-[data-theme="light-portatil"] ::-webkit-scrollbar-thumb {
-  background: #0f380f;
-  border-radius: 0;
-  border: 2px solid #306230;
-}
+
 
 /* Mobile bottom nav */
-[data-theme="light-portatil"] .mobile-bottomnav,
-[data-theme="light-portatil"] .mobile-topbar {
-  background-color: #0f380f !important;
-  border-color: #306230 !important;
-}
-[data-theme="light-portatil"] .nav-bottom-active,
-[data-theme="light-portatil"] .nav-bottom-inactive {
-  color: #8bac0f !important;
-}
-[data-theme="light-portatil"] .nav-bottom-active {
-  color: #9bbc0f !important;
-}
+
 
 /* Sidebar DasiBoard title text on dark bg */
-[data-theme="light-portatil"] .sidebar-bg p,
-[data-theme="light-portatil"] .sidebar-bg span {
-  color: #8bac0f;
-}
+
 
 /* A-button style accent dot */
-[data-theme="light-portatil"] .sidebar-bg::after {
-  content: 'A';
-  position: absolute;
-  bottom: 90px; right: 16px;
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  background: #8b0000;
-  border: 2px solid #0f380f;
-  color: #9bbc0f;
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  line-height: 20px;
-  pointer-events: none;
-  box-shadow: 2px 2px 0 #0f380f;
-}
+
 
 /* Reduced font sizes on body for pixel font readability */
-[data-theme="light-portatil"] body {
-  font-size: 10px;
-  line-height: 1.8;
-}
-[data-theme="light-portatil"] .text-sm  { font-size: 9px !important; }
-[data-theme="light-portatil"] .text-xs  { font-size: 8px !important; }
-[data-theme="light-portatil"] .text-base { font-size: 10px !important; }
+
 
 /* Disable blur effects for pixel purity */
-[data-theme="light-portatil"] * {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
+
 
 /* Shimmer — pixelated version */
-[data-theme="light-portatil"] .shimmer {
-  background: linear-gradient(90deg, #8bac0f 25%, #9bbc0f 50%, #8bac0f 75%) !important;
-  background-size: 200% 100% !important;
-}
+
 
 /* ═══════════════════════════════════════════════════════════════════
    🎯  FOCUS MODE — [data-focus-mode="1"] on <html>
@@ -6337,101 +5564,10 @@ html { scroll-behavior: smooth; }
 /* ═══════════════════════════════════════════════════════════════════
    📼  DARK — K7  (Cassette tape · Marrom/Laranja · Retrô 80s)
 ═══════════════════════════════════════════════════════════════════ */
-[data-theme="dark-k7"] {
-  --bg-base:        #1a0e00;
-  --bg-surface:     #261500;
-  --bg-elevated:    #331b00;
-  --bg-card:        #3d2200;
-  --border:         rgba(200,120,0,0.22);
-  --border-light:   rgba(200,120,0,0.40);
-  --text-primary:   #f5e0c0;
-  --text-secondary: #c88040;
-  --text-muted:     #6b3e10;
-  --accent-1:       #c85000;
-  --accent-2:       #a04000;
-  --accent-3:       #ff8800;
-  --accent-glow:    rgba(200,80,0,0.35);
-  --accent-soft:    rgba(200,80,0,0.12);
-  --gradient-hero:  linear-gradient(135deg, #c85000 0%, #7a2e00 50%, #1a0e00 100%);
-  --gradient-btn:   linear-gradient(135deg, #c85000, #a04000);
-  --noise-opacity:  0.05;
-  --card-blur:      0px;
-  --sidebar-overlay: none;
-  font-family: "DM Sans", sans-serif;
-}
-[data-theme="dark-k7"] h1,
-[data-theme="dark-k7"] h2,
-[data-theme="dark-k7"] h3,
-[data-theme="dark-k7"] h4 {
-  font-family: "Syne", sans-serif;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #ff8800;
-  text-shadow: 0 0 12px rgba(200,80,0,0.5);
-}
+
+
 /* Magnetic tape spiral pattern */
-[data-theme="dark-k7"] body::before {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 6px,
-      rgba(200,80,0,0.03) 6px,
-      rgba(200,80,0,0.03) 7px
-    ),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(200,80,0,0.10) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(120,40,0,0.08) 0%, transparent 50%);
-}
-[data-theme="dark-k7"] body::after {
-  content: '';
-  position: fixed; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, #a04000, #ff8800, #c85000, #ff8800, #a04000);
-  pointer-events: none; z-index: 9000; opacity: 0.7;
-}
-[data-theme="dark-k7"] .sidebar-bg {
-  background: linear-gradient(180deg, #261500 0%, #1a0e00 100%);
-  border-right: 1px solid rgba(200,80,0,0.2);
-}
-[data-theme="dark-k7"] .sidebar-bg::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, #a04000, #ff8800, #a04000);
-  pointer-events: none;
-}
-[data-theme="dark-k7"] .card {
-  background: rgba(61,34,0,0.92);
-  border: 1px solid rgba(200,80,0,0.18);
-  border-top: 1px solid rgba(200,80,0,0.35);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-[data-theme="dark-k7"] .card-hover:hover {
-  border-color: rgba(255,136,0,0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(200,80,0,0.2);
-}
-[data-theme="dark-k7"] .nav-active {
-  background: rgba(200,80,0,0.12) !important;
-  border: 1px solid rgba(255,136,0,0.4) !important;
-  color: #ff8800 !important;
-}
-[data-theme="dark-k7"] .nav-inactive { color: #6b3e10; }
-[data-theme="dark-k7"] .nav-inactive:hover { color: #ff8800; background: rgba(200,80,0,0.08); }
-[data-theme="dark-k7"] .btn-primary {
-  background: linear-gradient(135deg, #c85000, #a04000) !important;
-  border: 1px solid rgba(255,136,0,0.4) !important;
-  box-shadow: 0 2px 12px rgba(200,80,0,0.3) !important;
-  font-weight: 700 !important;
-}
-[data-theme="dark-k7"] .input {
-  background: rgba(26,14,0,0.8) !important;
-  border-color: rgba(200,80,0,0.25) !important;
-  color: #f5e0c0 !important;
-}
-[data-theme="dark-k7"] .input:focus { border-color: #c85000 !important; box-shadow: 0 0 0 2px rgba(200,80,0,0.15) !important; }
-[data-theme="dark-k7"] ::-webkit-scrollbar-thumb { background: #c85000; }
-[data-theme="dark-k7"] ::-webkit-scrollbar-track { background: #1a0e00; }
+
 
 /* ═══════════════════════════════════════════════════════════════════
    📋  LIGHT — Papiro  (Caderno de engenharia · Papel milimetrado)
@@ -6969,217 +6105,48 @@ html { scroll-behavior: smooth; }
    ⛏️  CUBO — Inventário Survival · Minecraft-inspired
 ═══════════════════════════════════════════════════════════════════ */
 @media screen {
-  [data-theme="light-cubo"] {
-    --bg-base:          #c6b37d;
-    --bg-surface:       #d4c090;
-    --bg-elevated:      #bcaa70;
-    --bg-card:          #d4c090;
-    --border:           #6b5a30;
-    --border-light:     #4a3d20;
-    --text-primary:     #1a1008;
-    --text-secondary:   #2a1e0c;
-    --text-muted:       #5a4a28;
-    --accent-1:         #5d8a22;
-    --accent-2:         #3d6010;
-    --accent-3:         #7aaa30;
-    --accent-glow:      rgba(93,138,34,0.3);
-    --accent-soft:      rgba(93,138,34,0.15);
-    --gradient-hero:    linear-gradient(135deg, #c6b37d 0%, #d4c090 50%, #a8c880 100%);
-    --gradient-btn:     linear-gradient(180deg, #7aaa30 0%, #5d8a22 50%, #3d6010 100%);
-    --noise-opacity:    0.0;
-    --card-blur:        0px;
-    font-family:        'Press Start 2P', monospace;
-    image-rendering:    pixelated;
-  }
-  [data-theme="light-cubo"] * { image-rendering: pixelated; }
-  [data-theme="light-cubo"] h1,
-  [data-theme="light-cubo"] h2,
-  [data-theme="light-cubo"] h3 {
-    font-family: 'Press Start 2P', monospace !important;
-    font-size: 0.55em !important;
-    letter-spacing: 0.04em !important;
-    color: #1a1008;
-    line-height: 1.8;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-  }
+  
+  
+  
   /* Cards como slots de inventário */
-  [data-theme="light-cubo"] .card {
-    background: #c6b37d !important;
-    border: 2px solid #1a1008 !important;
-    border-radius: 0 !important;
-    box-shadow:
-      inset -2px -2px 0 #8b7040,
-      inset 2px 2px 0 #e8d4a0,
-      inset -4px -4px 0 #6b5228 !important;
-    padding: 12px !important;
-  }
-  [data-theme="light-cubo"] .card-hover:hover {
-    background: #d4c090 !important;
-    box-shadow:
-      inset -2px -2px 0 #8b7040,
-      inset 2px 2px 0 #f0e0b0,
-      inset -4px -4px 0 #6b5228 !important;
-  }
-  [data-theme="light-cubo"] .btn-primary {
-    background: linear-gradient(180deg, #7aaa30 0%, #5d8a22 50%, #3d6010 100%) !important;
-    border: 2px solid #1a1008 !important;
-    border-radius: 0 !important;
-    box-shadow: inset -2px -2px 0 #2a4808, inset 2px 2px 0 #9acc40 !important;
-    color: #fff !important;
-    font-family: 'Press Start 2P', monospace !important;
-    font-size: 0.55em !important;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.5) !important;
-  }
-  [data-theme="light-cubo"] .btn-primary:active {
-    box-shadow: inset 2px 2px 0 #2a4808, inset -2px -2px 0 #9acc40 !important;
-    transform: translateY(1px) !important;
-  }
-  [data-theme="light-cubo"] .input {
-    background: #8b8b7a !important;
-    border: 2px solid #1a1008 !important;
-    border-radius: 0 !important;
-    color: #ffffff !important;
-    font-family: 'Press Start 2P', monospace !important;
-    font-size: 0.65em !important;
-    box-shadow: inset -2px -2px 0 #6b6b5a, inset 2px 2px 0 #a0a090 !important;
-  }
-  [data-theme="light-cubo"] .sidebar-bg {
-    background: #3d6010 !important;
-    border-right: 2px solid #1a1008 !important;
-    box-shadow: inset -2px 0 0 #2a4808 !important;
-  }
-  [data-theme="light-cubo"] .sidebar-bg .nav-active {
-    background: rgba(122,170,48,0.3) !important;
-    border: 2px solid #7aaa30 !important;
-    border-radius: 0 !important;
-    color: #e8d4a0 !important;
-  }
-  [data-theme="light-cubo"] .sidebar-bg .nav-inactive { color: rgba(200,220,160,0.7) !important; }
-  [data-theme="light-cubo"] .sidebar-bg .nav-inactive:hover {
-    background: rgba(122,170,48,0.15) !important;
-    color: #c8dc9e !important;
-  }
-  [data-theme="light-cubo"] .label { color: #5d8a22 !important; font-family: 'Press Start 2P', monospace !important; font-size: 0.55em !important; }
-  [data-theme="light-cubo"] .shimmer {
-    background: linear-gradient(90deg, #bcaa70 0%, #d4c090 45%, #bcaa70 100%) !important;
-    background-size: 300% 100% !important;
-    animation: shimmer 1.6s infinite !important;
-  }
-  [data-theme="light-cubo"] .hero-card {
-    background: #c6b37d !important;
-    border: 2px solid #1a1008 !important;
-    border-radius: 0 !important;
-    box-shadow: inset -2px -2px 0 #8b7040, inset 2px 2px 0 #e8d4a0, inset -4px -4px 0 #6b5228 !important;
-  }
-  [data-theme="light-cubo"] ::-webkit-scrollbar-track { background: #bcaa70 !important; }
-  [data-theme="light-cubo"] ::-webkit-scrollbar-thumb { background: #6b5228 !important; border-radius: 0 !important; border: 1px solid #1a1008 !important; }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    ☕  CAFÉ — Livraria · Playfair Display · Sepia editorial
 ═══════════════════════════════════════════════════════════════════ */
 @media screen {
-  [data-theme="light-cafe"] {
-    --bg-base:          #f5f0e8;
-    --bg-surface:       #fefcf7;
-    --bg-elevated:      #f0e8dc;
-    --bg-card:          #fefcf7;
-    --border:           #c8a87a;
-    --border-light:     #b09060;
-    --text-primary:     #2a1808;
-    --text-secondary:   #4a3020;
-    --text-muted:       #8a6848;
-    --accent-1:         #8b4513;
-    --accent-2:         #6b3410;
-    --accent-3:         #a05020;
-    --accent-glow:      rgba(139,69,19,0.2);
-    --accent-soft:      rgba(139,69,19,0.08);
-    --gradient-hero:    linear-gradient(135deg, #f5f0e8 0%, #fefcf7 60%, #f0e8d8 100%);
-    --gradient-btn:     linear-gradient(135deg, #a05020, #6b3410);
-    --noise-opacity:    0.03;
-    --card-blur:        0px;
-    font-family:        'DM Sans', sans-serif;
-  }
-  [data-theme="light-cafe"] h1,
-  [data-theme="light-cafe"] h2,
-  [data-theme="light-cafe"] h3,
-  [data-theme="light-cafe"] .font-display {
-    font-family: 'Playfair Display', Georgia, serif !important;
-    font-size: 1em !important;
-    font-weight: 600 !important;
-    letter-spacing: -0.01em !important;
-    color: #2a1808 !important;
-    line-height: 1.3 !important;
-  }
-  [data-theme="light-cafe"] .card {
-    background: #fefcf7 !important;
-    border: 1px solid #c8a87a !important;
-    border-radius: 6px !important;
-    box-shadow: 2px 3px 12px rgba(100,60,20,0.08), 0 1px 3px rgba(100,60,20,0.05) !important;
-  }
-  [data-theme="light-cafe"] .card-hover:hover {
-    box-shadow: 3px 5px 20px rgba(100,60,20,0.12) !important;
-    transform: translateY(-1px) !important;
-  }
-  [data-theme="light-cafe"] .btn-primary {
-    background: linear-gradient(135deg, #a05020, #6b3410) !important;
-    border: none !important;
-    border-radius: 6px !important;
-    box-shadow: 0 2px 8px rgba(107,52,16,0.3) !important;
-    color: #fef8f0 !important;
-    font-family: 'Playfair Display', serif !important;
-    font-style: italic !important;
-  }
-  [data-theme="light-cafe"] .btn-primary:hover {
-    background: linear-gradient(135deg, #b86030, #7b4420) !important;
-  }
-  [data-theme="light-cafe"] .btn-ghost { border-color: #c8a87a !important; color: #4a3020 !important; }
-  [data-theme="light-cafe"] .input {
-    background: #faf6ee !important;
-    border: 1px solid #c8a87a !important;
-    border-radius: 4px !important;
-    box-shadow: inset 0 1px 3px rgba(100,60,20,0.06) !important;
-    color: #2a1808 !important;
-    font-family: 'DM Sans', sans-serif !important;
-  }
-  [data-theme="light-cafe"] .input:focus {
-    border-color: #8b4513 !important;
-    box-shadow: 0 0 0 3px rgba(139,69,19,0.1) !important;
-  }
-  [data-theme="light-cafe"] .sidebar-bg {
-    background: linear-gradient(180deg, #3a2010 0%, #2a1808 100%) !important;
-    border-right: 1px solid #5a3820 !important;
-    box-shadow: 4px 0 16px rgba(0,0,0,0.2) !important;
-  }
-  [data-theme="light-cafe"] .sidebar-bg .nav-active {
-    background: rgba(254,252,247,0.12) !important;
-    border-left: 3px solid #c8a87a !important;
-    color: #fef8f0 !important;
-    border-radius: 0 4px 4px 0 !important;
-  }
-  [data-theme="light-cafe"] .sidebar-bg .nav-inactive { color: rgba(240,220,190,0.6) !important; }
-  [data-theme="light-cafe"] .sidebar-bg .nav-inactive:hover {
-    background: rgba(254,252,247,0.08) !important;
-    color: rgba(240,220,190,0.9) !important;
-  }
-  [data-theme="light-cafe"] .label {
-    color: #8b4513 !important;
-    font-family: 'Playfair Display', serif !important;
-    font-style: italic !important;
-    font-size: 0.78rem !important;
-  }
-  [data-theme="light-cafe"] ::-webkit-scrollbar-track { background: #f0e8dc !important; }
-  [data-theme="light-cafe"] ::-webkit-scrollbar-thumb { background: #c8a87a !important; border-radius: 3px !important; }
-  [data-theme="light-cafe"] .shimmer {
-    background: linear-gradient(90deg, #f0e8dc 0%, #fefcf7 45%, #f0e8dc 100%) !important;
-    background-size: 300% 100% !important;
-    animation: shimmer 1.6s infinite !important;
-  }
-  [data-theme="light-cafe"] .hero-card {
-    background: linear-gradient(135deg, #fefcf7 0%, #f5f0e8 100%) !important;
-    border: 1px solid #c8a87a !important;
-    box-shadow: 3px 5px 20px rgba(100,60,20,0.1) !important;
-  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 }
 
 /* ═══════════════════════════════════════════════════════════════════
