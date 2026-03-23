@@ -13,6 +13,7 @@ import toast from 'react-hot-toast'
 import { emitNotification } from '@/hooks/useNotifications'
 import api from '@/utils/api'
 import { useModalBack } from '@/hooks/useModalBack'
+import { getEntityIcon } from '@/utils/entityIcons'
 
 interface Entity {
   id: string; slug: string; name: string; short_name: string; description: string
@@ -263,9 +264,11 @@ function JoinModal({ entity, onClose, onJoined }: {
          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-in space-y-4" style={{maxHeight:"90dvh",overflowY:"auto",background:"var(--bg-card)",border:`1px solid ${entity.color}33`,boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl overflow-hidden"
                style={{ background: entity.color + '22', border: `1px solid ${entity.color}44` }}>
-            {entity.icon_emoji}
+            {getEntityIcon(entity.slug)
+              ? <img src={getEntityIcon(entity.slug)!} alt={entity.short_name} className="w-full h-full object-cover rounded-2xl" />
+              : entity.icon_emoji}
           </div>
           <div>
             <h3 className="font-display font-bold" style={{ color: 'var(--text-primary)' }}>Entrar na entidade</h3>
@@ -786,9 +789,11 @@ function EntityDetail({ entity: initial, onBack, onMembershipChange }: {
             <ArrowLeft size={16} /> Voltar
           </button>
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-5">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 overflow-hidden"
                  style={{ background: entity.color + '22', border: `1px solid ${entity.color}44` }}>
-              {entity.icon_emoji}
+              {getEntityIcon(entity.slug)
+                ? <img src={getEntityIcon(entity.slug)!} alt={entity.short_name} className="w-full h-full object-cover rounded-2xl" />
+                : entity.icon_emoji}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -1000,9 +1005,11 @@ function EntityCard({ entity, onClick }: { entity: Entity; onClick: () => void }
             className="card-hover text-left group flex flex-col gap-3 w-full"
             style={{ borderTop: `3px solid ${entity.color}` }}>
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 overflow-hidden"
              style={{ background: entity.color + '22', border: `1px solid ${entity.color}33` }}>
-          {entity.icon_emoji}
+          {getEntityIcon(entity.slug)
+            ? <img src={getEntityIcon(entity.slug)!} alt={entity.short_name} className="w-full h-full object-cover rounded-xl" />
+            : entity.icon_emoji}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
