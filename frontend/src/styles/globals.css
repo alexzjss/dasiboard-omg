@@ -6737,11 +6737,12 @@ html { font-size: var(--app-font-size); }
 /* ── Dashboard hero gradient card ──────────────────────────────── */
 .hero-card {
   border-radius: 28px;
-  padding: 24px;
+  padding: 0;
   background: linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-card) 60%);
   border: 1px solid var(--accent-1);
   position: relative;
   overflow: hidden;
+  contain: layout;
 }
 .hero-card::before {
   content: '';
