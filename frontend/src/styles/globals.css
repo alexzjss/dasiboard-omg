@@ -7978,9 +7978,8 @@ html { font-size: var(--app-font-size); }
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.page-mobile > *:first-child {
-  animation: pageEnter 0.3s cubic-bezier(0.16,1,0.3,1) both;
-}
+/* pageEnter removido — conflitava com .animate-in no primeiro filho,
+   causando área em branco no hero card por disputa de opacity/transform */
 
 /* ── Skeleton shimmer for loading states ─────────────────────────── */
 .skeleton {
@@ -8062,4 +8061,3 @@ html { font-size: var(--app-font-size); }
 
 /* ── Theme-specific sidebar widths ───────────────────────────────── */
 @media (min-width: 1024px) { :root { --sidebar-w: 236px; } }
-
