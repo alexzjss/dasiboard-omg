@@ -108,12 +108,7 @@
 }
 
 /* ── Toast customizado por tema ── */
-[data-theme="dark-pixel"] .go2072408551 {
-  font-family: "Press Start 2P", monospace !important;
-  font-size: 8px !important;
-  border-radius: 0 !important;
-  border: 2px solid #ffcc00 !important;
-}
+
 [data-theme="light-aranha"] .go2072408551 {
   border: 2px solid #1a0a00 !important;
   border-radius: 4px !important;
@@ -147,11 +142,7 @@
 }
 
 /* ── Pixel theme: remove radius on focus ── */
-[data-theme="dark-pixel"] :focus-visible {
-  outline: 3px solid #ffcc00;
-  outline-offset: 2px;
-  border-radius: 0 !important;
-}
+
 
 /* ── Aranha theme: comic focus ── */
 [data-theme="light-aranha"] :focus-visible {
@@ -565,13 +556,7 @@
 }
 
 /* ── 720: Xbox section headers ── */
-[data-theme="light-720"] .section-header {
-  font-family: "Rajdhani", sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #6fbe00;
-  text-shadow: 0 0 10px rgba(111,190,0,0.5);
-}
+
 
 /* ── Scrollbar personalizado por tema ── */
 [data-theme="light-vanilla"] ::-webkit-scrollbar { width: 4px; }
@@ -630,12 +615,7 @@ main > *:first-child {
   border-color: #e60000 !important;
   box-shadow: 0 0 0 3px rgba(230,0,0,0.12) !important;
 }
-[data-theme="dark-pixel"] .input:focus {
-  border-color: #ffcc00 !important;
-  box-shadow: none !important;
-  outline: 2px solid #ffcc00 !important;
-  border-radius: 0 !important;
-}
+
 [data-theme="light-blueprint"] .input:focus {
   border-color: #4499ff !important;
   box-shadow: 0 0 0 2px rgba(68,153,255,0.2), 0 0 12px rgba(68,153,255,0.1) !important;
@@ -650,11 +630,7 @@ main > *:first-child {
   transform: translateY(-2px) rotate(-0.3deg);
   box-shadow: 4px 4px 0 #e60000 !important;
 }
-[data-theme="dark-pixel"] .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 4px 4px 0 #ffcc00 !important;
-  image-rendering: pixelated;
-}
+
 [data-theme="dark-shell"] .card-hover:hover {
   border-color: #00ff41 !important;
   box-shadow: 0 0 20px rgba(0,255,65,0.15) !important;
@@ -675,17 +651,8 @@ main > *:first-child {
   border-radius: 0 !important;
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
 }
-[data-theme="dark-pixel"] .btn-primary {
-  border-radius: 0 !important;
-  image-rendering: pixelated;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  box-shadow: 4px 4px 0 #000 !important;
-}
-[data-theme="dark-pixel"] .btn-primary:active {
-  transform: translate(2px, 2px) !important;
-  box-shadow: 2px 2px 0 #000 !important;
-}
+
+
 [data-theme="dark-dlc"] .btn-primary {
   background: linear-gradient(90deg, #ff0080, #7700ff, #0080ff) !important;
   background-size: 200% auto !important;
@@ -707,9 +674,8 @@ main > *:first-child {
 [data-theme="dark-shell"] ::-webkit-scrollbar { width: 6px; }
 [data-theme="dark-shell"] ::-webkit-scrollbar-track { background: #000; }
 [data-theme="dark-shell"] ::-webkit-scrollbar-thumb { background: #00ff4180; }
-[data-theme="dark-pixel"] ::-webkit-scrollbar { width: 8px; }
-[data-theme="dark-pixel"] ::-webkit-scrollbar-track { background: #181818; }
-[data-theme="dark-pixel"] ::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 0; }
+
+
 [data-theme="dark-dlc"] ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff0080, #7700ff); border-radius: 3px; }
 [data-theme="light-aranha"] ::-webkit-scrollbar-thumb { background: #e60000; border-radius: 2px; }
 
@@ -732,11 +698,7 @@ main > *:first-child {
   letter-spacing: 0.2em;
   margin-bottom: 8px;
 }
-[data-theme="dark-pixel"] .hero-card {
-  border-radius: 0 !important;
-  border: 3px solid #ffcc00 !important;
-  image-rendering: pixelated;
-}
+
 [data-theme="light-aranha"] .hero-card {
   border-left: 4px solid #e60000 !important;
 }
@@ -755,11 +717,7 @@ main > *:first-child {
   font-family: 'Bangers', sans-serif;
   letter-spacing: 0.08em;
 }
-[data-theme="dark-pixel"] .badge {
-  border-radius: 0 !important;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
-}
+
 [data-theme="dark-shell"] .badge {
   border-radius: 0 !important;
   font-family: 'JetBrains Mono', monospace;
@@ -809,10 +767,7 @@ main > *:first-child {
   color: #00ff41 !important;
 }
 [data-theme="dark-shell"] .nav-active::before { content: '> '; font-family: 'JetBrains Mono', monospace; }
-[data-theme="dark-pixel"] .nav-active {
-  border-radius: 0 !important;
-  box-shadow: inset 2px 2px 0 #ffcc00, inset -1px -1px 0 #000 !important;
-}
+
 [data-theme="light-aranha"] .nav-active {
   background: #e60000 !important;
   color: #fff !important;
@@ -849,10 +804,7 @@ main > *:first-child {
   outline-color: #00ff41;
   outline-style: dashed;
 }
-[data-theme="dark-pixel"] :focus-visible {
-  outline: 3px solid #ffcc00;
-  border-radius: 0;
-}
+
 
 /* ── Loading skeleton melhorado ── */
 .shimmer {
@@ -1006,43 +958,10 @@ main > *:first-child {
 }
 
 /* ── Punkrock: efeitos extras ── */
-[data-theme="light-punkrock"] .hero-card {
-  background: #ffffff !important;
-  border: 2px solid rgba(230,0,0,0.3) !important;
-  box-shadow: 5px 5px 0 rgba(230,0,0,0.4), 8px 8px 0 rgba(26,31,143,0.25) !important;
-}
-[data-theme="light-punkrock"] .hero-card h1 {
-  color: #1a0000 !important;
-  text-shadow: 2px 2px 0 rgba(230,0,0,0.5) !important;
-}
-[data-theme="light-punkrock"] .section-header {
-  font-family: "Bangers", sans-serif;
-  font-size: 16px;
-  letter-spacing: 0.12em;
-  color: #ffe066;
-  text-shadow: 2px 2px 0 rgba(230,0,0,0.6);
-}
-[data-theme="light-punkrock"] :focus-visible {
-  outline: 3px solid #ffe066;
-  outline-offset: 2px;
-}
-[data-theme="light-punkrock"] .shimmer {
-  background: linear-gradient(90deg, #f0f0f0 0%, #fff8cc 40%, #f0f0f0 80%);
-  background-size: 300% 100%;
-  animation: shimmer-wave 1.8s linear infinite;
-}
-[data-theme="light-punkrock"] .nav-bottom-active {
-  font-family: "Bangers", sans-serif;
-  letter-spacing: 0.08em;
-  color: #ffe066 !important;
-}
+
+
 /* Cards dentro do punkrock precisam de texto escuro */
-[data-theme="light-punkrock"] .card,
-[data-theme="light-punkrock"] .card * {
-  --text-primary: #1a0000;
-  --text-secondary: #8b1a00;
-  --text-muted: #b09070;
-}
+
 
 /* ── Vingança: efeitos extras ── */
 [data-theme="dark-vinganca"] .hero-card {
@@ -1712,4 +1631,3 @@ html {
 [data-theme^="light"] {
   color-scheme: light;
 }
-
