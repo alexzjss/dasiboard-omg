@@ -105,14 +105,18 @@ export default function TurmaPage() {
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
 
+  const [turmaError, setTurmaError] = useState(false)
+
   useEffect(() => {
     setLoading(true)
+    setTurmaError(false)
     if (year) {
       api.get(`/social/turma/${year}`)
         .then(({ data }) => setTurma(data))
         .catch(err => {
           const msg = err.response?.data?.detail ?? 'Erro ao carregar turma'
           toast.error(msg)
+          setTurmaError(true)
         })
         .finally(() => setLoading(false))
     } else {
@@ -221,7 +225,27 @@ export default function TurmaPage() {
   }
 
   // ── Detail view ────────────────────────────────────────────────────────────
-  if (!turma) return null
+  if (!turma) return (
+    <div className="max-w-2xl mx-auto px-4 py-10 flex flex-col items-center gap-4 text-center animate-in">
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+           style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+        <Users size={28} style={{ opacity: 0.3, color: 'var(--text-muted)' }} />
+      </div>
+      <div>
+        <p className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+          {turmaError ? 'Erro ao carregar turma' : 'Nenhum membro encontrado'}
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+          {turmaError
+            ? 'Não foi possível carregar os dados desta turma.'
+            : 'Esta turma ainda não tem membros com perfil público.'}
+        </p>
+      </div>
+      <Link to="/turma" className="btn-ghost text-sm gap-2 flex items-center">
+        <ArrowLeft size={14} /> Voltar para Turmas
+      </Link>
+    </div>
+  )
 
   const ranked  = [...turma.members].sort((a, b) => b.ach_count - a.ach_count)
   const filtered = search.trim()
