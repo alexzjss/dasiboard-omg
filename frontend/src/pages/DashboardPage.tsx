@@ -768,9 +768,8 @@ export default function DashboardPage() {
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
              boxShadow: '0 4px 40px var(--accent-glow)',
+             contain: 'layout',
            }}>
-        <div className="accent-orb" style={{ width: 300, height: 300, top: -120, right: -80, opacity: 0.10 }} />
-        <div className="accent-orb" style={{ width: 140, height: 140, bottom: -40, left: 10, opacity: 0.05, animationDelay: '3.5s' }} />
 
         <div className="relative z-10 p-5 md:p-7">
           <div className="flex items-start justify-between gap-3 mb-4">
