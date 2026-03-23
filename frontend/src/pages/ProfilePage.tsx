@@ -234,6 +234,50 @@ function rgbToHsl(r: number, g: number, b: number): [number,number,number] {
   return [h*60, s*100, l*100]
 }
 
+function hexToHsl(hex: string): [number, number, number] {
+  const [r, g, b] = hexToRgb(hex)
+  return rgbToHsl(r, g, b)
+}
+
+function hueDistance(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360
+  return Math.min(d, 360 - d)
+}
+
+function pickBlobPalette(
+  userId: string,
+  entities: { id: string; color: string; is_member: boolean }[],
+  selectedEntityId: string | null,
+): { hue: number; sat: number; lit: number } {
+  const members = entities.filter(e => e.is_member)
+  if (selectedEntityId) {
+    const selected = entities.find(e => e.id === selectedEntityId && e.is_member)
+    if (selected) {
+      const [h, s, l] = hexToHsl(selected.color)
+      return { hue: h, sat: s, lit: l }
+    }
+  }
+  if (members.length > 0) {
+    const rng = seededRng(userId + '-blob-entity')
+    const pick = members[Math.floor(rng() * members.length)]
+    const [h, s, l] = hexToHsl(pick.color)
+    return { hue: h, sat: s, lit: l }
+  }
+
+  const rng = seededRng(userId + '-blob-fallback')
+  let hue = Math.floor(rng() * 360)
+  let sat = 60 + rng() * 18
+  let lit = 46 + rng() * 16
+
+  const entityHues = entities.map(e => hexToHsl(e.color)[0])
+  let attempts = 0
+  while (entityHues.some(h => hueDistance(h, hue) < 18) && attempts < 12) {
+    hue = (hue + 27) % 360
+    attempts += 1
+  }
+  return { hue, sat, lit }
+}
+
 function deriveColors(hue: number, sat: number, lit: number) {
   const h2=(hue+40)%360, h3=(hue+85)%360, h4=(hue-30+360)%360
   return {
@@ -348,8 +392,8 @@ function drawDecorativeQR(
   ctx.restore()
 }
 
-// ── PORTRAIT card background — Arc-inspired ──────────────────────────────────
-type BlobShape = 'leaf'|'arch'|'wave'|'corner'|'hill'|'shield'
+// ── PORTRAIT card background — Blob-inspired ─────────────────────────────────
+type BlobShape = 'blob'|'leaf'|'arch'|'corner'|'hill'|'shield'
 
 function drawShape(
   ctx: CanvasRenderingContext2D,
@@ -361,6 +405,34 @@ function drawShape(
   ctx.beginPath()
 
   switch (shape) {
+    case 'blob': {
+      const cx = W * (0.46 + (rng() - 0.5) * 0.12)
+      const cy = zoneH * (0.38 + (rng() - 0.5) * 0.18)
+      const rx = W * (0.48 + rng() * 0.18)
+      const ry = zoneH * (0.52 + rng() * 0.20)
+      const n = 12 + Math.floor(rng() * 4)
+      const pts: [number, number][] = []
+      for (let i = 0; i < n; i++) {
+        const ang = (i / n) * Math.PI * 2
+        const wobble = 0.78 + rng() * 0.38
+        pts.push([cx + Math.cos(ang) * rx * wobble, cy + Math.sin(ang) * ry * wobble])
+      }
+      for (let i = 0; i < n; i++) {
+        const p0 = pts[(i - 1 + n) % n]
+        const p1 = pts[i]
+        const p2 = pts[(i + 1) % n]
+        const p3 = pts[(i + 2) % n]
+        const t = 0.28
+        const cp1x = p1[0] + (p2[0] - p0[0]) * t
+        const cp1y = p1[1] + (p2[1] - p0[1]) * t
+        const cp2x = p2[0] - (p3[0] - p1[0]) * t
+        const cp2y = p2[1] - (p3[1] - p1[1]) * t
+        if (i === 0) ctx.moveTo(p1[0], p1[1])
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1])
+      }
+      ctx.closePath()
+      break
+    }
     case 'leaf': {
       const cx = W * (0.38 + rng() * 0.24)
       const cy = zoneH * (0.08 + rng() * 0.08)
@@ -384,26 +456,6 @@ function drawShape(
       ctx.bezierCurveTo(left, top + archH - archH * 0.55, left + r * 0.45, top, left + r, top)
       ctx.bezierCurveTo(left + r + r * 0.45, top, right, top + archH - archH * 0.55, right, top + archH)
       ctx.lineTo(right, bot)
-      ctx.closePath()
-      break
-    }
-    case 'wave': {
-      const band  = zoneH * (0.34 + rng() * 0.10)
-      const gap   = zoneH * (0.06 + rng() * 0.06)
-      const amp   = zoneH * (0.07 + rng() * 0.05)
-      const left  = pad
-      const right = W - pad
-      // Band 1
-      ctx.moveTo(left, pad * 0.5)
-      ctx.lineTo(right, pad * 0.5)
-      ctx.lineTo(right, band)
-      ctx.bezierCurveTo(right - W * 0.25, band + amp, left + W * 0.25, band - amp, left, band)
-      ctx.closePath()
-      // Band 2
-      ctx.moveTo(left, band + gap)
-      ctx.bezierCurveTo(left + W * 0.25, band + gap - amp, right - W * 0.25, band + gap + amp, right, band + gap)
-      ctx.lineTo(right, band + gap + band * 0.65)
-      ctx.bezierCurveTo(right - W * 0.25, band + gap + band * 0.65 + amp * 0.5, left + W * 0.25, band + gap + band * 0.65 - amp * 0.5, left, band + gap + band * 0.65)
       ctx.closePath()
       break
     }
@@ -471,15 +523,17 @@ function drawCardBackground(
   hue: number, sat: number, lit: number,
   rng: () => number,
   entityBg: { color: string; name: string } | null,
+  blobPalette: { hue: number; sat: number; lit: number } | null,
 ) {
   // ── 1. Always solid cream base — NEVER transparent ────────────────────────
   const cardBase = '#FAFAF5'
   ctx.fillStyle = cardBase
   ctx.fillRect(0, 0, W, H)
 
-  // ── 2. Shape colors ALWAYS come from user hue — entity only affects border ─
-  // (entity bg is intentionally IGNORED here for color)
-  let blobH = hue, blobS = Math.max(sat, 42), blobL = lit
+  // ── 2. Shape colors come from blob palette (entities or fallback) ──────────
+  let blobH = blobPalette?.hue ?? hue
+  let blobS = Math.max(blobPalette?.sat ?? sat, 42)
+  let blobL = blobPalette?.lit ?? lit
   blobL = Math.min(Math.max(blobL, 32), 64)
 
   const hi  = `hsl(${blobH}, ${Math.max(blobS-18, 28)}%, ${Math.min(blobL+26, 82)}%)`
@@ -489,7 +543,7 @@ function drawCardBackground(
   // ── 3. Pick shape deterministically from user hue+sat+lit seed ───────────
   const shapeRng  = seededRng(String(hue) + String(Math.round(sat)) + String(Math.round(lit)) + 'shp')
   const shapeRng2 = seededRng(String(hue) + String(Math.round(sat)) + 'shp2')
-  const shapes: BlobShape[] = ['leaf','arch','wave','corner','hill','shield']
+  const shapes: BlobShape[] = ['blob','blob','leaf','arch','corner','hill','shield']
   const shape = shapes[Math.floor(shapeRng() * shapes.length)]
 
   // ── 4. Draw shape inside clipped zone ────────────────────────────────────
@@ -783,6 +837,7 @@ function drawLandscapeCard(
   activeAchievements: Achievement[],
   area: string, language: string,
   entityBg: { color: string; name: string } | null,
+  blobPalette: { hue: number; sat: number; lit: number } | null,
 ) {
   const W = 920, H = 580
   canvas.width = W * 2; canvas.height = H * 2
@@ -810,13 +865,13 @@ function drawLandscapeCard(
   // Pick shape same as portrait
   const shapeRng  = seededRng(String(hue) + String(Math.round(sat)) + String(Math.round(lit)) + 'shp')
   const shapeRng2 = seededRng(String(hue) + String(Math.round(sat)) + 'shp2')
-  const shapes: BlobShape[] = ['leaf', 'arch', 'wave', 'corner', 'hill', 'shield']
+  const shapes: BlobShape[] = ['blob','blob','leaf','arch','corner','hill','shield']
   const shape = shapes[Math.floor(shapeRng() * shapes.length)]
 
-  // Colors — always user hue, never entity
-  const blobH = hue
-  const blobS = Math.max(sat, 42)
-  const blobL = Math.min(Math.max(lit, 32), 64)
+  // Colors — blob palette (entities or fallback)
+  const blobH = blobPalette?.hue ?? hue
+  const blobS = Math.max(blobPalette?.sat ?? sat, 42)
+  const blobL = Math.min(Math.max(blobPalette?.lit ?? lit, 32), 64)
   const hi    = `hsl(${blobH}, ${Math.max(blobS - 18, 28)}%, ${Math.min(blobL + 26, 82)}%)`
   const mid   = `hsl(${blobH}, ${blobS}%, ${blobL}%)`
   const low   = `hsl(${(blobH + 18) % 360}, ${Math.min(blobS + 8, 88)}%, ${Math.max(blobL - 22, 20)}%)`
@@ -1069,6 +1124,7 @@ function drawPortraitCard(
   activeAchievements: Achievement[],
   area: string, language: string,
   entityBg: { color: string; name: string } | null,
+  blobPalette: { hue: number; sat: number; lit: number } | null,
 ) {
   const W = 680, H = 920
   canvas.width = W*2; canvas.height = H*2
@@ -1086,7 +1142,7 @@ function drawPortraitCard(
 
   ctx.clearRect(0,0,W,H)
   ctx.save(); roundRect(ctx,0,0,W,H,32); ctx.clip()
-  drawCardBackground(ctx,W,H,zoneH,style,hue,sat,lit,rngBg,entityBg)
+  drawCardBackground(ctx,W,H,zoneH,style,hue,sat,lit,rngBg,entityBg,blobPalette)
   drawPortraitInfo(ctx,W,H,zoneH,user,avatarImg,activeAchievements,area,language,hue,sat,lit,entityBg,style)
   ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1; ctx.globalAlpha=1
   roundRect(ctx,0.5,0.5,W-1,H-1,32); ctx.stroke()
@@ -1446,6 +1502,11 @@ export default function ProfilePage() {
     return {color:ent.color, name:ent.short_name||ent.name}
   },[entityBgId,entities])
 
+  const blobPalette = useMemo(() => {
+    if (!user) return null
+    return pickBlobPalette(user.id, entities, entityBgId)
+  }, [user, entities, entityBgId])
+
   // Load avatar image whenever url changes
   useEffect(() => {
     if (!user?.avatar_url) { setAvatarImg(null); return }
@@ -1458,12 +1519,12 @@ export default function ProfilePage() {
   const draw = useCallback(() => {
     if (!user) return
     if (canvasRef.current)
-      try { drawPortraitCard(canvasRef.current, user, avatarImg, activeAchievements, area, language, entityBgData) }
+        try { drawPortraitCard(canvasRef.current, user, avatarImg, activeAchievements, area, language, entityBgData, blobPalette) }
       catch(err) { console.error('Portrait draw:', err) }
-    if (canvasLandRef.current)
-      try { drawLandscapeCard(canvasLandRef.current, user, avatarImg, activeAchievements, area, language, entityBgData) }
+      if (canvasLandRef.current)
+        try { drawLandscapeCard(canvasLandRef.current, user, avatarImg, activeAchievements, area, language, entityBgData, blobPalette) }
       catch(err) { console.error('Landscape draw:', err) }
-  }, [user, avatarImg, activeAchievements, area, language, entityBgData])
+    }, [user, avatarImg, activeAchievements, area, language, entityBgData, blobPalette])
 
   useEffect(() => { draw() }, [draw])
 
