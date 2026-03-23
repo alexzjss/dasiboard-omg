@@ -257,7 +257,7 @@ function EventForm({
 }
 
 // ── Week Schedule View ────────────────────────────────────────────────────────
-function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject[] }) {
+function ScheduleView({ events, subjects, entities }: { events: Event[]; subjects: Subject[]; entities: Entity[] }) {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 }))
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const schedules = loadSchedules()
@@ -793,7 +793,7 @@ export default function CalendarPage() {
       {/* ── Schedule View ── */}
       {view === 'schedule' && (
         <div className="flex-1 overflow-hidden">
-          <ScheduleView events={events} subjects={subjects} />
+          <ScheduleView events={events} subjects={subjects} entities={entities} />
         </div>
       )}
       {/* ── Agenda View — mobile list ── */}
