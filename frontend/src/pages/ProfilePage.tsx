@@ -674,13 +674,17 @@ function drawPortraitInfo(
   area: string, language: string,
   hue: number, sat: number, lit: number,
   entityBg: { color: string; name: string } | null,
+  blobPalette: { hue: number; sat: number; lit: number } | null,
   style: CardStyle,
 ) {
-  // Colors always from user hue
-  const ink      = `hsl(${hue}, 55%, 12%)`
-  const inkMid   = `hsl(${hue}, 30%, 40%)`
-  const inkFaint = `hsl(${hue}, 20%, 58%)`
-  const accent   = `hsl(${hue}, ${Math.max(sat, 52)}%, ${Math.max(lit - 8, 26)}%)`
+  // Text colors follow entity palette when available
+  const baseHue = blobPalette?.hue ?? hue
+  const baseSat = blobPalette?.sat ?? sat
+  const baseLit = blobPalette?.lit ?? lit
+  const ink      = `hsl(${baseHue}, 55%, 12%)`
+  const inkMid   = `hsl(${baseHue}, 30%, 40%)`
+  const inkFaint = `hsl(${baseHue}, 20%, 58%)`
+  const accent   = `hsl(${baseHue}, ${Math.max(baseSat, 52)}%, ${Math.max(baseLit - 8, 26)}%)`
 
   const padX = W * 0.085
   const padR = W - padX
@@ -957,10 +961,13 @@ function drawLandscapeCard(
   // ── Right zone: info panel ────────────────────────────────────────────────
   const rx     = leftW + W * 0.04
   const rW     = W - rx - W * 0.04
-  const ink    = `hsl(${hue}, 55%, 12%)`
-  const inkMid = `hsl(${hue}, 28%, 44%)`
-  const inkF   = `hsl(${hue}, 18%, 60%)`
-  const accent = `hsl(${hue}, ${Math.max(sat, 52)}%, ${Math.max(blobL - 8, 26)}%)`
+  const baseHue = blobPalette?.hue ?? hue
+  const baseSat = blobPalette?.sat ?? sat
+  const baseLit = blobPalette?.lit ?? blobL
+  const ink    = `hsl(${baseHue}, 55%, 12%)`
+  const inkMid = `hsl(${baseHue}, 28%, 44%)`
+  const inkF   = `hsl(${baseHue}, 18%, 60%)`
+  const accent = `hsl(${baseHue}, ${Math.max(baseSat, 52)}%, ${Math.max(baseLit - 8, 26)}%)`
 
   // Header label
   ctx.font         = `600 ${Math.round(W * 0.012)}px monospace`
@@ -1143,7 +1150,7 @@ function drawPortraitCard(
   ctx.clearRect(0,0,W,H)
   ctx.save(); roundRect(ctx,0,0,W,H,32); ctx.clip()
   drawCardBackground(ctx,W,H,zoneH,style,hue,sat,lit,rngBg,entityBg,blobPalette)
-  drawPortraitInfo(ctx,W,H,zoneH,user,avatarImg,activeAchievements,area,language,hue,sat,lit,entityBg,style)
+  drawPortraitInfo(ctx,W,H,zoneH,user,avatarImg,activeAchievements,area,language,hue,sat,lit,entityBg,blobPalette,style)
   ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.lineWidth=1; ctx.globalAlpha=1
   roundRect(ctx,0.5,0.5,W-1,H-1,32); ctx.stroke()
   ctx.restore()
