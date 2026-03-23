@@ -12,7 +12,6 @@ const THEME_ACCENT: Record<string, string> = {
   'light-sintetizado':'#60a5fa',
   'light-grace':      '#92400e',
   'light-lab':        '#ec4899',
-  'light-720':        '#22d3ee',
 }
 
 interface DasiLogoProps {
