@@ -43,6 +43,17 @@ const TYPE_LABELS: Record<string, string> = {
   exam: 'Prova', deadline: 'Deadline',
   academic: 'Acadêmico', personal: 'Pessoal', work: 'Trabalho', entity: 'Entidade',
 }
+
+function getEventLabel(ev: { event_type: string; entity_id?: string }, entities: Entity[]): { label: string; color: string } {
+  if (ev.event_type === 'entity' && ev.entity_id) {
+    const ent = entities.find(e => e.id === ev.entity_id)
+    if (ent) return { label: ent.short_name, color: ent.color }
+  }
+  return {
+    label: TYPE_LABELS[ev.event_type] ?? ev.event_type,
+    color: TYPE_COLORS[ev.event_type] ?? '#a855f7',
+  }
+}
 const DAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7)
 const PX_PER_HOUR = 64
@@ -442,7 +453,7 @@ function ScheduleView({ events, subjects }: { events: Event[]; subjects: Subject
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
                         style={{ background: selectedEvent.color + '20', color: selectedEvent.color }}>
-                    {TYPE_LABELS[selectedEvent.event_type] ?? selectedEvent.event_type}
+                    {getEventLabel(selectedEvent, entities).label}
                   </span>
                   <h3 className="font-display font-bold text-lg mt-1.5 leading-tight" style={{ color: 'var(--text-primary)' }}>
                     {selectedEvent.title}
@@ -572,7 +583,7 @@ function AgendaView({ events, TYPE_LABELS, TYPE_COLORS }: {
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                               style={{ background: color + '18', color }}>
-                          {TYPE_LABELS[ev.event_type] ?? ev.event_type}
+                          {getEventLabel(ev, entities).label}
                         </span>
                         {ev.location && (
                           <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>📍 {ev.location}</span>
@@ -931,7 +942,7 @@ export default function CalendarPage() {
                               {ev.recurring && <Repeat size={9} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
                               <p className="text-sm font-medium truncate" style={{ color:'var(--text-primary)' }}>{ev.title}</p>
                             </div>
-                            <p className="text-[10px]" style={{ color: ev.color }}>{TYPE_LABELS[ev.event_type]}</p>
+                            <p className="text-[10px]" style={{ color: getEventLabel(ev, entities).color }}>{getEventLabel(ev, entities).label}</p>
                             {ev.class_code && (
                               <span className="text-[10px] rounded px-1.5 py-0.5 mt-1 inline-block"
                                     style={{ background:'var(--border)', color:'var(--text-secondary)' }}>
