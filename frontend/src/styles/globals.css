@@ -3157,7 +3157,7 @@ html.presentation-mode .grades-fluxo-node {
 /* ════════════════════════════════════════════════════════
    ANIMATIONS
 ════════════════════════════════════════════════════════ */
-.animate-in           { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-in           { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-in-delay-1   { animation: slideUp 0.35s 0.05s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-in-delay-2   { animation: slideUp 0.35s 0.10s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-in-delay-3   { animation: slideUp 0.35s 0.15s cubic-bezier(0.16,1,0.3,1) both; }
@@ -6919,6 +6919,18 @@ html { font-size: var(--app-font-size); }
 .animate-in-delay-5   { animation: slideUpFresh 0.32s 0.20s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-fade-scale   { animation: fadeInScale  0.28s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-slide-right  { animation: slideInRight 0.28s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Garante que se a animação não completar (aba em background, reduced-motion, etc)
+   o elemento sempre aparece visível — evita área em branco no hero card */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in, .animate-in-delay-1, .animate-in-delay-2,
+  .animate-in-delay-3, .animate-in-delay-4, .animate-in-delay-5,
+  .animate-fade-scale, .animate-slide-right {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
 
 /* ── Cards — more polished ───────────────────────────────────────── */
 .card {
