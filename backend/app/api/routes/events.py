@@ -37,7 +37,8 @@ def list_events(
     personal_q = (
         "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
-        "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only "
+        "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only, "
+        "recurring, recur_weeks "
         "FROM events WHERE owner_id = %s"
     )
     p_params: list = [uid]
@@ -53,7 +54,8 @@ def list_events(
         eq = (
             "SELECT id, owner_id, title, description, event_type, start_at, end_at, "
             "all_day, color, location, created_at, "
-            "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only "
+            "NULL::varchar AS class_code, FALSE AS is_global, entity_id, members_only, "
+            "recurring, recur_weeks "
             f"FROM events WHERE entity_id IN ({placeholders}) AND owner_id != %s"
         )
         e_params: list = entity_ids + [uid]
@@ -66,7 +68,8 @@ def list_events(
     global_q = (
         "SELECT id, NULL::uuid AS owner_id, title, description, event_type, start_at, end_at, "
         "all_day, color, location, created_at, "
-        "class_code, TRUE AS is_global, entity_id, members_only "
+        "class_code, TRUE AS is_global, entity_id, members_only, "
+        "recurring, recur_weeks "
         "FROM global_events WHERE 1=1"
     )
     g_params: list = []
