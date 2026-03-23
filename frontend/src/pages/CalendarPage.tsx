@@ -512,10 +512,11 @@ const FORM_DEFAULT: EventFormData = {
 }
 
 // ── Agenda View — mobile-first list grouped by day ───────────────────────────
-function AgendaView({ events, TYPE_LABELS, TYPE_COLORS }: {
-  events: { id: string; title: string; event_type: string; start_at: string; end_at?: string; color: string; location?: string; class_code?: string; is_global?: boolean }[]
+function AgendaView({ events, TYPE_LABELS, TYPE_COLORS, entities }: {
+  events: { id: string; title: string; event_type: string; start_at: string; end_at?: string; color: string; location?: string; class_code?: string; is_global?: boolean; entity_id?: string }[]
   TYPE_LABELS: Record<string, string>
   TYPE_COLORS: Record<string, string>
+  entities: Entity[]
 }) {
   const today = new Date()
   const upcoming = events
@@ -798,7 +799,7 @@ export default function CalendarPage() {
       )}
       {/* ── Agenda View — mobile list ── */}
       {view === 'agenda' && (
-        <AgendaView events={filtered} TYPE_LABELS={TYPE_LABELS} TYPE_COLORS={TYPE_COLORS} />
+        <AgendaView events={filtered} TYPE_LABELS={TYPE_LABELS} TYPE_COLORS={TYPE_COLORS} entities={entities} />
       )}
 
       {/* ── Calendar View ── */}
