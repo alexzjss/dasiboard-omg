@@ -15,7 +15,7 @@ import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
 
 interface Room {
   id: string; code: string; subject_code?: string; subject_name: string
-  creator_name: string; created_at: string
+  creator_name: string; creator_id?: string; created_at: string
   sessions: Session[]; invites: Invite[]
 }
 interface Session {
@@ -28,7 +28,7 @@ interface OnlineUser {
 }
 interface RoomListItem {
   id: string; code: string; subject_name: string; subject_code?: string
-  creator_name: string; online_now: number; total_sessions: number; created_at: string
+  creator_name: string; creator_id?: string; online_now: number; total_sessions: number; created_at: string
 }
 
 function Avatar({ name, url, size = 9 }: { name: string; url?: string; size?: number }) {
@@ -54,7 +54,24 @@ function RoomListPage() {
   const [creating, setCreating] = useState(false)
   const [joining,  setJoining]  = useState('')
   const [form, setForm] = useState({ subject_name: '', subject_code: '' })
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+
+  const deleteRoom = async (roomId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm('Tem certeza que quer excluir esta sala? Esta ação não pode ser desfeita.')) return
+    try {
+      await api.delete(\`/social/rooms/\${roomId}\`)
+      setRooms(prev => prev.filter(r => r.id !== roomId))
+      toast.success('Sala excluída')
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail ?? 'Erro ao excluir sala')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const load = useCallback(() => {
     api.get('/social/rooms')
@@ -211,6 +228,15 @@ function RoomListPage() {
                     <Wifi size={9} /> {r.online_now}
                   </span>
                 )}
+                {(r.creator_id === user?.id || r.creator_name === user?.full_name) && (
+                  <button
+                    onClick={(e) => deleteRoom(r.id, e)}
+                    title="Excluir sala"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-100 opacity-40 hover:bg-red-500/10"
+                    style={{ color: '#f87171', border: '1px solid transparent' }}>
+                    <Trash2 size={12} />
+                  </button>
+                )}
                 <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
               </div>
             </Link>
@@ -325,6 +351,21 @@ function RoomDetail({ code }: { code: string }) {
     }
   }
 
+  const deleteRoom = async () => {
+    if (!confirm('Tem certeza que quer excluir esta sala permanentemente? Todos os dados serão perdidos.')) return
+    try {
+      await api.delete(`/social/rooms/${room!.id}`)
+      toast.success('Sala excluída')
+      navigate('/room')
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail ?? 'Erro ao excluir sala')
+    }
+  }
+
+  const endSession = async () => {
+    if (inRoom) await leave()
+  }
+
   const invite = async () => {
     const nusp = inviteNusp.trim()
     if (!nusp) { toast.error('Informe o Nº USP'); return }
@@ -398,22 +439,32 @@ function RoomDetail({ code }: { code: string }) {
           </div>
         </div>
 
-        {/* Join / Leave */}
-        {inRoom ? (
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 text-sm font-mono font-bold px-3 py-2 rounded-xl"
-                 style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
-              <Timer size={13} /> {mm}:{ss}
-            </div>
-            <button onClick={leave} className="btn-danger text-sm gap-1.5 py-2 px-3">
-              <LogOut size={13} /> Sair
+        {/* Join / Leave / Delete */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          {inRoom ? (
+            <>
+              <div className="flex items-center gap-1.5 text-sm font-mono font-bold px-3 py-2 rounded-xl"
+                   style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
+                <Timer size={13} /> {mm}:{ss}
+              </div>
+              <button onClick={leave} className="btn-danger text-sm gap-1.5 py-2 px-3">
+                <LogOut size={13} /> Encerrar estudos
+              </button>
+            </>
+          ) : (
+            <button onClick={join} className="btn-primary text-sm gap-1.5">
+              <LogIn size={14} /> Entrar na sala
             </button>
-          </div>
-        ) : (
-          <button onClick={join} className="btn-primary text-sm gap-1.5 shrink-0">
-            <LogIn size={14} /> Entrar na sala
-          </button>
-        )}
+          )}
+          {(room.creator_id === user?.id || room.creator_name === user?.full_name) && (
+            <button onClick={deleteRoom}
+                    title="Excluir sala permanentemente"
+                    className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all hover:opacity-90"
+                    style={{ background: 'rgba(239,68,68,0.08)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}>
+              <Trash2 size={12} /> Excluir sala
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
