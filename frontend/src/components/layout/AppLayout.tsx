@@ -513,7 +513,9 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
         </div>
         <LofiPlayer />
         <EvaSyncBar />
-        <StudyMode />
+        <div className="mt-1">
+          <StudyMode />
+        </div>
       </div>
 
       {/* User */}
