@@ -332,6 +332,7 @@ def list_rooms(db: RealDictCursor = Depends(get_db), user=Depends(get_current_us
         """
         SELECT r.id, r.code, r.subject_code, r.subject_name, r.created_at,
                u.full_name AS creator_name,
+               r.created_by AS creator_id,
                (SELECT COUNT(DISTINCT user_id) FROM study_room_sessions s WHERE s.room_id = r.id AND s.left_at IS NULL) AS online_now,
                (SELECT COUNT(*) FROM study_room_sessions s WHERE s.room_id = r.id) AS total_sessions
         FROM study_rooms r
@@ -370,7 +371,7 @@ def create_room(
 @router.get("/rooms/{code}")
 def get_room(code: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
     db.execute(
-        "SELECT r.*, u.full_name AS creator_name FROM study_rooms r "
+        "SELECT r.*, u.full_name AS creator_name, u.id AS creator_id FROM study_rooms r "
         "JOIN users u ON u.id = r.created_by WHERE r.code = %s",
         (code,),
     )
@@ -436,6 +437,25 @@ def leave_room(code: str, db: RealDictCursor = Depends(get_db), user=Depends(get
     )
     result = db.fetchone()
     return {"duration_min": result["duration_min"] if result else 0}
+
+
+@router.delete("/rooms/{room_id}", status_code=204)
+def delete_room(room_id: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    db.execute("SELECT id, created_by FROM study_rooms WHERE id = %s", (room_id,))
+    room = db.fetchone()
+    if not room:
+        raise HTTPException(404, "Sala não encontrada")
+    if str(room["created_by"]) != str(user["id"]):
+        raise HTTPException(403, "Apenas o criador pode excluir a sala")
+    # End all active sessions first
+    db.execute(
+        "UPDATE study_room_sessions SET left_at = NOW() WHERE room_id = %s AND left_at IS NULL",
+        (room_id,),
+    )
+    db.execute("DELETE FROM study_room_invites WHERE room_id = %s", (room_id,))
+    db.execute("DELETE FROM study_room_sessions WHERE room_id = %s", (room_id,))
+    db.execute("DELETE FROM study_rooms WHERE id = %s", (room_id,))
+    return
 
 
 @router.post("/rooms/{code}/invite")
