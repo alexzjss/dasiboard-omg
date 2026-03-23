@@ -528,10 +528,17 @@ def follow_user(
         (str(user["id"]),),
     )
     actor = db.fetchone()
+    db.execute("SELECT full_name FROM users WHERE nusp = %s", (nusp,))
+    target_name_row = db.fetchone()
+    target_name = target_name_row["full_name"] if target_name_row else None
     db.execute(
         "INSERT INTO activity_feed (actor_id, kind, payload) VALUES (%s, %s, %s)",
         (str(user["id"]), "followed",
-         __import__("json").dumps({"target_nusp": nusp, "actor_name": actor["full_name"] if actor else ""})),
+         __import__("json").dumps({
+             "target_nusp": nusp,
+             "target_name": target_name,
+             "actor_name": actor["full_name"] if actor else "",
+         })),
     )
     return {"ok": True, "following": bool(result)}
 
@@ -659,6 +666,25 @@ def get_feed(
         if isinstance(r.get("payload"), str):
             r["payload"] = _json.loads(r["payload"])
         result.append(r)
+
+    # Enrich legacy follow payloads with target name
+    target_nusps = sorted({
+        r.get("payload", {}).get("target_nusp")
+        for r in result
+        if r.get("kind") == "followed" and r.get("payload", {}).get("target_nusp") and not r.get("payload", {}).get("target_name")
+    })
+    if target_nusps:
+        placeholders = ",".join(["%s"] * len(target_nusps))
+        db.execute(
+            f"SELECT nusp, full_name FROM users WHERE nusp IN ({placeholders})",
+            tuple(target_nusps),
+        )
+        name_map = {str(row["nusp"]): row["full_name"] for row in db.fetchall()}
+        for r in result:
+            payload = r.get("payload", {})
+            if r.get("kind") == "followed" and payload.get("target_nusp") and not payload.get("target_name"):
+                payload["target_name"] = name_map.get(str(payload.get("target_nusp")))
+                r["payload"] = payload
     return result
 
 
