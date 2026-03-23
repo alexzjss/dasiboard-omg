@@ -33,7 +33,7 @@ function playAchievementSound() {
 
 export function AchievementToast({ achievement: a, onDismiss }: AchievementToastProps) {
   const { theme } = useTheme()
-  const is720 = theme.id === 'light-720'
+  const is720 = false
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
