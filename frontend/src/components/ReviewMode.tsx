@@ -165,7 +165,7 @@ export default function ReviewMode({ subjectName, cards, onClose, subjectId }: {
   const myName = user?.full_name?.split(' ')[0] ?? 'Eu'
 
   const room = useStudyRoom(myName)
-  const isGameTheme = ['dark-pixel','light-720','light-portatil','dark-dlc'].includes(theme.id)
+  const isGameTheme = ['dark-dlc'].includes(theme.id)
 
   const card = session[idx]
 
