@@ -24,7 +24,7 @@ interface Turma {
   year: number; member_count: number
   members: TurmaMember[]; events: TurmaEvent[]
 }
-interface TurmaList { year: number; member_count: number }
+interface TurmaList { entry_year: number; member_count: number }
 
 const TYPE_COLORS: Record<string, string> = {
   exam: '#ef4444', deadline: '#f59e0b', academic: '#4d67f5',
@@ -176,21 +176,21 @@ export default function TurmaPage() {
         ) : (
           <div className="space-y-2">
             {list.map(t => (
-              <Link key={t.year} to={`/turma/${t.year}`}
+              <Link key={t.entry_year} to={`/turma/${t.entry_year}`}
                     className="card-hover flex items-center gap-4 px-4 py-3.5 rounded-2xl animate-in"
                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0"
                      style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }}>
                   <span className="font-display font-bold text-lg leading-none" style={{ color: 'var(--accent-3)' }}>
-                    {String(t.year).slice(2)}
+                    {String(t.entry_year).slice(2)}
                   </span>
                   <span className="text-[9px] font-semibold" style={{ color: 'var(--accent-3)', opacity: 0.7 }}>
-                    {t.year}
+                    {t.entry_year}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>
-                    Turma {t.year}
+                    Turma {t.entry_year}
                   </p>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     <Users size={10} className="inline mr-1" />
