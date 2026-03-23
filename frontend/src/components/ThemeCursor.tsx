@@ -4,7 +4,6 @@ import { useTheme } from '@/context/ThemeContext'
 
 // Themes that get a custom cursor
 const CURSOR_THEMES: Record<string, 'pixel' | 'crosshair' | 'glow' | 'nerv'> = {
-  'dark-pixel':      'pixel',
   'light-blueprint': 'crosshair',
   'light-vidro':     'glow',
   'dark-eva':        'nerv',
