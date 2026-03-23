@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom'
 
 const EXP_KEY = 'dasiboard-exp'
 // EXP bar visible on retro themes; level shown everywhere in profile
-const EXP_THEMES = new Set(['dark-pixel', 'light-720', 'light-portatil'])
+const EXP_THEMES = new Set([])
 
 // Thresholds for levels 1–20
 const LEVEL_THRESHOLDS = [
@@ -110,10 +110,9 @@ export function ExpBar() {
 
   if (!isRetroTheme) return null
 
-  const isPixel   = theme.id === 'dark-pixel' || theme.id === 'light-portatil'
-  const barColor  = theme.id === 'light-720' ? '#6fbe00'
-    : theme.id === 'light-portatil' ? '#0f380f' : '#ffcc00'
-  const bgColor   = theme.id === 'light-portatil' ? '#306230' : 'rgba(255,255,255,0.1)'
+  const isPixel   = false
+  const barColor  = '#ffcc00'
+  const bgColor   = 'rgba(255,255,255,0.1)'
   const monoFont  = isPixel ? '"Press Start 2P", monospace' : '"Rajdhani", sans-serif'
 
   return (
