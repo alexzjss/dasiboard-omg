@@ -54,6 +54,14 @@ function getEventLabel(ev: { event_type: string; entity_id?: string }, entities:
     color: TYPE_COLORS[ev.event_type] ?? '#a855f7',
   }
 }
+
+function getEventColor(ev: { event_type: string; entity_id?: string; color: string }, entities: Entity[]): string {
+  if (ev.event_type === 'entity' && ev.entity_id) {
+    const ent = entities.find(e => e.id === ev.entity_id)
+    if (ent) return ent.color
+  }
+  return TYPE_COLORS[ev.event_type] ?? ev.color
+}
 const DAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7)
 const PX_PER_HOUR = 64
@@ -400,13 +408,13 @@ function ScheduleView({ events, subjects, entities }: { events: Event[]; subject
                       return (
                         <button key={e.id} onClick={() => setSelectedEvent(e)}
                                 className="absolute left-0.5 right-0.5 rounded-lg text-left overflow-hidden transition-all hover:opacity-90 hover:z-20"
-                                style={{ top, height, background: e.color + '25', border: `1.5px solid ${e.color}88`, borderLeft: `3px solid ${e.color}`, zIndex: 2 }}>
+                                style={{ top, height, background: getEventColor(e, entities) + '25', border: `1.5px solid ${getEventColor(e, entities)}88`, borderLeft: `3px solid ${getEventColor(e, entities)}`, zIndex: 2 }}>
                           <div className="px-1 py-0.5">
-                            <p className="text-[9px] font-bold leading-tight truncate" style={{ color: e.color }}>
+                            <p className="text-[9px] font-bold leading-tight truncate" style={{ color: getEventColor(e, entities) }}>
                               {e.title}
                             </p>
                             {height > 30 && (
-                              <p className="text-[8px]" style={{ color: e.color, opacity: 0.7 }}>
+                              <p className="text-[8px]" style={{ color: getEventColor(e, entities), opacity: 0.7 }}>
                                 {format(parseISO(e.start_at), 'HH:mm')}
                               </p>
                             )}
@@ -443,16 +451,16 @@ function ScheduleView({ events, subjects, entities }: { events: Event[]; subject
          role="dialog" aria-modal="true"
              onClick={e => { if (e.target === e.currentTarget) setSelectedEvent(null) }}>
           <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl animate-in"
-               style={{ background: 'var(--bg-card)', border: `1px solid ${selectedEvent.color}44`, boxShadow: `0 24px 64px rgba(0,0,0,0.5)` }}>
+               style={{ background: 'var(--bg-card)', border: `1px solid ${getEventColor(selectedEvent, entities)}44`, boxShadow: `0 24px 64px rgba(0,0,0,0.5)` }}>
             <div className="flex justify-center pt-3 sm:hidden">
               <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
             </div>
-            <div className="h-1.5 rounded-t-full mx-4 mt-3 mb-4" style={{ background: selectedEvent.color }} />
+            <div className="h-1.5 rounded-t-full mx-4 mt-3 mb-4" style={{ background: getEventColor(selectedEvent, entities) }} />
             <div className="px-5 pb-6 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                        style={{ background: selectedEvent.color + '20', color: selectedEvent.color }}>
+                        style={{ background: getEventColor(selectedEvent, entities) + '20', color: getEventColor(selectedEvent, entities) }}>
                     {getEventLabel(selectedEvent, entities).label}
                   </span>
                   <h3 className="font-display font-bold text-lg mt-1.5 leading-tight" style={{ color: 'var(--text-primary)' }}>
@@ -562,7 +570,7 @@ function AgendaView({ events, TYPE_LABELS, TYPE_COLORS, entities }: {
               {dayEvents.map(ev => {
                 const startDt = new Date(ev.start_at)
                 const endDt   = ev.end_at ? new Date(ev.end_at) : null
-                const color   = TYPE_COLORS[ev.event_type] ?? ev.color
+                const color   = getEventColor(ev, entities)
                 return (
                   <div key={ev.id}
                        className="flex items-start gap-3 p-3 rounded-2xl transition-all active:scale-[0.98]"
@@ -865,7 +873,7 @@ export default function CalendarPage() {
                     </span>
                     <div className="flex gap-0.5 mt-0.5 flex-wrap">
                       {dayEvs.slice(0, 4).map(ev => (
-                        <div key={ev.id} className="w-2 h-2 rounded-full transition-transform hover:scale-125" style={{ backgroundColor: ev.color, boxShadow: `0 0 0 1px ${ev.color}40` }} />
+                        <div key={ev.id} className="w-2 h-2 rounded-full transition-transform hover:scale-125" style={{ backgroundColor: getEventColor(ev, entities), boxShadow: `0 0 0 1px ${getEventColor(ev, entities)}40` }} />
                       ))}
                       {dayEvs.length > 4 && (
                         <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--text-muted)', opacity: 0.5 }} />
@@ -935,7 +943,7 @@ export default function CalendarPage() {
                   <div className="space-y-2">
                     {daySelected.map(ev => (
                       <div key={ev.id} className="p-3 rounded-xl border group transition-all"
-                           style={{ borderColor: ev.color + '44', backgroundColor: ev.color + '0d' }}>
+                           style={{ borderColor: getEventColor(ev, entities) + '44', backgroundColor: getEventColor(ev, entities) + '0d' }}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 mb-0.5">
