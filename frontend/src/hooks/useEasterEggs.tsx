@@ -68,11 +68,9 @@ function useSequence(sequence: string[], onMatch: () => void, timeoutMs = 2000) 
 
 // ── Theme-specific sequences ──────────────────────────────────────────────────
 const THEME_SEQUENCES: Record<string, { seq: string[]; name: string }> = {
-  'dark-pixel':      { seq: ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'], name: 'breakout' },
   'dark-hypado':     { seq: ['ArrowUp','ArrowUp','ArrowUp'], name: 'vapor' },
   'dark-shell':      { seq: ['m','a','t','r','i','x'], name: 'matrix' },
   'dark-colina':     { seq: ['s','i','l','e','n','t'], name: 'silent' },
-  'light-720':       { seq: ['ArrowUp','ArrowRight','ArrowDown','ArrowLeft','ArrowUp'], name: 'xbox' },
   'dark-dlc':        { seq: ['r','g','b'], name: 'rgb' },
   'light-blueprint': { seq: ['b','l','u','e'], name: 'blueprint' },
   'light-ilha':      { seq: ['i','l','h','a'], name: 'ilha' },
