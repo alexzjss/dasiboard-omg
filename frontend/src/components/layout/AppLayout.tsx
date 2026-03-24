@@ -477,9 +477,38 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
 
       <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.35 }} />
 
+      {/* Profile highlight */}
+      <div className="px-3 pt-3 pb-1 relative z-10">
+        <NavLink to="/profile"
+                 className={({ isActive }) => clsx(
+                   'flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all',
+                   isActive ? 'nav-active' : 'nav-inactive'
+                 )}
+                 style={{
+                   background: 'linear-gradient(135deg, rgba(168,85,247,0.18), rgba(59,130,246,0.12))',
+                   border: '1px solid var(--accent-1)',
+                   boxShadow: '0 6px 18px rgba(0,0,0,0.22)',
+                 }}>
+          {user?.avatar_url ? (
+            <img src={user.avatar_url} alt={user.full_name}
+                 className="w-9 h-9 rounded-xl object-cover" />
+          ) : (
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold"
+                 style={{ background: 'var(--gradient-btn)', color: '#fff' }}>
+              {initials}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
+            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>Perfil</p>
+          </div>
+          <User size={15} />
+        </NavLink>
+      </div>
+
       {/* Nav */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10 overflow-y-auto">
-        {nav.map(({ to, label, icon: Icon, end }) => (
+        {nav.filter(n => n.to !== '/profile').map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
                    className={({ isActive }) => clsx(
                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
