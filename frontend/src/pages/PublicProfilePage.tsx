@@ -31,8 +31,8 @@ export default function PublicProfilePage() {
     api.get(`/social/u/${nusp}`)
       .then(({ data }) => {
         setUser(data)
-        // Load follow status if logged in and not own profile
-        if (me?.nusp !== nusp) {
+        // Load follow status + counts (for self and others)
+        if (me?.nusp) {
           api.get(`/social/follow/status/${nusp}`).then(r => setFollowStatus(r.data)).catch(() => {})
         }
       })
@@ -165,12 +165,14 @@ export default function PublicProfilePage() {
               </span>
             )}
             {followStatus && (
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                  <Users size={11} /> <strong style={{ color: 'var(--text-primary)' }}>{followStatus.followers}</strong> seguidores
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
+                      style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                  <Users size={12} /> {followStatus.followers} seguidores
                 </span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>{followStatus.following_count}</strong> seguindo
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                      style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                  {followStatus.following_count} seguindo
                 </span>
               </div>
             )}
