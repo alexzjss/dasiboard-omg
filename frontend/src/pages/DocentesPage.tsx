@@ -59,7 +59,11 @@ const DOCENTES_DATA: Docente[] = [
       { label: "Calculo 2", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/Calc%20II%20-%20Ca%CC%81lculo%20II/Auil" },
     ]
   },
-  { name: "Prof. Dr. Flávio Luiz Coutinho", email: "flcoutinho@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/3100288618568772", personal: null, areas: "Rastreamento de olhar, razão cruzada, compensação de movimentos de cabeça e interação humano computador" },
+  { name: "Prof. Dr. Flávio Luiz Coutinho", email: "flcoutinho@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/3100288618568772", personal: null, areas: "Rastreamento de olhar, razão cruzada, compensação de movimentos de cabeça e interação humano computador",
+    past_exams: [
+      { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Coutinho" },
+    ]
+  },
   { name: "Profa. Dra. Gisele da Silva Craveiro", email: "giselesc@usp.br", room: "252 – Edifício I1", lattes: "https://lattes.cnpq.br/0361123363747622", personal: null, areas: "Impactos de Sistemas de Informação na Sociedade, Governo eletrônico, Dados Abertos, Governo Aberto, Cultura livre e cultura digital" },
   { name: "Prof. Dr. Helton Hideraldo Bíscaro", email: "heltonhb@usp.br", room: "352B – Prédio I1", lattes: "https://lattes.cnpq.br/8794441658476782", personal: null, areas: "Estrutura de Dados, Reconstrução, Nuvem de pontos, Complexos Simpliciais, Teoria de Morse Discreta",
     past_exams: [
@@ -67,7 +71,11 @@ const DOCENTES_DATA: Docente[] = [
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Helton" },
     ]
   },
-  { name: "Prof. Dr. Ivandré Paraboni", email: "ivandre@usp.br", room: "320F – Edifício I1", lattes: "https://lattes.cnpq.br/4979536048261282", personal: "https://www.each.usp.br/ivandre", areas: "Processamento de Língua Natural, Ciências Cognitivas, Inteligência Artificial, Tecnologia da Língua Humana" },
+  { name: "Prof. Dr. Ivandré Paraboni", email: "ivandre@usp.br", room: "320F – Edifício I1", lattes: "https://lattes.cnpq.br/4979536048261282", personal: "https://www.each.usp.br/ivandre", areas: "Processamento de Língua Natural, Ciências Cognitivas, Inteligência Artificial, Tecnologia da Língua Humana",
+    past_exams: [
+      { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Ivandre" },
+    ]
+  },
   { name: "Prof. Dr. João Luiz Bernardes Júnior", email: "jlbernardes@usp.br", room: "110G – Edifício A1", lattes: "https://lattes.cnpq.br/8529032048850930", personal: null, areas: "Interação Humano-Computador, Análise e Processamento de Imagens, Computação Gráfica, Visualização Científica, Jogos Digitais, Realidade Virtual e Aumentada",
     past_exams: [
       { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Jo%C3%A3o" },
@@ -102,6 +110,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Marcelo Morandini", email: "m.morandini@usp.br", room: "322E – Edifício I1", lattes: "https://lattes.cnpq.br/7235951485247158", personal: "https://www.each.usp.br/morandini", areas: "Engenharia de Software, Interação Humano-Computador, Usabilidade, Ergonomia e Testes de Software",
     past_exams: [
       { label: "Introducao a Programacao (IP)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Morandini/Provas/P1/2024" },
+      { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Morandini" },
     ]
   },
   { name: "Prof. Dr. Marcio Moretto Ribeiro", email: "marciomr@usp.br", room: null, lattes: "https://lattes.cnpq.br/2153927915438535", personal: null, areas: "Lógicas de Descrição e Revisão de Crenças",
