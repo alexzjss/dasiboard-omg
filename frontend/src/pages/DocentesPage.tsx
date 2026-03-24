@@ -17,7 +17,11 @@ interface Docente {
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const DOCENTES_DATA: Docente[] = [
-  { name: "Prof. Dr. Alexandre Ferreira Ramos", email: "alex.ramos@usp.br", room: "A1-104B", lattes: "https://lattes.cnpq.br/9681052469456395", personal: "https://each.usp.br/alexramos/", areas: "Classificação da função e dos mecanismos de supressão de flutuações aleatórias em regulação da expressão gênica" },
+  { name: "Prof. Dr. Alexandre Ferreira Ramos", email: "alex.ramos@usp.br", room: "A1-104B", lattes: "https://lattes.cnpq.br/9681052469456395", personal: "https://each.usp.br/alexramos/", areas: "Classificação da função e dos mecanismos de supressão de flutuações aleatórias em regulação da expressão gênica",
+    past_exams: [
+      { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Alexandre/P2" },
+    ]
+  },
   { name: "Profa. Dra. Ana Amélia Benedito Silva", email: "aamelia@usp.br", room: "301 G – Prédio I1", lattes: "https://lattes.cnpq.br/0827495526048435", personal: null, areas: "Séries Temporais Biológicas" },
   { name: "Prof. Dr. André Carlos Busanelli de Aquino", email: "aquino@usp.br", room: null, lattes: "https://lattes.cnpq.br/2204782841421432", personal: null, areas: "Rhythm, organizing e agency em organizações do setor público; Ciclo Financeiro de Governos Locais; Resiliência de organizações públicas" },
   { name: "Prof. Dr. Andre Cavalcanti Rocha Martins", email: "amartins@usp.br", room: "319 F – Prédio I1", lattes: "https://lattes.cnpq.br/2318177531681999", personal: null, areas: "Dinâmica Cultural e de Opiniões" },
@@ -48,7 +52,11 @@ const DOCENTES_DATA: Docente[] = [
     ]
   },
   { name: "Profa. Dra. Fátima de Lourdes dos Santos Nunes Marques", email: "fatima.nunes@usp.br", room: "210P – Prédio A1", lattes: "https://lattes.cnpq.br/8626964624628522", personal: null, areas: "Realidade Virtual, Processamento de Imagens, Banco de Dados, Sistemas de Auxílio ao Diagnóstico, Treinamento Médico Virtual, Mamografia, Recuperação Baseada em Conteúdo" },
-  { name: "Prof. Dr. Fernando Auil", email: "auil@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/9270505088399430", personal: null, areas: "Abordagem de Beurling da Hipótese de Riemann, Matemática Aplicada" },
+  { name: "Prof. Dr. Fernando Auil", email: "auil@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/9270505088399430", personal: null, areas: "Abordagem de Beurling da Hipótese de Riemann, Matemática Aplicada",
+    past_exams: [
+      { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Fernando%20Auil" },
+    ]
+  },
   { name: "Prof. Dr. Flávio Luiz Coutinho", email: "flcoutinho@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/3100288618568772", personal: null, areas: "Rastreamento de olhar, razão cruzada, compensação de movimentos de cabeça e interação humano computador" },
   { name: "Profa. Dra. Gisele da Silva Craveiro", email: "giselesc@usp.br", room: "252 – Edifício I1", lattes: "https://lattes.cnpq.br/0361123363747622", personal: null, areas: "Impactos de Sistemas de Informação na Sociedade, Governo eletrônico, Dados Abertos, Governo Aberto, Cultura livre e cultura digital" },
   { name: "Prof. Dr. Helton Hideraldo Bíscaro", email: "heltonhb@usp.br", room: "352B – Prédio I1", lattes: "https://lattes.cnpq.br/8794441658476782", personal: null, areas: "Estrutura de Dados, Reconstrução, Nuvem de pontos, Complexos Simpliciais, Teoria de Morse Discreta",
@@ -66,6 +74,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. José de Jesús Pérez Alcázar", email: "jperez@usp.br", room: "352 F – Prédio I1", lattes: "https://lattes.cnpq.br/2201580020088062", personal: null, areas: "Tecnologia Web, Sistemas de Informação e Engenharia de Software, Inteligência Artificial e Bancos de Dados" },
   { name: "Prof. Dr. José Ricardo Gonçalves de Mendonça", email: "jricardo@usp.br", room: null, lattes: "https://lattes.cnpq.br/8792749813872106", personal: null, areas: "Física Estatística, Sistemas de Computação, Empreendedorismo de base tecnológica",
     past_exams: [
+      { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Jos%C3%A9%20Ricardo" },
       { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Jos%C3%A9%20Ricardo" },
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Jos%C3%A9%20Ricardo/Provas" },
     ]
@@ -101,6 +110,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Marcos Lordello Chaim", email: "chaim@usp.br", room: "322 N – Edifício I1", lattes: "https://lattes.cnpq.br/6414738466336890", personal: "https://www.each.usp.br/chaim", areas: "Engenharia de Software, Teste e Depuração de Software, Manutenção de Software, Métodos de Desenvolvimento de Software, Linguagens de Programação" },
   { name: "Prof. Dr. Masayuki Oka Hase", email: "mhase@usp.br", room: "202A – Edifício I1", lattes: "https://lattes.cnpq.br/9979732565759430", personal: null, areas: "Física Estatística, Redes Complexas",
     past_exams: [
+      { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Massayuki" },
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Masayuki" },
     ]
   },
