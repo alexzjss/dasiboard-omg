@@ -36,7 +36,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Esteban Fernandez Tuesta", email: "tuesta@usp.br", room: "346-E – Bloco I1", lattes: "https://lattes.cnpq.br/1068554491963326", personal: null, areas: "Probabilidade Aplicada, Estatística Aplicada, Processos Markovianos e Ciência da Informação" },
   { name: "Prof. Dr. Fabio Nakano", email: "fabionakano@usp.br", room: "A1-204E", lattes: "https://lattes.cnpq.br/7142543937454545", personal: null, areas: "Bioinformática, Banco de Dados, Matemática Aplicada",
     past_exams: [
-      { label: "IP", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Nakano/Provas" },
+      { label: "Introducao a Programacao (IP)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Nakano/Provas" },
     ]
   },
   { name: "Profa. Dra. Fátima de Lourdes dos Santos Nunes Marques", email: "fatima.nunes@usp.br", room: "210P – Prédio A1", lattes: "https://lattes.cnpq.br/8626964624628522", personal: null, areas: "Realidade Virtual, Processamento de Imagens, Banco de Dados, Sistemas de Auxílio ao Diagnóstico, Treinamento Médico Virtual, Mamografia, Recuperação Baseada em Conteúdo" },
@@ -68,7 +68,11 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Profa. Dra. Luciane Meneguin Ortega", email: "luciane.ortega@usp.br", room: "210C – Edifício A1", lattes: "https://lattes.cnpq.br/8594007840837513", personal: null, areas: "Empreendedorismo, Inovação Tecnológica, Inovação Social, Pequenas e Médias Empresas" },
   { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia" },
   { name: "Prof. Dr. Marcelo Medeiros Eler", email: "marceloeler@usp.br", room: null, lattes: "https://lattes.cnpq.br/0170428647417667", personal: null, areas: "Engenharia de Software, Teste de Software, Geração automática de dados de teste, Governo Eletrônico, Gestão de TI" },
-  { name: "Prof. Dr. Marcelo Morandini", email: "m.morandini@usp.br", room: "322E – Edifício I1", lattes: "https://lattes.cnpq.br/7235951485247158", personal: "https://www.each.usp.br/morandini", areas: "Engenharia de Software, Interação Humano-Computador, Usabilidade, Ergonomia e Testes de Software" },
+  { name: "Prof. Dr. Marcelo Morandini", email: "m.morandini@usp.br", room: "322E – Edifício I1", lattes: "https://lattes.cnpq.br/7235951485247158", personal: "https://www.each.usp.br/morandini", areas: "Engenharia de Software, Interação Humano-Computador, Usabilidade, Ergonomia e Testes de Software",
+    past_exams: [
+      { label: "Introducao a Programacao (IP)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Morandini/Provas/P1/2024" },
+    ]
+  },
   { name: "Prof. Dr. Marcio Moretto Ribeiro", email: "marciomr@usp.br", room: null, lattes: "https://lattes.cnpq.br/2153927915438535", personal: null, areas: "Lógicas de Descrição e Revisão de Crenças",
     past_exams: [
       { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Moretto" },
@@ -80,7 +84,11 @@ const DOCENTES_DATA: Docente[] = [
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Masayuki" },
     ]
   },
-  { name: "Prof. Dr. Norton Trevisan Roman", email: "norton@usp.br", room: "110R – Edifício A1", lattes: "https://lattes.cnpq.br/4440731926425760", personal: "https://www.each.usp.br/norton", areas: "Processamento de Língua Natural (Linguística Computacional), Inteligência Artificial, Educação em Informática" },
+  { name: "Prof. Dr. Norton Trevisan Roman", email: "norton@usp.br", room: "110R – Edifício A1", lattes: "https://lattes.cnpq.br/4440731926425760", personal: "https://www.each.usp.br/norton", areas: "Processamento de Língua Natural (Linguística Computacional), Inteligência Artificial, Educação em Informática",
+    past_exams: [
+      { label: "Introducao a Programacao (IP)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Norton" },
+    ]
+  },
   { name: "Profa. Dra. Patrícia Rufino Oliveira", email: "proliveira@usp.br", room: "322A – Edifício I1", lattes: "https://lattes.cnpq.br/9174573815394512", personal: null, areas: "Inteligência Artificial, Computação Bioinspirada, Redes Neurais Artificiais, Processamento de Imagens Digitais, Visão Computacional, Análise de Componentes Independentes" },
   { name: "Prof. Dr. Renan Cerqueira Afonso Alves", email: "renanalves@usp.br", room: null, lattes: "https://lattes.cnpq.br/4974090084595688", personal: null, areas: "Redes de sensores sem fio, Internet das coisas, Modelagem de redes de computadores" },
   { name: "Prof. Dr. Regis Rossi Alves Faria", email: "regis@usp.br", room: "357H – Edifício I1", lattes: "https://lattes.cnpq.br/9990463602315076", personal: null, areas: "Computação sônica/musical, Processamento de sinais/áudio, Sonologia, Tecnologia da música, Bioacústica, Sistemas musicais interativos" },
