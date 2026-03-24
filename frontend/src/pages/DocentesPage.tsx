@@ -29,6 +29,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Profa. Dra. Ariane Machado Lima", email: "ariane.machado@usp.br", room: "210-N – Edifício A1", lattes: "https://lattes.cnpq.br/6342311646947853", personal: "https://www.each.usp.br/ariane", areas: "Reconhecimento de Padrões, Gramáticas Estocásticas, Classificadores de Sequências, Bioinformática, RNAs não codificantes",
     past_exams: [
       { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Ariane/Provas" },
+      { label: "Algoritmos e Estruturas de Dados II (AED II)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/AED%20II%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20II/Ariane/Provas/P1/2017" },
     ]
   },
   { name: "Prof. Dr. Camilo Rodrigues Neto", email: "camiloneto@usp.br", room: "322-O – Edifício I1", lattes: "https://lattes.cnpq.br/8618151183586924", personal: "https://www.each.usp.br/camiloneto/", areas: "Sistemas Complexos, Modelagem por agentes, Dinâmica Estocástica, Econofísica, Análise e modelagem multifractal de sinais" },
@@ -72,6 +73,7 @@ const DOCENTES_DATA: Docente[] = [
     past_exams: [
       { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Coutinho" },
       { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Flavio" },
+      { label: "Computacao Orientada a Objetos (COO)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/COO%20-%20Computac%CC%A7a%CC%83o%20Orientada%20a%20Objetos/Flavio%20Coutinho" },
     ]
   },
   { name: "Profa. Dra. Gisele da Silva Craveiro", email: "giselesc@usp.br", room: "252 – Edifício I1", lattes: "https://lattes.cnpq.br/0361123363747622", personal: null, areas: "Impactos de Sistemas de Informação na Sociedade, Governo eletrônico, Dados Abertos, Governo Aberto, Cultura livre e cultura digital" },
@@ -79,11 +81,13 @@ const DOCENTES_DATA: Docente[] = [
     past_exams: [
       { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Helton" },
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Helton" },
+      { label: "Algoritmos e Estruturas de Dados II (AED II)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/AED%20II%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20II/Helton" },
     ]
   },
   { name: "Prof. Dr. Ivandré Paraboni", email: "ivandre@usp.br", room: "320F – Edifício I1", lattes: "https://lattes.cnpq.br/4979536048261282", personal: "https://www.each.usp.br/ivandre", areas: "Processamento de Língua Natural, Ciências Cognitivas, Inteligência Artificial, Tecnologia da Língua Humana",
     past_exams: [
       { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Ivandre" },
+      { label: "Algoritmos e Estruturas de Dados II (AED II)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/AED%20II%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20II/Ivandre" },
     ]
   },
   { name: "Prof. Dr. João Luiz Bernardes Júnior", email: "jlbernardes@usp.br", room: "110G – Edifício A1", lattes: "https://lattes.cnpq.br/8529032048850930", personal: null, areas: "Interação Humano-Computador, Análise e Processamento de Imagens, Computação Gráfica, Visualização Científica, Jogos Digitais, Realidade Virtual e Aumentada",
@@ -111,6 +115,7 @@ const DOCENTES_DATA: Docente[] = [
     past_exams: [
       { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Digiampietri" },
       { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Digiampietri" },
+      { label: "Algoritmos e Estruturas de Dados II (AED II)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/AED%20II%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20II/Digiampietri/Provas" },
     ]
   },
   { name: "Prof. Dr. Luciano Vieira de Araújo", email: "lvaraujo@usp.br", room: "T10P – Edifício A1", lattes: "https://lattes.cnpq.br/2459050725301964", personal: null, areas: "Banco de Dados, Business Intelligence, Data Warehouse, Bioinformática, Informática em Saúde, HIV, Hepatites, Natural User Interface",
@@ -122,6 +127,7 @@ const DOCENTES_DATA: Docente[] = [
     past_exams: [
       { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Lauretto/EPS" },
       { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Lauretto" },
+      { label: "Algoritmos e Estruturas de Dados II (AED II)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/AED%20II%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20II/Lauretto/Provas/P1/2014" },
     ]
   },
   { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia",
@@ -143,6 +149,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Marcio Moretto Ribeiro", email: "marciomr@usp.br", room: null, lattes: "https://lattes.cnpq.br/2153927915438535", personal: null, areas: "Lógicas de Descrição e Revisão de Crenças",
     past_exams: [
       { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Moretto" },
+      { label: "Algoritmos e Estruturas de Dados II (AED II)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/AED%20II%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20II/Ma%CC%81rcio/Aulas" },
     ]
   },
   { name: "Prof. Dr. Marcos Lordello Chaim", email: "chaim@usp.br", room: "322 N – Edifício I1", lattes: "https://lattes.cnpq.br/6414738466336890", personal: "https://www.each.usp.br/chaim", areas: "Engenharia de Software, Teste e Depuração de Software, Manutenção de Software, Métodos de Desenvolvimento de Software, Linguagens de Programação",
@@ -161,7 +168,11 @@ const DOCENTES_DATA: Docente[] = [
       { label: "Introducao a Programacao (IP)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Norton" },
     ]
   },
-  { name: "Profa. Dra. Patrícia Rufino Oliveira", email: "proliveira@usp.br", room: "322A – Edifício I1", lattes: "https://lattes.cnpq.br/9174573815394512", personal: null, areas: "Inteligência Artificial, Computação Bioinspirada, Redes Neurais Artificiais, Processamento de Imagens Digitais, Visão Computacional, Análise de Componentes Independentes" },
+  { name: "Profa. Dra. Patrícia Rufino Oliveira", email: "proliveira@usp.br", room: "322A – Edifício I1", lattes: "https://lattes.cnpq.br/9174573815394512", personal: null, areas: "Inteligência Artificial, Computação Bioinspirada, Redes Neurais Artificiais, Processamento de Imagens Digitais, Visão Computacional, Análise de Componentes Independentes",
+    past_exams: [
+      { label: "Computacao Orientada a Objetos (COO)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/3%C2%BA%20Semestre/COO%20-%20Computac%CC%A7a%CC%83o%20Orientada%20a%20Objetos/Patricia" },
+    ]
+  },
   { name: "Prof. Dr. Renan Cerqueira Afonso Alves", email: "renanalves@usp.br", room: null, lattes: "https://lattes.cnpq.br/4974090084595688", personal: null, areas: "Redes de sensores sem fio, Internet das coisas, Modelagem de redes de computadores" },
   { name: "Prof. Dr. Regis Rossi Alves Faria", email: "regis@usp.br", room: "357H – Edifício I1", lattes: "https://lattes.cnpq.br/9990463602315076", personal: null, areas: "Computação sônica/musical, Processamento de sinais/áudio, Sonologia, Tecnologia da música, Bioacústica, Sistemas musicais interativos" },
   { name: "Profa. Dra. Sarajane Marques Peres", email: "sarajane@usp.br", room: "320A – Edifício I1", lattes: "https://lattes.cnpq.br/6265936760089757", personal: "https://www.each.usp.br/sarajane", areas: "Inteligência Computacional, Aprendizado de Máquina, Reconhecimento de Padrões" },
