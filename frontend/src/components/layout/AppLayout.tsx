@@ -500,7 +500,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>Perfil</p>
+            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
           </div>
           <User size={15} />
         </NavLink>
@@ -550,23 +550,6 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
       {/* User */}
       <div className="px-3 pb-3 pt-2 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
         <ExpBar />
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl transition-all cursor-default group"
-             style={{ marginTop: '4px' }}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-btn)' }}>
-            <span className="text-xs font-bold text-white font-display">{initials}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
-          </div>
-          <button onClick={() => { logout(); navigate('/login') }} title="Sair"
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                  style={{ color: 'var(--text-muted)' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; (e.currentTarget as HTMLElement).style.backgroundColor = '#f8717120' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
-            <LogOut size={13} />
-          </button>
-        </div>
       </div>
     </>
   )
