@@ -23,6 +23,15 @@ interface FeedItem {
   actor_public?: boolean
 }
 
+interface DiscoverProfile {
+  id: string
+  full_name: string
+  nusp: string
+  avatar_url?: string
+  public_profile: boolean
+  is_following: boolean
+}
+
 const KIND_META: Record<string, { icon: React.ReactNode; color: string; label: (p: any, name: string) => string }> = {
   note_shared:   { icon: <Share2 size={14} />,    color: '#22c55e',  label: (p, n) => `${n} compartilhou uma nota: "${p.title ?? ''}"` },
   room_joined:   { icon: <LogIn size={14} />,     color: '#4d67f5',  label: (p, n) => `${n} entrou na sala ${p.subject_name ?? p.room_code ?? ''}` },
@@ -100,6 +109,7 @@ function FeedCard({ item }: { item: FeedItem }) {
 export default function FeedPage() {
   const { user }   = useAuthStore()
   const [items,    setItems]    = useState<FeedItem[]>([])
+  const [profiles, setProfiles] = useState<DiscoverProfile[]>([])
   const [loading,  setLoading]  = useState(true)
   const [mode,     setMode]     = useState<'following' | 'all'>('following')
   const [refreshing, setRefreshing] = useState(false)
@@ -107,14 +117,33 @@ export default function FeedPage() {
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
     try {
-      const { data } = await api.get(`/social/feed?mode=${mode}&limit=50`)
-      setItems(data)
+      if (mode === 'all') {
+        const { data } = await api.get('/social/discover?limit=200')
+        setProfiles(data)
+      } else {
+        const { data } = await api.get(`/social/feed?mode=${mode}&limit=50`)
+        setItems(data)
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.detail ?? 'Erro ao carregar feed')
     } finally { setLoading(false); setRefreshing(false) }
   }, [mode])
 
   useEffect(() => { setLoading(true); load() }, [mode, load])
+
+  const toggleFollow = async (profile: DiscoverProfile) => {
+    try {
+      if (profile.is_following) {
+        await api.delete(`/social/follow/${profile.nusp}`)
+        setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, is_following: false } : p))
+      } else {
+        await api.post(`/social/follow/${profile.nusp}`)
+        setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, is_following: true } : p))
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail ?? 'Erro ao atualizar')
+    }
+  }
 
   // Group by day
   const groups: Record<string, FeedItem[]> = {}
@@ -166,39 +195,77 @@ export default function FeedPage() {
         ))}
       </div>
 
-      {/* Feed */}
+      {/* Feed / Discover */}
       {loading ? (
         <div className="space-y-3">
           {[0,1,2,3].map(i => <div key={i} className="shimmer h-20 rounded-2xl" />)}
         </div>
+      ) : mode === 'all' ? (
+        profiles.length === 0 ? (
+          <div className="card flex flex-col items-center py-16 gap-4 text-center">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                 style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <Rss size={28} style={{ opacity: 0.25, color: 'var(--text-muted)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Nenhum perfil encontrado
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Ainda nao existem perfis disponiveis para seguir
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {profiles.map(profile => {
+              const ini = profile.full_name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+              return (
+                <div key={profile.id} className="flex items-center gap-3 p-4 rounded-2xl"
+                     style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                  <Link to={profile.public_profile ? `/u/${profile.nusp}` : '#'} className="shrink-0">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt={profile.full_name}
+                           className="w-10 h-10 rounded-xl object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold"
+                           style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }}>
+                        {ini}
+                      </div>
+                    )}
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {profile.full_name}
+                    </p>
+                    <p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
+                      Nº USP {profile.nusp}
+                    </p>
+                  </div>
+                  <button onClick={() => toggleFollow(profile)}
+                          className={profile.is_following ? 'btn-ghost text-xs' : 'btn-primary text-xs'}>
+                    {profile.is_following ? 'Seguindo' : 'Seguir'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )
       ) : items.length === 0 ? (
         <div className="card flex flex-col items-center py-16 gap-4 text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
             <Rss size={28} style={{ opacity: 0.25, color: 'var(--text-muted)' }} />
           </div>
-          {mode === 'following' ? (
-            <>
-              <div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Nenhuma atividade</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Siga colegas nos perfis públicos para ver a atividade deles aqui
-                </p>
-              </div>
-              <button onClick={() => setMode('all')} className="btn-primary text-sm gap-2">
-                <Globe size={14} /> Descobrir pessoas
-              </button>
-            </>
-          ) : (
-            <div>
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Nenhuma atividade pública ainda
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                Ative o perfil público e compartilhe notas para aparecer aqui
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Nenhuma atividade</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              Siga colegas nos perfis publicos para ver a atividade deles aqui
+            </p>
+          </div>
+          <button onClick={() => setMode('all')} className="btn-primary text-sm gap-2">
+            <Globe size={14} /> Descobrir pessoas
+          </button>
         </div>
       ) : (
         <div className="space-y-6">

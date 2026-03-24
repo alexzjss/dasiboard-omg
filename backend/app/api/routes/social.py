@@ -125,6 +125,32 @@ def get_public_profile(nusp: str, db: RealDictCursor = Depends(get_db)):
     return result
 
 
+@router.get("/discover")
+def discover_profiles(
+    limit: int = Query(100, ge=1, le=500),
+    db: RealDictCursor = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    uid = str(user["id"])
+    db.execute(
+        """
+        SELECT u.id, u.full_name, u.nusp, u.avatar_url, u.public_profile,
+               EXISTS(
+                   SELECT 1 FROM user_follows f
+                   WHERE f.follower_id = %s AND f.followed_id = u.id
+               ) AS is_following
+        FROM users u
+        WHERE u.is_active = TRUE
+          AND u.nusp IS NOT NULL
+          AND u.id != %s
+        ORDER BY u.full_name
+        LIMIT %s
+        """,
+        (uid, uid, limit),
+    )
+    return db.fetchall()
+
+
 # ══════════════════════════════════════════════════════
 # TURMA (agrupamento por ano de entrada)
 # ══════════════════════════════════════════════════════
