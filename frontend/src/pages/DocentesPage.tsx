@@ -110,10 +110,20 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Luciano Antonio Digiampietri", email: "digiampietri@usp.br", room: "110P – Edifício A1", lattes: "https://lattes.cnpq.br/1689147340536405", personal: "https://each.usp.br/digiampietri", areas: "Gerenciamento e Composição Automática de Serviços Web Semânticos, Bioinformática, Mineração de Dados, Análise de Redes Sociais, Educação em Sistemas de Informação",
     past_exams: [
       { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Digiampietri" },
+      { label: "Algoritmos e Estrutura de Dados 1 (AED I)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/AED%20I%20-%20Algoritmos%20e%20Estruturas%20de%20Dados%20I/Digiampietri" },
     ]
   },
-  { name: "Prof. Dr. Luciano Vieira de Araújo", email: "lvaraujo@usp.br", room: "T10P – Edifício A1", lattes: "https://lattes.cnpq.br/2459050725301964", personal: null, areas: "Banco de Dados, Business Intelligence, Data Warehouse, Bioinformática, Informática em Saúde, HIV, Hepatites, Natural User Interface" },
-  { name: "Prof. Dr. Marcelo de Souza Lauretto", email: "marcelolauretto@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/2488734578237992", personal: "https://www.each.usp.br/lauretto", areas: "Testes de Hipóteses Bayesianos, Bioestatística, Bioinformática, Computação Numérica, Inteligência Artificial, Machine Learning, Análise de Riscos, Métodos de Monte Carlo" },
+  { name: "Prof. Dr. Luciano Vieira de Araújo", email: "lvaraujo@usp.br", room: "T10P – Edifício A1", lattes: "https://lattes.cnpq.br/2459050725301964", personal: null, areas: "Banco de Dados, Business Intelligence, Data Warehouse, Bioinformática, Informática em Saúde, HIV, Hepatites, Natural User Interface",
+    past_exams: [
+      { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Luciano/Provas" },
+    ]
+  },
+  { name: "Prof. Dr. Marcelo de Souza Lauretto", email: "marcelolauretto@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/2488734578237992", personal: "https://www.each.usp.br/lauretto", areas: "Testes de Hipóteses Bayesianos, Bioestatística, Bioinformática, Computação Numérica, Inteligência Artificial, Machine Learning, Análise de Riscos, Métodos de Monte Carlo",
+    past_exams: [
+      { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Lauretto/EPS" },
+      { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Lauretto" },
+    ]
+  },
   { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia",
     past_exams: [
       { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Fantinato" },
