@@ -485,7 +485,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
                    isActive ? 'nav-active' : 'nav-inactive'
                  )}
                  style={{
-                   background: 'linear-gradient(135deg, rgba(168,85,247,0.18), rgba(59,130,246,0.12))',
+                   background: 'linear-gradient(135deg, var(--accent-soft), rgba(0,0,0,0.06))',
                    border: '1px solid var(--accent-1)',
                    boxShadow: '0 6px 18px rgba(0,0,0,0.22)',
                  }}>
