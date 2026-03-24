@@ -54,7 +54,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. José de Jesús Pérez Alcázar", email: "jperez@usp.br", room: "352 F – Prédio I1", lattes: "https://lattes.cnpq.br/2201580020088062", personal: null, areas: "Tecnologia Web, Sistemas de Informação e Engenharia de Software, Inteligência Artificial e Bancos de Dados" },
   { name: "Prof. Dr. José Ricardo Gonçalves de Mendonça", email: "jricardo@usp.br", room: null, lattes: "https://lattes.cnpq.br/8792749813872106", personal: null, areas: "Física Estatística, Sistemas de Computação, Empreendedorismo de base tecnológica",
     past_exams: [
-      { label: "MD", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Jos%C3%A9%20Ricardo" },
+      { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Jos%C3%A9%20Ricardo" },
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Jos%C3%A9%20Ricardo/Provas" },
     ]
   },
@@ -62,13 +62,18 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Karla Roberta Pereira Sampaio Lima", email: "ksampaiolima@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/8474346566632932", personal: null, areas: "Otimização Combinatória e Teoria dos Grafos",
     past_exams: [
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Karla" },
+      { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Karla" },
     ]
   },
   { name: "Profa. Dra. Luciane Meneguin Ortega", email: "luciane.ortega@usp.br", room: "210C – Edifício A1", lattes: "https://lattes.cnpq.br/8594007840837513", personal: null, areas: "Empreendedorismo, Inovação Tecnológica, Inovação Social, Pequenas e Médias Empresas" },
   { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia" },
   { name: "Prof. Dr. Marcelo Medeiros Eler", email: "marceloeler@usp.br", room: null, lattes: "https://lattes.cnpq.br/0170428647417667", personal: null, areas: "Engenharia de Software, Teste de Software, Geração automática de dados de teste, Governo Eletrônico, Gestão de TI" },
   { name: "Prof. Dr. Marcelo Morandini", email: "m.morandini@usp.br", room: "322E – Edifício I1", lattes: "https://lattes.cnpq.br/7235951485247158", personal: "https://www.each.usp.br/morandini", areas: "Engenharia de Software, Interação Humano-Computador, Usabilidade, Ergonomia e Testes de Software" },
-  { name: "Prof. Dr. Marcio Moretto Ribeiro", email: "marciomr@usp.br", room: null, lattes: "https://lattes.cnpq.br/2153927915438535", personal: null, areas: "Lógicas de Descrição e Revisão de Crenças" },
+  { name: "Prof. Dr. Marcio Moretto Ribeiro", email: "marciomr@usp.br", room: null, lattes: "https://lattes.cnpq.br/2153927915438535", personal: null, areas: "Lógicas de Descrição e Revisão de Crenças",
+    past_exams: [
+      { label: "Matematica Discreta (MD)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Moretto" },
+    ]
+  },
   { name: "Prof. Dr. Marcos Lordello Chaim", email: "chaim@usp.br", room: "322 N – Edifício I1", lattes: "https://lattes.cnpq.br/6414738466336890", personal: "https://www.each.usp.br/chaim", areas: "Engenharia de Software, Teste e Depuração de Software, Manutenção de Software, Métodos de Desenvolvimento de Software, Linguagens de Programação" },
   { name: "Prof. Dr. Masayuki Oka Hase", email: "mhase@usp.br", room: "202A – Edifício I1", lattes: "https://lattes.cnpq.br/9979732565759430", personal: null, areas: "Física Estatística, Redes Complexas",
     past_exams: [
