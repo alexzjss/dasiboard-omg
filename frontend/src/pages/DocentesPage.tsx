@@ -107,7 +107,11 @@ const DOCENTES_DATA: Docente[] = [
     ]
   },
   { name: "Profa. Dra. Luciane Meneguin Ortega", email: "luciane.ortega@usp.br", room: "210C – Edifício A1", lattes: "https://lattes.cnpq.br/8594007840837513", personal: null, areas: "Empreendedorismo, Inovação Tecnológica, Inovação Social, Pequenas e Médias Empresas" },
-  { name: "Prof. Dr. Luciano Antonio Digiampietri", email: "digiampietri@usp.br", room: "110P – Edifício A1", lattes: "https://lattes.cnpq.br/1689147340536405", personal: "https://each.usp.br/digiampietri", areas: "Gerenciamento e Composição Automática de Serviços Web Semânticos, Bioinformática, Mineração de Dados, Análise de Redes Sociais, Educação em Sistemas de Informação" },
+  { name: "Prof. Dr. Luciano Antonio Digiampietri", email: "digiampietri@usp.br", room: "110P – Edifício A1", lattes: "https://lattes.cnpq.br/1689147340536405", personal: "https://each.usp.br/digiampietri", areas: "Gerenciamento e Composição Automática de Serviços Web Semânticos, Bioinformática, Mineração de Dados, Análise de Redes Sociais, Educação em Sistemas de Informação",
+    past_exams: [
+      { label: "Introducao a Analise de Algoritmos (IAA)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/IAA%20-%20Introduc%CC%A7a%CC%83o%20a%CC%80%20Ana%CC%81lise%20de%20Algoritmos/Digiampietri" },
+    ]
+  },
   { name: "Prof. Dr. Luciano Vieira de Araújo", email: "lvaraujo@usp.br", room: "T10P – Edifício A1", lattes: "https://lattes.cnpq.br/2459050725301964", personal: null, areas: "Banco de Dados, Business Intelligence, Data Warehouse, Bioinformática, Informática em Saúde, HIV, Hepatites, Natural User Interface" },
   { name: "Prof. Dr. Marcelo de Souza Lauretto", email: "marcelolauretto@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/2488734578237992", personal: "https://www.each.usp.br/lauretto", areas: "Testes de Hipóteses Bayesianos, Bioestatística, Bioinformática, Computação Numérica, Inteligência Artificial, Machine Learning, Análise de Riscos, Métodos de Monte Carlo" },
   { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia",
