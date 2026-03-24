@@ -30,9 +30,17 @@ const DOCENTES_DATA: Docente[] = [
       { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Claudia" },
     ]
   },
-  { name: "Prof. Dr. Clodoaldo Aparecido de Moraes Lima", email: "c.lima@usp.br", room: "104N – Prédio A1", lattes: "https://lattes.cnpq.br/3017337174053381", personal: null, areas: "Inteligência Artificial, Machine Learning, Métodos de kernel, Análise e Predição de Séries Temporais Financeiras e Biomédicas, Sistemas Biométricos" },
+  { name: "Prof. Dr. Clodoaldo Aparecido de Moraes Lima", email: "c.lima@usp.br", room: "104N – Prédio A1", lattes: "https://lattes.cnpq.br/3017337174053381", personal: null, areas: "Inteligência Artificial, Machine Learning, Métodos de kernel, Análise e Predição de Séries Temporais Financeiras e Biomédicas, Sistemas Biométricos",
+    past_exams: [
+      { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Clodoaldo/Provas/P1" },
+    ]
+  },
   { name: "Prof. Dr. Daniel de Angelis Cordeiro", email: "daniel.cordeiro@usp.br", room: "352D – Edifício I1", lattes: "https://lattes.cnpq.br/5322325760113475", personal: "https://www.each.usp.br/dc/", areas: "Teoria do Escalonamento, Teoria Algorítmica dos Jogos, Computação de Alto Desempenho, Computação Paralela e Distribuída, Computação em Nuvem" },
-  { name: "Prof. Dr. Edmir Parada Vasques Prado", email: "eprado@usp.br", room: "110M – Edifício A1", lattes: "https://lattes.cnpq.br/2091731281771940", personal: null, areas: "Gestão da Informação e do Conhecimento, Governança e Gestão de Tecnologia da Informação, Sistemas de Informação Organizacionais e Interorganizacionais" },
+  { name: "Prof. Dr. Edmir Parada Vasques Prado", email: "eprado@usp.br", room: "110M – Edifício A1", lattes: "https://lattes.cnpq.br/2091731281771940", personal: null, areas: "Gestão da Informação e do Conhecimento, Governança e Gestão de Tecnologia da Informação, Sistemas de Informação Organizacionais e Interorganizacionais",
+    past_exams: [
+      { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Edmir/Provas" },
+    ]
+  },
   { name: "Prof. Dr. Esteban Fernandez Tuesta", email: "tuesta@usp.br", room: "346-E – Bloco I1", lattes: "https://lattes.cnpq.br/1068554491963326", personal: null, areas: "Probabilidade Aplicada, Estatística Aplicada, Processos Markovianos e Ciência da Informação" },
   { name: "Prof. Dr. Fabio Nakano", email: "fabionakano@usp.br", room: "A1-204E", lattes: "https://lattes.cnpq.br/7142543937454545", personal: null, areas: "Bioinformática, Banco de Dados, Matemática Aplicada",
     past_exams: [
@@ -50,7 +58,11 @@ const DOCENTES_DATA: Docente[] = [
     ]
   },
   { name: "Prof. Dr. Ivandré Paraboni", email: "ivandre@usp.br", room: "320F – Edifício I1", lattes: "https://lattes.cnpq.br/4979536048261282", personal: "https://www.each.usp.br/ivandre", areas: "Processamento de Língua Natural, Ciências Cognitivas, Inteligência Artificial, Tecnologia da Língua Humana" },
-  { name: "Prof. Dr. João Luiz Bernardes Júnior", email: "jlbernardes@usp.br", room: "110G – Edifício A1", lattes: "https://lattes.cnpq.br/8529032048850930", personal: null, areas: "Interação Humano-Computador, Análise e Processamento de Imagens, Computação Gráfica, Visualização Científica, Jogos Digitais, Realidade Virtual e Aumentada" },
+  { name: "Prof. Dr. João Luiz Bernardes Júnior", email: "jlbernardes@usp.br", room: "110G – Edifício A1", lattes: "https://lattes.cnpq.br/8529032048850930", personal: null, areas: "Interação Humano-Computador, Análise e Processamento de Imagens, Computação Gráfica, Visualização Científica, Jogos Digitais, Realidade Virtual e Aumentada",
+    past_exams: [
+      { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Jo%C3%A3o" },
+    ]
+  },
   { name: "Prof. Dr. José de Jesús Pérez Alcázar", email: "jperez@usp.br", room: "352 F – Prédio I1", lattes: "https://lattes.cnpq.br/2201580020088062", personal: null, areas: "Tecnologia Web, Sistemas de Informação e Engenharia de Software, Inteligência Artificial e Bancos de Dados" },
   { name: "Prof. Dr. José Ricardo Gonçalves de Mendonça", email: "jricardo@usp.br", room: null, lattes: "https://lattes.cnpq.br/8792749813872106", personal: null, areas: "Física Estatística, Sistemas de Computação, Empreendedorismo de base tecnológica",
     past_exams: [
@@ -66,8 +78,16 @@ const DOCENTES_DATA: Docente[] = [
     ]
   },
   { name: "Profa. Dra. Luciane Meneguin Ortega", email: "luciane.ortega@usp.br", room: "210C – Edifício A1", lattes: "https://lattes.cnpq.br/8594007840837513", personal: null, areas: "Empreendedorismo, Inovação Tecnológica, Inovação Social, Pequenas e Médias Empresas" },
-  { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia" },
-  { name: "Prof. Dr. Marcelo Medeiros Eler", email: "marceloeler@usp.br", room: null, lattes: "https://lattes.cnpq.br/0170428647417667", personal: null, areas: "Engenharia de Software, Teste de Software, Geração automática de dados de teste, Governo Eletrônico, Gestão de TI" },
+  { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia",
+    past_exams: [
+      { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Fantinato" },
+    ]
+  },
+  { name: "Prof. Dr. Marcelo Medeiros Eler", email: "marceloeler@usp.br", room: null, lattes: "https://lattes.cnpq.br/0170428647417667", personal: null, areas: "Engenharia de Software, Teste de Software, Geração automática de dados de teste, Governo Eletrônico, Gestão de TI",
+    past_exams: [
+      { label: "Fundamentos de Sistemas de Informacao (FSI)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/FSI%20-%20Fundamentos%20de%20Sistemas%20de%20Informac%CC%A7a%CC%83o/Eler" },
+    ]
+  },
   { name: "Prof. Dr. Marcelo Morandini", email: "m.morandini@usp.br", room: "322E – Edifício I1", lattes: "https://lattes.cnpq.br/7235951485247158", personal: "https://www.each.usp.br/morandini", areas: "Engenharia de Software, Interação Humano-Computador, Usabilidade, Ergonomia e Testes de Software",
     past_exams: [
       { label: "Introducao a Programacao (IP)", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Morandini/Provas/P1/2024" },
