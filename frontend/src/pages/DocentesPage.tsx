@@ -20,6 +20,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Alexandre Ferreira Ramos", email: "alex.ramos@usp.br", room: "A1-104B", lattes: "https://lattes.cnpq.br/9681052469456395", personal: "https://each.usp.br/alexramos/", areas: "Classificação da função e dos mecanismos de supressão de flutuações aleatórias em regulação da expressão gênica",
     past_exams: [
       { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Alexandre/P2" },
+      { label: "Calculo 2", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/Calc%20II%20-%20Ca%CC%81lculo%20II/Alexandre/Provas" },
     ]
   },
   { name: "Profa. Dra. Ana Amélia Benedito Silva", email: "aamelia@usp.br", room: "301 G – Prédio I1", lattes: "https://lattes.cnpq.br/0827495526048435", personal: null, areas: "Séries Temporais Biológicas" },
@@ -55,6 +56,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Fernando Auil", email: "auil@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/9270505088399430", personal: null, areas: "Abordagem de Beurling da Hipótese de Riemann, Matemática Aplicada",
     past_exams: [
       { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Fernando%20Auil" },
+      { label: "Calculo 2", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/Calc%20II%20-%20Ca%CC%81lculo%20II/Auil" },
     ]
   },
   { name: "Prof. Dr. Flávio Luiz Coutinho", email: "flcoutinho@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/3100288618568772", personal: null, areas: "Rastreamento de olhar, razão cruzada, compensação de movimentos de cabeça e interação humano computador" },
