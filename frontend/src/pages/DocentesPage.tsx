@@ -27,6 +27,7 @@ const DOCENTES_DATA: Docente[] = [
     past_exams: [
       { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Claudia" },
       { label: "Calculo 2", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/Calc%20II%20-%20Ca%CC%81lculo%20II/Claudia" },
+      { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Claudia" },
     ]
   },
   { name: "Prof. Dr. Clodoaldo Aparecido de Moraes Lima", email: "c.lima@usp.br", room: "104N – Prédio A1", lattes: "https://lattes.cnpq.br/3017337174053381", personal: null, areas: "Inteligência Artificial, Machine Learning, Métodos de kernel, Análise e Predição de Séries Temporais Financeiras e Biomédicas, Sistemas Biométricos" },
@@ -45,6 +46,7 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Helton Hideraldo Bíscaro", email: "heltonhb@usp.br", room: "352B – Prédio I1", lattes: "https://lattes.cnpq.br/8794441658476782", personal: null, areas: "Estrutura de Dados, Reconstrução, Nuvem de pontos, Complexos Simpliciais, Teoria de Morse Discreta",
     past_exams: [
       { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Helton" },
+      { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Helton" },
     ]
   },
   { name: "Prof. Dr. Ivandré Paraboni", email: "ivandre@usp.br", room: "320F – Edifício I1", lattes: "https://lattes.cnpq.br/4979536048261282", personal: "https://www.each.usp.br/ivandre", areas: "Processamento de Língua Natural, Ciências Cognitivas, Inteligência Artificial, Tecnologia da Língua Humana" },
@@ -53,17 +55,26 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. José Ricardo Gonçalves de Mendonça", email: "jricardo@usp.br", room: null, lattes: "https://lattes.cnpq.br/8792749813872106", personal: null, areas: "Física Estatística, Sistemas de Computação, Empreendedorismo de base tecnológica",
     past_exams: [
       { label: "MD", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Jos%C3%A9%20Ricardo" },
+      { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Jos%C3%A9%20Ricardo/Provas" },
     ]
   },
   { name: "Profa. Dra. Karina Valdivia Delgado", email: "kvd@usp.br", room: "104F – Edifício A1", lattes: "https://lattes.cnpq.br/8420771612707965", personal: "https://www.ime.usp.br/~kvd", areas: "Inteligência Artificial, Planejamento Probabilístico, Tomada de decisão, Processos de decisão markovianos" },
-  { name: "Prof. Dr. Karla Roberta Pereira Sampaio Lima", email: "ksampaiolima@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/8474346566632932", personal: null, areas: "Otimização Combinatória e Teoria dos Grafos" },
+  { name: "Prof. Dr. Karla Roberta Pereira Sampaio Lima", email: "ksampaiolima@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/8474346566632932", personal: null, areas: "Otimização Combinatória e Teoria dos Grafos",
+    past_exams: [
+      { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Karla" },
+    ]
+  },
   { name: "Profa. Dra. Luciane Meneguin Ortega", email: "luciane.ortega@usp.br", room: "210C – Edifício A1", lattes: "https://lattes.cnpq.br/8594007840837513", personal: null, areas: "Empreendedorismo, Inovação Tecnológica, Inovação Social, Pequenas e Médias Empresas" },
   { name: "Prof. Dr. Marcelo Fantinato", email: "m.fantinato@usp.br", room: "110I – Edifício A1", lattes: "https://lattes.cnpq.br/8207954538307988", personal: "https://www.each.usp.br/fantinato", areas: "Mineração de Processos, Gestão de Processos de Negócio (BPM), Internet das Coisas (IoT), Brinquedos Inteligentes e Robôs de Companhia" },
   { name: "Prof. Dr. Marcelo Medeiros Eler", email: "marceloeler@usp.br", room: null, lattes: "https://lattes.cnpq.br/0170428647417667", personal: null, areas: "Engenharia de Software, Teste de Software, Geração automática de dados de teste, Governo Eletrônico, Gestão de TI" },
   { name: "Prof. Dr. Marcelo Morandini", email: "m.morandini@usp.br", room: "322E – Edifício I1", lattes: "https://lattes.cnpq.br/7235951485247158", personal: "https://www.each.usp.br/morandini", areas: "Engenharia de Software, Interação Humano-Computador, Usabilidade, Ergonomia e Testes de Software" },
   { name: "Prof. Dr. Marcio Moretto Ribeiro", email: "marciomr@usp.br", room: null, lattes: "https://lattes.cnpq.br/2153927915438535", personal: null, areas: "Lógicas de Descrição e Revisão de Crenças" },
   { name: "Prof. Dr. Marcos Lordello Chaim", email: "chaim@usp.br", room: "322 N – Edifício I1", lattes: "https://lattes.cnpq.br/6414738466336890", personal: "https://www.each.usp.br/chaim", areas: "Engenharia de Software, Teste e Depuração de Software, Manutenção de Software, Métodos de Desenvolvimento de Software, Linguagens de Programação" },
-  { name: "Prof. Dr. Masayuki Oka Hase", email: "mhase@usp.br", room: "202A – Edifício I1", lattes: "https://lattes.cnpq.br/9979732565759430", personal: null, areas: "Física Estatística, Redes Complexas" },
+  { name: "Prof. Dr. Masayuki Oka Hase", email: "mhase@usp.br", room: "202A – Edifício I1", lattes: "https://lattes.cnpq.br/9979732565759430", personal: null, areas: "Física Estatística, Redes Complexas",
+    past_exams: [
+      { label: "MVGA", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MVGA%20-%20Matrizes%2C%20Vetores%20e%20Geometria%20Anal%C3%ADtica/Masayuki" },
+    ]
+  },
   { name: "Prof. Dr. Norton Trevisan Roman", email: "norton@usp.br", room: "110R – Edifício A1", lattes: "https://lattes.cnpq.br/4440731926425760", personal: "https://www.each.usp.br/norton", areas: "Processamento de Língua Natural (Linguística Computacional), Inteligência Artificial, Educação em Informática" },
   { name: "Profa. Dra. Patrícia Rufino Oliveira", email: "proliveira@usp.br", room: "322A – Edifício I1", lattes: "https://lattes.cnpq.br/9174573815394512", personal: null, areas: "Inteligência Artificial, Computação Bioinspirada, Redes Neurais Artificiais, Processamento de Imagens Digitais, Visão Computacional, Análise de Componentes Independentes" },
   { name: "Prof. Dr. Renan Cerqueira Afonso Alves", email: "renanalves@usp.br", room: null, lattes: "https://lattes.cnpq.br/4974090084595688", personal: null, areas: "Redes de sensores sem fio, Internet das coisas, Modelagem de redes de computadores" },
