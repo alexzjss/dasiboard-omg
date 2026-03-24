@@ -11,6 +11,7 @@ interface Docente {
   lattes: string | null
   personal: string | null
   areas: string
+  past_exams?: { label: string; url: string }[]
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -22,21 +23,38 @@ const DOCENTES_DATA: Docente[] = [
   { name: "Prof. Dr. Andre Cavalcanti Rocha Martins", email: "amartins@usp.br", room: "319 F – Prédio I1", lattes: "https://lattes.cnpq.br/2318177531681999", personal: null, areas: "Dinâmica Cultural e de Opiniões" },
   { name: "Profa. Dra. Ariane Machado Lima", email: "ariane.machado@usp.br", room: "210-N – Edifício A1", lattes: "https://lattes.cnpq.br/6342311646947853", personal: "https://www.each.usp.br/ariane", areas: "Reconhecimento de Padrões, Gramáticas Estocásticas, Classificadores de Sequências, Bioinformática, RNAs não codificantes" },
   { name: "Prof. Dr. Camilo Rodrigues Neto", email: "camiloneto@usp.br", room: "322-O – Edifício I1", lattes: "https://lattes.cnpq.br/8618151183586924", personal: "https://www.each.usp.br/camiloneto/", areas: "Sistemas Complexos, Modelagem por agentes, Dinâmica Estocástica, Econofísica, Análise e modelagem multifractal de sinais" },
-  { name: "Profa. Dra. Cláudia Inés Garcia", email: "claudiag@usp.br", room: "202 G – Prédio I1", lattes: "https://lattes.cnpq.br/4327900264403345", personal: null, areas: "Matemática, com ênfase em Matemática Aplicada" },
+  { name: "Profa. Dra. Cláudia Inés Garcia", email: "claudiag@usp.br", room: "202 G – Prédio I1", lattes: "https://lattes.cnpq.br/4327900264403345", personal: null, areas: "Matemática, com ênfase em Matemática Aplicada",
+    past_exams: [
+      { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Claudia" },
+      { label: "Calculo 2", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/Calc%20II%20-%20Ca%CC%81lculo%20II/Claudia" },
+    ]
+  },
   { name: "Prof. Dr. Clodoaldo Aparecido de Moraes Lima", email: "c.lima@usp.br", room: "104N – Prédio A1", lattes: "https://lattes.cnpq.br/3017337174053381", personal: null, areas: "Inteligência Artificial, Machine Learning, Métodos de kernel, Análise e Predição de Séries Temporais Financeiras e Biomédicas, Sistemas Biométricos" },
   { name: "Prof. Dr. Daniel de Angelis Cordeiro", email: "daniel.cordeiro@usp.br", room: "352D – Edifício I1", lattes: "https://lattes.cnpq.br/5322325760113475", personal: "https://www.each.usp.br/dc/", areas: "Teoria do Escalonamento, Teoria Algorítmica dos Jogos, Computação de Alto Desempenho, Computação Paralela e Distribuída, Computação em Nuvem" },
   { name: "Prof. Dr. Edmir Parada Vasques Prado", email: "eprado@usp.br", room: "110M – Edifício A1", lattes: "https://lattes.cnpq.br/2091731281771940", personal: null, areas: "Gestão da Informação e do Conhecimento, Governança e Gestão de Tecnologia da Informação, Sistemas de Informação Organizacionais e Interorganizacionais" },
   { name: "Prof. Dr. Esteban Fernandez Tuesta", email: "tuesta@usp.br", room: "346-E – Bloco I1", lattes: "https://lattes.cnpq.br/1068554491963326", personal: null, areas: "Probabilidade Aplicada, Estatística Aplicada, Processos Markovianos e Ciência da Informação" },
-  { name: "Prof. Dr. Fabio Nakano", email: "fabionakano@usp.br", room: "A1-204E", lattes: "https://lattes.cnpq.br/7142543937454545", personal: null, areas: "Bioinformática, Banco de Dados, Matemática Aplicada" },
+  { name: "Prof. Dr. Fabio Nakano", email: "fabionakano@usp.br", room: "A1-204E", lattes: "https://lattes.cnpq.br/7142543937454545", personal: null, areas: "Bioinformática, Banco de Dados, Matemática Aplicada",
+    past_exams: [
+      { label: "IP", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/IP%20-%20Introduc%CC%A7a%CC%83o%20a%20Programac%CC%A7a%CC%83o/Nakano/Provas" },
+    ]
+  },
   { name: "Profa. Dra. Fátima de Lourdes dos Santos Nunes Marques", email: "fatima.nunes@usp.br", room: "210P – Prédio A1", lattes: "https://lattes.cnpq.br/8626964624628522", personal: null, areas: "Realidade Virtual, Processamento de Imagens, Banco de Dados, Sistemas de Auxílio ao Diagnóstico, Treinamento Médico Virtual, Mamografia, Recuperação Baseada em Conteúdo" },
   { name: "Prof. Dr. Fernando Auil", email: "auil@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/9270505088399430", personal: null, areas: "Abordagem de Beurling da Hipótese de Riemann, Matemática Aplicada" },
   { name: "Prof. Dr. Flávio Luiz Coutinho", email: "flcoutinho@usp.br", room: "357 F – Prédio I1", lattes: "https://lattes.cnpq.br/3100288618568772", personal: null, areas: "Rastreamento de olhar, razão cruzada, compensação de movimentos de cabeça e interação humano computador" },
   { name: "Profa. Dra. Gisele da Silva Craveiro", email: "giselesc@usp.br", room: "252 – Edifício I1", lattes: "https://lattes.cnpq.br/0361123363747622", personal: null, areas: "Impactos de Sistemas de Informação na Sociedade, Governo eletrônico, Dados Abertos, Governo Aberto, Cultura livre e cultura digital" },
-  { name: "Prof. Dr. Helton Hideraldo Bíscaro", email: "heltonhb@usp.br", room: "352B – Prédio I1", lattes: "https://lattes.cnpq.br/8794441658476782", personal: null, areas: "Estrutura de Dados, Reconstrução, Nuvem de pontos, Complexos Simpliciais, Teoria de Morse Discreta" },
+  { name: "Prof. Dr. Helton Hideraldo Bíscaro", email: "heltonhb@usp.br", room: "352B – Prédio I1", lattes: "https://lattes.cnpq.br/8794441658476782", personal: null, areas: "Estrutura de Dados, Reconstrução, Nuvem de pontos, Complexos Simpliciais, Teoria de Morse Discreta",
+    past_exams: [
+      { label: "Calculo 1", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/1%C2%BA%20Semestre/Calc%20I%20-%20Ca%CC%81lculo%20I/Helton" },
+    ]
+  },
   { name: "Prof. Dr. Ivandré Paraboni", email: "ivandre@usp.br", room: "320F – Edifício I1", lattes: "https://lattes.cnpq.br/4979536048261282", personal: "https://www.each.usp.br/ivandre", areas: "Processamento de Língua Natural, Ciências Cognitivas, Inteligência Artificial, Tecnologia da Língua Humana" },
   { name: "Prof. Dr. João Luiz Bernardes Júnior", email: "jlbernardes@usp.br", room: "110G – Edifício A1", lattes: "https://lattes.cnpq.br/8529032048850930", personal: null, areas: "Interação Humano-Computador, Análise e Processamento de Imagens, Computação Gráfica, Visualização Científica, Jogos Digitais, Realidade Virtual e Aumentada" },
   { name: "Prof. Dr. José de Jesús Pérez Alcázar", email: "jperez@usp.br", room: "352 F – Prédio I1", lattes: "https://lattes.cnpq.br/2201580020088062", personal: null, areas: "Tecnologia Web, Sistemas de Informação e Engenharia de Software, Inteligência Artificial e Bancos de Dados" },
-  { name: "Prof. Dr. José Ricardo Gonçalves de Mendonça", email: "jricardo@usp.br", room: null, lattes: "https://lattes.cnpq.br/8792749813872106", personal: null, areas: "Física Estatística, Sistemas de Computação, Empreendedorismo de base tecnológica" },
+  { name: "Prof. Dr. José Ricardo Gonçalves de Mendonça", email: "jricardo@usp.br", room: null, lattes: "https://lattes.cnpq.br/8792749813872106", personal: null, areas: "Física Estatística, Sistemas de Computação, Empreendedorismo de base tecnológica",
+    past_exams: [
+      { label: "MD", url: "https://github.com/driveeach/drivesi/tree/master/Materias%20Obrigatorias/2%C2%BA%20Semestre/MD%20-%20Matema%CC%81tica%20Discreta%20I/Jos%C3%A9%20Ricardo" },
+    ]
+  },
   { name: "Profa. Dra. Karina Valdivia Delgado", email: "kvd@usp.br", room: "104F – Edifício A1", lattes: "https://lattes.cnpq.br/8420771612707965", personal: "https://www.ime.usp.br/~kvd", areas: "Inteligência Artificial, Planejamento Probabilístico, Tomada de decisão, Processos de decisão markovianos" },
   { name: "Prof. Dr. Karla Roberta Pereira Sampaio Lima", email: "ksampaiolima@usp.br", room: "104P – Edifício A1", lattes: "https://lattes.cnpq.br/8474346566632932", personal: null, areas: "Otimização Combinatória e Teoria dos Grafos" },
   { name: "Profa. Dra. Luciane Meneguin Ortega", email: "luciane.ortega@usp.br", room: "210C – Edifício A1", lattes: "https://lattes.cnpq.br/8594007840837513", personal: null, areas: "Empreendedorismo, Inovação Tecnológica, Inovação Social, Pequenas e Médias Empresas" },
@@ -80,6 +98,7 @@ function nameToHue(name: string): number {
 
 export default function DocentesPage() {
   const [query, setQuery] = useState('')
+  const [examsDoc, setExamsDoc] = useState<Docente | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
@@ -209,8 +228,63 @@ export default function DocentesPage() {
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
         >
           {filtered.map((doc, i) => (
-            <DocenteCard key={doc.email} doc={doc} index={i} highlight={query.trim() || undefined} />
+            <DocenteCard
+              key={doc.email}
+              doc={doc}
+              index={i}
+              highlight={query.trim() || undefined}
+              onOpenExams={setExamsDoc}
+            />
           ))}
+        </div>
+      )}
+
+      {examsDoc && examsDoc.past_exams && (
+        <div
+          className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center sm:p-4"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setExamsDoc(null) }}
+        >
+          <div
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden animate-in"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}
+          >
+            <div className="flex justify-center pt-3 sm:hidden">
+              <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
+            </div>
+            <div className="px-5 pt-4 pb-3 flex items-start justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div>
+                <h3 className="font-display font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+                  Provas antigas
+                </h3>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  {examsDoc.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setExamsDoc(null)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--border)', color: 'var(--text-muted)' }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-2">
+              {examsDoc.past_exams.map((exam) => (
+                <a
+                  key={exam.url}
+                  href={exam.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all hover:scale-[1.01]"
+                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                >
+                  <span>{exam.label}</span>
+                  <ExternalLink size={14} style={{ color: 'var(--text-muted)' }} />
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -219,7 +293,17 @@ export default function DocentesPage() {
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function DocenteCard({ doc, index, highlight }: { doc: Docente; index: number; highlight?: string }) {
+function DocenteCard({
+  doc,
+  index,
+  highlight,
+  onOpenExams,
+}: {
+  doc: Docente
+  index: number
+  highlight?: string
+  onOpenExams: (doc: Docente) => void
+}) {
   const initials = getInitials(doc.name)
   const hue = nameToHue(doc.name)
 
@@ -319,8 +403,19 @@ function DocenteCard({ doc, index, highlight }: { doc: Docente; index: number; h
       </p>
 
       {/* Links */}
-      {(doc.lattes || doc.personal) && (
+      {(doc.lattes || doc.personal || doc.past_exams?.length) && (
         <div className="flex items-center gap-2 mt-auto pt-1">
+          {doc.past_exams?.length && (
+            <button
+              onClick={() => onOpenExams(doc)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-[1.03] active:scale-[0.97]"
+              style={{ background: 'var(--accent-soft)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-1)'; e.currentTarget.style.color = 'var(--accent-3)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <BookOpen size={11} /> Provas antigas
+            </button>
+          )}
           {doc.lattes && (
             <a
               href={doc.lattes}
