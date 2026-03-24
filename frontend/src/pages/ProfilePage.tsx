@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   User, Mail, Hash, Calendar, GraduationCap, LogOut,
   Download, RefreshCw, X, Check, Code2, Trophy,
-  Sparkles, ImagePlus, Trash2, Lock, Star, RotateCw, Maximize2,
+  Sparkles, ImagePlus, Trash2, Lock, Star, RotateCw, Maximize2, Globe,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useStudyStats } from '@/hooks/useStudyStats'
@@ -1637,7 +1637,18 @@ export default function ProfilePage() {
           {avatarLoading&&<div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}><RefreshCw size={16} className="animate-spin text-white"/></div>}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-2xl md:text-3xl font-bold truncate tracking-tight" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-2xl md:text-3xl font-bold truncate tracking-tight" style={{color:"var(--text-primary)"}}>{user.full_name}</h1>
+            {user.nusp && (
+              <button
+                onClick={() => navigate(`/u/${user.nusp}`)}
+                className="btn-ghost text-xs px-2 py-1 gap-1.5"
+                title="Ver perfil publico"
+              >
+                <Globe size={12} /> Perfil publico
+              </button>
+            )}
+          </div>
           <p className="text-sm mt-0.5" style={{color:"var(--accent-3)"}}>{userTitle}</p>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold"
