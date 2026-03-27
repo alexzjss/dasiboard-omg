@@ -788,10 +788,10 @@ export default function CalendarPage() {
             <button onClick={() => setCurrent(new Date())}
                     className="btn-ghost text-xs px-2 py-1 font-medium" style={{ color: 'var(--accent-3)' }}>Hoje</button>
             <button onClick={() => setCurrent(s => addMonths(s, 1))} className="btn-ghost p-1.5"><ChevronRight size={15}/></button>
-            <button onClick={() => openForm(false)} className="btn-primary text-xs py-1.5 sm:min-w-[110px] sm:justify-center">
+            <button onClick={() => openForm(false)} className="btn-primary text-xs py-1.5 sm:w-[120px] sm:justify-center">
               <Plus size={13}/> <span className="hidden sm:inline">Evento</span>
             </button>
-            <button onClick={() => openForm(true)} className="btn text-white text-xs py-1.5 sm:min-w-[110px] sm:justify-center"
+            <button onClick={() => openForm(true)} className="btn text-white text-xs py-1.5 sm:w-[120px] sm:justify-center"
                     style={{ background:'linear-gradient(135deg,var(--accent-1),#db2777)', boxShadow:'0 2px 8px var(--accent-glow)' }}>
               <Globe size={13}/> <span className="hidden sm:inline">Global</span>
             </button>
