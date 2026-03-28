@@ -408,6 +408,51 @@ CREATE INDEX IF NOT EXISTS idx_global_materials_subject  ON global_materials (su
 
 """
 
+# Migration separada para materiais — executada independentemente do INIT_SQL principal.
+# Isso garante que as tabelas sejam criadas mesmo em deploys onde o container não
+# foi reiniciado (advisory lock do INIT_SQL já havia rodado sem este bloco).
+MATERIALS_MIGRATION_SQL = """
+CREATE TABLE IF NOT EXISTS materials (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title       VARCHAR(255) NOT NULL,
+    description TEXT,
+    category    VARCHAR(20)  NOT NULL DEFAULT 'outro'
+                    CHECK (category IN ('aula','exercicio','livro','video','artigo','podcast','outro')),
+    type        VARCHAR(10)  NOT NULL DEFAULT 'link'
+                    CHECK (type IN ('link','file')),
+    url         TEXT,
+    file_url    TEXT,
+    file_name   VARCHAR(255),
+    subject     VARCHAR(50),
+    tags        TEXT[]       NOT NULL DEFAULT '{}',
+    semester    VARCHAR(10),
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_materials_owner    ON materials (owner_id);
+CREATE INDEX IF NOT EXISTS idx_materials_category ON materials (category);
+CREATE INDEX IF NOT EXISTS idx_materials_subject  ON materials (subject) WHERE subject IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS global_materials (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    title       VARCHAR(255) NOT NULL,
+    description TEXT,
+    category    VARCHAR(20)  NOT NULL DEFAULT 'outro'
+                    CHECK (category IN ('aula','exercicio','livro','video','artigo','podcast','outro')),
+    type        VARCHAR(10)  NOT NULL DEFAULT 'link'
+                    CHECK (type IN ('link','file')),
+    url         TEXT,
+    file_url    TEXT,
+    file_name   VARCHAR(255),
+    subject     VARCHAR(50),
+    tags        TEXT[]       NOT NULL DEFAULT '{}',
+    semester    VARCHAR(10),
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_global_materials_category ON global_materials (category);
+CREATE INDEX IF NOT EXISTS idx_global_materials_subject  ON global_materials (subject) WHERE subject IS NOT NULL;
+"""
+
 
 def get_pool():
     global _pool
@@ -437,6 +482,15 @@ def init_db():
                 cur.execute(INIT_SQL)
             finally:
                 cur.execute("SELECT pg_advisory_unlock(12345678)")
+
+            # Migration de materiais: executa com lock próprio para garantir
+            # que rode mesmo em containers que não passaram pelo INIT_SQL completo.
+            cur.execute("SELECT pg_advisory_lock(12345679)")
+            try:
+                cur.execute(MATERIALS_MIGRATION_SQL)
+            finally:
+                cur.execute("SELECT pg_advisory_unlock(12345679)")
+
         conn.autocommit = False
     except Exception:
         conn.autocommit = False
