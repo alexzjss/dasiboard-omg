@@ -100,27 +100,38 @@ def list_materials(
 ):
     """Retorna os materiais do usuário + todos os globais."""
     uid = str(user["id"])
-    db.execute(
-        """
-        SELECT id, owner_id AS created_by, title, description, category, type,
-               url, file_url, file_name, subject, tags, FALSE AS is_global,
-               created_at, semester
-        FROM   materials
-        WHERE  owner_id = %s
+    try:
+        db.execute(
+            """
+            SELECT id, owner_id AS created_by, title, description, category, type,
+                   url, file_url, file_name, subject, tags, FALSE AS is_global,
+                   created_at, semester
+            FROM   materials
+            WHERE  owner_id = %s
 
-        UNION ALL
+            UNION ALL
 
-        SELECT id, NULL AS created_by, title, description, category, type,
-               url, file_url, file_name, subject, tags, TRUE AS is_global,
-               created_at, semester
-        FROM   global_materials
+            SELECT id, NULL AS created_by, title, description, category, type,
+                   url, file_url, file_name, subject, tags, TRUE AS is_global,
+                   created_at, semester
+            FROM   global_materials
 
-        ORDER BY created_at DESC
-        """,
-        (uid,),
-    )
-    rows = db.fetchall()
-    return [_row_to_out(dict(r)) for r in rows]
+            ORDER BY created_at DESC
+            """,
+            (uid,),
+        )
+        rows = db.fetchall()
+        return [_row_to_out(dict(r)) for r in rows]
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "does not exist" in err_msg or "relation" in err_msg:
+            # Tabelas ainda não foram criadas (container não reiniciado após deploy)
+            raise HTTPException(
+                503,
+                "Tabelas de materiais ainda não inicializadas. "
+                "Reinicie o container do backend para aplicar as migrações."
+            )
+        raise
 
 
 @router.post("/", response_model=MaterialOut, status_code=201)
