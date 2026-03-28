@@ -2,17 +2,15 @@ import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
 // ── BASE_URL resolution ────────────────────────────────────────────────────────
-// Prioridade:
-// 1. VITE_API_URL definida em build time (variável de ambiente no App Platform)
-// 2. '/api' como fallback — funciona com docker-compose local onde o nginx
-//    faz proxy de /api/ → backend:8000
+// Em produção (docker-compose) o nginx faz proxy /api/ → backend:8000,
+// então BASE_URL = '/api' e o axios chama /api/materials, /api/events, etc.
 //
-// IMPORTANTE para DigitalOcean App Platform:
-// Defina VITE_API_URL nas variáveis de ambiente do componente frontend:
-//   https://SEU-BACKEND.ondigitalocean.app
-// Sem isso, o frontend usa '/api' que aponta para si mesmo e as chamadas falham.
+// Se VITE_API_URL estiver definida E não for string vazia, usa ela.
+// Isso evita o bug de VITE_API_URL="" (string vazia) — que com ?? retornaria ""
+// e faria o axios chamar /materials sem prefixo, respondido pelo nginx da SPA.
 //
-const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
+const _rawApiUrl = import.meta.env.VITE_API_URL
+const BASE_URL = (_rawApiUrl && _rawApiUrl.trim()) ? _rawApiUrl.trim() : '/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
