@@ -621,7 +621,6 @@ export default function MaterialsPage() {
     setLoading(true)
     try {
       const { data } = await api.get<Material[]>('/materials')
-      // Sucesso — persiste e exibe. Lista vazia é válida.
       const merged = (data ?? []).map(m => ({ ...m, starred: starred.has(m.id) }))
       setMaterials(merged)
       saveLocal(merged)
@@ -629,27 +628,24 @@ export default function MaterialsPage() {
       const cached = loadLocal()
       setMaterials(cached)
 
-      const status  = err?.response?.status
-      const detail  = err?.response?.data?.detail as string | undefined
-      const isNet   = !err?.response // sem resposta = rede/CORS/servidor offline
+      const status = err?.response?.status
+      const detail = err?.response?.data?.detail as string | undefined
+      const isNet  = !err?.response
 
-      if (isNet) {
-        // Sem resposta do servidor — não mostra nada se tiver cache local
-        if (cached.length === 0) {
-          toast.error('Não foi possível conectar ao servidor.')
-        }
-      } else if (status === 401 || status === 403) {
-        // Token inválido — interceptor de auth já redireciona para /login
+      if (status === 401 || status === 403) {
+        // Interceptor de auth já cuida do redirect
       } else if (status === 404) {
-        // Endpoint não existe no backend — deploy incompleto
-        toast.error('Endpoint /materials não encontrado. Verifique o deploy do backend.')
+        toast.error('Rota /materials não encontrada no backend. Verifique o deploy.')
       } else if (status === 500 || status === 503) {
         toast.error(detail ?? `Erro interno no servidor (${status}).`)
-      } else if (detail) {
+      } else if (!isNet && detail) {
         toast.error(detail)
-      } else if (cached.length === 0) {
-        toast.error('Erro desconhecido ao carregar materiais.')
+      } else if (isNet && cached.length === 0) {
+        // Sem resposta e sem cache: mostra aviso discreto sem bloquear UX
+        console.warn('[Materials] Sem conexão com o servidor. VITE_API_URL =', import.meta.env.VITE_API_URL ?? '(não definido — usando /api)')
+        toast('Materiais indisponíveis. Verifique a conexão.', { icon: '📡', duration: 3000 })
       }
+      // Se tem cache: exibe silenciosamente, sem toast
     } finally {
       setLoading(false)
     }
