@@ -3,14 +3,11 @@ Materiais de Estudo — /materials
 Materiais pessoais (owner_id) + materiais globais (sem owner, requerem GLOBAL_EVENTS_KEY).
 Usuários vêem seus próprios materiais + todos os globais.
 """
-import json
-import os
-import shutil
-import uuid
-from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, Header, Form, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from psycopg2.extras import RealDictCursor
 from typing import List, Optional
+from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel
 from app.db.session import get_db
 from app.api.routes.auth import get_current_user
@@ -18,42 +15,31 @@ from app.core.config import settings
 
 router = APIRouter()
 
-# Use UPLOAD_DIR env var; fallback for local dev
-_raw_upload_dir = os.environ.get("UPLOAD_DIR", "/app/uploads")
-UPLOAD_DIR = Path(_raw_upload_dir)
-
-# Allowed MIME types / extensions for uploaded materials
-ALLOWED_EXTENSIONS = {
-    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
-    ".txt", ".md", ".zip", ".mp4", ".mp3",
-}
-
-
-def _save_upload(file: UploadFile) -> tuple[str, str]:
-    """Save an uploaded file to disk. Returns (file_url, file_name)."""
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    ext = Path(file.filename or "").suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(400, f"Tipo de arquivo não permitido: {ext or '(sem extensão)'}")
-    unique_name = f"{uuid.uuid4()}{ext}"
-    dest = UPLOAD_DIR / unique_name
-    with dest.open("wb") as out:
-        shutil.copyfileobj(file.file, out)
-    return f"/files/{unique_name}", file.filename or unique_name
-
-
-def _delete_upload(file_url: Optional[str]):
-    """Remove a previously uploaded file if it lives under UPLOAD_DIR."""
-    if not file_url or not file_url.startswith("/files/"):
-        return
-    path = UPLOAD_DIR / file_url.removeprefix("/files/")
-    try:
-        path.unlink(missing_ok=True)
-    except Exception:
-        pass
-
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
+
+class MaterialCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category: str = "outro"         # aula | exercicio | livro | video | artigo | podcast | outro
+    type: str = "link"              # link | file
+    url: Optional[str] = None
+    subject: Optional[str] = None
+    tags: List[str] = []
+    is_global: bool = False
+    semester: Optional[str] = None
+
+
+class MaterialUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    type: Optional[str] = None
+    url: Optional[str] = None
+    subject: Optional[str] = None
+    tags: Optional[List[str]] = None
+    semester: Optional[str] = None
+
 
 class MaterialOut(BaseModel):
     id: str
@@ -139,44 +125,23 @@ def list_materials(
 
 @router.post("/", response_model=MaterialOut, status_code=201)
 def create_material(
-    title: str = Form(...),
-    description: Optional[str] = Form(None),
-    category: str = Form("outro"),
-    type: str = Form("link"),
-    url: Optional[str] = Form(None),
-    subject: Optional[str] = Form(None),
-    tags: str = Form("[]"),
-    is_global: bool = Form(False),
-    semester: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None),
+    body: MaterialCreate,
     db: RealDictCursor = Depends(get_db),
     user=Depends(get_current_user),
     x_global_key: Optional[str] = Header(None),
 ):
-    try:
-        parsed_tags: List[str] = json.loads(tags) if tags else []
-    except (json.JSONDecodeError, ValueError):
-        raise HTTPException(400, "Formato inválido para tags: esperado array JSON.")
-
-    file_url: Optional[str] = None
-    file_name: Optional[str] = None
-    if file and file.filename:
-        file_url, file_name = _save_upload(file)
-
-    if is_global:
+    if body.is_global:
         if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
-            if file_url:
-                _delete_upload(file_url)
             raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
         db.execute(
             """
             INSERT INTO global_materials
-                (title, description, category, type, url, file_url, file_name, subject, tags, semester)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (title, description, category, type, url, subject, tags, semester)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (title, description, category, type,
-             url, file_url, file_name, subject, parsed_tags, semester),
+            (body.title, body.description, body.category, body.type,
+             body.url, body.subject, body.tags, body.semester),
         )
         row = dict(db.fetchone())
         row["is_global"] = True
@@ -186,12 +151,12 @@ def create_material(
         db.execute(
             """
             INSERT INTO materials
-                (owner_id, title, description, category, type, url, file_url, file_name, subject, tags, semester)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (owner_id, title, description, category, type, url, subject, tags, semester)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (uid, title, description, category, type,
-             url, file_url, file_name, subject, parsed_tags, semester),
+            (uid, body.title, body.description, body.category, body.type,
+             body.url, body.subject, body.tags, body.semester),
         )
         row = dict(db.fetchone())
         row["is_global"] = False
@@ -203,50 +168,19 @@ def create_material(
 @router.put("/{material_id}", response_model=MaterialOut)
 def update_material(
     material_id: str,
-    title: Optional[str] = Form(None),
-    description: Optional[str] = Form(None),
-    category: Optional[str] = Form(None),
-    type: Optional[str] = Form(None),
-    url: Optional[str] = Form(None),
-    subject: Optional[str] = Form(None),
-    tags: Optional[str] = Form(None),
-    semester: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None),
+    body: MaterialUpdate,
     db: RealDictCursor = Depends(get_db),
     user=Depends(get_current_user),
     x_global_key: Optional[str] = Header(None),
 ):
     uid = str(user["id"])
 
-    new_file_url: Optional[str] = None
-    new_file_name: Optional[str] = None
-    if file and file.filename:
-        new_file_url, new_file_name = _save_upload(file)
-
-    try:
-        parsed_tags: Optional[List[str]] = json.loads(tags) if tags is not None else None
-    except (json.JSONDecodeError, ValueError):
-        raise HTTPException(400, "Formato inválido para tags: esperado array JSON.")
-
-    updates: dict = {}
-    if title       is not None: updates["title"]       = title
-    if description is not None: updates["description"] = description
-    if category    is not None: updates["category"]    = category
-    if type        is not None: updates["type"]        = type
-    if url         is not None: updates["url"]         = url
-    if subject     is not None: updates["subject"]     = subject
-    if parsed_tags is not None: updates["tags"]        = parsed_tags
-    if semester    is not None: updates["semester"]    = semester
-    if new_file_url:
-        updates["file_url"]  = new_file_url
-        updates["file_name"] = new_file_name
-
     # Try personal first
     db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s",
                (material_id, uid))
     row = db.fetchone()
     if row:
-        old_file_url = dict(row).get("file_url") if new_file_url else None
+        updates = {k: v for k, v in body.model_dump(exclude_none=True).items()}
         if not updates:
             return _row_to_out({**dict(row), "is_global": False, "created_by": uid})
         cols = ", ".join(f"{k} = %s" for k in updates)
@@ -258,8 +192,6 @@ def update_material(
         updated = dict(db.fetchone())
         updated["is_global"] = False
         updated["created_by"] = uid
-        if old_file_url:
-            _delete_upload(old_file_url)
         return _row_to_out(updated)
 
     # Try global
@@ -267,10 +199,8 @@ def update_material(
     row = db.fetchone()
     if row:
         if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
-            if new_file_url:
-                _delete_upload(new_file_url)
             raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
-        old_file_url = dict(row).get("file_url") if new_file_url else None
+        updates = {k: v for k, v in body.model_dump(exclude_none=True).items()}
         if not updates:
             return _row_to_out({**dict(row), "is_global": True, "created_by": None})
         cols = ", ".join(f"{k} = %s" for k in updates)
@@ -282,12 +212,8 @@ def update_material(
         updated = dict(db.fetchone())
         updated["is_global"] = True
         updated["created_by"] = None
-        if old_file_url:
-            _delete_upload(old_file_url)
         return _row_to_out(updated)
 
-    if new_file_url:
-        _delete_upload(new_file_url)
     raise HTTPException(404, "Material não encontrado.")
 
 
@@ -301,22 +227,17 @@ def delete_material(
     uid = str(user["id"])
 
     # Try personal
-    db.execute("DELETE FROM materials WHERE id = %s AND owner_id = %s RETURNING id, file_url",
+    db.execute("DELETE FROM materials WHERE id = %s AND owner_id = %s RETURNING id",
                (material_id, uid))
-    row = db.fetchone()
-    if row:
-        _delete_upload(dict(row).get("file_url"))
+    if db.fetchone():
         return
 
     # Try global
-    db.execute("SELECT id, file_url FROM global_materials WHERE id = %s", (material_id,))
-    row = db.fetchone()
-    if row:
+    db.execute("SELECT id FROM global_materials WHERE id = %s", (material_id,))
+    if db.fetchone():
         if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
             raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
-        _delete_upload(dict(row).get("file_url"))
         db.execute("DELETE FROM global_materials WHERE id = %s", (material_id,))
         return
 
     raise HTTPException(404, "Material não encontrado.")
-
