@@ -621,25 +621,34 @@ export default function MaterialsPage() {
     setLoading(true)
     try {
       const { data } = await api.get<Material[]>('/materials')
-      const merged = data.map(m => ({ ...m, starred: starred.has(m.id) }))
+      // Sucesso — persiste e exibe. Lista vazia é válida.
+      const merged = (data ?? []).map(m => ({ ...m, starred: starred.has(m.id) }))
       setMaterials(merged)
       saveLocal(merged)
     } catch (err: any) {
-      // API falhou — usa cache local como fallback somente leitura
       const cached = loadLocal()
       setMaterials(cached)
-      // Mostra erro sempre — lista vazia num dispositivo novo é normal,
-      // mas a falha na API ainda precisa ser sinalizada
-      const status = err?.response?.status
-      const detail = err?.response?.data?.detail
-      if (status === 500 || status === 503) {
-        toast.error(`Erro no servidor (${status}). Tente recarregar.`)
+
+      const status  = err?.response?.status
+      const detail  = err?.response?.data?.detail as string | undefined
+      const isNet   = !err?.response // sem resposta = rede/CORS/servidor offline
+
+      if (isNet) {
+        // Sem resposta do servidor — não mostra nada se tiver cache local
+        if (cached.length === 0) {
+          toast.error('Não foi possível conectar ao servidor.')
+        }
       } else if (status === 401 || status === 403) {
-        // Token expirado ou inválido — o interceptor de auth já cuida disso
+        // Token inválido — interceptor de auth já redireciona para /login
+      } else if (status === 404) {
+        // Endpoint não existe no backend — deploy incompleto
+        toast.error('Endpoint /materials não encontrado. Verifique o deploy do backend.')
+      } else if (status === 500 || status === 503) {
+        toast.error(detail ?? `Erro interno no servidor (${status}).`)
       } else if (detail) {
         toast.error(detail)
-      } else {
-        toast.error('Servidor indisponível. Exibindo cache local.')
+      } else if (cached.length === 0) {
+        toast.error('Erro desconhecido ao carregar materiais.')
       }
     } finally {
       setLoading(false)
