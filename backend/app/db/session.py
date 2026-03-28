@@ -363,6 +363,49 @@ CREATE TABLE IF NOT EXISTS event_mentions (
 CREATE INDEX IF NOT EXISTS idx_event_mentions_event ON event_mentions (event_id);
 CREATE INDEX IF NOT EXISTS idx_event_mentions_nusp  ON event_mentions (mentioned_nusp);
 
+-- ── Materials ─────────────────────────────────────────────────────────────────
+-- Materiais pessoais (por usuário)
+CREATE TABLE IF NOT EXISTS materials (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title       VARCHAR(255) NOT NULL,
+    description TEXT,
+    category    VARCHAR(20)  NOT NULL DEFAULT 'outro'
+                    CHECK (category IN ('aula','exercicio','livro','video','artigo','podcast','outro')),
+    type        VARCHAR(10)  NOT NULL DEFAULT 'link'
+                    CHECK (type IN ('link','file')),
+    url         TEXT,
+    file_url    TEXT,
+    file_name   VARCHAR(255),
+    subject     VARCHAR(50),
+    tags        TEXT[]       NOT NULL DEFAULT '{}',
+    semester    VARCHAR(10),
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_materials_owner    ON materials (owner_id);
+CREATE INDEX IF NOT EXISTS idx_materials_category ON materials (category);
+CREATE INDEX IF NOT EXISTS idx_materials_subject  ON materials (subject) WHERE subject IS NOT NULL;
+
+-- Materiais globais (visíveis para todos, requerem chave)
+CREATE TABLE IF NOT EXISTS global_materials (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    title       VARCHAR(255) NOT NULL,
+    description TEXT,
+    category    VARCHAR(20)  NOT NULL DEFAULT 'outro'
+                    CHECK (category IN ('aula','exercicio','livro','video','artigo','podcast','outro')),
+    type        VARCHAR(10)  NOT NULL DEFAULT 'link'
+                    CHECK (type IN ('link','file')),
+    url         TEXT,
+    file_url    TEXT,
+    file_name   VARCHAR(255),
+    subject     VARCHAR(50),
+    tags        TEXT[]       NOT NULL DEFAULT '{}',
+    semester    VARCHAR(10),
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_global_materials_category ON global_materials (category);
+CREATE INDEX IF NOT EXISTS idx_global_materials_subject  ON global_materials (subject) WHERE subject IS NOT NULL;
+
 """
 
 

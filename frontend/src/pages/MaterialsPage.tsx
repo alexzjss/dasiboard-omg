@@ -624,9 +624,13 @@ export default function MaterialsPage() {
       const merged = data.map(m => ({ ...m, starred: starred.has(m.id) }))
       setMaterials(merged)
       saveLocal(merged)
-    } catch {
-      // API not available yet — use localStorage
-      setMaterials(loadLocal())
+    } catch (err: any) {
+      // API indisponível — usa cache local como fallback somente leitura
+      const cached = loadLocal()
+      setMaterials(cached)
+      if (cached.length === 0) {
+        toast.error('Não foi possível carregar materiais do servidor.')
+      }
     } finally {
       setLoading(false)
     }
@@ -645,8 +649,9 @@ export default function MaterialsPage() {
     if (formData.is_global && globalKey) headers['x-global-key'] = globalKey
 
     let saved: Material | null = null
+    let savedViaApi = false
 
-    // Try API
+    // ── Tenta API ──────────────────────────────────────────────────────────
     try {
       if (file) {
         const fd = new FormData()
@@ -673,8 +678,18 @@ export default function MaterialsPage() {
           saved = data
         }
       }
-    } catch {
-      // Fallback: save locally
+      savedViaApi = true
+    } catch (err: any) {
+      // Materiais globais NUNCA devem cair no fallback local —
+      // eles precisam do servidor para serem visíveis a outros usuários.
+      if (formData.is_global) {
+        const msg = err?.response?.data?.detail ?? 'Erro ao salvar material global.'
+        toast.error(msg)
+        throw err           // propaga para o form mostrar estado de erro
+      }
+
+      // Material pessoal: salva localmente como fallback offline
+      toast('Servidor indisponível — material salvo localmente.', { icon: '⚠️' })
       saved = {
         id:          editingMat?.id ?? crypto.randomUUID(),
         title:       formData.title,
@@ -686,7 +701,7 @@ export default function MaterialsPage() {
         file_size:   file?.size,
         subject:     formData.subject || undefined,
         tags,
-        is_global:   formData.is_global,
+        is_global:   false,
         created_at:  editingMat?.created_at ?? new Date().toISOString(),
         semester:    formData.semester || undefined,
       }
@@ -703,7 +718,13 @@ export default function MaterialsPage() {
     })
 
     if (!editingMat) addExp(EXP_REWARDS.noteCreated)
-    toast.success(editingMat ? 'Material atualizado!' : 'Material adicionado! 📚')
+    toast.success(
+      editingMat
+        ? 'Material atualizado!'
+        : savedViaApi
+          ? 'Material adicionado! 📚'
+          : 'Material salvo localmente (offline).'
+    )
     setEditingMat(undefined)
   }
 
@@ -716,17 +737,20 @@ export default function MaterialsPage() {
       const headers: Record<string, string> = {}
       if (deletingMat.is_global && globalKey) headers['x-global-key'] = globalKey
       await api.delete(`/materials/${deletingMat.id}`, { headers })
-    } catch {
-      // Remove locally anyway
-    } finally {
+
+      // Sucesso na API — remove local também
       setMaterials(prev => {
         const updated = prev.filter(m => m.id !== deletingMat.id)
         saveLocal(updated)
         return updated
       })
       setDeletingMat(undefined)
-      setDeleteLoading(false)
       toast.success('Material removido')
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail ?? 'Erro ao remover material.'
+      toast.error(msg)
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
