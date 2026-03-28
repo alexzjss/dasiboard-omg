@@ -651,32 +651,19 @@ export default function MaterialsPage() {
     let saved: Material | null = null
     let savedViaApi = false
 
-    // ── Tenta API ──────────────────────────────────────────────────────────
+    // ── Tenta API (always multipart/form-data so files are supported) ──────
     try {
-      if (file) {
-        const fd = new FormData()
-        fd.append('file', file)
-        Object.entries({ ...formData, tags: JSON.stringify(tags) }).forEach(([k, v]) => fd.append(k, String(v)))
-        if (editingMat) {
-          const { data } = await api.put<Material>(`/materials/${editingMat.id}`, fd, {
-            headers: { ...headers, 'Content-Type': 'multipart/form-data' }
-          })
-          saved = data
-        } else {
-          const { data } = await api.post<Material>('/materials', fd, {
-            headers: { ...headers, 'Content-Type': 'multipart/form-data' }
-          })
-          saved = data
-        }
+      const fd = new FormData()
+      if (file) fd.append('file', file)
+      Object.entries({ ...formData, tags: JSON.stringify(tags) }).forEach(
+        ([k, v]) => fd.append(k, String(v))
+      )
+      if (editingMat) {
+        const { data } = await api.put<Material>(`/materials/${editingMat.id}`, fd, { headers })
+        saved = data
       } else {
-        const payload = { ...formData, tags }
-        if (editingMat) {
-          const { data } = await api.put<Material>(`/materials/${editingMat.id}`, payload, { headers })
-          saved = data
-        } else {
-          const { data } = await api.post<Material>('/materials', payload, { headers })
-          saved = data
-        }
+        const { data } = await api.post<Material>('/materials', fd, { headers })
+        saved = data
       }
       savedViaApi = true
     } catch (err: any) {
