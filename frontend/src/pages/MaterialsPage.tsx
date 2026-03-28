@@ -625,11 +625,21 @@ export default function MaterialsPage() {
       setMaterials(merged)
       saveLocal(merged)
     } catch (err: any) {
-      // API indisponível — usa cache local como fallback somente leitura
+      // API falhou — usa cache local como fallback somente leitura
       const cached = loadLocal()
       setMaterials(cached)
-      if (cached.length === 0) {
-        toast.error('Não foi possível carregar materiais do servidor.')
+      // Mostra erro sempre — lista vazia num dispositivo novo é normal,
+      // mas a falha na API ainda precisa ser sinalizada
+      const status = err?.response?.status
+      const detail = err?.response?.data?.detail
+      if (status === 500 || status === 503) {
+        toast.error(`Erro no servidor (${status}). Tente recarregar.`)
+      } else if (status === 401 || status === 403) {
+        // Token expirado ou inválido — o interceptor de auth já cuida disso
+      } else if (detail) {
+        toast.error(detail)
+      } else {
+        toast.error('Servidor indisponível. Exibindo cache local.')
       }
     } finally {
       setLoading(false)
