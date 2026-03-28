@@ -406,6 +406,14 @@ CREATE TABLE IF NOT EXISTS global_materials (
 CREATE INDEX IF NOT EXISTS idx_global_materials_category ON global_materials (category);
 CREATE INDEX IF NOT EXISTS idx_global_materials_subject  ON global_materials (subject) WHERE subject IS NOT NULL;
 
+-- Idempotent migrations for materials tables (add columns that may be missing in older deployments)
+ALTER TABLE materials        ADD COLUMN IF NOT EXISTS file_url  TEXT;
+ALTER TABLE materials        ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+ALTER TABLE materials        ADD COLUMN IF NOT EXISTS semester  VARCHAR(10);
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS file_url  TEXT;
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS semester  VARCHAR(10);
+
 """
 
 
