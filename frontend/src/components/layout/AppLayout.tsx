@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Rss, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Users, X,
   LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings,
-  MoreHorizontal,
+  MoreHorizontal, Library,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
@@ -49,6 +49,7 @@ const NAV_SECONDARY = [
   { to: '/turma',     label: 'Turma',         icon: GraduationCap,   end: false },
   { to: '/room',      label: 'Salas',         icon: Monitor,         end: false },
   { to: '/feed',      label: 'Feed',          icon: Rss,             end: false },
+  { to: '/materials', label: 'Materiais',     icon: Library,         end: false },
   { to: '/docentes',  label: 'Docentes',      icon: BookMarked,      end: false },
   { to: '/settings',  label: 'Configurações', icon: Settings,        end: false },
 ]
@@ -720,6 +721,7 @@ export default function AppLayout() {
     { key: 'h', ctrl: true, shift: true, description: 'Ir para Início',        group: 'Navegação', action: () => navigate('/') },
     { key: 's', ctrl: true, shift: true, description: 'Ir para Configurações', group: 'Navegação', action: () => navigate('/settings') },
     { key: 'y', ctrl: true, shift: true, description: 'Abrir Study Room',      group: 'Navegação', action: () => navigate('/study') },
+    { key: 'm', ctrl: true, shift: true, description: 'Ir para Materiais',     group: 'Navegação', action: () => navigate('/materials') },
     // Interface
     { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
     { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false) } },

@@ -27,6 +27,8 @@ export const STORAGE_KEYS = {
   colorBlind:       'dasiboard-colorblind',
   focusMode:        'dasiboard-focus-mode',
   liteMode:         'dasiboard-lite-mode',
+  materials:        'dasiboard-materials-v1',
+  materialsStarred: 'dasiboard-materials-starred',
 } as const
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS]
