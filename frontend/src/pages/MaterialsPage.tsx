@@ -381,7 +381,7 @@ function MaterialCard({
               {cat.label}
             </span>
             {mat.is_global && (
-              <Globe size={10} style={{ color: '#a855f7', flexShrink: 0 }} title="Global" />
+              <Globe size={10} style={{ color: '#a855f7', flexShrink: 0 }} aria-label="Global" />
             )}
           </div>
           <button onClick={onToggleStar}
@@ -702,7 +702,7 @@ export default function MaterialsPage() {
       return updated
     })
 
-    if (!editingMat) addExp(EXP_REWARDS.createNote ?? 15)
+    if (!editingMat) addExp(EXP_REWARDS.noteCreated)
     toast.success(editingMat ? 'Material atualizado!' : 'Material adicionado! 📚')
     setEditingMat(undefined)
   }
