@@ -1,10 +1,9 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
-// BASE_URL é sempre '/api' — o nginx de borda (nginx/nginx.conf) faz o proxy
-// location /api/ → http://backend:8000
-// Não use VITE_API_URL: se definida como "" no App Platform, o Vite substitui
-// import.meta.env.VITE_API_URL por "" em build time, quebrando todas as chamadas.
+// BASE_URL fixo em '/api' — o nginx de borda roteia /api/ → backend:8000
+// NÃO usar import.meta.env.VITE_API_URL: o App Platform injeta essa variável
+// como string vazia no build, fazendo axios chamar '/materials' sem prefixo.
 const BASE_URL = '/api'
 
 const api = axios.create({
