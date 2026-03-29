@@ -625,19 +625,27 @@ export default function MaterialsPage() {
       setMaterials(merged)
       saveLocal(merged)
     } catch (err: any) {
-      // Silencioso: usa cache local se disponível, ou lista vazia
-      // O toast só aparece em erros HTTP explícitos do servidor
       const cached = loadLocal()
       setMaterials(cached)
+
       const status = err?.response?.status
       const detail = err?.response?.data?.detail as string | undefined
-      if (status === 500 || status === 503) {
-        toast.error(detail ?? `Erro no servidor (${status}). Tente recarregar.`)
-      } else if (status && status !== 401 && status !== 403 && status !== 404 && detail) {
+      const isNet  = !err?.response
+
+      if (status === 401 || status === 403) {
+        // Interceptor de auth já cuida do redirect
+      } else if (status === 404) {
+        toast.error('Rota /materials não encontrada no backend. Verifique o deploy.')
+      } else if (status === 500 || status === 503) {
+        toast.error(detail ?? `Erro interno no servidor (${status}).`)
+      } else if (!isNet && detail) {
         toast.error(detail)
+      } else if (isNet && cached.length === 0) {
+        // Sem resposta e sem cache: mostra aviso discreto sem bloquear UX
+        console.warn('[Materials] Sem conexão com o servidor, usando cache local.')
+        toast('Materiais indisponíveis. Verifique a conexão.', { icon: '📡', duration: 3000 })
       }
-      // Sem resposta (rede/proxy) ou 404: silencioso — lista vazia é estado normal
-      console.warn('[Materials] API indisponível, usando cache local:', err?.message ?? err)
+      // Se tem cache: exibe silenciosamente, sem toast
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
+// BASE_URL sempre '/api' — o nginx-spa.conf faz proxy /api/ → backend interno
 const BASE_URL = '/api'
 
 const api = axios.create({

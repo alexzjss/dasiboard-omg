@@ -1,7 +1,7 @@
 // ── DaSIboard Service Worker v2 — Smart offline caching ───────────────────────
-const CACHE_V      = 'dasiboard-v2'
-const STATIC_CACHE = 'dasiboard-static-v2'
-const API_CACHE    = 'dasiboard-api-v2'
+const CACHE_V      = 'dasiboard-v3'
+const STATIC_CACHE = 'dasiboard-static-v3'
+const API_CACHE    = 'dasiboard-api-v3'
 
 // Static assets — cache on install, serve from cache always
 const STATIC_ASSETS = [
