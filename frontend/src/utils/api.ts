@@ -1,16 +1,11 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
-// ── BASE_URL resolution ────────────────────────────────────────────────────────
-// Em produção (docker-compose) o nginx faz proxy /api/ → backend:8000,
-// então BASE_URL = '/api' e o axios chama /api/materials, /api/events, etc.
-//
-// Se VITE_API_URL estiver definida E não for string vazia, usa ela.
-// Isso evita o bug de VITE_API_URL="" (string vazia) — que com ?? retornaria ""
-// e faria o axios chamar /materials sem prefixo, respondido pelo nginx da SPA.
-//
-const _rawApiUrl = import.meta.env.VITE_API_URL
-const BASE_URL = (_rawApiUrl && _rawApiUrl.trim()) ? _rawApiUrl.trim() : '/api'
+// BASE_URL é sempre '/api' — o nginx de borda (nginx/nginx.conf) faz o proxy
+// location /api/ → http://backend:8000
+// Não use VITE_API_URL: se definida como "" no App Platform, o Vite substitui
+// import.meta.env.VITE_API_URL por "" em build time, quebrando todas as chamadas.
+const BASE_URL = '/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
