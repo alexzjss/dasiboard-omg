@@ -1,7 +1,7 @@
-// ── DaSIboard Service Worker v2 — Smart offline caching ───────────────────────
-const CACHE_V      = 'dasiboard-v2'
-const STATIC_CACHE = 'dasiboard-static-v2'
-const API_CACHE    = 'dasiboard-api-v2'
+// ── DaSIboard Service Worker v3 — Smart offline caching ───────────────────────
+const CACHE_V      = 'dasiboard-v3'
+const STATIC_CACHE = 'dasiboard-static-v3'
+const API_CACHE    = 'dasiboard-api-v3'
 
 // Static assets — cache on install, serve from cache always
 const STATIC_ASSETS = [
@@ -24,7 +24,7 @@ self.addEventListener('install', event => {
   )
 })
 
-// ── Activate — clean old caches ────────────────────────────────────────────────
+// ── Activate — clean ALL old caches ────────────────────────────────────────────
 self.addEventListener('activate', event => {
   const KEEP = [STATIC_CACHE, API_CACHE]
   event.waitUntil(
