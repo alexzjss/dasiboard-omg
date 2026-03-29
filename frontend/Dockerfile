@@ -11,5 +11,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # Copia como template (será processado pelo envsubst no CMD)
 COPY nginx-spa.conf /etc/nginx/templates/default.conf.template
+# Valor padrão para BACKEND_URL; deve ser sobrescrito em produção com a URL real do backend
+ENV BACKEND_URL=http://backend:8000
 EXPOSE 80
 # nginx:alpine já executa envsubst automaticamente para arquivos em /etc/nginx/templates/
