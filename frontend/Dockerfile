@@ -6,12 +6,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2 — serve with nginx + envsubst para injetar BACKEND_URL
+# Stage 2 — serve with nginx
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-# Copia como template (será processado pelo envsubst no CMD)
-COPY nginx-spa.conf /etc/nginx/templates/default.conf.template
-# Valor padrão para BACKEND_URL; deve ser sobrescrito em produção com a URL real do backend
-ENV BACKEND_URL=http://backend:8000
+# Copia config estático diretamente (sem envsubst); proxy /api/ é gerido pelo nginx externo
+COPY nginx-spa.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-# nginx:alpine já executa envsubst automaticamente para arquivos em /etc/nginx/templates/
