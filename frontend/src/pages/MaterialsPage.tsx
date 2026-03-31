@@ -639,15 +639,22 @@ export default function MaterialsPage() {
         // Interceptor de auth já cuida do redirect
       } else if (status === 404) {
         toast.error('Rota /materials não encontrada no backend. Verifique o deploy.')
+      } else if (status === 422) {
+        // Erro de validação do FastAPI — normalmente indica incompatibilidade de payload
+        console.error('[Materials] Erro 422:', err?.response?.data)
+        toast.error('Erro de validação no servidor. Verifique o deploy do backend.')
       } else if (status === 500 || status === 503) {
         toast.error(detail ?? `Erro interno no servidor (${status}).`)
       } else if (!isNet && detail) {
         toast.error(detail)
+      } else if (!isNet && status) {
+        // Status não mapeado (ex: 502, 504) — não tratar como erro de rede
+        toast.error(`Erro ${status} no servidor. Tente recarregar.`)
       } else if (isNet) {
-        // Sem resposta do servidor (rede ou deploy fora do ar)
+        // Sem resposta alguma do servidor (rede ou deploy completamente fora do ar)
         console.warn('[Materials] Sem conexão com o servidor, usando cache local.')
         if (cached.length === 0) {
-          toast('Servidor indisponível e sem cache local. Tente novamente.', { icon: '📡', duration: 4000 })
+          toast('Servidor indisponível. Tente novamente em instantes.', { icon: '📡', duration: 4000 })
         }
         // Se tem cache: já foi carregado acima, exibe silenciosamente
       }

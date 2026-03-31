@@ -12,6 +12,14 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // Se o body for FormData, remover o Content-Type para o browser
+  // setar automaticamente com o boundary correto (multipart/form-data; boundary=...).
+  // Sem isso, o axios mantém 'application/json' e o FastAPI rejeita com 422.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
+
   return config
 })
 
