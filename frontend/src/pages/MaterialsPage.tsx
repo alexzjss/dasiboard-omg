@@ -619,15 +619,18 @@ export default function MaterialsPage() {
   // Load materials — try API first, fallback to localStorage
   const fetchMaterials = useCallback(async () => {
     setLoading(true)
+    // Carrega cache imediatamente — garante que qualquer dispositivo vê algo
+    // enquanto a requisição à API está em andamento
+    const cached = loadLocal()
+    if (cached.length > 0) {
+      setMaterials(cached.map(m => ({ ...m, starred: starred.has(m.id) })))
+    }
     try {
       const { data } = await api.get<Material[]>('/materials')
       const merged = (data ?? []).map(m => ({ ...m, starred: starred.has(m.id) }))
       setMaterials(merged)
       saveLocal(merged)
     } catch (err: any) {
-      const cached = loadLocal()
-      setMaterials(cached)
-
       const status = err?.response?.status
       const detail = err?.response?.data?.detail as string | undefined
       const isNet  = !err?.response
@@ -640,12 +643,14 @@ export default function MaterialsPage() {
         toast.error(detail ?? `Erro interno no servidor (${status}).`)
       } else if (!isNet && detail) {
         toast.error(detail)
-      } else if (isNet && cached.length === 0) {
-        // Sem resposta e sem cache: mostra aviso discreto sem bloquear UX
+      } else if (isNet) {
+        // Sem resposta do servidor (rede ou deploy fora do ar)
         console.warn('[Materials] Sem conexão com o servidor, usando cache local.')
-        toast('Materiais indisponíveis. Verifique a conexão.', { icon: '📡', duration: 3000 })
+        if (cached.length === 0) {
+          toast('Servidor indisponível e sem cache local. Tente novamente.', { icon: '📡', duration: 4000 })
+        }
+        // Se tem cache: já foi carregado acima, exibe silenciosamente
       }
-      // Se tem cache: exibe silenciosamente, sem toast
     } finally {
       setLoading(false)
     }
@@ -667,31 +672,27 @@ export default function MaterialsPage() {
     let savedViaApi = false
 
     // ── Tenta API ──────────────────────────────────────────────────────────
+    // O backend agora aceita APENAS multipart/form-data (suporte a upload).
+    // Sempre enviar FormData, com ou sem arquivo.
     try {
-      if (file) {
-        const fd = new FormData()
-        fd.append('file', file)
-        Object.entries({ ...formData, tags: JSON.stringify(tags) }).forEach(([k, v]) => fd.append(k, String(v)))
-        if (editingMat) {
-          const { data } = await api.put<Material>(`/materials/${editingMat.id}`, fd, {
-            headers: { ...headers, 'Content-Type': 'multipart/form-data' }
-          })
-          saved = data
-        } else {
-          const { data } = await api.post<Material>('/materials', fd, {
-            headers: { ...headers, 'Content-Type': 'multipart/form-data' }
-          })
-          saved = data
-        }
+      const fd = new FormData()
+      fd.append('title',       formData.title)
+      fd.append('description', formData.description)
+      fd.append('category',    formData.category)
+      fd.append('type',        formData.type)
+      fd.append('url',         formData.url)
+      fd.append('subject',     formData.subject)
+      fd.append('tags',        JSON.stringify(tags))
+      fd.append('is_global',   String(formData.is_global))
+      fd.append('semester',    formData.semester)
+      if (file) fd.append('file', file)
+
+      if (editingMat) {
+        const { data } = await api.put<Material>(`/materials/${editingMat.id}`, fd, { headers })
+        saved = data
       } else {
-        const payload = { ...formData, tags }
-        if (editingMat) {
-          const { data } = await api.put<Material>(`/materials/${editingMat.id}`, payload, { headers })
-          saved = data
-        } else {
-          const { data } = await api.post<Material>('/materials', payload, { headers })
-          saved = data
-        }
+        const { data } = await api.post<Material>('/materials', fd, { headers })
+        saved = data
       }
       savedViaApi = true
     } catch (err: any) {

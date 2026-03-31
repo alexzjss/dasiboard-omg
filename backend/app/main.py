@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+import os
 from app.core.config import settings
 from app.api.routes import auth, users, kanban, grades, events, entities, social, materials
 from app.db.session import init_db
+
+UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "/app/uploads"))
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(
     title="DaSIboard API",
@@ -39,3 +45,10 @@ app.include_router(materials.router,prefix="/materials",tags=["Materials"])
 @app.get("/health", tags=["Health"])
 def health():
     return {"status": "ok"}
+
+
+# ── Serve uploaded files ──────────────────────────────────────────────────────
+# Arquivos ficam em /app/uploads (mapeado via volume Docker em produção).
+# Acessíveis em: GET /uploads/<uuid>/<filename>
+# O nginx repassa /uploads/ → backend, que serve via StaticFiles.
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")

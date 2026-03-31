@@ -2,44 +2,93 @@
 Materiais de Estudo — /materials
 Materiais pessoais (owner_id) + materiais globais (sem owner, requerem GLOBAL_EVENTS_KEY).
 Usuários vêem seus próprios materiais + todos os globais.
+
+Suporte a upload de arquivos:
+  - Arquivos são salvos em UPLOAD_DIR (padrão /app/uploads).
+  - A URL pública é /uploads/<uuid>/<filename>, servida via StaticFiles no main.py.
+  - Em produção: monte um volume Docker persistente em /app/uploads.
 """
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File as FastAPIFile, Form
 from psycopg2.extras import RealDictCursor
 from typing import List, Optional
-from datetime import datetime
-from uuid import UUID
-from pydantic import BaseModel
+from pathlib import Path
+import shutil, os, json as _json
+
 from app.db.session import get_db
 from app.api.routes.auth import get_current_user
 from app.core.config import settings
 
 router = APIRouter()
 
+# ── Upload dir ────────────────────────────────────────────────────────────────
+
+UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "/app/uploads"))
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+MAX_FILE_BYTES = 50 * 1024 * 1024  # 50 MB
+
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx",
+    ".xls", ".xlsx", ".txt", ".md", ".zip",
+    ".mp4", ".mp3", ".png", ".jpg", ".jpeg", ".gif", ".webp",
+}
+
+
+def _save_upload(file: UploadFile) -> tuple:
+    """Salva o arquivo em UPLOAD_DIR/<uuid>/<filename>. Retorna (file_url, file_name)."""
+    from uuid import uuid4
+    suffix = Path(file.filename or "arquivo").suffix.lower()
+    if suffix not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            400,
+            f"Extensão '{suffix}' não permitida. "
+            f"Permitidas: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+        )
+    uid = str(uuid4())
+    dest_dir = UPLOAD_DIR / uid
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = Path(file.filename or "arquivo").name
+    dest = dest_dir / safe_name
+    size = 0
+    with dest.open("wb") as out:
+        while True:
+            chunk = file.file.read(1024 * 256)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_FILE_BYTES:
+                out.close()
+                shutil.rmtree(dest_dir, ignore_errors=True)
+                raise HTTPException(413, "Arquivo muito grande. Máximo: 50 MB.")
+            out.write(chunk)
+    return f"/uploads/{uid}/{safe_name}", safe_name
+
+
+def _delete_upload(file_url: Optional[str]):
+    """Remove o diretório do arquivo físico silenciosamente."""
+    if not file_url:
+        return
+    try:
+        parts = file_url.strip("/").split("/")   # ["uploads", "<uuid>", "<name>"]
+        if len(parts) >= 2:
+            target = UPLOAD_DIR / parts[1]
+            shutil.rmtree(target, ignore_errors=True)
+    except Exception:
+        pass
+
+
+def _parse_tags(raw: Optional[str]) -> List[str]:
+    if not raw:
+        return []
+    try:
+        return _json.loads(raw)
+    except Exception:
+        return [t.strip() for t in raw.split(",") if t.strip()]
+
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
-class MaterialCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
-    category: str = "outro"         # aula | exercicio | livro | video | artigo | podcast | outro
-    type: str = "link"              # link | file
-    url: Optional[str] = None
-    subject: Optional[str] = None
-    tags: List[str] = []
-    is_global: bool = False
-    semester: Optional[str] = None
-
-
-class MaterialUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    type: Optional[str] = None
-    url: Optional[str] = None
-    subject: Optional[str] = None
-    tags: Optional[List[str]] = None
-    semester: Optional[str] = None
-
+from pydantic import BaseModel
 
 class MaterialOut(BaseModel):
     id: str
@@ -58,20 +107,11 @@ class MaterialOut(BaseModel):
     semester: Optional[str] = None
 
 
-# ── Auth helper ───────────────────────────────────────────────────────────────
-
-def require_global_key(x_global_key: Optional[str] = Header(None)):
-    if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
-        raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
-    return True
-
-
 # ── Row → dict ────────────────────────────────────────────────────────────────
 
 def _row_to_out(row: dict) -> dict:
     tags = row.get("tags") or []
     if isinstance(tags, str):
-        # Postgres array stored as text — parse "{a,b,c}"
         tags = [t.strip().strip('"') for t in tags.strip("{}").split(",") if t.strip()]
     return {
         "id":          str(row["id"]),
@@ -125,7 +165,6 @@ def list_materials(
     except Exception as e:
         err_msg = str(e).lower()
         if "does not exist" in err_msg or "relation" in err_msg:
-            # Tabelas ainda não foram criadas (container não reiniciado após deploy)
             raise HTTPException(
                 503,
                 "Tabelas de materiais ainda não inicializadas. "
@@ -135,24 +174,43 @@ def list_materials(
 
 
 @router.post("/", response_model=MaterialOut, status_code=201)
-def create_material(
-    body: MaterialCreate,
+async def create_material(
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    category: str = Form("outro"),
+    type: str = Form("link"),
+    url: Optional[str] = Form(None),
+    subject: Optional[str] = Form(None),
+    tags: Optional[str] = Form("[]"),
+    is_global: bool = Form(False),
+    semester: Optional[str] = Form(None),
+    file: Optional[UploadFile] = FastAPIFile(None),
     db: RealDictCursor = Depends(get_db),
     user=Depends(get_current_user),
     x_global_key: Optional[str] = Header(None),
 ):
-    if body.is_global:
+    tag_list = _parse_tags(tags)
+
+    file_url: Optional[str] = None
+    file_name: Optional[str] = None
+
+    if type == "file":
+        if not file or not file.filename:
+            raise HTTPException(400, "Arquivo obrigatório para o tipo 'file'.")
+        file_url, file_name = _save_upload(file)
+        url = None  # file type não usa url
+
+    if is_global:
         if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
             raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
         db.execute(
             """
             INSERT INTO global_materials
-                (title, description, category, type, url, subject, tags, semester)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                (title, description, category, type, url, file_url, file_name, subject, tags, semester)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (body.title, body.description, body.category, body.type,
-             body.url, body.subject, body.tags, body.semester),
+            (title, description, category, type, url, file_url, file_name, subject, tag_list, semester),
         )
         row = dict(db.fetchone())
         row["is_global"] = True
@@ -162,12 +220,11 @@ def create_material(
         db.execute(
             """
             INSERT INTO materials
-                (owner_id, title, description, category, type, url, subject, tags, semester)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (owner_id, title, description, category, type, url, file_url, file_name, subject, tags, semester)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (uid, body.title, body.description, body.category, body.type,
-             body.url, body.subject, body.tags, body.semester),
+            (uid, title, description, category, type, url, file_url, file_name, subject, tag_list, semester),
         )
         row = dict(db.fetchone())
         row["is_global"] = False
@@ -177,49 +234,77 @@ def create_material(
 
 
 @router.put("/{material_id}", response_model=MaterialOut)
-def update_material(
+async def update_material(
     material_id: str,
-    body: MaterialUpdate,
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    type: Optional[str] = Form(None),
+    url: Optional[str] = Form(None),
+    subject: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    semester: Optional[str] = Form(None),
+    file: Optional[UploadFile] = FastAPIFile(None),
     db: RealDictCursor = Depends(get_db),
     user=Depends(get_current_user),
     x_global_key: Optional[str] = Header(None),
 ):
     uid = str(user["id"])
+    updates: dict = {}
+    if title is not None:       updates["title"] = title
+    if description is not None: updates["description"] = description
+    if category is not None:    updates["category"] = category
+    if type is not None:        updates["type"] = type
+    if subject is not None:     updates["subject"] = subject
+    if semester is not None:    updates["semester"] = semester
+    if url is not None:         updates["url"] = url
+    if tags is not None:        updates["tags"] = _parse_tags(tags)
 
-    # Try personal first
-    db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s",
-               (material_id, uid))
+    # ── Personal ──────────────────────────────────────────────────────────────
+    db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
     row = db.fetchone()
     if row:
-        updates = {k: v for k, v in body.model_dump(exclude_none=True).items()}
+        old_file_url = dict(row).get("file_url")
+        if file and file.filename:
+            new_url, new_name = _save_upload(file)
+            updates["file_url"] = new_url
+            updates["file_name"] = new_name
+            _delete_upload(old_file_url)
+        if updates.get("type") == "link":
+            updates["file_url"] = None
+            updates["file_name"] = None
+            _delete_upload(old_file_url)
         if not updates:
             return _row_to_out({**dict(row), "is_global": False, "created_by": uid})
         cols = ", ".join(f"{k} = %s" for k in updates)
         vals = list(updates.values()) + [material_id, uid]
-        db.execute(
-            f"UPDATE materials SET {cols} WHERE id = %s AND owner_id = %s RETURNING *",
-            vals,
-        )
+        db.execute(f"UPDATE materials SET {cols} WHERE id = %s AND owner_id = %s RETURNING *", vals)
         updated = dict(db.fetchone())
         updated["is_global"] = False
         updated["created_by"] = uid
         return _row_to_out(updated)
 
-    # Try global
+    # ── Global ────────────────────────────────────────────────────────────────
     db.execute("SELECT * FROM global_materials WHERE id = %s", (material_id,))
     row = db.fetchone()
     if row:
         if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
             raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
-        updates = {k: v for k, v in body.model_dump(exclude_none=True).items()}
+        old_file_url = dict(row).get("file_url")
+        if file and file.filename:
+            new_url, new_name = _save_upload(file)
+            updates["file_url"] = new_url
+            updates["file_name"] = new_name
+            _delete_upload(old_file_url)
+        if updates.get("type") == "link":
+            updates["file_url"] = None
+            updates["file_name"] = None
+            _delete_upload(old_file_url)
         if not updates:
             return _row_to_out({**dict(row), "is_global": True, "created_by": None})
         cols = ", ".join(f"{k} = %s" for k in updates)
         vals = list(updates.values()) + [material_id]
-        db.execute(
-            f"UPDATE global_materials SET {cols} WHERE id = %s RETURNING *",
-            vals,
-        )
+        db.execute(f"UPDATE global_materials SET {cols} WHERE id = %s RETURNING *", vals)
         updated = dict(db.fetchone())
         updated["is_global"] = True
         updated["created_by"] = None
@@ -237,17 +322,19 @@ def delete_material(
 ):
     uid = str(user["id"])
 
-    # Try personal
-    db.execute("DELETE FROM materials WHERE id = %s AND owner_id = %s RETURNING id",
-               (material_id, uid))
-    if db.fetchone():
+    db.execute("SELECT file_url FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
+    row = db.fetchone()
+    if row:
+        _delete_upload(dict(row).get("file_url"))
+        db.execute("DELETE FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
         return
 
-    # Try global
-    db.execute("SELECT id FROM global_materials WHERE id = %s", (material_id,))
-    if db.fetchone():
+    db.execute("SELECT id, file_url FROM global_materials WHERE id = %s", (material_id,))
+    row = db.fetchone()
+    if row:
         if not x_global_key or x_global_key != settings.GLOBAL_EVENTS_KEY:
             raise HTTPException(403, "Chave de acesso global inválida ou ausente.")
+        _delete_upload(dict(row).get("file_url"))
         db.execute("DELETE FROM global_materials WHERE id = %s", (material_id,))
         return
 
