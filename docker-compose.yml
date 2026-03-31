@@ -27,6 +27,8 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
+      # Volume persistente para arquivos enviados pelos usuários.
+      # Sem isso, uploads são perdidos a cada redeploy.
       - uploads_data:/app/uploads
     depends_on:
       db:

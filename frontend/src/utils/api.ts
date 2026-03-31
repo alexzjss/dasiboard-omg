@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
-// BASE_URL sempre '/api' — o nginx-spa.conf faz proxy /api/ → backend interno
+// BASE_URL sempre '/api' — o nginx faz proxy /api/ → backend
 const BASE_URL = '/api'
 
 const api = axios.create({
@@ -13,9 +13,9 @@ api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken
   if (token) config.headers.Authorization = `Bearer ${token}`
 
-  // Se o body for FormData, remover o Content-Type para o browser
-  // setar automaticamente com o boundary correto (multipart/form-data; boundary=...).
-  // Sem isso, o axios mantém 'application/json' e o FastAPI rejeita com 422.
+  // Quando o body é FormData (upload de arquivo), deixar o browser
+  // definir o Content-Type com o boundary correto automaticamente.
+  // Se o axios mantiver 'application/json', o FastAPI rejeita com 422.
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type']
   }

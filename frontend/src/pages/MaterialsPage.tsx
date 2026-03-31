@@ -4,15 +4,14 @@ import {
   BookOpen, Link2, Upload, Plus, X, Search, Filter,
   Download, ExternalLink, Trash2, KeyRound, Globe,
   FileText, Video, Headphones, BookMarked, FlaskConical,
-  Star, StarOff, ChevronDown, ChevronUp, Tag, FolderOpen,
-  SortAsc, SortDesc, Grid2X2, List, Eye, Calendar,
-  AlertCircle, Check, Loader2, Pencil, Copy,
+  Star, StarOff, ChevronDown, ChevronUp, FolderOpen,
+  SortAsc, SortDesc, Grid2X2, List,
+  Check, Loader2, Pencil,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import api from '@/utils/api'
-import clsx from 'clsx'
 import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,15 +29,13 @@ interface Material {
   url?: string
   file_url?: string
   file_name?: string
-  file_size?: number
   subject?: string
   tags: string[]
   is_global: boolean
   created_at: string
   created_by?: string
   semester?: string
-  // stored locally only:
-  starred?: boolean
+  starred?: boolean  // apenas local
 }
 
 interface MaterialFormData {
@@ -55,13 +52,13 @@ interface MaterialFormData {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CATEGORIES: { value: MaterialCategory; label: string; emoji: string; color: string }[] = [
-  { value: 'aula',      label: 'Aula',        emoji: '📚', color: '#4d67f5' },
-  { value: 'exercicio', label: 'Exercício',    emoji: '✏️', color: '#f59e0b' },
-  { value: 'livro',     label: 'Livro',        emoji: '📖', color: '#22c55e' },
-  { value: 'video',     label: 'Vídeo',        emoji: '🎬', color: '#ef4444' },
-  { value: 'artigo',    label: 'Artigo',       emoji: '📄', color: '#a855f7' },
-  { value: 'podcast',   label: 'Podcast',      emoji: '🎙️', color: '#ec4899' },
-  { value: 'outro',     label: 'Outro',        emoji: '📎', color: '#6b7280' },
+  { value: 'aula',      label: 'Aula',     emoji: '📚', color: '#4d67f5' },
+  { value: 'exercicio', label: 'Exercício', emoji: '✏️', color: '#f59e0b' },
+  { value: 'livro',     label: 'Livro',    emoji: '📖', color: '#22c55e' },
+  { value: 'video',     label: 'Vídeo',    emoji: '🎬', color: '#ef4444' },
+  { value: 'artigo',    label: 'Artigo',   emoji: '📄', color: '#a855f7' },
+  { value: 'podcast',   label: 'Podcast',  emoji: '🎙️', color: '#ec4899' },
+  { value: 'outro',     label: 'Outro',    emoji: '📎', color: '#6b7280' },
 ]
 
 const CAT_ICON: Record<MaterialCategory, React.ReactNode> = {
@@ -77,6 +74,7 @@ const CAT_ICON: Record<MaterialCategory, React.ReactNode> = {
 const STORAGE_KEY = 'dasiboard-materials-v1'
 const STARRED_KEY = 'dasiboard-materials-starred'
 
+// ── Local storage helpers ─────────────────────────────────────────────────────
 function loadLocal(): Material[] {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') } catch { return [] }
 }
@@ -89,7 +87,6 @@ function loadStarred(): Set<string> {
 function saveStarred(ids: Set<string>) {
   try { localStorage.setItem(STARRED_KEY, JSON.stringify([...ids])) } catch {}
 }
-
 function fmtSize(bytes?: number): string {
   if (!bytes) return ''
   if (bytes < 1024) return `${bytes} B`
@@ -135,8 +132,10 @@ function MaterialForm({
       await onSave({ ...form, tags: tagInput }, file ?? undefined)
       onClose()
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail ?? 'Erro ao salvar material')
-    } finally { setLoading(false) }
+      // erros já tratados em handleSave, não mostrar toast duplo
+    } finally {
+      setLoading(false)
+    }
   }
 
   const cat = CATEGORIES.find(c => c.value === form.category)!
@@ -189,7 +188,7 @@ function MaterialForm({
                           color: form.type === t ? 'var(--accent-3)' : 'var(--text-secondary)',
                         }}>
                   {t === 'link' ? <Link2 size={14}/> : <Upload size={14}/>}
-                  {t === 'link' ? 'Link/URL' : 'Upload'}
+                  {t === 'link' ? 'Link/URL' : 'Upload de arquivo'}
                 </button>
               ))}
             </div>
@@ -241,7 +240,7 @@ function MaterialForm({
                 Arquivo {!editing && '*'}
               </label>
               <input ref={fileRef} type="file" className="hidden"
-                     accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.zip,.mp4,.mp3"
+                     accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.zip,.mp4,.mp3,.png,.jpg,.jpeg,.gif,.webp"
                      onChange={e => setFile(e.target.files?.[0] ?? null)} />
               <button onClick={() => fileRef.current?.click()}
                       className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm border-dashed transition-all"
@@ -300,7 +299,7 @@ function MaterialForm({
             <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
               Tags <span style={{ fontWeight: 400 }}>(separadas por vírgula)</span>
             </label>
-            <input className="input w-full text-sm" placeholder="banco-de-dados, sql, nosql, otimização"
+            <input className="input w-full text-sm" placeholder="banco-de-dados, sql, nosql"
                    value={tagInput} onChange={e => setTagInput(e.target.value)} />
           </div>
 
@@ -366,11 +365,9 @@ function MaterialCard({
       className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-200 hover:scale-[1.01] animate-in"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
     >
-      {/* Category stripe */}
       <div className="h-1 w-full" style={{ background: cat.color }} />
 
       <div className="flex flex-col gap-2 p-4 flex-1">
-        {/* Header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-sm"
@@ -380,9 +377,7 @@ function MaterialCard({
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: cat.color }}>
               {cat.label}
             </span>
-            {mat.is_global && (
-              <Globe size={10} style={{ color: '#a855f7', flexShrink: 0 }} aria-label="Global" />
-            )}
+            {mat.is_global && <Globe size={10} style={{ color: '#a855f7', flexShrink: 0 }} />}
           </div>
           <button onClick={onToggleStar}
                   className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg"
@@ -391,19 +386,16 @@ function MaterialCard({
           </button>
         </div>
 
-        {/* Title */}
         <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>
           {mat.title}
         </h3>
 
-        {/* Description */}
         {mat.description && (
           <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: 'var(--text-muted)' }}>
             {mat.description}
           </p>
         )}
 
-        {/* Meta */}
         <div className="flex flex-wrap gap-1 mt-auto pt-2">
           {mat.subject && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
@@ -428,7 +420,6 @@ function MaterialCard({
           )}
         </div>
 
-        {/* Type badge + date */}
         <div className="flex items-center justify-between pt-1">
           <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
             {mat.type === 'link' ? <Link2 size={10}/> : <Upload size={10}/>}
@@ -438,7 +429,6 @@ function MaterialCard({
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex border-t" style={{ borderColor: 'var(--border)' }}>
         <button onClick={onOpen}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all hover:bg-[var(--accent-soft)]"
@@ -480,13 +470,11 @@ function MaterialRow({
   return (
     <div className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all animate-in"
          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-      {/* Category icon */}
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
            style={{ background: cat.color + '22', color: cat.color }}>
         {CAT_ICON[mat.category]}
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{mat.title}</span>
@@ -512,7 +500,6 @@ function MaterialRow({
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-1 shrink-0">
         <button onClick={onToggleStar} className="p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                 style={{ color: starred ? '#f59e0b' : 'var(--text-muted)' }}>
@@ -591,167 +578,152 @@ function DeleteConfirm({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MaterialsPage() {
-  const [materials,    setMaterials]    = useState<Material[]>([])
-  const [loading,      setLoading]      = useState(true)
-  const [showForm,     setShowForm]     = useState(false)
-  const [editingMat,   setEditingMat]   = useState<Material | undefined>()
-  const [deletingMat,  setDeletingMat]  = useState<Material | undefined>()
-  const [deleteLoading,setDeleteLoading]= useState(false)
-  const [globalKey,    setGlobalKey]    = useState('')
+  const [materials,     setMaterials]    = useState<Material[]>([])
+  const [loading,       setLoading]      = useState(true)
+  const [showForm,      setShowForm]     = useState(false)
+  const [editingMat,    setEditingMat]   = useState<Material | undefined>()
+  const [deletingMat,   setDeletingMat]  = useState<Material | undefined>()
+  const [deleteLoading, setDeleteLoading]= useState(false)
+  const [globalKey,     setGlobalKey]    = useState('')
 
   // Filters
-  const [search,      setSearch]      = useState('')
-  const [filterCat,   setFilterCat]   = useState<MaterialCategory | 'all'>('all')
-  const [filterType,  setFilterType]  = useState<MaterialType | 'all'>('all')
-  const [filterScope, setFilterScope] = useState<'all' | 'global' | 'mine'>('all')
-  const [filterStarred, setFilterStarred] = useState(false)
-  const [filterSubject, setFilterSubject] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [search,        setSearch]       = useState('')
+  const [filterCat,     setFilterCat]    = useState<MaterialCategory | 'all'>('all')
+  const [filterType,    setFilterType]   = useState<MaterialType | 'all'>('all')
+  const [filterScope,   setFilterScope]  = useState<'all' | 'global' | 'mine'>('all')
+  const [filterStarred, setFilterStarred]= useState(false)
+  const [filterSubject, setFilterSubject]= useState('')
+  const [showFilters,   setShowFilters]  = useState(false)
 
   // Sort & View
-  const [sortField,  setSortField]  = useState<SortField>('created_at')
-  const [sortAsc,    setSortAsc]    = useState(false)
-  const [viewMode,   setViewMode]   = useState<ViewMode>('grid')
+  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [sortAsc,   setSortAsc]   = useState(false)
+  const [viewMode,  setViewMode]  = useState<ViewMode>('grid')
 
-  // Starred
+  // Starred (local only)
   const [starred, setStarred] = useState<Set<string>>(loadStarred)
 
-  // Load materials — try API first, fallback to localStorage
+  // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchMaterials = useCallback(async () => {
     setLoading(true)
-    // Carrega cache imediatamente — garante que qualquer dispositivo vê algo
-    // enquanto a requisição à API está em andamento
+
+    // Mostrar cache imediatamente enquanto busca na API.
+    // Isso garante que qualquer dispositivo veja algo instantaneamente
+    // mesmo que o servidor demore ou esteja temporariamente indisponível.
     const cached = loadLocal()
     if (cached.length > 0) {
       setMaterials(cached.map(m => ({ ...m, starred: starred.has(m.id) })))
     }
+
     try {
       const { data } = await api.get<Material[]>('/materials')
       const merged = (data ?? []).map(m => ({ ...m, starred: starred.has(m.id) }))
       setMaterials(merged)
       saveLocal(merged)
     } catch (err: any) {
-      const status = err?.response?.status
-      const detail = err?.response?.data?.detail as string | undefined
-      const isNet  = !err?.response
+      const status  = err?.response?.status
+      const detail  = err?.response?.data?.detail as string | undefined
+      const hasResp = Boolean(err?.response)
 
       if (status === 401 || status === 403) {
-        // Interceptor de auth já cuida do redirect
+        // Interceptor de auth já cuida do redirect — silencioso aqui
       } else if (status === 404) {
-        toast.error('Rota /materials não encontrada no backend. Verifique o deploy.')
-      } else if (status === 422) {
-        // Erro de validação do FastAPI — normalmente indica incompatibilidade de payload
-        console.error('[Materials] Erro 422:', err?.response?.data)
-        toast.error('Erro de validação no servidor. Verifique o deploy do backend.')
-      } else if (status === 500 || status === 503) {
-        toast.error(detail ?? `Erro interno no servidor (${status}).`)
-      } else if (!isNet && detail) {
-        toast.error(detail)
-      } else if (!isNet && status) {
-        // Status não mapeado (ex: 502, 504) — não tratar como erro de rede
-        toast.error(`Erro ${status} no servidor. Tente recarregar.`)
-      } else if (isNet) {
-        // Sem resposta alguma do servidor (rede ou deploy completamente fora do ar)
-        console.warn('[Materials] Sem conexão com o servidor, usando cache local.')
+        toast.error('Rota /materials não encontrada. Verifique o deploy do backend.')
+      } else if (status === 503) {
+        toast.error(detail ?? 'Tabelas de materiais não inicializadas. Reinicie o backend.')
+      } else if (hasResp) {
+        toast.error(detail ?? `Erro ${status} no servidor.`)
+      } else {
+        // Sem resposta alguma — servidor fora do ar ou sem rede
         if (cached.length === 0) {
-          toast('Servidor indisponível. Tente novamente em instantes.', { icon: '📡', duration: 4000 })
+          toast('Servidor indisponível e sem cache. Tente novamente.', { icon: '📡', duration: 4000 })
         }
-        // Se tem cache: já foi carregado acima, exibe silenciosamente
+        // Com cache: já exibido acima, sem toast
       }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchMaterials() }, [fetchMaterials])
 
-  // ── Save (create / edit) ──────────────────────────────────────────────────
+  // ── Save ───────────────────────────────────────────────────────────────────
+  /**
+   * Fluxo de dois passos para materiais com arquivo:
+   *   1. POST /materials (JSON) → cria o registro com metadados
+   *   2. POST /materials/{id}/upload (multipart) → envia o arquivo binário
+   *
+   * Isso evita completamente o problema de Content-Type conflitante que
+   * ocorria quando tentávamos misturar JSON e arquivo na mesma requisição.
+   */
   const handleSave = async (formData: MaterialFormData, file?: File) => {
-    const tags = formData.tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean)
-
+    const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean)
     const headers: Record<string, string> = {}
     if (formData.is_global && globalKey) headers['x-global-key'] = globalKey
 
-    let saved: Material | null = null
-    let savedViaApi = false
-
-    // ── Tenta API ──────────────────────────────────────────────────────────
-    // O backend agora aceita APENAS multipart/form-data (suporte a upload).
-    // Sempre enviar FormData, com ou sem arquivo.
+    // Passo 1: criar/atualizar metadados via JSON
+    let saved: Material
     try {
-      const fd = new FormData()
-      fd.append('title',       formData.title)
-      fd.append('description', formData.description)
-      fd.append('category',    formData.category)
-      fd.append('type',        formData.type)
-      fd.append('url',         formData.url)
-      fd.append('subject',     formData.subject)
-      fd.append('tags',        JSON.stringify(tags))
-      fd.append('is_global',   String(formData.is_global))
-      fd.append('semester',    formData.semester)
-      if (file) fd.append('file', file)
-
-      if (editingMat) {
-        const { data } = await api.put<Material>(`/materials/${editingMat.id}`, fd, { headers })
-        saved = data
-      } else {
-        const { data } = await api.post<Material>('/materials', fd, { headers })
-        saved = data
-      }
-      savedViaApi = true
-    } catch (err: any) {
-      // Materiais globais NUNCA devem cair no fallback local —
-      // eles precisam do servidor para serem visíveis a outros usuários.
-      if (formData.is_global) {
-        const msg = err?.response?.data?.detail ?? 'Erro ao salvar material global.'
-        toast.error(msg)
-        throw err           // propaga para o form mostrar estado de erro
-      }
-
-      // Material pessoal: salva localmente como fallback offline
-      toast('Servidor indisponível — material salvo localmente.', { icon: '⚠️' })
-      saved = {
-        id:          editingMat?.id ?? crypto.randomUUID(),
+      const payload = {
         title:       formData.title,
-        description: formData.description || undefined,
+        description: formData.description || null,
         category:    formData.category,
         type:        formData.type,
-        url:         formData.type === 'link' ? formData.url : undefined,
-        file_name:   file?.name,
-        file_size:   file?.size,
-        subject:     formData.subject || undefined,
+        url:         formData.type === 'link' ? formData.url : null,
+        subject:     formData.subject || null,
         tags,
-        is_global:   false,
-        created_at:  editingMat?.created_at ?? new Date().toISOString(),
-        semester:    formData.semester || undefined,
+        is_global:   formData.is_global,
+        semester:    formData.semester || null,
+      }
+
+      if (editingMat) {
+        const { data } = await api.put<Material>(`/materials/${editingMat.id}`, payload, { headers })
+        saved = data
+      } else {
+        const { data } = await api.post<Material>('/materials', payload, { headers })
+        saved = data
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail ?? 'Erro ao salvar material.'
+      toast.error(msg)
+      throw err
+    }
+
+    // Passo 2: upload de arquivo (se houver)
+    // Endpoint separado com multipart/form-data puro — sem conflito de Content-Type.
+    if (formData.type === 'file' && file) {
+      const fd = new FormData()
+      fd.append('file', file)
+      try {
+        const { data } = await api.post<{ file_url: string; file_name: string }>(
+          `/materials/${saved.id}/upload`,
+          fd,
+          { headers }
+        )
+        saved = { ...saved, file_url: data.file_url, file_name: data.file_name }
+      } catch (err: any) {
+        // Metadados foram salvos, mas o arquivo falhou — avisa sem reverter
+        const msg = err?.response?.data?.detail ?? 'Erro ao enviar arquivo. O material foi salvo sem arquivo.'
+        toast.error(msg)
+        // Não lança — o material já existe, só o arquivo falhou
       }
     }
 
-    if (!saved) return
-
+    // Atualizar estado local
     setMaterials(prev => {
-      const updated = editingMat
-        ? prev.map(m => m.id === editingMat.id ? { ...saved!, starred: m.starred } : m)
-        : [{ ...saved!, starred: false }, ...prev]
-      saveLocal(updated)
-      return updated
+      const next = editingMat
+        ? prev.map(m => m.id === editingMat.id ? { ...saved, starred: m.starred } : m)
+        : [{ ...saved, starred: false }, ...prev]
+      saveLocal(next)
+      return next
     })
 
     if (!editingMat) addExp(EXP_REWARDS.noteCreated)
-    toast.success(
-      editingMat
-        ? 'Material atualizado!'
-        : savedViaApi
-          ? 'Material adicionado! 📚'
-          : 'Material salvo localmente (offline).'
-    )
+    toast.success(editingMat ? 'Material atualizado!' : 'Material adicionado! 📚')
     setEditingMat(undefined)
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
+  // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!deletingMat) return
     if (deletingMat.is_global && !globalKey) { toast.error('Informe a chave de acesso global'); return }
@@ -760,24 +732,21 @@ export default function MaterialsPage() {
       const headers: Record<string, string> = {}
       if (deletingMat.is_global && globalKey) headers['x-global-key'] = globalKey
       await api.delete(`/materials/${deletingMat.id}`, { headers })
-
-      // Sucesso na API — remove local também
       setMaterials(prev => {
-        const updated = prev.filter(m => m.id !== deletingMat.id)
-        saveLocal(updated)
-        return updated
+        const next = prev.filter(m => m.id !== deletingMat.id)
+        saveLocal(next)
+        return next
       })
       setDeletingMat(undefined)
       toast.success('Material removido')
     } catch (err: any) {
-      const msg = err?.response?.data?.detail ?? 'Erro ao remover material.'
-      toast.error(msg)
+      toast.error(err?.response?.data?.detail ?? 'Erro ao remover material.')
     } finally {
       setDeleteLoading(false)
     }
   }
 
-  // ── Star toggle ───────────────────────────────────────────────────────────
+  // ── Star ───────────────────────────────────────────────────────────────────
   const toggleStar = (id: string) => {
     setStarred(prev => {
       const next = new Set(prev)
@@ -787,17 +756,22 @@ export default function MaterialsPage() {
     })
   }
 
-  // ── Filtered + sorted ─────────────────────────────────────────────────────
+  // ── Open material ──────────────────────────────────────────────────────────
+  const openMaterial = (mat: Material) => {
+    const url = mat.url ?? mat.file_url
+    if (url) window.open(url, '_blank')
+    else toast.error('Arquivo não disponível para visualização online')
+  }
+
+  // ── Filter + sort ──────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...materials]
-
-    if (filterCat !== 'all')   list = list.filter(m => m.category === filterCat)
-    if (filterType !== 'all')  list = list.filter(m => m.type === filterType)
+    if (filterCat !== 'all')      list = list.filter(m => m.category === filterCat)
+    if (filterType !== 'all')     list = list.filter(m => m.type === filterType)
     if (filterScope === 'global') list = list.filter(m => m.is_global)
     if (filterScope === 'mine')   list = list.filter(m => !m.is_global)
     if (filterStarred)            list = list.filter(m => starred.has(m.id))
     if (filterSubject.trim())     list = list.filter(m => m.subject?.toLowerCase().includes(filterSubject.toLowerCase()))
-
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(m =>
@@ -807,27 +781,15 @@ export default function MaterialsPage() {
         m.tags.some(t => t.toLowerCase().includes(q))
       )
     }
-
     list.sort((a, b) => {
-      let av: string, bv: string
-      if (sortField === 'title')      { av = a.title;       bv = b.title }
-      else if (sortField === 'category') { av = a.category; bv = b.category }
-      else if (sortField === 'subject')  { av = a.subject ?? ''; bv = b.subject ?? '' }
-      else                               { av = a.created_at;   bv = b.created_at }
+      const av = sortField === 'title' ? a.title : sortField === 'category' ? a.category : sortField === 'subject' ? (a.subject ?? '') : a.created_at
+      const bv = sortField === 'title' ? b.title : sortField === 'category' ? b.category : sortField === 'subject' ? (b.subject ?? '') : b.created_at
       return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av)
     })
-
-    // Starred first
-    list.sort((a, b) => {
-      const as = starred.has(a.id) ? 0 : 1
-      const bs = starred.has(b.id) ? 0 : 1
-      return as - bs
-    })
-
+    list.sort((a, b) => (starred.has(a.id) ? 0 : 1) - (starred.has(b.id) ? 0 : 1))
     return list
   }, [materials, filterCat, filterType, filterScope, filterStarred, filterSubject, search, sortField, sortAsc, starred])
 
-  // Unique subjects for autocomplete
   const subjects = useMemo(() =>
     [...new Set(materials.map(m => m.subject).filter(Boolean) as string[])].sort(),
     [materials]
@@ -838,12 +800,11 @@ export default function MaterialsPage() {
     filterScope !== 'all', filterStarred, filterSubject.trim().length > 0,
   ].filter(Boolean).length
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    total: materials.length,
-    global: materials.filter(m => m.is_global).length,
+    total:   materials.length,
+    global:  materials.filter(m => m.is_global).length,
     starred: [...starred].filter(id => materials.some(m => m.id === id)).length,
-    byCat: CATEGORIES.map(c => ({ ...c, count: materials.filter(m => m.category === c.value).length })),
+    byCat:   CATEGORIES.map(c => ({ ...c, count: materials.filter(m => m.category === c.value).length })),
   }), [materials, starred])
 
   return (
@@ -888,10 +849,9 @@ export default function MaterialsPage() {
         ))}
       </div>
 
-      {/* ── Search + Filters bar ──────────────────────────────────────────── */}
+      {/* ── Search + Filters ──────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
-          {/* Search */}
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
             <input
@@ -907,7 +867,6 @@ export default function MaterialsPage() {
             )}
           </div>
 
-          {/* Filter toggle */}
           <button onClick={() => setShowFilters(f => !f)}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                   style={{
@@ -926,7 +885,6 @@ export default function MaterialsPage() {
             {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
 
-          {/* Sort */}
           <div className="flex items-center gap-1 px-3 py-2.5 rounded-xl"
                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <select
@@ -943,7 +901,6 @@ export default function MaterialsPage() {
             </button>
           </div>
 
-          {/* View mode */}
           <div className="hidden sm:flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
             {(['grid', 'list'] as ViewMode[]).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
@@ -955,11 +912,9 @@ export default function MaterialsPage() {
           </div>
         </div>
 
-        {/* Expanded filters */}
         {showFilters && (
           <div className="p-4 rounded-2xl space-y-4 animate-in"
                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-            {/* Category */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Categoria</p>
               <div className="flex flex-wrap gap-1.5">
@@ -987,7 +942,6 @@ export default function MaterialsPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Type */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Tipo</p>
                 <div className="flex gap-1.5">
@@ -1005,7 +959,6 @@ export default function MaterialsPage() {
                 </div>
               </div>
 
-              {/* Scope */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Visibilidade</p>
                 <div className="flex gap-1.5">
@@ -1023,7 +976,6 @@ export default function MaterialsPage() {
                 </div>
               </div>
 
-              {/* Subject */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Disciplina</p>
                 <div className="relative">
@@ -1038,7 +990,6 @@ export default function MaterialsPage() {
               </div>
             </div>
 
-            {/* Starred */}
             <div className="flex items-center justify-between">
               <button onClick={() => setFilterStarred(f => !f)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium transition-all"
@@ -1050,7 +1001,6 @@ export default function MaterialsPage() {
                 <Star size={12} fill={filterStarred ? 'currentColor' : 'none'} />
                 Apenas favoritos
               </button>
-
               {activeFilterCount > 0 && (
                 <button onClick={() => {
                   setFilterCat('all'); setFilterType('all'); setFilterScope('all')
@@ -1066,7 +1016,6 @@ export default function MaterialsPage() {
         )}
       </div>
 
-      {/* ── Results count ──────────────────────────────────────────────────── */}
       {(search || activeFilterCount > 0) && (
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           {filtered.length} {filtered.length === 1 ? 'resultado' : 'resultados'}
@@ -1074,14 +1023,14 @@ export default function MaterialsPage() {
         </p>
       )}
 
-      {/* ── Loading ─────────────────────────────────────────────────────────── */}
-      {loading && (
+      {/* ── Loading ──────────────────────────────────────────────────────── */}
+      {loading && materials.length === 0 && (
         <div className="flex items-center justify-center py-16">
           <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent-3)' }} />
         </div>
       )}
 
-      {/* ── Empty state ──────────────────────────────────────────────────────── */}
+      {/* ── Empty ────────────────────────────────────────────────────────── */}
       {!loading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
@@ -1106,20 +1055,14 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* ── Grid view ──────────────────────────────────────────────────────── */}
-      {!loading && filtered.length > 0 && viewMode === 'grid' && (
+      {/* ── Grid ─────────────────────────────────────────────────────────── */}
+      {filtered.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(mat => (
             <MaterialCard
-              key={mat.id}
-              mat={mat}
-              starred={starred.has(mat.id)}
+              key={mat.id} mat={mat} starred={starred.has(mat.id)}
               onToggleStar={() => toggleStar(mat.id)}
-              onOpen={() => {
-                const url = mat.url ?? mat.file_url
-                if (url) window.open(url, '_blank')
-                else toast.error('Arquivo não disponível para visualização online')
-              }}
+              onOpen={() => openMaterial(mat)}
               onEdit={() => { setEditingMat(mat); setShowForm(true) }}
               onDelete={() => setDeletingMat(mat)}
             />
@@ -1127,20 +1070,14 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* ── List view ──────────────────────────────────────────────────────── */}
-      {!loading && filtered.length > 0 && viewMode === 'list' && (
+      {/* ── List ─────────────────────────────────────────────────────────── */}
+      {filtered.length > 0 && viewMode === 'list' && (
         <div className="space-y-2">
           {filtered.map(mat => (
             <MaterialRow
-              key={mat.id}
-              mat={mat}
-              starred={starred.has(mat.id)}
+              key={mat.id} mat={mat} starred={starred.has(mat.id)}
               onToggleStar={() => toggleStar(mat.id)}
-              onOpen={() => {
-                const url = mat.url ?? mat.file_url
-                if (url) window.open(url, '_blank')
-                else toast.error('Arquivo não disponível para visualização online')
-              }}
+              onOpen={() => openMaterial(mat)}
               onEdit={() => { setEditingMat(mat); setShowForm(true) }}
               onDelete={() => setDeletingMat(mat)}
             />
@@ -1148,7 +1085,7 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* ── Form modal ─────────────────────────────────────────────────────── */}
+      {/* ── Form modal ───────────────────────────────────────────────────── */}
       {showForm && (
         <MaterialForm
           onClose={() => { setShowForm(false); setEditingMat(undefined) }}
@@ -1159,7 +1096,7 @@ export default function MaterialsPage() {
         />
       )}
 
-      {/* ── Delete confirm ─────────────────────────────────────────────────── */}
+      {/* ── Delete confirm ───────────────────────────────────────────────── */}
       {deletingMat && (
         <DeleteConfirm
           mat={deletingMat}
