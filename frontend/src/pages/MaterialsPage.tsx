@@ -717,8 +717,10 @@ export default function MaterialsPage() {
         saved = normalizeMaterial(data)
       }
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { detail?: string } } }
-      toast.error(e?.response?.data?.detail ?? 'Erro ao salvar material.')
+      const e = err as { response?: { status?: number; data?: { detail?: string } } }
+      const detail = e?.response?.data?.detail
+      const status = e?.response?.status
+      toast.error(detail ?? (status ? `Erro ${status} ao salvar material.` : 'Erro ao salvar material.'))
       throw err
     }
 

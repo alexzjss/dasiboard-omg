@@ -433,6 +433,16 @@ CREATE INDEX IF NOT EXISTS idx_materials_owner    ON materials (owner_id);
 CREATE INDEX IF NOT EXISTS idx_materials_category ON materials (category);
 CREATE INDEX IF NOT EXISTS idx_materials_subject  ON materials (subject) WHERE subject IS NOT NULL;
 
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT 'outro';
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS type VARCHAR(10) NOT NULL DEFAULT 'link';
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS file_url TEXT;
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS subject VARCHAR(50);
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS semester VARCHAR(10);
+
 CREATE TABLE IF NOT EXISTS global_materials (
     id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     title       VARCHAR(255) NOT NULL,
@@ -451,6 +461,16 @@ CREATE TABLE IF NOT EXISTS global_materials (
 );
 CREATE INDEX IF NOT EXISTS idx_global_materials_category ON global_materials (category);
 CREATE INDEX IF NOT EXISTS idx_global_materials_subject  ON global_materials (subject) WHERE subject IS NOT NULL;
+
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT 'outro';
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS type VARCHAR(10) NOT NULL DEFAULT 'link';
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS file_url TEXT;
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS subject VARCHAR(50);
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE global_materials ADD COLUMN IF NOT EXISTS semester VARCHAR(10);
 """
 
 
