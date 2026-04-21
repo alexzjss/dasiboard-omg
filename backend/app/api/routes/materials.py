@@ -15,6 +15,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File
+from psycopg2 import errors as pg_errors
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
@@ -97,6 +98,14 @@ def _parse_tags(raw) -> List[str]:
     if isinstance(raw, list):
         return [t for t in raw if t]
     return [t.strip().strip('"') for t in str(raw).strip("{}").split(",") if t.strip()]
+
+
+def _maybe_raise_schema_error(exc: Exception) -> None:
+    if isinstance(exc, (pg_errors.UndefinedTable, pg_errors.UndefinedColumn)):
+        raise HTTPException(
+            503,
+            "Estrutura de materiais desatualizada no banco. Verifique se as migrações foram aplicadas com sucesso.",
+        )
 
 
 def _serialize_row(row: dict, is_global: bool, created_by: Optional[str]) -> dict:
@@ -192,12 +201,7 @@ def list_materials(
         rows = db.fetchall()
         return [_serialize_row(dict(r), bool(r["is_global"]), r.get("created_by")) for r in rows]
     except Exception as exc:
-        msg = str(exc).lower()
-        if "does not exist" in msg or "relation" in msg:
-            raise HTTPException(
-                503,
-                "Tabelas de materiais não encontradas. Reinicie o backend para aplicar as migrações."
-            )
+        _maybe_raise_schema_error(exc)
         raise
 
 
@@ -217,34 +221,40 @@ def create_material(
     if body.type == "link" and not body.url:
         raise HTTPException(400, "URL é obrigatória para materiais do tipo 'link'.")
 
-    if body.is_global:
-        _require_global_key(x_global_key)
+    try:
+        if body.is_global:
+            _require_global_key(x_global_key)
+            db.execute(
+                """
+                INSERT INTO global_materials
+                    (title, description, category, type, url, subject, tags, semester)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING *
+                """,
+                (body.title, body.description, body.category, body.type,
+                 body.url, body.subject, body.tags, body.semester),
+            )
+            r = dict(db.fetchone())
+            return _serialize_row(r, True, None)
+
+        uid = str(user["id"])
         db.execute(
             """
-            INSERT INTO global_materials
-                (title, description, category, type, url, subject, tags, semester)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO materials
+                (owner_id, title, description, category, type, url, subject, tags, semester)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (body.title, body.description, body.category, body.type,
+            (uid, body.title, body.description, body.category, body.type,
              body.url, body.subject, body.tags, body.semester),
         )
         r = dict(db.fetchone())
-        return _serialize_row(r, True, None)
-
-    uid = str(user["id"])
-    db.execute(
-        """
-        INSERT INTO materials
-            (owner_id, title, description, category, type, url, subject, tags, semester)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING *
-        """,
-        (uid, body.title, body.description, body.category, body.type,
-         body.url, body.subject, body.tags, body.semester),
-    )
-    r = dict(db.fetchone())
-    return _serialize_row(r, False, uid)
+        return _serialize_row(r, False, uid)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _maybe_raise_schema_error(exc)
+        raise
 
 
 # ── POST /materials/{id}/upload ───────────────────────────────────────────────
@@ -264,41 +274,47 @@ def upload_file(
     """
     uid = str(user["id"])
 
-    # Localizar material (pessoal ou global)
-    db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
-    row = db.fetchone()
-    table = "materials"
-    where = "id = %s AND owner_id = %s"
-    where_vals: list = [material_id, uid]
-    is_global = False
-
-    if not row:
-        db.execute("SELECT * FROM global_materials WHERE id = %s", (material_id,))
+    try:
+        # Localizar material (pessoal ou global)
+        db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
         row = db.fetchone()
+        table = "materials"
+        where = "id = %s AND owner_id = %s"
+        where_vals: list = [material_id, uid]
+        is_global = False
+
         if not row:
-            raise HTTPException(404, "Material não encontrado.")
-        _require_global_key(x_global_key)
-        table = "global_materials"
-        where = "id = %s"
-        where_vals = [material_id]
-        is_global = True
+            db.execute("SELECT * FROM global_materials WHERE id = %s", (material_id,))
+            row = db.fetchone()
+            if not row:
+                raise HTTPException(404, "Material não encontrado.")
+            _require_global_key(x_global_key)
+            table = "global_materials"
+            where = "id = %s"
+            where_vals = [material_id]
+            is_global = True
 
-    old_row = dict(row)
+        old_row = dict(row)
 
-    # Apagar arquivo anterior
-    _delete_file(old_row.get("file_url"))
+        # Apagar arquivo anterior
+        _delete_file(old_row.get("file_url"))
 
-    # Salvar novo arquivo
-    file_url, file_name = _store_file(file)
+        # Salvar novo arquivo
+        file_url, file_name = _store_file(file)
 
-    # Atualizar banco e retornar o registro completo
-    db.execute(
-        f"UPDATE {table} SET file_url = %s, file_name = %s, type = 'file' WHERE {where} RETURNING *",
-        [file_url, file_name] + where_vals,
-    )
-    updated = dict(db.fetchone())
-    created_by = uid if not is_global else None
-    return _serialize_row(updated, is_global, created_by)
+        # Atualizar banco e retornar o registro completo
+        db.execute(
+            f"UPDATE {table} SET file_url = %s, file_name = %s, type = 'file' WHERE {where} RETURNING *",
+            [file_url, file_name] + where_vals,
+        )
+        updated = dict(db.fetchone())
+        created_by = uid if not is_global else None
+        return _serialize_row(updated, is_global, created_by)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _maybe_raise_schema_error(exc)
+        raise
 
 
 # ── PUT /materials/{id} ───────────────────────────────────────────────────────
@@ -318,38 +334,44 @@ def update_material(
         updates["file_url"] = None
         updates["file_name"] = None
 
-    # Material pessoal
-    db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
-    row = db.fetchone()
-    if row:
-        if updates.get("type") == "link":
-            _delete_file(dict(row).get("file_url"))
-        if not updates:
-            return _serialize_row(dict(row), False, uid)
-        cols = ", ".join(f"{k} = %s" for k in updates)
-        db.execute(
-            f"UPDATE materials SET {cols} WHERE id = %s AND owner_id = %s RETURNING *",
-            list(updates.values()) + [material_id, uid],
-        )
-        return _serialize_row(dict(db.fetchone()), False, uid)
+    try:
+        # Material pessoal
+        db.execute("SELECT * FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
+        row = db.fetchone()
+        if row:
+            if updates.get("type") == "link":
+                _delete_file(dict(row).get("file_url"))
+            if not updates:
+                return _serialize_row(dict(row), False, uid)
+            cols = ", ".join(f"{k} = %s" for k in updates)
+            db.execute(
+                f"UPDATE materials SET {cols} WHERE id = %s AND owner_id = %s RETURNING *",
+                list(updates.values()) + [material_id, uid],
+            )
+            return _serialize_row(dict(db.fetchone()), False, uid)
 
-    # Material global
-    db.execute("SELECT * FROM global_materials WHERE id = %s", (material_id,))
-    row = db.fetchone()
-    if row:
-        _require_global_key(x_global_key)
-        if updates.get("type") == "link":
-            _delete_file(dict(row).get("file_url"))
-        if not updates:
-            return _serialize_row(dict(row), True, None)
-        cols = ", ".join(f"{k} = %s" for k in updates)
-        db.execute(
-            f"UPDATE global_materials SET {cols} WHERE id = %s RETURNING *",
-            list(updates.values()) + [material_id],
-        )
-        return _serialize_row(dict(db.fetchone()), True, None)
+        # Material global
+        db.execute("SELECT * FROM global_materials WHERE id = %s", (material_id,))
+        row = db.fetchone()
+        if row:
+            _require_global_key(x_global_key)
+            if updates.get("type") == "link":
+                _delete_file(dict(row).get("file_url"))
+            if not updates:
+                return _serialize_row(dict(row), True, None)
+            cols = ", ".join(f"{k} = %s" for k in updates)
+            db.execute(
+                f"UPDATE global_materials SET {cols} WHERE id = %s RETURNING *",
+                list(updates.values()) + [material_id],
+            )
+            return _serialize_row(dict(db.fetchone()), True, None)
 
-    raise HTTPException(404, "Material não encontrado.")
+        raise HTTPException(404, "Material não encontrado.")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _maybe_raise_schema_error(exc)
+        raise
 
 
 # ── DELETE /materials/{id} ────────────────────────────────────────────────────
@@ -363,19 +385,25 @@ def delete_material(
 ):
     uid = str(user["id"])
 
-    db.execute("SELECT file_url FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
-    row = db.fetchone()
-    if row:
-        _delete_file(dict(row).get("file_url"))
-        db.execute("DELETE FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
-        return
+    try:
+        db.execute("SELECT file_url FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
+        row = db.fetchone()
+        if row:
+            _delete_file(dict(row).get("file_url"))
+            db.execute("DELETE FROM materials WHERE id = %s AND owner_id = %s", (material_id, uid))
+            return
 
-    db.execute("SELECT id, file_url FROM global_materials WHERE id = %s", (material_id,))
-    row = db.fetchone()
-    if row:
-        _require_global_key(x_global_key)
-        _delete_file(dict(row).get("file_url"))
-        db.execute("DELETE FROM global_materials WHERE id = %s", (material_id,))
-        return
+        db.execute("SELECT id, file_url FROM global_materials WHERE id = %s", (material_id,))
+        row = db.fetchone()
+        if row:
+            _require_global_key(x_global_key)
+            _delete_file(dict(row).get("file_url"))
+            db.execute("DELETE FROM global_materials WHERE id = %s", (material_id,))
+            return
 
-    raise HTTPException(404, "Material não encontrado.")
+        raise HTTPException(404, "Material não encontrado.")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _maybe_raise_schema_error(exc)
+        raise
