@@ -35,7 +35,6 @@ interface Material {
   created_at: string
   created_by?: string
   semester?: string
-  starred?: boolean  // apenas local
 }
 
 interface MaterialFormData {
@@ -52,13 +51,13 @@ interface MaterialFormData {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CATEGORIES: { value: MaterialCategory; label: string; emoji: string; color: string }[] = [
-  { value: 'aula',      label: 'Aula',     emoji: '📚', color: '#4d67f5' },
-  { value: 'exercicio', label: 'Exercício', emoji: '✏️', color: '#f59e0b' },
-  { value: 'livro',     label: 'Livro',    emoji: '📖', color: '#22c55e' },
-  { value: 'video',     label: 'Vídeo',    emoji: '🎬', color: '#ef4444' },
-  { value: 'artigo',    label: 'Artigo',   emoji: '📄', color: '#a855f7' },
-  { value: 'podcast',   label: 'Podcast',  emoji: '🎙️', color: '#ec4899' },
-  { value: 'outro',     label: 'Outro',    emoji: '📎', color: '#6b7280' },
+  { value: 'aula',      label: 'Aula',      emoji: '📚', color: '#4d67f5' },
+  { value: 'exercicio', label: 'Exercício',  emoji: '✏️', color: '#f59e0b' },
+  { value: 'livro',     label: 'Livro',      emoji: '📖', color: '#22c55e' },
+  { value: 'video',     label: 'Vídeo',      emoji: '🎬', color: '#ef4444' },
+  { value: 'artigo',    label: 'Artigo',     emoji: '📄', color: '#a855f7' },
+  { value: 'podcast',   label: 'Podcast',    emoji: '🎙️', color: '#ec4899' },
+  { value: 'outro',     label: 'Outro',      emoji: '📎', color: '#6b7280' },
 ]
 
 const CAT_ICON: Record<MaterialCategory, React.ReactNode> = {
@@ -71,22 +70,16 @@ const CAT_ICON: Record<MaterialCategory, React.ReactNode> = {
   outro:     <FolderOpen   size={14} />,
 }
 
-const STORAGE_KEY = 'dasiboard-materials-v1'
 const STARRED_KEY = 'dasiboard-materials-starred'
 
-// ── Local storage helpers ─────────────────────────────────────────────────────
-function loadLocal(): Material[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') } catch { return [] }
-}
-function saveLocal(mats: Material[]) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(mats)) } catch {}
-}
+// ── Starred helpers (local only — não afeta outros dispositivos) ───────────────
 function loadStarred(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(STARRED_KEY) ?? '[]')) } catch { return new Set() }
 }
 function saveStarred(ids: Set<string>) {
   try { localStorage.setItem(STARRED_KEY, JSON.stringify([...ids])) } catch {}
 }
+
 function fmtSize(bytes?: number): string {
   if (!bytes) return ''
   if (bytes < 1024) return `${bytes} B`
@@ -131,8 +124,8 @@ function MaterialForm({
     try {
       await onSave({ ...form, tags: tagInput }, file ?? undefined)
       onClose()
-    } catch (e: any) {
-      // erros já tratados em handleSave, não mostrar toast duplo
+    } catch {
+      // erros já tratados em handleSave
     } finally {
       setLoading(false)
     }
@@ -155,12 +148,10 @@ function MaterialForm({
           boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
         }}
       >
-        {/* Handle mobile */}
         <div className="flex justify-center pt-3 sm:hidden shrink-0">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-light)' }} />
         </div>
 
-        {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0">
           <h3 className="font-display font-bold text-base flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <BookOpen size={16} style={{ color: 'var(--accent-3)' }} />
@@ -330,7 +321,6 @@ function MaterialForm({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-5 pb-5 pt-3 shrink-0 flex gap-3" style={{ borderTop: '1px solid var(--border)' }}>
           <button onClick={onClose} className="flex-1 btn-secondary py-2.5 rounded-xl text-sm font-semibold">
             Cancelar
@@ -600,33 +590,24 @@ export default function MaterialsPage() {
   const [sortAsc,   setSortAsc]   = useState(false)
   const [viewMode,  setViewMode]  = useState<ViewMode>('grid')
 
-  // Starred (local only)
+  // Starred (preferência local — não sincroniza entre dispositivos por design)
   const [starred, setStarred] = useState<Set<string>>(loadStarred)
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  // ── Fetch ─────────────────────────────────────────────────────────────────
+  // Sempre busca da API — sem cache local — para garantir que todos os
+  // dispositivos vejam os mesmos dados, incluindo arquivos enviados por outros.
   const fetchMaterials = useCallback(async () => {
     setLoading(true)
-
-    // Mostrar cache imediatamente enquanto busca na API.
-    // Isso garante que qualquer dispositivo veja algo instantaneamente
-    // mesmo que o servidor demore ou esteja temporariamente indisponível.
-    const cached = loadLocal()
-    if (cached.length > 0) {
-      setMaterials(cached.map(m => ({ ...m, starred: starred.has(m.id) })))
-    }
-
     try {
       const { data } = await api.get<Material[]>('/materials')
-      const merged = (data ?? []).map(m => ({ ...m, starred: starred.has(m.id) }))
-      setMaterials(merged)
-      saveLocal(merged)
+      setMaterials(data ?? [])
     } catch (err: any) {
       const status  = err?.response?.status
       const detail  = err?.response?.data?.detail as string | undefined
       const hasResp = Boolean(err?.response)
 
       if (status === 401 || status === 403) {
-        // Interceptor de auth já cuida do redirect — silencioso aqui
+        // interceptor de auth já trata o redirect
       } else if (status === 404) {
         toast.error('Rota /materials não encontrada. Verifique o deploy do backend.')
       } else if (status === 503) {
@@ -634,48 +615,48 @@ export default function MaterialsPage() {
       } else if (hasResp) {
         toast.error(detail ?? `Erro ${status} no servidor.`)
       } else {
-        // Sem resposta alguma — servidor fora do ar ou sem rede
-        if (cached.length === 0) {
-          toast('Servidor indisponível e sem cache. Tente novamente.', { icon: '📡', duration: 4000 })
-        }
-        // Com cache: já exibido acima, sem toast
+        toast('Servidor indisponível. Verifique sua conexão.', { icon: '📡', duration: 4000 })
       }
     } finally {
       setLoading(false)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => { fetchMaterials() }, [fetchMaterials])
 
-  // ── Save ───────────────────────────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────────
   /**
-   * Fluxo de dois passos para materiais com arquivo:
-   *   1. POST /materials (JSON) → cria o registro com metadados
-   *   2. POST /materials/{id}/upload (multipart) → envia o arquivo binário
+   * Fluxo em dois passos:
+   *   1. POST /materials (JSON)           — cria/atualiza metadados
+   *   2. POST /materials/{id}/upload (multipart) — envia arquivo e recebe o
+   *      material atualizado com file_url persistido no banco
    *
-   * Isso evita completamente o problema de Content-Type conflitante que
-   * ocorria quando tentávamos misturar JSON e arquivo na mesma requisição.
+   * O passo 2 retorna o material completo, garantindo que o state local
+   * reflita exatamente o que está no banco — o mesmo que outros dispositivos verão.
+   *
+   * Se o upload falhar, o erro é relançado (não silenciado) para que o modal
+   * não feche e o usuário saiba que precisa tentar novamente.
    */
   const handleSave = async (formData: MaterialFormData, file?: File) => {
     const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean)
     const headers: Record<string, string> = {}
     if (formData.is_global && globalKey) headers['x-global-key'] = globalKey
 
-    // Passo 1: criar/atualizar metadados via JSON
+    const payload = {
+      title:       formData.title,
+      description: formData.description || null,
+      category:    formData.category,
+      type:        formData.type,
+      url:         formData.type === 'link' ? formData.url : null,
+      subject:     formData.subject || null,
+      tags,
+      is_global:   formData.is_global,
+      semester:    formData.semester || null,
+    }
+
+    // Passo 1: criar/atualizar metadados
     let saved: Material
     try {
-      const payload = {
-        title:       formData.title,
-        description: formData.description || null,
-        category:    formData.category,
-        type:        formData.type,
-        url:         formData.type === 'link' ? formData.url : null,
-        subject:     formData.subject || null,
-        tags,
-        is_global:   formData.is_global,
-        semester:    formData.semester || null,
-      }
-
       if (editingMat) {
         const { data } = await api.put<Material>(`/materials/${editingMat.id}`, payload, { headers })
         saved = data
@@ -684,46 +665,46 @@ export default function MaterialsPage() {
         saved = data
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.detail ?? 'Erro ao salvar material.'
-      toast.error(msg)
+      toast.error(err?.response?.data?.detail ?? 'Erro ao salvar material.')
       throw err
     }
 
     // Passo 2: upload de arquivo (se houver)
-    // Endpoint separado com multipart/form-data puro — sem conflito de Content-Type.
+    // O endpoint retorna o material completo com file_url já gravado no banco.
     if (formData.type === 'file' && file) {
       const fd = new FormData()
       fd.append('file', file)
       try {
-        const { data } = await api.post<{ file_url: string; file_name: string }>(
-          `/materials/${saved.id}/upload`,
-          fd,
-          { headers }
-        )
-        saved = { ...saved, file_url: data.file_url, file_name: data.file_name }
+        const { data } = await api.post<Material>(`/materials/${saved.id}/upload`, fd, { headers })
+        saved = data
       } catch (err: any) {
-        // Metadados foram salvos, mas o arquivo falhou — avisa sem reverter
-        const msg = err?.response?.data?.detail ?? 'Erro ao enviar arquivo. O material foi salvo sem arquivo.'
+        // O upload falhou — relançar para que o modal não feche.
+        // O registro foi criado sem arquivo; o usuário pode tentar editar e enviar novamente.
+        const msg = err?.response?.data?.detail ?? 'Erro ao enviar arquivo. Tente editar o material para reenviar.'
         toast.error(msg)
-        // Não lança — o material já existe, só o arquivo falhou
+        // Ainda assim adicionamos o material sem arquivo ao estado para não perder o registro
+        setMaterials(prev =>
+          editingMat
+            ? prev.map(m => m.id === editingMat.id ? saved : m)
+            : [saved, ...prev]
+        )
+        throw err
       }
     }
 
-    // Atualizar estado local
-    setMaterials(prev => {
-      const next = editingMat
-        ? prev.map(m => m.id === editingMat.id ? { ...saved, starred: m.starred } : m)
-        : [{ ...saved, starred: false }, ...prev]
-      saveLocal(next)
-      return next
-    })
+    // Atualizar estado com o retorno do servidor (fonte única da verdade)
+    setMaterials(prev =>
+      editingMat
+        ? prev.map(m => m.id === editingMat.id ? saved : m)
+        : [saved, ...prev]
+    )
 
     if (!editingMat) addExp(EXP_REWARDS.noteCreated)
     toast.success(editingMat ? 'Material atualizado!' : 'Material adicionado! 📚')
     setEditingMat(undefined)
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!deletingMat) return
     if (deletingMat.is_global && !globalKey) { toast.error('Informe a chave de acesso global'); return }
@@ -732,11 +713,7 @@ export default function MaterialsPage() {
       const headers: Record<string, string> = {}
       if (deletingMat.is_global && globalKey) headers['x-global-key'] = globalKey
       await api.delete(`/materials/${deletingMat.id}`, { headers })
-      setMaterials(prev => {
-        const next = prev.filter(m => m.id !== deletingMat.id)
-        saveLocal(next)
-        return next
-      })
+      setMaterials(prev => prev.filter(m => m.id !== deletingMat.id))
       setDeletingMat(undefined)
       toast.success('Material removido')
     } catch (err: any) {
@@ -746,7 +723,7 @@ export default function MaterialsPage() {
     }
   }
 
-  // ── Star ───────────────────────────────────────────────────────────────────
+  // ── Star ──────────────────────────────────────────────────────────────────
   const toggleStar = (id: string) => {
     setStarred(prev => {
       const next = new Set(prev)
@@ -756,14 +733,17 @@ export default function MaterialsPage() {
     })
   }
 
-  // ── Open material ──────────────────────────────────────────────────────────
+  // ── Open / Download ───────────────────────────────────────────────────────
+  // file_url vem do banco como "/uploads/uuid/arquivo.pdf".
+  // Como o nginx proxy /uploads/ → backend, simplesmente usar como href funciona
+  // em qualquer dispositivo — nenhuma URL absoluta necessária.
   const openMaterial = (mat: Material) => {
     const url = mat.url ?? mat.file_url
-    if (url) window.open(url, '_blank')
-    else toast.error('Arquivo não disponível para visualização online')
+    if (!url) { toast.error('Arquivo não disponível'); return }
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
-  // ── Filter + sort ──────────────────────────────────────────────────────────
+  // ── Filter + sort ─────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...materials]
     if (filterCat !== 'all')      list = list.filter(m => m.category === filterCat)
@@ -786,7 +766,8 @@ export default function MaterialsPage() {
       const bv = sortField === 'title' ? b.title : sortField === 'category' ? b.category : sortField === 'subject' ? (b.subject ?? '') : b.created_at
       return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av)
     })
-    list.sort((a, b) => (starred.has(a.id) ? 0 : 1) - (starred.has(b.id) ? 0 : 1))
+    // Favoritos primeiro
+    list.sort((a, b) => (starred.has(b.id) ? 1 : 0) - (starred.has(a.id) ? 1 : 0))
     return list
   }, [materials, filterCat, filterType, filterScope, filterStarred, filterSubject, search, sortField, sortAsc, starred])
 
@@ -810,7 +791,7 @@ export default function MaterialsPage() {
   return (
     <div className="px-4 py-6 max-w-6xl mx-auto space-y-5">
 
-      {/* ── Page Header ─────────────────────────────────────────────────── */}
+      {/* ── Page Header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display font-bold text-2xl flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
@@ -849,7 +830,7 @@ export default function MaterialsPage() {
         ))}
       </div>
 
-      {/* ── Search + Filters ──────────────────────────────────────────────── */}
+      {/* ── Search + Filters ─────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -1023,14 +1004,14 @@ export default function MaterialsPage() {
         </p>
       )}
 
-      {/* ── Loading ──────────────────────────────────────────────────────── */}
+      {/* ── Loading ───────────────────────────────────────────────────────── */}
       {loading && materials.length === 0 && (
         <div className="flex items-center justify-center py-16">
           <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent-3)' }} />
         </div>
       )}
 
-      {/* ── Empty ────────────────────────────────────────────────────────── */}
+      {/* ── Empty ─────────────────────────────────────────────────────────── */}
       {!loading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
@@ -1055,7 +1036,7 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* ── Grid ─────────────────────────────────────────────────────────── */}
+      {/* ── Grid ──────────────────────────────────────────────────────────── */}
       {filtered.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(mat => (
@@ -1070,7 +1051,7 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* ── List ─────────────────────────────────────────────────────────── */}
+      {/* ── List ──────────────────────────────────────────────────────────── */}
       {filtered.length > 0 && viewMode === 'list' && (
         <div className="space-y-2">
           {filtered.map(mat => (
@@ -1085,7 +1066,7 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* ── Form modal ───────────────────────────────────────────────────── */}
+      {/* ── Form modal ────────────────────────────────────────────────────── */}
       {showForm && (
         <MaterialForm
           onClose={() => { setShowForm(false); setEditingMat(undefined) }}
@@ -1096,7 +1077,7 @@ export default function MaterialsPage() {
         />
       )}
 
-      {/* ── Delete confirm ───────────────────────────────────────────────── */}
+      {/* ── Delete confirm ────────────────────────────────────────────────── */}
       {deletingMat && (
         <DeleteConfirm
           mat={deletingMat}
