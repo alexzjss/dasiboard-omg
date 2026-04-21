@@ -22,7 +22,6 @@ const TurmaPage                = lazy(() => import('@/pages/TurmaPage'))
 const FeedPage                 = lazy(() => import('@/pages/FeedPage'))
 const SharedNotePage           = lazy(() => import('@/pages/SharedNotePage'))
 const StudyRoomPersistentPage  = lazy(() => import('@/pages/StudyRoomPersistentPage'))
-const MaterialsPage            = lazy(() => import('@/pages/MaterialsPage'))
 
 // ── Skeleton fallback ─────────────────────────────────────────────────────────
 function PageSkeleton() {
@@ -71,7 +70,6 @@ export default function App() {
         <Route path="turma"      element={<Suspense fallback={<PageSkeleton />}><TurmaPage /></Suspense>} />
         <Route path="feed"        element={<Suspense fallback={<PageSkeleton />}><FeedPage /></Suspense>} />
         <Route path="turma/:year" element={<Suspense fallback={<PageSkeleton />}><TurmaPage /></Suspense>} />
-        <Route path="materials"   element={<Suspense fallback={<PageSkeleton />}><MaterialsPage /></Suspense>} />
       </Route>
       {/* Public routes — no auth required */}
       <Route path="/u/:nusp"             element={<Suspense fallback={<PageSkeleton />}><PublicProfilePage /></Suspense>} />
