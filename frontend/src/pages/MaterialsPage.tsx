@@ -1,5 +1,5 @@
 // ── Materiais de Estudo — /materials ──────────────────────────────────────────
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   BookOpen, Link2, Upload, Plus, X, Search, Filter,
   Download, ExternalLink, Trash2, KeyRound, Globe,
@@ -9,51 +9,16 @@ import {
   Check, Loader2, Pencil,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { formatDistanceToNow, parseISO, isValid } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import api from '@/utils/api'
-import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
+import {
+  type MaterialCategory, type MaterialType,
+  type NormalizedMaterial, type MaterialFormData,
+  safeFormatAgo, safeCmp, fmtSize,
+  useMaterials,
+} from '@/hooks/useMaterials'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-type MaterialCategory = 'aula' | 'exercicio' | 'livro' | 'video' | 'artigo' | 'podcast' | 'outro'
-type MaterialType     = 'link' | 'file'
-type SortField        = 'title' | 'created_at' | 'category' | 'subject'
-type ViewMode         = 'grid' | 'list'
-
-interface Material {
-  id: string
-  title: string
-  description?: string | null
-  category: MaterialCategory
-  type: MaterialType
-  url?: string | null
-  file_url?: string | null
-  file_name?: string | null
-  subject?: string | null
-  // tags pode vir como array, string JSON, string "{a,b}" (formato Postgres) ou null/undefined
-  tags: string[] | string | null | undefined
-  is_global: boolean
-  created_at: string
-  created_by?: string | null
-  semester?: string | null
-}
-
-// Versão normalizada para uso interno — tags sempre como string[]
-interface NormalizedMaterial extends Omit<Material, 'tags'> {
-  tags: string[]
-}
-
-interface MaterialFormData {
-  title: string
-  description: string
-  category: MaterialCategory
-  type: MaterialType
-  url: string
-  subject: string
-  tags: string
-  is_global: boolean
-  semester: string
-}
+// ── UI-specific types ─────────────────────────────────────────────────────────
+type SortField = 'title' | 'created_at' | 'category' | 'subject'
+type ViewMode  = 'grid' | 'list'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CATEGORIES: { value: MaterialCategory; label: string; emoji: string; color: string }[] = [
@@ -74,78 +39,6 @@ const CAT_ICON: Record<MaterialCategory, React.ReactNode> = {
   artigo:    <FileText     size={14} />,
   podcast:   <Headphones   size={14} />,
   outro:     <FolderOpen   size={14} />,
-}
-
-const STARRED_KEY = 'dasiboard-materials-starred'
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Normaliza tags independente do formato vindo da API:
- *  - string[]           → retorna direto
- *  - string "{a,b,c}"  → parse do formato array do Postgres
- *  - string "a,b,c"    → split por vírgula
- *  - null/undefined     → []
- */
-function parseTags(raw: string[] | string | null | undefined): string[] {
-  if (!raw) return []
-  if (Array.isArray(raw)) return raw.filter(Boolean)
-  const s = String(raw).trim()
-  if (!s || s === '{}') return []
-  // Formato Postgres: {tag1,tag2}
-  if (s.startsWith('{') && s.endsWith('}')) {
-    return s.slice(1, -1).split(',').map(t => t.trim().replace(/^"|"$/g, '')).filter(Boolean)
-  }
-  return s.split(',').map(t => t.trim()).filter(Boolean)
-}
-
-/** Normaliza um material recebido da API garantindo campos seguros. */
-function normalizeMaterial(m: Material): NormalizedMaterial {
-  return {
-    ...m,
-    title:       m.title       ?? '',
-    description: m.description ?? null,
-    category:    (m.category   ?? 'outro') as MaterialCategory,
-    type:        (m.type       ?? 'link')  as MaterialType,
-    url:         m.url         ?? null,
-    file_url:    m.file_url    ?? null,
-    file_name:   m.file_name   ?? null,
-    subject:     m.subject     ?? null,
-    semester:    m.semester    ?? null,
-    is_global:   Boolean(m.is_global),
-    created_at:  m.created_at  ?? new Date().toISOString(),
-    tags:        parseTags(m.tags),
-  }
-}
-
-/** Formata data com fallback seguro — nunca lança exceção. */
-function safeFormatAgo(dateStr: string | null | undefined): string {
-  if (!dateStr) return ''
-  try {
-    const date = parseISO(dateStr)
-    if (!isValid(date)) return ''
-    return formatDistanceToNow(date, { locale: ptBR, addSuffix: true })
-  } catch {
-    return ''
-  }
-}
-
-/** localeCompare seguro — trata undefined/null como string vazia. */
-function safeCmp(a: string | null | undefined, b: string | null | undefined): number {
-  return (a ?? '').localeCompare(b ?? '', 'pt-BR', { sensitivity: 'base' })
-}
-
-function loadStarred(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(STARRED_KEY) ?? '[]')) } catch { return new Set() }
-}
-function saveStarred(ids: Set<string>) {
-  try { localStorage.setItem(STARRED_KEY, JSON.stringify([...ids])) } catch {}
-}
-
-function fmtSize(bytes?: number): string {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
 // ── Material Form Modal ───────────────────────────────────────────────────────
@@ -187,13 +80,11 @@ function MaterialForm({
       await onSave({ ...form, tags: tagInput }, file ?? undefined)
       onClose()
     } catch {
-      // erros já tratados em handleSave
+      // errors already shown in useMaterials
     } finally {
       setLoading(false)
     }
   }
-
-  const cat = CATEGORIES.find(c => c.value === form.category) ?? CATEGORIES[0]
 
   return (
     <div
@@ -630,15 +521,18 @@ function DeleteConfirm({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MaterialsPage() {
-  const [materials,     setMaterials]    = useState<NormalizedMaterial[]>([])
-  const [loading,       setLoading]      = useState(true)
-  const [showForm,      setShowForm]     = useState(false)
-  const [editingMat,    setEditingMat]   = useState<NormalizedMaterial | undefined>()
-  const [deletingMat,   setDeletingMat]  = useState<NormalizedMaterial | undefined>()
-  const [deleteLoading, setDeleteLoading]= useState(false)
-  const [globalKey,     setGlobalKey]    = useState('')
+  // ── Server state (owned by useMaterials hook) ─────────────────────────────
+  const {
+    materials, loading, deleteLoading, starred, globalKey, setGlobalKey,
+    saveMaterial, deleteMaterial, toggleStar, openMaterial,
+  } = useMaterials()
 
-  // Filters
+  // ── Modal state ───────────────────────────────────────────────────────────
+  const [showForm,    setShowForm]    = useState(false)
+  const [editingMat,  setEditingMat]  = useState<NormalizedMaterial | undefined>()
+  const [deletingMat, setDeletingMat] = useState<NormalizedMaterial | undefined>()
+
+  // ── Filter state ──────────────────────────────────────────────────────────
   const [search,        setSearch]       = useState('')
   const [filterCat,     setFilterCat]    = useState<MaterialCategory | 'all'>('all')
   const [filterType,    setFilterType]   = useState<MaterialType | 'all'>('all')
@@ -647,153 +541,26 @@ export default function MaterialsPage() {
   const [filterSubject, setFilterSubject]= useState('')
   const [showFilters,   setShowFilters]  = useState(false)
 
-  // Sort & View
+  // ── Sort & view state ─────────────────────────────────────────────────────
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortAsc,   setSortAsc]   = useState(false)
   const [viewMode,  setViewMode]  = useState<ViewMode>('grid')
 
-  // Starred (preferência local — não sincroniza entre dispositivos por design)
-  const [starred, setStarred] = useState<Set<string>>(loadStarred)
+  // ── Event handlers ────────────────────────────────────────────────────────
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchMaterials = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get<Material[]>('/materials')
-      // Normaliza TODOS os campos logo ao entrar — garante que nenhum campo
-      // seja undefined/null quando o código precisar acessá-los.
-      const normalized = (Array.isArray(data) ? data : []).map(normalizeMaterial)
-      setMaterials(normalized)
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number; data?: { detail?: string } } }
-      const status  = e?.response?.status
-      const detail  = e?.response?.data?.detail
-      const hasResp = Boolean(e?.response)
-
-      if (status === 401 || status === 403) {
-        // interceptor de auth já trata o redirect
-      } else if (status === 404) {
-        toast.error('Rota /materials não encontrada. Verifique o deploy do backend.')
-      } else if (status === 503) {
-        toast.error(detail ?? 'Tabelas de materiais não inicializadas. Reinicie o backend.')
-      } else if (hasResp) {
-        toast.error(detail ?? `Erro ${status} no servidor.`)
-      } else {
-        toast('Servidor indisponível. Verifique sua conexão.', { icon: '📡', duration: 4000 })
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { fetchMaterials() }, [fetchMaterials])
-
-  // ── Save ──────────────────────────────────────────────────────────────────
-  const handleSave = async (formData: MaterialFormData, file?: File) => {
-    const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean)
-    const headers: Record<string, string> = {}
-    if (formData.is_global && globalKey) headers['x-global-key'] = globalKey
-
-    const payload = {
-      title:       formData.title,
-      description: formData.description || null,
-      category:    formData.category,
-      type:        formData.type,
-      url:         formData.type === 'link' ? formData.url : null,
-      subject:     formData.subject || null,
-      tags,
-      is_global:   formData.is_global,
-      semester:    formData.semester || null,
-    }
-
-    // Passo 1: criar/atualizar metadados
-    let saved: NormalizedMaterial
-    try {
-      if (editingMat) {
-        const { data } = await api.put<Material>(`/materials/${editingMat.id}`, payload, { headers })
-        saved = normalizeMaterial(data)
-      } else {
-        const { data } = await api.post<Material>('/materials', payload, { headers })
-        saved = normalizeMaterial(data)
-      }
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number; data?: { detail?: string } } }
-      const detail = e?.response?.data?.detail
-      const status = e?.response?.status
-      toast.error(detail ?? (status ? `Erro ${status} ao salvar material.` : 'Erro ao salvar material.'))
-      throw err
-    }
-
-    // Passo 2: upload de arquivo (se houver)
-    if (formData.type === 'file' && file) {
-      const fd = new FormData()
-      fd.append('file', file)
-      try {
-        const { data } = await api.post<Material>(`/materials/${saved.id}/upload`, fd, { headers })
-        saved = normalizeMaterial(data)
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { detail?: string } } }
-        const msg = e?.response?.data?.detail ?? 'Erro ao enviar arquivo. Tente editar o material para reenviar.'
-        toast.error(msg)
-        // Ainda assim adicionamos o material sem arquivo para não perder o registro
-        setMaterials(prev =>
-          editingMat
-            ? prev.map(m => m.id === editingMat.id ? saved : m)
-            : [saved, ...prev]
-        )
-        throw err
-      }
-    }
-
-    setMaterials(prev =>
-      editingMat
-        ? prev.map(m => m.id === editingMat.id ? saved : m)
-        : [saved, ...prev]
-    )
-
-    if (!editingMat) addExp(EXP_REWARDS.noteCreated)
-    toast.success(editingMat ? 'Material atualizado!' : 'Material adicionado! 📚')
-    setEditingMat(undefined)
+  /** Adapts the form's (formData, file?) signature to the hook's saveMaterial. */
+  const handleFormSave = async (formData: MaterialFormData, file?: File) => {
+    await saveMaterial(formData, file, editingMat?.id)
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
-  const handleDelete = async () => {
+  /** Runs delete and closes the confirm dialog only on success. */
+  const handleDeleteConfirm = async () => {
     if (!deletingMat) return
-    if (deletingMat.is_global && !globalKey) { toast.error('Informe a chave de acesso global'); return }
-    setDeleteLoading(true)
-    try {
-      const headers: Record<string, string> = {}
-      if (deletingMat.is_global && globalKey) headers['x-global-key'] = globalKey
-      await api.delete(`/materials/${deletingMat.id}`, { headers })
-      setMaterials(prev => prev.filter(m => m.id !== deletingMat.id))
-      setDeletingMat(undefined)
-      toast.success('Material removido')
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { detail?: string } } }
-      toast.error(e?.response?.data?.detail ?? 'Erro ao remover material.')
-    } finally {
-      setDeleteLoading(false)
-    }
+    const ok = await deleteMaterial(deletingMat)
+    if (ok) setDeletingMat(undefined)
   }
 
-  // ── Star ──────────────────────────────────────────────────────────────────
-  const toggleStar = (id: string) => {
-    setStarred(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      saveStarred(next)
-      return next
-    })
-  }
-
-  // ── Open / Download ───────────────────────────────────────────────────────
-  const openMaterial = (mat: NormalizedMaterial) => {
-    const url = mat.url ?? mat.file_url
-    if (!url) { toast.error('Arquivo não disponível'); return }
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
-
-  // ── Filter + sort ─────────────────────────────────────────────────────────
+  // ── Derived: filtered + sorted list ──────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...materials]
 
@@ -815,7 +582,6 @@ export default function MaterialsPage() {
       )
     }
 
-    // Ordenação — safeCmp garante que undefined/null nunca chegue ao localeCompare
     list.sort((a, b) => {
       let cmp: number
       switch (sortField) {
@@ -827,7 +593,7 @@ export default function MaterialsPage() {
       return sortAsc ? cmp : -cmp
     })
 
-    // Favoritos sempre no topo
+    // Starred items always float to the top
     list.sort((a, b) => (starred.has(b.id) ? 1 : 0) - (starred.has(a.id) ? 1 : 0))
 
     return list
@@ -852,6 +618,7 @@ export default function MaterialsPage() {
     byCat:   CATEGORIES.map(c => ({ ...c, count: materials.filter(m => m.category === c.value).length })),
   }), [materials, starred])
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="px-4 py-6 max-w-6xl mx-auto space-y-5">
 
@@ -1134,7 +901,7 @@ export default function MaterialsPage() {
       {showForm && (
         <MaterialForm
           onClose={() => { setShowForm(false); setEditingMat(undefined) }}
-          onSave={handleSave}
+          onSave={handleFormSave}
           editing={editingMat}
           globalKey={globalKey}
           setGlobalKey={setGlobalKey}
@@ -1147,7 +914,7 @@ export default function MaterialsPage() {
           mat={deletingMat}
           globalKey={globalKey}
           setGlobalKey={setGlobalKey}
-          onConfirm={handleDelete}
+          onConfirm={handleDeleteConfirm}
           onCancel={() => setDeletingMat(undefined)}
           loading={deleteLoading}
         />
