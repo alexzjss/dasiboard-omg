@@ -9,7 +9,7 @@ import {
   Check, Loader2, Pencil,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { formatDistanceToNow, parseISO } from 'date-fns'
+import { formatDistanceToNow, parseISO, isValid } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import api from '@/utils/api'
 import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
@@ -23,18 +23,24 @@ type ViewMode         = 'grid' | 'list'
 interface Material {
   id: string
   title: string
-  description?: string
+  description?: string | null
   category: MaterialCategory
   type: MaterialType
-  url?: string
-  file_url?: string
-  file_name?: string
-  subject?: string
-  tags: string[]
+  url?: string | null
+  file_url?: string | null
+  file_name?: string | null
+  subject?: string | null
+  // tags pode vir como array, string JSON, string "{a,b}" (formato Postgres) ou null/undefined
+  tags: string[] | string | null | undefined
   is_global: boolean
   created_at: string
-  created_by?: string
-  semester?: string
+  created_by?: string | null
+  semester?: string | null
+}
+
+// Versão normalizada para uso interno — tags sempre como string[]
+interface NormalizedMaterial extends Omit<Material, 'tags'> {
+  tags: string[]
 }
 
 interface MaterialFormData {
@@ -72,7 +78,62 @@ const CAT_ICON: Record<MaterialCategory, React.ReactNode> = {
 
 const STARRED_KEY = 'dasiboard-materials-starred'
 
-// ── Starred helpers (local only — não afeta outros dispositivos) ───────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Normaliza tags independente do formato vindo da API:
+ *  - string[]           → retorna direto
+ *  - string "{a,b,c}"  → parse do formato array do Postgres
+ *  - string "a,b,c"    → split por vírgula
+ *  - null/undefined     → []
+ */
+function parseTags(raw: string[] | string | null | undefined): string[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw.filter(Boolean)
+  const s = String(raw).trim()
+  if (!s || s === '{}') return []
+  // Formato Postgres: {tag1,tag2}
+  if (s.startsWith('{') && s.endsWith('}')) {
+    return s.slice(1, -1).split(',').map(t => t.trim().replace(/^"|"$/g, '')).filter(Boolean)
+  }
+  return s.split(',').map(t => t.trim()).filter(Boolean)
+}
+
+/** Normaliza um material recebido da API garantindo campos seguros. */
+function normalizeMaterial(m: Material): NormalizedMaterial {
+  return {
+    ...m,
+    title:       m.title       ?? '',
+    description: m.description ?? null,
+    category:    (m.category   ?? 'outro') as MaterialCategory,
+    type:        (m.type       ?? 'link')  as MaterialType,
+    url:         m.url         ?? null,
+    file_url:    m.file_url    ?? null,
+    file_name:   m.file_name   ?? null,
+    subject:     m.subject     ?? null,
+    semester:    m.semester    ?? null,
+    is_global:   Boolean(m.is_global),
+    created_at:  m.created_at  ?? new Date().toISOString(),
+    tags:        parseTags(m.tags),
+  }
+}
+
+/** Formata data com fallback seguro — nunca lança exceção. */
+function safeFormatAgo(dateStr: string | null | undefined): string {
+  if (!dateStr) return ''
+  try {
+    const date = parseISO(dateStr)
+    if (!isValid(date)) return ''
+    return formatDistanceToNow(date, { locale: ptBR, addSuffix: true })
+  } catch {
+    return ''
+  }
+}
+
+/** localeCompare seguro — trata undefined/null como string vazia. */
+function safeCmp(a: string | null | undefined, b: string | null | undefined): number {
+  return (a ?? '').localeCompare(b ?? '', 'pt-BR', { sensitivity: 'base' })
+}
+
 function loadStarred(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(STARRED_KEY) ?? '[]')) } catch { return new Set() }
 }
@@ -93,7 +154,7 @@ function MaterialForm({
 }: {
   onClose: () => void
   onSave: (data: MaterialFormData, file?: File) => Promise<void>
-  editing?: Material
+  editing?: NormalizedMaterial
   globalKey: string
   setGlobalKey: (v: string) => void
 }) {
@@ -108,12 +169,13 @@ function MaterialForm({
     is_global:   editing?.is_global   ?? false,
     semester:    editing?.semester    ?? '',
   })
-  const [file,    setFile]    = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [file,     setFile]    = useState<File | null>(null)
+  const [loading,  setLoading] = useState(false)
   const [tagInput, setTagInput] = useState(editing?.tags?.join(', ') ?? '')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const set = (k: keyof MaterialFormData, v: any) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: keyof MaterialFormData, v: unknown) =>
+    setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async () => {
     if (!form.title.trim()) { toast.error('Título é obrigatório'); return }
@@ -131,7 +193,7 @@ function MaterialForm({
     }
   }
 
-  const cat = CATEGORIES.find(c => c.value === form.category)!
+  const cat = CATEGORIES.find(c => c.value === form.category) ?? CATEGORIES[0]
 
   return (
     <div
@@ -340,15 +402,15 @@ function MaterialForm({
 function MaterialCard({
   mat, starred, onToggleStar, onOpen, onDelete, onEdit,
 }: {
-  mat: Material
+  mat: NormalizedMaterial
   starred: boolean
   onToggleStar: () => void
   onOpen: () => void
   onDelete: () => void
   onEdit: () => void
 }) {
-  const cat = CATEGORIES.find(c => c.value === mat.category)!
-  const ago = formatDistanceToNow(parseISO(mat.created_at), { locale: ptBR, addSuffix: true })
+  const cat = CATEGORIES.find(c => c.value === mat.category) ?? CATEGORIES[CATEGORIES.length - 1]
+  const ago = safeFormatAgo(mat.created_at)
 
   return (
     <div
@@ -413,9 +475,9 @@ function MaterialCard({
         <div className="flex items-center justify-between pt-1">
           <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
             {mat.type === 'link' ? <Link2 size={10}/> : <Upload size={10}/>}
-            {mat.type === 'link' ? 'Link' : mat.file_name ?? 'Arquivo'}
+            {mat.type === 'link' ? 'Link' : (mat.file_name ?? 'Arquivo')}
           </span>
-          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{ago}</span>
+          {ago && <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{ago}</span>}
         </div>
       </div>
 
@@ -447,15 +509,15 @@ function MaterialCard({
 function MaterialRow({
   mat, starred, onToggleStar, onOpen, onDelete, onEdit,
 }: {
-  mat: Material
+  mat: NormalizedMaterial
   starred: boolean
   onToggleStar: () => void
   onOpen: () => void
   onDelete: () => void
   onEdit: () => void
 }) {
-  const cat = CATEGORIES.find(c => c.value === mat.category)!
-  const ago = formatDistanceToNow(parseISO(mat.created_at), { locale: ptBR, addSuffix: true })
+  const cat = CATEGORIES.find(c => c.value === mat.category) ?? CATEGORIES[CATEGORIES.length - 1]
+  const ago = safeFormatAgo(mat.created_at)
 
   return (
     <div className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all animate-in"
@@ -486,7 +548,7 @@ function MaterialRow({
           {mat.tags.slice(0, 3).map(tag => (
             <span key={tag} className="text-[10px]" style={{ color: 'var(--text-muted)' }}>#{tag}</span>
           ))}
-          <span className="text-[10px] ml-auto" style={{ color: 'var(--text-muted)' }}>{ago}</span>
+          {ago && <span className="text-[10px] ml-auto" style={{ color: 'var(--text-muted)' }}>{ago}</span>}
         </div>
       </div>
 
@@ -517,7 +579,7 @@ function MaterialRow({
 function DeleteConfirm({
   mat, globalKey, setGlobalKey, onConfirm, onCancel, loading,
 }: {
-  mat: Material
+  mat: NormalizedMaterial
   globalKey: string
   setGlobalKey: (v: string) => void
   onConfirm: () => void
@@ -568,11 +630,11 @@ function DeleteConfirm({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MaterialsPage() {
-  const [materials,     setMaterials]    = useState<Material[]>([])
+  const [materials,     setMaterials]    = useState<NormalizedMaterial[]>([])
   const [loading,       setLoading]      = useState(true)
   const [showForm,      setShowForm]     = useState(false)
-  const [editingMat,    setEditingMat]   = useState<Material | undefined>()
-  const [deletingMat,   setDeletingMat]  = useState<Material | undefined>()
+  const [editingMat,    setEditingMat]   = useState<NormalizedMaterial | undefined>()
+  const [deletingMat,   setDeletingMat]  = useState<NormalizedMaterial | undefined>()
   const [deleteLoading, setDeleteLoading]= useState(false)
   const [globalKey,     setGlobalKey]    = useState('')
 
@@ -594,17 +656,19 @@ export default function MaterialsPage() {
   const [starred, setStarred] = useState<Set<string>>(loadStarred)
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
-  // Sempre busca da API — sem cache local — para garantir que todos os
-  // dispositivos vejam os mesmos dados, incluindo arquivos enviados por outros.
   const fetchMaterials = useCallback(async () => {
     setLoading(true)
     try {
       const { data } = await api.get<Material[]>('/materials')
-      setMaterials(data ?? [])
-    } catch (err: any) {
-      const status  = err?.response?.status
-      const detail  = err?.response?.data?.detail as string | undefined
-      const hasResp = Boolean(err?.response)
+      // Normaliza TODOS os campos logo ao entrar — garante que nenhum campo
+      // seja undefined/null quando o código precisar acessá-los.
+      const normalized = (Array.isArray(data) ? data : []).map(normalizeMaterial)
+      setMaterials(normalized)
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: { detail?: string } } }
+      const status  = e?.response?.status
+      const detail  = e?.response?.data?.detail
+      const hasResp = Boolean(e?.response)
 
       if (status === 401 || status === 403) {
         // interceptor de auth já trata o redirect
@@ -625,18 +689,6 @@ export default function MaterialsPage() {
   useEffect(() => { fetchMaterials() }, [fetchMaterials])
 
   // ── Save ──────────────────────────────────────────────────────────────────
-  /**
-   * Fluxo em dois passos:
-   *   1. POST /materials (JSON)           — cria/atualiza metadados
-   *   2. POST /materials/{id}/upload (multipart) — envia arquivo e recebe o
-   *      material atualizado com file_url persistido no banco
-   *
-   * O passo 2 retorna o material completo, garantindo que o state local
-   * reflita exatamente o que está no banco — o mesmo que outros dispositivos verão.
-   *
-   * Se o upload falhar, o erro é relançado (não silenciado) para que o modal
-   * não feche e o usuário saiba que precisa tentar novamente.
-   */
   const handleSave = async (formData: MaterialFormData, file?: File) => {
     const tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean)
     const headers: Record<string, string> = {}
@@ -655,34 +707,33 @@ export default function MaterialsPage() {
     }
 
     // Passo 1: criar/atualizar metadados
-    let saved: Material
+    let saved: NormalizedMaterial
     try {
       if (editingMat) {
         const { data } = await api.put<Material>(`/materials/${editingMat.id}`, payload, { headers })
-        saved = data
+        saved = normalizeMaterial(data)
       } else {
         const { data } = await api.post<Material>('/materials', payload, { headers })
-        saved = data
+        saved = normalizeMaterial(data)
       }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.detail ?? 'Erro ao salvar material.')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string } } }
+      toast.error(e?.response?.data?.detail ?? 'Erro ao salvar material.')
       throw err
     }
 
     // Passo 2: upload de arquivo (se houver)
-    // O endpoint retorna o material completo com file_url já gravado no banco.
     if (formData.type === 'file' && file) {
       const fd = new FormData()
       fd.append('file', file)
       try {
         const { data } = await api.post<Material>(`/materials/${saved.id}/upload`, fd, { headers })
-        saved = data
-      } catch (err: any) {
-        // O upload falhou — relançar para que o modal não feche.
-        // O registro foi criado sem arquivo; o usuário pode tentar editar e enviar novamente.
-        const msg = err?.response?.data?.detail ?? 'Erro ao enviar arquivo. Tente editar o material para reenviar.'
+        saved = normalizeMaterial(data)
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { detail?: string } } }
+        const msg = e?.response?.data?.detail ?? 'Erro ao enviar arquivo. Tente editar o material para reenviar.'
         toast.error(msg)
-        // Ainda assim adicionamos o material sem arquivo ao estado para não perder o registro
+        // Ainda assim adicionamos o material sem arquivo para não perder o registro
         setMaterials(prev =>
           editingMat
             ? prev.map(m => m.id === editingMat.id ? saved : m)
@@ -692,7 +743,6 @@ export default function MaterialsPage() {
       }
     }
 
-    // Atualizar estado com o retorno do servidor (fonte única da verdade)
     setMaterials(prev =>
       editingMat
         ? prev.map(m => m.id === editingMat.id ? saved : m)
@@ -716,8 +766,9 @@ export default function MaterialsPage() {
       setMaterials(prev => prev.filter(m => m.id !== deletingMat.id))
       setDeletingMat(undefined)
       toast.success('Material removido')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.detail ?? 'Erro ao remover material.')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string } } }
+      toast.error(e?.response?.data?.detail ?? 'Erro ao remover material.')
     } finally {
       setDeleteLoading(false)
     }
@@ -734,10 +785,7 @@ export default function MaterialsPage() {
   }
 
   // ── Open / Download ───────────────────────────────────────────────────────
-  // file_url vem do banco como "/uploads/uuid/arquivo.pdf".
-  // Como o nginx proxy /uploads/ → backend, simplesmente usar como href funciona
-  // em qualquer dispositivo — nenhuma URL absoluta necessária.
-  const openMaterial = (mat: Material) => {
+  const openMaterial = (mat: NormalizedMaterial) => {
     const url = mat.url ?? mat.file_url
     if (!url) { toast.error('Arquivo não disponível'); return }
     window.open(url, '_blank', 'noopener,noreferrer')
@@ -746,33 +794,47 @@ export default function MaterialsPage() {
   // ── Filter + sort ─────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...materials]
+
     if (filterCat !== 'all')      list = list.filter(m => m.category === filterCat)
     if (filterType !== 'all')     list = list.filter(m => m.type === filterType)
     if (filterScope === 'global') list = list.filter(m => m.is_global)
     if (filterScope === 'mine')   list = list.filter(m => !m.is_global)
     if (filterStarred)            list = list.filter(m => starred.has(m.id))
-    if (filterSubject.trim())     list = list.filter(m => m.subject?.toLowerCase().includes(filterSubject.toLowerCase()))
+    if (filterSubject.trim())     list = list.filter(m =>
+      (m.subject ?? '').toLowerCase().includes(filterSubject.toLowerCase())
+    )
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(m =>
         m.title.toLowerCase().includes(q) ||
-        m.description?.toLowerCase().includes(q) ||
-        m.subject?.toLowerCase().includes(q) ||
+        (m.description ?? '').toLowerCase().includes(q) ||
+        (m.subject ?? '').toLowerCase().includes(q) ||
         m.tags.some(t => t.toLowerCase().includes(q))
       )
     }
+
+    // Ordenação — safeCmp garante que undefined/null nunca chegue ao localeCompare
     list.sort((a, b) => {
-      const av = sortField === 'title' ? a.title : sortField === 'category' ? a.category : sortField === 'subject' ? (a.subject ?? '') : a.created_at
-      const bv = sortField === 'title' ? b.title : sortField === 'category' ? b.category : sortField === 'subject' ? (b.subject ?? '') : b.created_at
-      return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av)
+      let cmp: number
+      switch (sortField) {
+        case 'title':    cmp = safeCmp(a.title,    b.title);    break
+        case 'category': cmp = safeCmp(a.category, b.category); break
+        case 'subject':  cmp = safeCmp(a.subject,  b.subject);  break
+        default:         cmp = safeCmp(a.created_at, b.created_at); break
+      }
+      return sortAsc ? cmp : -cmp
     })
-    // Favoritos primeiro
+
+    // Favoritos sempre no topo
     list.sort((a, b) => (starred.has(b.id) ? 1 : 0) - (starred.has(a.id) ? 1 : 0))
+
     return list
   }, [materials, filterCat, filterType, filterScope, filterStarred, filterSubject, search, sortField, sortAsc, starred])
 
   const subjects = useMemo(() =>
-    [...new Set(materials.map(m => m.subject).filter(Boolean) as string[])].sort(),
+    [...new Set(
+      materials.map(m => m.subject).filter((s): s is string => Boolean(s))
+    )].sort((a, b) => safeCmp(a, b)),
     [materials]
   )
 
