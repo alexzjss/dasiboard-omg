@@ -15,6 +15,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File
+from psycopg2 import errors as pg_errors
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
@@ -100,16 +101,10 @@ def _parse_tags(raw) -> List[str]:
 
 
 def _maybe_raise_schema_error(exc: Exception) -> None:
-    msg = str(exc).lower()
-    if "does not exist" in msg and (
-        "materials" in msg
-        or "global_materials" in msg
-        or "column" in msg
-        or "relation" in msg
-    ):
+    if isinstance(exc, (pg_errors.UndefinedTable, pg_errors.UndefinedColumn)):
         raise HTTPException(
             503,
-            "Estrutura de materiais desatualizada no banco. Reinicie o backend para aplicar as migrações.",
+            "Estrutura de materiais desatualizada no banco. Verifique se as migrações foram aplicadas com sucesso.",
         )
 
 
