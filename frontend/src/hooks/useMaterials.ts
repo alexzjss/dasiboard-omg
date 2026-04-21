@@ -210,7 +210,7 @@ export function useMaterials() {
         const { data } = await api.put<Material>(`/materials/${editingId}`, payload, { headers })
         saved = normalizeMaterial(data)
       } else {
-        const { data } = await api.post<Material>('/materials', payload, { headers })
+        const { data } = await api.post<Material>('/materials/', payload, { headers })
         saved = normalizeMaterial(data)
       }
     } catch (err: unknown) {
