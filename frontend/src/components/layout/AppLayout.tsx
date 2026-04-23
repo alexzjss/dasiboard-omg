@@ -16,7 +16,7 @@ import { NotificationBanner } from '@/hooks/usePushNotifications'
 import storage, { STORAGE_KEYS } from '@/utils/storage'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { useSwipeNavigation, useKeyboardShortcuts } from '@/hooks/useInteractions'
-import { useTheme, THEMES, DARK_THEMES, LIGHT_THEMES, THEME_GROUPS, ThemeId, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
+import { useTheme, THEMES, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
 import { LofiPlayer } from '@/components/LofiPlayer'
@@ -56,6 +56,8 @@ const nav = [...NAV_PRIMARY, ...NAV_SECONDARY]
 
 // ── Theme preview colors for visual picker ───────────────────────────────────
 const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string }> = {
+  'custom-dark':      { bg: '#0c0c1a', accent: '#7c3aed', card: '#13133a' },
+  'custom-light':     { bg: '#f5f6fb', accent: '#7c3aed', card: '#ffffff' },
   // Escuros base
   'dark-roxo':        { bg: '#0d0a1a', accent: '#a855f7', card: '#1a1430' },
   'dark-hypado':      { bg: '#0a0510', accent: '#ff6600', card: '#1f1028' },
@@ -195,50 +197,15 @@ function PokeballButton({ onClick }: { onClick: () => void }) {
 
 // ── Visual Theme Picker ───────────────────────────────────────────────────────
 function ThemePicker({ onClose }: { onClose: () => void }) {
-  const { theme, setTheme } = useTheme()
-  const [filter, setFilter] = useState<'all'|'dark'|'light'|'games'|'vibes'|'tech'|'neon'|'special'|'anime'|'super'>('all')
-  const [search, setSearch] = useState('')
-  const searchRef = useRef<HTMLInputElement>(null)
+  const { theme, setTheme, accentColor, setAccentColor } = useTheme()
 
   useEffect(() => {
-    searchRef.current?.focus()
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const shown = THEMES.filter(t => {
-    const matchFilter =
-      filter === 'all'   ? true :
-      filter === 'dark'  ? t.dark :
-      filter === 'light' ? !t.dark :
-      t.group === filter
-    const matchSearch = !search.trim() ||
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase())
-    return matchFilter && matchSearch
-  })
-
-  const FILTERS = [
-    { key: 'all',     label: '✨ Todos',      emoji: '' },
-    { key: 'dark',    label: '🌙 Escuros',    emoji: '' },
-    { key: 'light',   label: '☀️ Claros',     emoji: '' },
-    { key: 'games',   label: '🕹️ Games',      emoji: '' },
-    { key: 'vibes',   label: '🎨 Atmosfera',  emoji: '' },
-    { key: 'tech',    label: '💻 Tech',        emoji: '' },
-    { key: 'neon',    label: '🌆 Neon & CRT', emoji: '' },
-    { key: 'special', label: '✨ Especial',   emoji: '' },
-    { key: 'anime',   label: '🎌 Anime',      emoji: '' },
-    { key: 'super',   label: '🦸 Herói',      emoji: '' },
-  ] as const
-
-  // Group by category for grouped display
-  const useGrouped = filter === 'all' && !search.trim()
-  const GROUP_ORDER = ['base','games','vibes','neon','tech','special','anime','super']
-  const GROUP_LABELS: Record<string,string> = {
-    base:'Essenciais', games:'Games & Pixel', vibes:'Atmosfera', neon:'Neon & CRT',
-    tech:'Tech', special:'Especial', anime:'Anime', super:'Super-heróis',
-  }
+  const presets = ['#7c3aed', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899']
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center"
@@ -255,11 +222,7 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
         <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0">
           <h3 className="font-display font-bold text-base flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <Palette size={16} style={{ color: 'var(--accent-3)' }} />
-            Escolher tema
-            <span className="text-[10px] font-normal px-2 py-0.5 rounded-full"
-                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
-              {THEMES.length} temas
-            </span>
+            Personalizar tema
           </h3>
           <div className="flex items-center gap-2">
             <span className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono"
@@ -273,127 +236,68 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="px-5 mb-3 shrink-0">
-          <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-            <input ref={searchRef} type="text" placeholder="Buscar por nome ou descrição..." value={search}
-                   onChange={e => setSearch(e.target.value)}
-                   className="w-full pl-8 pr-3 py-2 rounded-xl text-sm"
-                   style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)', outline: 'none' }} />
-          </div>
-        </div>
-
-        {/* Filter chips — scrollable row */}
-        <div className="px-5 mb-3 shrink-0">
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-            {FILTERS.map(f => (
-              <button key={f.key} onClick={() => setFilter(f.key as any)}
-                      className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
-                      style={{
-                        background: filter === f.key ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                        border: `1px solid ${filter === f.key ? 'var(--accent-1)' : 'var(--border)'}`,
-                        color: filter === f.key ? 'var(--accent-3)' : 'var(--text-muted)',
-                        whiteSpace: 'nowrap',
-                      }}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Theme grid — grouped or flat */}
-        <div className="flex-1 overflow-y-auto px-4 pb-6">
-          {shown.length === 0 && (
-            <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
-              <Palette size={28} className="mx-auto mb-2 opacity-20" />
-              <p className="text-sm">Nenhum tema encontrado</p>
+        <div className="flex-1 overflow-y-auto px-5 pb-6">
+          <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Modo</p>
+            <div className="grid grid-cols-2 gap-2">
+              {THEMES.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTheme(t.id)}
+                  className="px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                  style={{
+                    background: theme.id === t.id ? 'var(--accent-soft)' : 'var(--bg-card)',
+                    border: `1px solid ${theme.id === t.id ? 'var(--accent-1)' : 'var(--border)'}`,
+                    color: theme.id === t.id ? 'var(--accent-3)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {t.emoji} {t.name}
+                </button>
+              ))}
             </div>
-          )}
-
-          {useGrouped ? (
-            GROUP_ORDER.map(gkey => {
-              const groupThemes = THEMES.filter(t => t.group === gkey)
-              if (groupThemes.length === 0) return null
-              return (
-                <div key={gkey} className="mb-5">
-                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2 px-0.5"
-                     style={{ color: 'var(--text-muted)' }}>
-                    {GROUP_LABELS[gkey]}
-                  </p>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    {groupThemes.map(t => <ThemeCard key={t.id} t={t} isActive={theme.id === t.id} onSelect={() => { setTheme(t.id as ThemeId); onClose() }} />)}
-                  </div>
-                </div>
-              )
-            })
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1">
-              {shown.map(t => <ThemeCard key={t.id} t={t} isActive={theme.id === t.id} onSelect={() => { setTheme(t.id as ThemeId); onClose() }} />)}
+            <p className="text-xs font-semibold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>Cor de destaque</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={accentColor}
+                onChange={e => setAccentColor(e.target.value)}
+                className="w-12 h-10 rounded-lg cursor-pointer"
+                style={{ background: 'transparent', border: '1px solid var(--border)' }}
+                title="Selecionar cor de destaque"
+              />
+              <input
+                type="text"
+                value={accentColor}
+                onChange={e => setAccentColor(e.target.value)}
+                className="input text-sm h-10"
+                maxLength={7}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 pb-4 pt-2 shrink-0 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}>
-          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-            {shown.length} de {THEMES.length} temas
-          </p>
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {presets.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setAccentColor(c)}
+                  className="w-7 h-7 rounded-full transition-all"
+                  style={{
+                    background: c,
+                    border: `2px solid ${accentColor.toLowerCase() === c ? 'var(--text-primary)' : 'var(--bg-card)'}`,
+                  }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
           <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
             Use <kbd className="px-1 py-0.5 rounded text-[9px]"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>Ctrl+T</kbd> para abrir
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>Ctrl+T</kbd> para abrir este painel
           </p>
+        </div>
+        <div className="px-5 pb-4 pt-2 shrink-0 flex items-center justify-end" style={{ borderTop: '1px solid var(--border)' }}>
+          <button onClick={onClose} className="btn-primary text-xs py-2 px-4">Concluir</button>
         </div>
       </div>
     </div>
-  )
-}
-
-function ThemeCard({ t, isActive, onSelect }: { t: import('@/context/ThemeContext').ThemeMeta; isActive: boolean; onSelect: () => void }) {
-  const preview = THEME_PREVIEWS[t.id] ?? { bg: '#111', accent: '#888', card: '#222' }
-  const isCRT = t.id === 'dark-matrix' || t.id === 'dark-crt'
-  const isNeon = t.id === 'dark-2077'
-  return (
-    <button onClick={onSelect}
-            className="flex flex-col gap-1.5 rounded-2xl p-2 transition-all active:scale-95"
-            style={{
-              border: `2px solid ${isActive ? 'var(--accent-1)' : 'var(--border)'}`,
-              background: isActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-            }}
-            title={t.description}>
-      {/* Mini preview */}
-      <div className="w-full rounded-lg overflow-hidden relative" style={{ height: 48, background: preview.bg }}>
-        {/* Sidebar strip */}
-        <div className="absolute left-0 top-0 bottom-0" style={{ width: 10, background: preview.accent + '30', borderRight: `1px solid ${preview.accent}55` }} />
-        {/* Card */}
-        <div className="absolute rounded" style={{ right: 5, top: 5, width: 22, height: 14, background: preview.card, border: `1px solid ${preview.accent}44` }} />
-        {/* Text lines */}
-        <div className="absolute rounded-full" style={{ left: 14, top: 6, width: 14, height: 3, background: preview.accent + '99' }} />
-        <div className="absolute rounded-full" style={{ left: 14, top: 12, width: 10, height: 2, background: preview.accent + '55' }} />
-        <div className="absolute rounded-full" style={{ left: 14, top: 17, width: 18, height: 2, background: preview.accent + '33' }} />
-        {/* CRT scanlines */}
-        {isCRT && Array.from({length:6}).map((_,i) => (
-          <div key={i} className="absolute left-0 right-0" style={{ top: i*8, height: 1, background: preview.accent + '18', pointerEvents: 'none' }} />
-        ))}
-        {/* Neon glow dot */}
-        {isNeon && <div className="absolute bottom-2 right-3 rounded-full" style={{ width: 6, height: 6, background: preview.accent, boxShadow: `0 0 6px ${preview.accent}` }} />}
-        {/* Active check */}
-        {isActive && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-lg" style={{ background: `${preview.accent}30` }}>
-            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                 style={{ background: preview.accent, boxShadow: `0 0 8px ${preview.accent}88` }}>✓</div>
-          </div>
-        )}
-      </div>
-      {/* Label */}
-      <div className="text-center">
-        <span style={{ fontSize: 12, display: 'block', lineHeight: 1 }}>{t.emoji}</span>
-        <p className="text-[9px] font-bold mt-0.5 truncate leading-tight"
-           style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-primary)' }}>
-          {t.name}
-        </p>
-      </div>
-    </button>
   )
 }
 
@@ -648,7 +552,7 @@ function MobileBottomNav() {
 export default function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { theme, isDark, cycleTheme, setTheme, chronoEra } = useTheme()
+  const { theme, cycleTheme, chronoEra } = useTheme()
   const { exams, active: panicAlert, panicOn, activate: activatePanic, dismiss: dismissPanic, deactivate: deactivatePanic } = usePanicMode()
   const [showPicker,      setShowPicker]   = useState(false)
   const [showPokeball,    setShowPokeball] = useState(false)
@@ -725,11 +629,7 @@ export default function AppLayout() {
     { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false) } },
     // Temas — ciclar com Alt+← / Alt+→
     { key: 'ArrowRight', alt: true, description: 'Próximo tema',    group: 'Temas', action: () => cycleTheme() },
-    { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => {
-      const pool = isDark ? DARK_THEMES : LIGHT_THEMES
-      const idx  = pool.findIndex(t => t.id === theme.id)
-      setTheme(pool[(idx - 1 + pool.length) % pool.length].id as ThemeId)
-    }},
+    { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => cycleTheme() },
     // Ações rápidas
     { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',   group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
     { key: 'r', ctrl: true, description: 'Recarregar dados da página',      group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },

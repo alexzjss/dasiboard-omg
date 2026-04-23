@@ -98,6 +98,7 @@ async function exportAllData() {
       area:           localStorage.getItem('dasiboard-area') ?? '',
       language:       localStorage.getItem('dasiboard-lang') ?? '',
       theme:          localStorage.getItem('dasiboard-theme') ?? '',
+      theme_v2:       localStorage.getItem('dasiboard-theme-v2') ?? '',
     }
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -127,6 +128,7 @@ function importData(file: File, onDone: () => void) {
       if (data.area)         localStorage.setItem('dasiboard-area',          data.area)
       if (data.language)     localStorage.setItem('dasiboard-lang',          data.language)
       if (data.theme)        localStorage.setItem('dasiboard-theme',          data.theme)
+      if (data.theme_v2)     localStorage.setItem('dasiboard-theme-v2',       data.theme_v2)
 
       // Restore server-side data (fire-and-forget, best-effort)
       const restorePromises: Promise<any>[] = []
@@ -267,7 +269,7 @@ export default function SettingsPage() {
   const { settings, update, setPending, commit } = useSettings()
   const { locale, setLang }    = useLocale()
   const { dndUntil, activateDnd, deactivateDnd, clearAll } = useNotifications()
-  const { theme }              = useTheme()
+  const { isDark, toggleDarkLight, accentColor, setAccentColor } = useTheme()
   const importRef              = useRef<HTMLInputElement>(null)
   const [activeSection, setActive] = useState<string>('appearance')
   const [notifPerm, setNotifPerm]  = useState(
@@ -345,6 +347,51 @@ export default function SettingsPage() {
       {/* ── Aparência ──────────────────────────────────────────────────── */}
       {activeSection === 'appearance' && (
         <div className="animate-in space-y-4">
+          <Section icon={Palette} title="Tema">
+            <Row label="Modo" hint={isDark ? 'Escuro' : 'Claro'}>
+              <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                <button
+                  onClick={() => !isDark && toggleDarkLight()}
+                  className="px-3 py-1.5 text-xs font-medium transition-all"
+                  style={{
+                    background: isDark ? 'var(--accent-soft)' : 'transparent',
+                    color: isDark ? 'var(--accent-3)' : 'var(--text-muted)',
+                  }}
+                >
+                  🌙 Escuro
+                </button>
+                <button
+                  onClick={() => isDark && toggleDarkLight()}
+                  className="px-3 py-1.5 text-xs font-medium transition-all"
+                  style={{
+                    background: !isDark ? 'var(--accent-soft)' : 'transparent',
+                    color: !isDark ? 'var(--accent-3)' : 'var(--text-muted)',
+                  }}
+                >
+                  ☀️ Claro
+                </button>
+              </div>
+            </Row>
+            <Row label="Cor de destaque" hint="Escolha a cor principal da interface">
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="w-10 h-9 rounded-md cursor-pointer"
+                  title="Selecionar cor de destaque"
+                />
+                <input
+                  type="text"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="input text-xs w-24 h-9 px-2"
+                  maxLength={7}
+                />
+              </div>
+            </Row>
+          </Section>
+
           <Section icon={Type} title="Tipografia">
             <Row label="Tamanho da fonte" hint={`${settings.fontSize}px — solte para aplicar`}>
               <div className="flex items-center gap-2">

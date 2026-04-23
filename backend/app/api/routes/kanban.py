@@ -62,6 +62,17 @@ def add_column(board_id: str, body: ColumnCreate, db: RealDictCursor = Depends(g
 
 @router.post("/columns/{column_id}/cards", response_model=CardOut, status_code=201)
 def add_card(column_id: str, body: CardCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    if body.column_id and str(body.column_id) != str(column_id):
+        raise HTTPException(400, "Use o column_id apenas na rota; o valor no corpo deve ser igual ou ausente.")
+
+    db.execute(
+        "SELECT c.id FROM kanban_columns c "
+        "JOIN kanban_boards b ON b.id = c.board_id "
+        "WHERE c.id = %s AND b.owner_id = %s",
+        (column_id, str(user["id"])),
+    )
+    if not db.fetchone():
+        raise HTTPException(404, "Coluna não encontrada")
     db.execute(
         """INSERT INTO kanban_cards (column_id, title, description, priority, due_date, position)
            VALUES (%s, %s, %s, %s, %s, %s) RETURNING *""",
@@ -72,9 +83,26 @@ def add_card(column_id: str, body: CardCreate, db: RealDictCursor = Depends(get_
 
 @router.patch("/cards/{card_id}", response_model=CardOut)
 def update_card(card_id: str, body: CardCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("SELECT id FROM kanban_cards WHERE id = %s", (card_id,))
+    db.execute(
+        "SELECT kc.id FROM kanban_cards kc "
+        "JOIN kanban_columns col ON col.id = kc.column_id "
+        "JOIN kanban_boards b ON b.id = col.board_id "
+        "WHERE kc.id = %s AND b.owner_id = %s",
+        (card_id, str(user["id"])),
+    )
     if not db.fetchone():
         raise HTTPException(404, "Card não encontrado")
+
+    if body.column_id:
+        db.execute(
+            "SELECT c.id FROM kanban_columns c "
+            "JOIN kanban_boards b ON b.id = c.board_id "
+            "WHERE c.id = %s AND b.owner_id = %s",
+            (str(body.column_id), str(user["id"])),
+        )
+        if not db.fetchone():
+            raise HTTPException(404, "Coluna de destino não encontrada")
+
     db.execute(
         """UPDATE kanban_cards
            SET title=%s, description=%s, priority=%s, due_date=%s, position=%s,
@@ -88,4 +116,11 @@ def update_card(card_id: str, body: CardCreate, db: RealDictCursor = Depends(get
 
 @router.delete("/cards/{card_id}", status_code=204)
 def delete_card(card_id: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("DELETE FROM kanban_cards WHERE id = %s", (card_id,))
+    db.execute(
+        "DELETE FROM kanban_cards kc USING kanban_columns col, kanban_boards b "
+        "WHERE kc.id = %s AND kc.column_id = col.id AND col.board_id = b.id AND b.owner_id = %s "
+        "RETURNING kc.id",
+        (card_id, str(user["id"])),
+    )
+    if not db.fetchone():
+        raise HTTPException(404, "Card não encontrado")

@@ -5,10 +5,13 @@
 # replace _windows with a Redis ZSET per key.
 
 import time
+import threading
 from collections import defaultdict
+from collections import deque
 from fastapi import HTTPException
 
-_windows: dict[str, list[float]] = defaultdict(list)
+_windows: dict[str, deque[float]] = defaultdict(deque)
+_lock = threading.Lock()
 
 
 def check_rate(user_id: str, action: str, max_calls: int, window_secs: int) -> None:
@@ -16,22 +19,24 @@ def check_rate(user_id: str, action: str, max_calls: int, window_secs: int) -> N
     Raise HTTP 429 if user has exceeded max_calls in the last window_secs seconds.
     Thread-safe for a single-process gunicorn deployment.
     """
-    key    = f"{user_id}:{action}"
-    now    = time.monotonic()
+    key = f"{user_id}:{action}"
+    now = time.monotonic()
     cutoff = now - window_secs
 
-    # Evict expired entries
-    _windows[key] = [t for t in _windows[key] if t > cutoff]
+    with _lock:
+        window = _windows[key]
+        while window and window[0] < cutoff:
+            window.popleft()
 
-    if len(_windows[key]) >= max_calls:
-        retry_after = int(_windows[key][0] - cutoff) + 1
-        raise HTTPException(
-            status_code=429,
-            detail=f"Muitas requisições para '{action}'. Aguarde {retry_after}s.",
-            headers={"Retry-After": str(retry_after)},
-        )
+        if len(window) >= max_calls:
+            retry_after = int(window[0] - cutoff) + 1
+            raise HTTPException(
+                status_code=429,
+                detail=f"Muitas requisições para '{action}'. Aguarde {retry_after}s.",
+                headers={"Retry-After": str(retry_after)},
+            )
 
-    _windows[key].append(now)
+        window.append(now)
 
 
 # ── Presets ───────────────────────────────────────────────────────────────────

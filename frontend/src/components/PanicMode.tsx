@@ -18,8 +18,8 @@ export function usePanicMode() {
   const [exams,    setExams]    = useState<ExamEvent[]>([])
   const [active,   setActive]   = useState(false)
   const [panicOn,  setPanicOn]  = useState(false)
-  const { setTheme } = useTheme()
-  const prevTheme = useRef<string | null>(null)
+  const { setTheme, isDark, accentColor, setAccentColor } = useTheme()
+  const prevTheme = useRef<{ themeId: 'custom-dark' | 'custom-light'; accent: string } | null>(null)
 
   useEffect(() => {
     // Check for exams in next 24h
@@ -42,8 +42,9 @@ export function usePanicMode() {
   const activate = () => {
     setPanicOn(true)
     setActive(false)
-    prevTheme.current = localStorage.getItem('dasiboard-theme') ?? 'dark-roxo'
-    setTheme('dark-vinganca' as any)   // deep red theme
+    prevTheme.current = { themeId: isDark ? 'custom-dark' : 'custom-light', accent: accentColor }
+    setTheme('custom-dark')
+    setAccentColor('#dc2626')
   }
 
   const dismiss = () => {
@@ -53,7 +54,10 @@ export function usePanicMode() {
 
   const deactivate = () => {
     setPanicOn(false)
-    if (prevTheme.current) setTheme(prevTheme.current as any)
+    if (prevTheme.current) {
+      setTheme(prevTheme.current.themeId)
+      setAccentColor(prevTheme.current.accent)
+    }
   }
 
   return { exams, active, panicOn, activate, dismiss, deactivate }

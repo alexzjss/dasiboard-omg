@@ -2044,7 +2044,16 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-          <button onClick={()=>{logout();navigate("/login")}} className="btn-danger w-full justify-center"><LogOut size={15}/> Sair da conta</button>
+          <button
+            onClick={async () => {
+              try { await api.post('/auth/logout') } catch {}
+              logout()
+              navigate("/login")
+            }}
+            className="btn-danger w-full justify-center"
+          >
+            <LogOut size={15}/> Sair da conta
+          </button>
         </div>
       )}
     </div>
