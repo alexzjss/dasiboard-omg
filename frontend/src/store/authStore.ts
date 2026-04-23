@@ -33,12 +33,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'dasiboard-auth',
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
       merge: (persisted, current) => ({
         ...current,
         ...(persisted as Partial<AuthState>),
-        accessToken: null,
-        refreshToken: null,
       }),
     }
   )
