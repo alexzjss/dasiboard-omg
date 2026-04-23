@@ -20,12 +20,12 @@ def check_rate(user_id: str, action: str, max_calls: int, window_secs: int) -> N
     Thread-safe for a single-process gunicorn deployment.
     """
     key = f"{user_id}:{action}"
-    now = time.time()
+    now = time.monotonic()
     cutoff = now - window_secs
 
     with _lock:
         window = _windows[key]
-        while window and window[0] <= cutoff:
+        while window and window[0] < cutoff:
             window.popleft()
 
         if len(window) >= max_calls:

@@ -72,11 +72,15 @@ class Settings(BaseSettings):
     def ensure_secure_jwt_secret(self):
         insecure = {"", "changeme", "changeme-jwt-secret"}
         if not self.JWT_SECRET_KEY:
-            self.JWT_SECRET_KEY = secrets.token_urlsafe(64)
+            if self.APP_ENV == "development":
+                self.JWT_SECRET_KEY = secrets.token_urlsafe(64)
+            else:
+                raise ValueError("JWT_SECRET_KEY ausente. Configure uma chave forte via variável de ambiente.")
         if self.JWT_SECRET_KEY in insecure or len(self.JWT_SECRET_KEY) < 32:
             raise ValueError("JWT_SECRET_KEY insegura. Configure uma chave forte com no mínimo 32 caracteres.")
-        if self.JWT_ALGORITHM != "HS256":
-            raise ValueError("JWT_ALGORITHM inválido. Use HS256.")
+        allowed_algs = {"HS256", "HS384", "HS512"}
+        if self.JWT_ALGORITHM not in allowed_algs:
+            raise ValueError("JWT_ALGORITHM inválido. Use HS256, HS384 ou HS512.")
         return self
 
 

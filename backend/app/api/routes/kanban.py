@@ -62,6 +62,9 @@ def add_column(board_id: str, body: ColumnCreate, db: RealDictCursor = Depends(g
 
 @router.post("/columns/{column_id}/cards", response_model=CardOut, status_code=201)
 def add_card(column_id: str, body: CardCreate, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
+    if body.column_id and str(body.column_id) != str(column_id):
+        raise HTTPException(400, "Use o column_id apenas na rota; o valor no corpo deve ser igual ou ausente.")
+
     db.execute(
         "SELECT c.id FROM kanban_columns c "
         "JOIN kanban_boards b ON b.id = c.board_id "
