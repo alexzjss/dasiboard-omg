@@ -10,6 +10,19 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 // ── Minimal markdown renderer ─────────────────────────────────────────────────
+function sanitizeMarkdownUrl(raw: string): string | null {
+  const url = raw.trim()
+  if (!url) return null
+  if (!/^(https?:\/\/|mailto:)/i.test(url)) return null
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:', 'mailto:'].includes(parsed.protocol)) return null
+    return parsed.href
+  } catch {
+    return null
+  }
+}
+
 function renderMd(md: string): string {
   return md
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -20,6 +33,11 @@ function renderMd(md: string): string {
     .replace(/__(.+?)__/g,     '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em>$1</em>')
     .replace(/_(.+?)_/g,       '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text, url) => {
+      const safeUrl = sanitizeMarkdownUrl(url)
+      if (!safeUrl) return text
+      return `<a href="${safeUrl.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer nofollow" style="color:var(--accent-3);text-decoration:underline">${text}</a>`
+    })
     .replace(/`(.+?)`/g, '<code style="background:var(--bg-elevated);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:0.85em">$1</code>')
     .replace(/^([Qq][:：]\s*)(.+)$/gm, '<span style="color:var(--accent-3);font-weight:600">$1</span><span>$2</span>')
     .replace(/^([Aa][:：]\s*)(.+)$/gm, '<span style="color:#22c55e;font-weight:600">$1</span><span>$2</span>')

@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
 import os
+import secrets
+from pydantic import model_validator
 
 
 class Settings(BaseSettings):
@@ -16,7 +18,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "dasiboard"
     POSTGRES_PASSWORD: str = "changeme"
 
-    JWT_SECRET_KEY: str = "changeme-jwt-secret"
+    JWT_SECRET_KEY: Optional[str] = None
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -65,6 +67,17 @@ class Settings(BaseSettings):
             return val
         # Dynamic fallback for future slugs not yet listed above
         return os.environ.get(env_name) or None
+
+    @model_validator(mode="after")
+    def ensure_secure_jwt_secret(self):
+        insecure = {"", "changeme", "changeme-jwt-secret"}
+        if not self.JWT_SECRET_KEY:
+            self.JWT_SECRET_KEY = secrets.token_urlsafe(64)
+        if self.JWT_SECRET_KEY in insecure or len(self.JWT_SECRET_KEY) < 32:
+            raise ValueError("JWT_SECRET_KEY insegura. Configure uma chave forte com no mínimo 32 caracteres.")
+        if self.JWT_ALGORITHM != "HS256":
+            raise ValueError("JWT_ALGORITHM inválido. Use HS256.")
+        return self
 
 
 settings = Settings()

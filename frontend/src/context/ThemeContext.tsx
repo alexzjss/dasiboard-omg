@@ -1,38 +1,22 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { useLocation } from 'react-router-dom'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import api from '@/utils/api'
+import { useAuthStore } from '@/store/authStore'
 
-export type ThemeId =
-  | 'dark-roxo' | 'dark-hypado' | 'dark-minas' | 'dark-dlc' | 'dark-shell'
-  | 'dark-colina' | 'light-blueprint'
-  | 'dark-holo' | 'dark-vinganca' | 'dark-eva'
-  | 'light-roxo' | 'light-aranha' | 'light-sintetizado' | 'light-grace'
-  | 'light-lab' | 'light-ilha' | 'light-vidro' | 'light-vanilla'
-  | 'light-memento'
-  | 'dark-chrono'
-  | 'dark-aqua'
-  | 'light-papiro'
-  | 'light-usp'
-  | 'light-stardew'
-  | 'dark-2077'
-  | 'light-sakura'
-  | 'dark-matrix'
-  | 'dark-crt'
-
-// Sub-eras do Chrono Trigger que rotacionam por página
+export type ThemeId = string
 export type ChronoEra = 'prehistoria' | 'antiguidade' | 'era-media' | 'futuro' | 'fim-dos-tempos'
 export const CHRONO_ERAS: ChronoEra[] = ['prehistoria', 'antiguidade', 'era-media', 'futuro', 'fim-dos-tempos']
 export const CHRONO_ERA_LABELS: Record<ChronoEra, string> = {
-  'prehistoria':    '65000000 A.C. · Pré-história',
-  'antiguidade':    '12000 A.C. · Era das Trevas',
-  'era-media':      '600 D.C. · Era Média',
-  'futuro':         '2300 D.C. · Futuro Sombrio',
+  'prehistoria': '65000000 A.C. · Pré-história',
+  'antiguidade': '12000 A.C. · Era das Trevas',
+  'era-media': '600 D.C. · Era Média',
+  'futuro': '2300 D.C. · Futuro Sombrio',
   'fim-dos-tempos': '∞ · Fim dos Tempos',
 }
 export const CHRONO_ERA_EMOJI: Record<ChronoEra, string> = {
-  'prehistoria':    '🦕',
-  'antiguidade':    '🏔️',
-  'era-media':      '🏰',
-  'futuro':         '🤖',
+  'prehistoria': '🦕',
+  'antiguidade': '🏔️',
+  'era-media': '🏰',
+  'futuro': '🤖',
   'fim-dos-tempos': '⌛',
 }
 
@@ -46,127 +30,203 @@ export interface ThemeMeta {
 }
 
 export const THEMES: ThemeMeta[] = [
-  // Escuros
-  { id: 'dark-roxo',        name: 'Dark',        dark: true,  emoji: '🔮', description: 'Roxo profundo',             group: 'base'    },
-  { id: 'dark-hypado',      name: 'Hypado',       dark: true,  emoji: '🌆', description: 'Vaporwave · Synthwave',      group: 'vibes'   },
-  { id: 'dark-minas',       name: 'Minas',        dark: true,  emoji: '🦕', description: 'Dinos & Máquinas',          group: 'vibes'   },
-  { id: 'dark-dlc',         name: 'DLC',          dark: true,  emoji: '🕹️', description: 'RGB Gaming',                group: 'games'   },
-  { id: 'dark-shell',       name: 'Shell',        dark: true,  emoji: '💀', description: 'CLI · Matrix',              group: 'tech'    },
-  { id: 'dark-colina',      name: 'Colina',       dark: true,  emoji: '🌫️', description: 'Silent Hill · Névoa',       group: 'vibes'   },
-  { id: 'light-blueprint',  name: 'Blueprint',    dark: true,  emoji: '📐', description: 'Plantas Técnicas',          group: 'tech'    },
-  { id: 'dark-holo',        name: 'Holográfico',  dark: true,  emoji: '🌈', description: 'Iridescente · Prisma',      group: 'special' },
-  { id: 'dark-vinganca',    name: 'Vingança',     dark: true,  emoji: '🦇', description: 'Batman TAS · Noir',         group: 'super'   },
-  { id: 'dark-eva',         name: 'Eva',          dark: true,  emoji: '🤖', description: 'Evangelion · NERV',         group: 'anime'   },
-  { id: 'dark-chrono',      name: 'Chrono',       dark: true,  emoji: '⌛', description: 'Chrono Trigger · Eras',    group: 'special' },
-  // Claros
-  { id: 'light-roxo',       name: 'Light',        dark: false, emoji: '☀️', description: 'Roxo suave',                group: 'base'    },
-  { id: 'light-aranha',     name: 'Aranha',       dark: false, emoji: '🕷️', description: 'HQ · Vermelho & Azul',     group: 'super'   },
-  { id: 'light-sintetizado',name: 'Sintetizado',  dark: false, emoji: '💠', description: 'Azul limpo',                group: 'base'    },
-  { id: 'light-grace',      name: 'Grace',        dark: false, emoji: '🦉', description: 'Bege editorial · Coruja',   group: 'vibes'   },
-  { id: 'light-lab',        name: 'Laboratório',  dark: false, emoji: '🖥️', description: 'Y2K Pink · Lime',          group: 'tech'    },
-  { id: 'light-ilha',       name: 'Ilha',         dark: false, emoji: '🏝️', description: 'Kingdom Hearts · Sol',     group: 'games'   },
-  { id: 'light-vidro',      name: 'Vidro',        dark: false, emoji: '🔮', description: 'Glassmorphism',             group: 'special' },
-  { id: 'light-vanilla',    name: 'Vanilla',      dark: false, emoji: '🍦', description: 'Bege elegante · Minimal',   group: 'base'    },
-  { id: 'light-memento',    name: 'Memento',      dark: false, emoji: '🃏', description: 'Persona · Editorial',       group: 'anime'   },
-  { id: 'dark-aqua',        name: 'Aqua',         dark: true,  emoji: '💧', description: 'Windows XP Luna · Azul vitrificado', group: 'special' },
-  { id: 'light-papiro',     name: 'Papiro',       dark: false, emoji: '📋', description: 'Caderno de engenharia · Milimetrado', group: 'tech'    },
-  { id: 'light-usp',        name: 'USP Oficial',  dark: false, emoji: '🏛️', description: 'Identidade visual oficial · Azul & Ouro', group: 'special' },
-  { id: 'light-stardew',    name: 'Stardew',      dark: false, emoji: '🌾', description: 'Vida no campo pixel · Terroso & Verde', group: 'games'   },
-  { id: 'dark-2077',        name: '2077',          dark: true,  emoji: '🏙️', description: 'Night City · Neon Amarelo',           group: 'neon'    },
-  { id: 'light-sakura',     name: 'Sakura',        dark: false, emoji: '🌸', description: 'Primavera japonesa · Rosa pétala',    group: 'vibes'   },
-  { id: 'dark-matrix',      name: 'Matrix',        dark: true,  emoji: '💚', description: 'CRT Verde · Terminal · 80s',          group: 'neon'    },
-  { id: 'dark-crt',         name: 'CRT',           dark: true,  emoji: '🟡', description: 'Monitor Âmbar · IBM · Anos 70',       group: 'neon'    },
+  { id: 'custom-dark', name: 'Escuro', dark: true, emoji: '🌙', description: 'Modo escuro com destaque customizável', group: 'base' },
+  { id: 'custom-light', name: 'Claro', dark: false, emoji: '☀️', description: 'Modo claro com destaque customizável', group: 'base' },
 ]
-
-export const DARK_THEMES  = THEMES.filter(t => t.dark)
+export const DARK_THEMES = THEMES.filter(t => t.dark)
 export const LIGHT_THEMES = THEMES.filter(t => !t.dark)
-export const THEME_GROUPS: Record<string, string> = {
-  base: 'Essenciais', vibes: 'Atmosfera', tech: 'Tech',
-  games: 'Games', super: 'Super-heróis', anime: 'Anime', special: 'Especial', neon: 'Neon & CRT',
-}
+export const THEME_GROUPS: Record<string, string> = { base: 'Essenciais' }
+
+type ThemeMode = 'light' | 'dark'
 
 interface ThemeCtx {
   theme: ThemeMeta
   isDark: boolean
+  accentColor: string
   cycleTheme: () => void
   toggleDarkLight: () => void
   setTheme: (id: ThemeId) => void
+  setAccentColor: (color: string) => void
   chronoEra: ChronoEra | null
 }
 
+const DEFAULT_ACCENT = '#7c3aed'
+const STORAGE_KEY = 'dasiboard-theme-v2'
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+
+function normalizeColor(value: string): string {
+  const c = value.trim().toLowerCase()
+  return HEX_COLOR_RE.test(c) ? c : DEFAULT_ACCENT
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const raw = normalizeColor(hex).slice(1)
+  return [parseInt(raw.slice(0, 2), 16), parseInt(raw.slice(2, 4), 16), parseInt(raw.slice(4, 6), 16)]
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamped = [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))))
+  return `#${clamped.map(v => v.toString(16).padStart(2, '0')).join('')}`
+}
+
+function lighten(hex: string, amount: number): string {
+  const [r, g, b] = hexToRgb(hex)
+  return rgbToHex(r + (255 - r) * amount, g + (255 - g) * amount, b + (255 - b) * amount)
+}
+
+function darken(hex: string, amount: number): string {
+  const [r, g, b] = hexToRgb(hex)
+  return rgbToHex(r * (1 - amount), g * (1 - amount), b * (1 - amount))
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const [r, g, b] = hexToRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 const ThemeContext = createContext<ThemeCtx>({
-  theme: THEMES[0], isDark: true,
-  cycleTheme: () => {}, toggleDarkLight: () => {}, setTheme: () => {},
+  theme: THEMES[0],
+  isDark: true,
+  accentColor: DEFAULT_ACCENT,
+  cycleTheme: () => {},
+  toggleDarkLight: () => {},
+  setTheme: () => {},
+  setAccentColor: () => {},
   chronoEra: null,
 })
 
-// Sorteia era aleatória mas diferente da atual
-function pickEra(current: ChronoEra | null): ChronoEra {
-  const options = current ? CHRONO_ERAS.filter(e => e !== current) : CHRONO_ERAS
-  return options[Math.floor(Math.random() * options.length)]
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeId, setThemeId] = useState<ThemeId>(() =>
-    (localStorage.getItem('dasiboard-theme') as ThemeId) ?? 'dark-roxo'
+  const accessToken = useAuthStore(s => s.accessToken)
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return 'dark'
+    try {
+      const parsed = JSON.parse(raw) as { mode?: ThemeMode }
+      return parsed.mode === 'light' ? 'light' : 'dark'
+    } catch {
+      return 'dark'
+    }
+  })
+  const [accentColor, setAccentColorState] = useState<string>(() => {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return DEFAULT_ACCENT
+    try {
+      const parsed = JSON.parse(raw) as { accentColor?: string }
+      return normalizeColor(parsed.accentColor ?? DEFAULT_ACCENT)
+    } catch {
+      return DEFAULT_ACCENT
+    }
+  })
+  const [loadedFromServer, setLoadedFromServer] = useState(false)
+
+  const theme = useMemo<ThemeMeta>(
+    () => (mode === 'dark' ? THEMES[0] : THEMES[1]),
+    [mode]
   )
-  const [chronoEra, setChronoEra] = useState<ChronoEra | null>(null)
+  const isDark = mode === 'dark'
 
-  const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0]
-  const isDark = theme.dark
-  const isChrono = themeId === 'dark-chrono'
+  const setTheme = (id: ThemeId) => setMode(id === 'custom-light' ? 'light' : 'dark')
+  const toggleDarkLight = () => setMode(prev => (prev === 'dark' ? 'light' : 'dark'))
+  const cycleTheme = () => toggleDarkLight()
+  const setAccentColor = (value: string) => setAccentColorState(normalizeColor(value))
 
-  // Aplica o data-theme e data-chrono-era no HTML
   useEffect(() => {
     const root = document.documentElement
-    root.setAttribute('data-theme', themeId)
+    const accent1 = accentColor
+    const accent2 = darken(accentColor, isDark ? 0.18 : 0.25)
+    const accent3 = lighten(accentColor, isDark ? 0.25 : 0.1)
+    const gradientBtn = `linear-gradient(135deg, ${accent1}, ${accent2})`
+    const gradientHero = isDark
+      ? `linear-gradient(135deg, ${darken(accentColor, 0.4)} 0%, ${darken(accentColor, 0.6)} 100%)`
+      : `linear-gradient(135deg, ${lighten(accentColor, 0.38)} 0%, ${lighten(accentColor, 0.22)} 100%)`
+
+    root.setAttribute('data-theme', isDark ? 'custom-dark' : 'custom-light')
     root.classList.remove('dark', 'light')
     root.classList.add(isDark ? 'dark' : 'light')
-    localStorage.setItem('dasiboard-theme', themeId)
 
-    if (isChrono && !chronoEra) {
-      const era = pickEra(null)
-      setChronoEra(era)
-      root.setAttribute('data-chrono-era', era)
+    if (isDark) {
+      root.style.setProperty('--bg-base', '#07070f')
+      root.style.setProperty('--bg-surface', '#0c0c1a')
+      root.style.setProperty('--bg-elevated', '#11112a')
+      root.style.setProperty('--bg-card', '#13133a')
+      root.style.setProperty('--border', '#1e1e50')
+      root.style.setProperty('--border-light', '#2a2a70')
+      root.style.setProperty('--text-primary', '#eeeeff')
+      root.style.setProperty('--text-secondary', '#b2b2dd')
+      root.style.setProperty('--text-muted', '#6d6d9e')
+      root.style.setProperty('--noise-opacity', '0.02')
+      root.style.setProperty('--card-blur', '0px')
+      root.style.setProperty('--sidebar-overlay', 'none')
+    } else {
+      root.style.setProperty('--bg-base', '#f5f6fb')
+      root.style.setProperty('--bg-surface', '#ffffff')
+      root.style.setProperty('--bg-elevated', '#eef1f8')
+      root.style.setProperty('--bg-card', '#ffffff')
+      root.style.setProperty('--border', '#d8deea')
+      root.style.setProperty('--border-light', '#c6cfdf')
+      root.style.setProperty('--text-primary', '#1d2234')
+      root.style.setProperty('--text-secondary', '#4d5775')
+      root.style.setProperty('--text-muted', '#75809f')
+      root.style.setProperty('--noise-opacity', '0.01')
+      root.style.setProperty('--card-blur', '0px')
+      root.style.setProperty('--sidebar-overlay', 'none')
     }
-    if (!isChrono) {
-      setChronoEra(null)
-      root.removeAttribute('data-chrono-era')
+
+    root.style.setProperty('--accent-1', accent1)
+    root.style.setProperty('--accent-2', accent2)
+    root.style.setProperty('--accent-3', accent3)
+    root.style.setProperty('--accent-soft', withAlpha(accent1, isDark ? 0.18 : 0.12))
+    root.style.setProperty('--accent-glow', withAlpha(accent1, isDark ? 0.3 : 0.18))
+    root.style.setProperty('--gradient-btn', gradientBtn)
+    root.style.setProperty('--gradient-hero', gradientHero)
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, accentColor }))
+    localStorage.setItem('dasiboard-theme', isDark ? 'custom-dark' : 'custom-light')
+  }, [mode, accentColor, isDark])
+
+  useEffect(() => {
+    if (!accessToken) {
+      setLoadedFromServer(true)
+      return
     }
-  }, [themeId, isDark, isChrono])
+    let alive = true
+    api.get('/users/me/theme')
+      .then(({ data }) => {
+        if (!alive) return
+        setMode(data?.mode === 'light' ? 'light' : 'dark')
+        setAccentColorState(normalizeColor(data?.accent_color ?? DEFAULT_ACCENT))
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setLoadedFromServer(true)
+      })
+    return () => { alive = false }
+  }, [accessToken])
 
-  // Troca de era ao navegar (só no tema Chrono)
-  const rotateChronoEra = useCallback(() => {
-    if (!isChrono) return
-    const next = pickEra(chronoEra)
-    setChronoEra(next)
-    document.documentElement.setAttribute('data-chrono-era', next)
-    // Emit event so audio hook can play portal sound
-    document.dispatchEvent(new CustomEvent('chrono:era-change', { detail: { era: next } }))
-  }, [isChrono, chronoEra])
-
-  const cycleTheme = () => {
-    const pool = isDark ? DARK_THEMES : LIGHT_THEMES
-    const idx  = pool.findIndex(t => t.id === themeId)
-    setThemeId(pool[(idx + 1) % pool.length].id)
-  }
-  const toggleDarkLight = () => setThemeId(isDark ? 'light-roxo' : 'dark-roxo')
+  useEffect(() => {
+    if (!accessToken || !loadedFromServer) return
+    const t = setTimeout(() => {
+      api.patch('/users/me/theme', { mode, accent_color: accentColor }).catch(() => {})
+    }, 300)
+    return () => clearTimeout(t)
+  }, [accessToken, loadedFromServer, mode, accentColor])
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, cycleTheme, toggleDarkLight, setTheme: setThemeId, chronoEra }}>
-      <ChronoRouteWatcher isChrono={isChrono} rotate={rotateChronoEra} />
+    <ThemeContext.Provider
+      value={{
+        theme,
+        isDark,
+        accentColor,
+        cycleTheme,
+        toggleDarkLight,
+        setTheme,
+        setAccentColor,
+        chronoEra: null,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   )
-}
-
-// Componente interno que escuta as rotas e rotaciona a era
-function ChronoRouteWatcher({ isChrono, rotate }: { isChrono: boolean; rotate: () => void }) {
-  const location = useLocation()
-  useEffect(() => {
-    if (isChrono) rotate()
-  }, [location.pathname])
-  return null
 }
 
 export const useTheme = () => useContext(ThemeContext)

@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
     full_name        VARCHAR(255) NOT NULL,
     nusp             VARCHAR(20)  UNIQUE,
     avatar_url       VARCHAR(512),
+    theme_mode       VARCHAR(10)  NOT NULL DEFAULT 'dark' CHECK (theme_mode IN ('light', 'dark')),
+    theme_accent     VARCHAR(7)   NOT NULL DEFAULT '#7c3aed' CHECK (theme_accent ~ '^#[0-9A-Fa-f]{6}$'),
     is_active        BOOLEAN      NOT NULL DEFAULT TRUE,
     is_verified      BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),

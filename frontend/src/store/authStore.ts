@@ -31,6 +31,15 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ user }),
       logout: () => set({ accessToken: null, refreshToken: null, user: null }),
     }),
-    { name: 'dasiboard-auth' }
+    {
+      name: 'dasiboard-auth',
+      partialize: (state) => ({ user: state.user }),
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as Partial<AuthState>),
+        accessToken: null,
+        refreshToken: null,
+      }),
+    }
   )
 )

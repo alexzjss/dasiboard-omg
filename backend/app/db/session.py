@@ -230,6 +230,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS public_bio          TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS entry_year          SMALLINT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS public_subjects     BOOLEAN  NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS public_achievements BOOLEAN  NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_mode          VARCHAR(10) NOT NULL DEFAULT 'dark';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_accent        VARCHAR(7)  NOT NULL DEFAULT '#7c3aed';
+
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_theme_mode_check;
+ALTER TABLE users ADD CONSTRAINT users_theme_mode_check CHECK (theme_mode IN ('light', 'dark'));
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_theme_accent_check;
+ALTER TABLE users ADD CONSTRAINT users_theme_accent_check CHECK (theme_accent ~ '^#[0-9A-Fa-f]{6}$');
 
 CREATE INDEX IF NOT EXISTS idx_users_entry_year     ON users (entry_year)     WHERE entry_year IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_users_public_profile ON users (public_profile) WHERE public_profile = TRUE;

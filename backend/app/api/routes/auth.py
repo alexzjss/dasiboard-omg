@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from psycopg2.extras import RealDictCursor
 from jose import JWTError
@@ -9,6 +9,7 @@ from app.core.security import (
     create_access_token, create_refresh_token, decode_token,
 )
 from app.schemas.schemas import RegisterRequest, TokenResponse, RefreshRequest, UserOut
+from app.core.config import settings
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -50,7 +51,11 @@ def register(body: RegisterRequest, db: RealDictCursor = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(form: OAuth2PasswordRequestForm = Depends(), db: RealDictCursor = Depends(get_db)):
+def login(
+    response: Response,
+    form: OAuth2PasswordRequestForm = Depends(),
+    db: RealDictCursor = Depends(get_db),
+):
     db.execute("SELECT * FROM users WHERE email = %s", (form.username,))
     user = db.fetchone()
     if not user or not verify_password(form.password, user["hashed_password"]):
@@ -58,16 +63,37 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: RealDictCursor = Depe
     if not user["is_active"]:
         raise HTTPException(403, "Conta desativada")
 
+    refresh_token = create_refresh_token(str(user["id"]))
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=settings.APP_ENV != "development",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path="/",
+    )
     return TokenResponse(
         access_token=create_access_token(str(user["id"])),
-        refresh_token=create_refresh_token(str(user["id"])),
+        refresh_token=refresh_token,
     )
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(body: RefreshRequest, db: RealDictCursor = Depends(get_db)):
+def refresh(
+    request: Request,
+    response: Response,
+    body: RefreshRequest | None = None,
+    db: RealDictCursor = Depends(get_db),
+):
+    refresh_token = body.refresh_token if body else None
+    if not refresh_token:
+        refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(401, "Refresh token ausente")
+
     try:
-        payload = decode_token(body.refresh_token)
+        payload = decode_token(refresh_token)
         if payload.get("type") != "refresh":
             raise ValueError
         user_id = payload["sub"]
@@ -78,10 +104,26 @@ def refresh(body: RefreshRequest, db: RealDictCursor = Depends(get_db)):
     if not db.fetchone():
         raise HTTPException(401, "Usuário não encontrado")
 
+    new_refresh = create_refresh_token(user_id)
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh,
+        httponly=True,
+        secure=settings.APP_ENV != "development",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path="/",
+    )
     return TokenResponse(
         access_token=create_access_token(user_id),
-        refresh_token=create_refresh_token(user_id),
+        refresh_token=new_refresh,
     )
+
+
+@router.post("/logout", status_code=204)
+def logout(response: Response):
+    response.delete_cookie(key="refresh_token", path="/")
+    return
 
 
 @router.get("/me", response_model=UserOut)

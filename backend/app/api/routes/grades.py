@@ -77,4 +77,11 @@ def add_grade(subject_id: str, body: GradeCreate, db: RealDictCursor = Depends(g
 
 @router.delete("/grades/{grade_id}", status_code=204)
 def delete_grade(grade_id: str, db: RealDictCursor = Depends(get_db), user=Depends(get_current_user)):
-    db.execute("DELETE FROM grades WHERE id = %s", (grade_id,))
+    db.execute(
+        "DELETE FROM grades g USING subjects s "
+        "WHERE g.id = %s AND g.subject_id = s.id AND s.owner_id = %s "
+        "RETURNING g.id",
+        (grade_id, str(user["id"])),
+    )
+    if not db.fetchone():
+        raise HTTPException(404, "Nota não encontrada")

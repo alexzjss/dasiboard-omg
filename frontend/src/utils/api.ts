@@ -7,6 +7,7 @@ const BASE_URL = '/api'
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
@@ -31,9 +32,8 @@ api.interceptors.response.use(
       original._retry = true
       try {
         const refreshToken = useAuthStore.getState().refreshToken
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        })
+        const payload = refreshToken ? { refresh_token: refreshToken } : {}
+        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, payload, { withCredentials: true })
         useAuthStore.getState().setTokens(data.access_token, data.refresh_token)
         original.headers.Authorization = `Bearer ${data.access_token}`
         return api(original)
