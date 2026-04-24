@@ -32,6 +32,9 @@ import { EvaSyncBar } from '@/components/EvaSync'
 import { PortatilSaveState } from '@/components/PortatilSaveState'
 import { AchievementToast, useAchievementToast, triggerAchievementToast } from '@/components/AchievementToast'
 import { useClockEasterEggs } from '@/hooks/useEasterEggs'
+import BottomNav from '@/components/layout/BottomNav'
+import Sidebar from '@/components/layout/Sidebar'
+import { useAppLayoutChrome } from '@/components/layout/useAppLayoutChrome'
 import clsx from 'clsx'
 import toast from 'react-hot-toast'
 
@@ -533,103 +536,17 @@ function MobileBottomNav() {
 
 export default function AppLayout() {
   const location = useLocation()
-  const navigate = useNavigate()
   const { theme, cycleTheme, chronoEra } = useTheme()
   const { exams, active: panicAlert, panicOn, activate: activatePanic, dismiss: dismissPanic, deactivate: deactivatePanic } = usePanicMode()
-  const [showPicker,      setShowPicker]   = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
   const [showPokeball,    setShowPokeball] = useState(false)
   const [starter,         setStarter]      = useState<string>(() => localStorage.getItem(STORAGE_KEYS.starter) ?? '')
   const { show: showOnboarding, markDone: doneOnboarding } = useOnboarding()
-
-  useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
-
-  useScrollRestoration()
-  useSwipeNavigation()
-  const { active: easterActive, close: closeEaster } = useEasterEggs()
-  const [externalEgg, setExternalEgg] = useState<EasterEggId>(null)
-  useExternalEasterEgg(setExternalEgg)
-  const activeEgg  = externalEgg ?? easterActive
-  const closeAnyEgg = useCallback(() => { setExternalEgg(null); closeEaster() }, [closeEaster])
-
-  // ── Floor is Lava — every Friday at 13:37 ─────────────────────────────
-  useEffect(() => {
-    const checkLava = () => {
-      const now = new Date()
-      if (now.getDay() !== 5) return // only Friday
-      if (now.getHours() !== 13 || now.getMinutes() !== 37) return
-      const key = 'dasiboard-lava-' + now.toISOString().slice(0, 10)
-      if (localStorage.getItem(key)) return
-      localStorage.setItem(key, '1')
-      if (Notification.permission === 'granted') {
-        new Notification('🌋 O chão é lava!', {
-          body: 'Você tem 30 segundos para abrir o Kanban!', icon: '/logo192.png',
-        })
-      }
-      toast('🌋 O chão é lava! Abra o Kanban em 30s para ganhar a conquista!', { duration: 30000, icon: '🌋' })
-      setTimeout(() => {
-        if (window.location.pathname === '/kanban') {
-          localStorage.setItem(STORAGE_KEYS.easterFound, '1')
-          triggerAchievementToast({ id:'ninja', emoji:'🥷', label:'Reflexos de Ninja',
-            rarity:'legendary', category:'secret', desc:'Abriu o Kanban no chão de lava',
-            hint:'???', color:'#ef4444', unlocked:true })
-        }
-      }, 30000)
-    }
-    checkLava()
-    const t = setInterval(checkLava, 30000)
-    return () => clearInterval(t)
-  }, [])
-  const { open: searchOpen, setOpen: setSearchOpen } = useGlobalSearch()
-  const presentation = usePresentationMode()
-
-  // Listen for global search open event (from sidebar button)
-  useEffect(() => {
-    const handler = () => setSearchOpen(true)
-    const pHandler = () => presentation.toggle()
-    document.addEventListener('global-search:open', handler)
-    document.addEventListener('presentation:toggle', pHandler)
-    return () => {
-      document.removeEventListener('global-search:open', handler)
-      document.removeEventListener('presentation:toggle', pHandler)
-    }
-  }, [setSearchOpen, presentation])
-
-  // ── Keyboard shortcuts ────────────────────────────────
-  const shortcuts = [
-    // Navegação de páginas — Ctrl+Shift+letra
-    { key: 'g', ctrl: true, shift: true, description: 'Ir para Disciplinas',   group: 'Navegação', action: () => navigate('/grades') },
-    { key: 'k', ctrl: true, shift: true, description: 'Ir para Kanban',        group: 'Navegação', action: () => navigate('/kanban') },
-    { key: 'c', ctrl: true, shift: true, description: 'Ir para Calendário',    group: 'Navegação', action: () => navigate('/calendar') },
-    { key: 'e', ctrl: true, shift: true, description: 'Ir para Entidades',     group: 'Navegação', action: () => navigate('/entities') },
-    { key: 'd', ctrl: true, shift: true, description: 'Ir para Docentes',      group: 'Navegação', action: () => navigate('/docentes') },
-    { key: 'p', ctrl: true, shift: true, description: 'Ir para Perfil',        group: 'Navegação', action: () => navigate('/profile') },
-    { key: 'h', ctrl: true, shift: true, description: 'Ir para Início',        group: 'Navegação', action: () => navigate('/') },
-    { key: 's', ctrl: true, shift: true, description: 'Ir para Configurações', group: 'Navegação', action: () => navigate('/settings') },
-    { key: 'y', ctrl: true, shift: true, description: 'Abrir Study Room',      group: 'Navegação', action: () => navigate('/study') },
-    // Interface
-    { key: 't', ctrl: true, description: 'Abrir seletor de temas',  group: 'Interface', action: () => setShowPicker(p => !p) },
-    { key: 'Escape',        description: 'Fechar modais',            group: 'Interface', action: () => { setShowPicker(false) } },
-    // Temas — ciclar com Alt+← / Alt+→
-    { key: 'ArrowRight', alt: true, description: 'Próximo tema',    group: 'Temas', action: () => cycleTheme() },
-    { key: 'ArrowLeft',  alt: true, description: 'Tema anterior',   group: 'Temas', action: () => cycleTheme() },
-    // Ações rápidas
-    { key: 'n', ctrl: true, description: 'Novo card Kanban (em /kanban)',   group: 'Ações', action: () => { if (location.pathname === '/kanban') document.dispatchEvent(new CustomEvent('kanban:new-card')) } },
-    { key: 'r', ctrl: true, description: 'Recarregar dados da página',      group: 'Ações', action: () => document.dispatchEvent(new CustomEvent('app:refresh')) },
-    { key: 'k', ctrl: true, description: 'Busca global (Spotlight)',        group: 'Ações', action: () => setSearchOpen(v => !v) },
-    { key: 'p', ctrl: true, shift: true, description: 'Modo apresentação',  group: 'Interface', action: () => presentation.toggle() },
-    { key: 'f', ctrl: true, description: 'Focar busca na página',           group: 'Ações', action: () => { const el = document.querySelector('input[type="text"][placeholder*="uscar"]') as HTMLInputElement; el?.focus() } },
-    // Navegação por seta com Ctrl (livre da colisão com konami/swipe)
-    { key: 'ArrowRight', ctrl: true, description: 'Próxima página',  group: 'Navegação rápida', action: () => {
-      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile', '/settings']
-      const idx = routes.indexOf(location.pathname); if (idx < routes.length - 1) navigate(routes[idx + 1])
-    }},
-    { key: 'ArrowLeft',  ctrl: true, description: 'Página anterior', group: 'Navegação rápida', action: () => {
-      const routes = ['/', '/kanban', '/grades', '/calendar', '/entities', '/docentes', '/profile', '/settings']
-      const idx = routes.indexOf(location.pathname); if (idx > 0) navigate(routes[idx - 1])
-    }},
-  ]
-
-  useKeyboardShortcuts(shortcuts)
+  const { activeEgg, closeAnyEgg, searchOpen, setSearchOpen, presentation } = useAppLayoutChrome({
+    pathname: location.pathname,
+    cycleTheme,
+    setShowPicker,
+  })
 
   const isPixel  = false
   const isChrono = theme.id === 'dark-chrono'
@@ -706,8 +623,8 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} liteMode={liteMode}
-                        onLogoEgg={() => { localStorage.setItem(STORAGE_KEYS.easterFound,'1'); setExternalEgg('dasi-flip') }} />
+        <Sidebar onOpenPicker={() => setShowPicker(true)} liteMode={liteMode}
+                 onLogoEgg={() => { localStorage.setItem(STORAGE_KEYS.easterFound,'1'); triggerEasterEgg('dasi-flip') }} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (
           <div className="px-3 pb-3">
@@ -761,7 +678,7 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav — 5 primary items + overflow drawer */}
-      <MobileBottomNav />
+      <BottomNav />
     </div>
   )
 }

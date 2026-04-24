@@ -847,41 +847,72 @@ export default function CalendarPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-7 mb-1.5">
-              {WEEK_DAYS.map(d => (
-                <div key={d} className="text-center text-[10px] font-semibold uppercase tracking-wider py-1.5"
-                     style={{ color: 'var(--text-muted)' }}>{d}</div>
-              ))}
-            </div>
+            <div className="flex-1 overflow-x-auto pb-2">
+              <div className="min-w-[920px]">
+                <div className="grid grid-cols-7 gap-2 mb-2">
+                  {WEEK_DAYS.map(d => (
+                    <div key={d} className="text-center text-[10px] font-semibold uppercase tracking-wider py-1.5 rounded-xl"
+                         style={{ color: 'var(--text-muted)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>{d}</div>
+                  ))}
+                </div>
 
-            <div className="grid grid-cols-7 gap-px rounded-xl overflow-auto flex-1"
-                 style={{ minHeight: '200px', background: 'var(--border)', border: '1px solid var(--border)' }}>
-              {days.map(day => {
-                const dayEvs = eventsForDay(day)
-                const isCurrentMonth = isSameMonth(day, current)
-                const isSel = selected ? isSameDay(day, selected) : false
-                return (
-                  <button key={day.toISOString()}
-                          onClick={() => setSelected(isSameDay(day, selected ?? new Date('')) ? null : day)}
-                          className={clsx('relative flex flex-col p-1 sm:p-1.5 text-left transition-colors min-h-[52px] sm:min-h-[72px] md:min-h-[80px]', !isCurrentMonth && 'opacity-30')}
-                          style={{ backgroundColor: isSel ? 'var(--accent-soft)' : 'var(--bg-base)' }}
-                          onMouseEnter={e => { if (!isSel) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-surface)' }}
-                          onMouseLeave={e => { if (!isSel) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-base)' }}>
-                    <span className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full mb-0.5"
-                          style={isToday(day) ? { background:'var(--gradient-btn)', color:'#fff', fontWeight:700 } : { color:'var(--text-secondary)' }}>
-                      {format(day, 'd')}
-                    </span>
-                    <div className="flex gap-0.5 mt-0.5 flex-wrap">
-                      {dayEvs.slice(0, 4).map(ev => (
-                        <div key={ev.id} className="w-2 h-2 rounded-full transition-transform hover:scale-125" style={{ backgroundColor: getEventColor(ev, entities), boxShadow: `0 0 0 1px ${getEventColor(ev, entities)}40` }} />
-                      ))}
-                      {dayEvs.length > 4 && (
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--text-muted)', opacity: 0.5 }} />
-                      )}
-                    </div>
-                  </button>
-                )
-              })}
+                <div className="grid grid-cols-7 gap-2 rounded-2xl flex-1" style={{ minHeight: '240px' }}>
+                  {days.map(day => {
+                    const dayEvs = eventsForDay(day)
+                    const isCurrentMonth = isSameMonth(day, current)
+                    const isSel = selected ? isSameDay(day, selected) : false
+                    return (
+                      <button key={day.toISOString()}
+                              onClick={() => setSelected(isSameDay(day, selected ?? new Date('')) ? null : day)}
+                              className={clsx('relative flex flex-col text-left transition-all p-3 rounded-2xl border min-h-[132px]', !isCurrentMonth && 'opacity-35')}
+                              style={{
+                                backgroundColor: isSel ? 'var(--accent-soft)' : 'var(--bg-card)',
+                                borderColor: isSel ? 'var(--accent-1)' : 'var(--border)',
+                                boxShadow: isSel ? '0 10px 28px rgba(0,0,0,0.12)' : 'none',
+                              }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium w-7 h-7 flex items-center justify-center rounded-full"
+                                style={isToday(day) ? { background:'var(--gradient-btn)', color:'#fff', fontWeight:700 } : { color:'var(--text-secondary)', background: 'var(--bg-elevated)' }}>
+                            {format(day, 'd')}
+                          </span>
+                          {dayEvs.length > 0 && (
+                            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full" style={{ color: 'var(--text-muted)', background: 'var(--bg-elevated)' }}>
+                              {dayEvs.length}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-1.5 flex-1">
+                          {dayEvs.slice(0, 3).map(ev => {
+                            const color = getEventColor(ev, entities)
+                            const label = getEventLabel(ev, entities)
+                            return (
+                              <div key={ev.id}
+                                   className="flex items-start gap-2 rounded-xl px-2.5 py-1.5"
+                                   style={{ background: color + '12', border: `1px solid ${color}22` }}>
+                                <span className="mt-1 h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] font-semibold truncate" style={{ color }}>
+                                    {ev.title}
+                                  </p>
+                                  <p className="text-[9px] truncate" style={{ color: 'var(--text-muted)' }}>
+                                    {label.label}{ev.start_at ? ` · ${format(parseISO(ev.start_at), 'HH:mm')}` : ''}
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          })}
+                          {dayEvs.length > 3 && (
+                            <p className="text-[10px] font-medium text-right pr-1" style={{ color: 'var(--text-muted)' }}>
+                              +{dayEvs.length - 3} eventos
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 

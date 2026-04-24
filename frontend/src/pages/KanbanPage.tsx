@@ -230,7 +230,7 @@ function KanbanCard({ card, colAccent, onEdit, columns, onMove }: {
       }}
     >
       <div
-        className="rounded-xl group cursor-default transition-all overflow-hidden"
+        className="rounded-xl group cursor-default transition-all overflow-hidden touch-manipulation select-none"
         style={{
           background: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
@@ -239,18 +239,18 @@ function KanbanCard({ card, colAccent, onEdit, columns, onMove }: {
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = colAccent + '88'; (e.currentTarget as HTMLElement).style.borderLeftColor = prioConfig.color; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px rgba(0,0,0,0.12)` }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.borderLeftColor = prioConfig.color; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
       >
-        <div className="p-3">
-          <div className="flex items-start gap-2">
+        <div className="p-3.5 sm:p-3">
+          <div className="flex items-start gap-2.5">
             <button
               {...attributes} {...listeners}
-              className="mt-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity"
+              className="mt-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity rounded-lg p-1"
               style={{ color: 'var(--text-muted)', touchAction: 'none' }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = colAccent)}
               onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
-              <GripVertical size={14} aria-hidden="true" />
+              <GripVertical size={16} aria-hidden="true" />
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+              <p className="text-[15px] sm:text-sm font-semibold leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>
                 {card.title}
               </p>
               {card.description && (
@@ -278,25 +278,25 @@ function KanbanCard({ card, colAccent, onEdit, columns, onMove }: {
             </div>
             <button
               onClick={() => onEdit(card)}
-              className="opacity-0 group-hover:opacity-100 transition-all mt-0.5 flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center"
+              className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all mt-0.5 flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ color: 'var(--text-muted)', background: 'var(--bg-surface)' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = colAccent; (e.currentTarget as HTMLElement).style.background = colAccent + '20' }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)' }}>
-              <Edit2 size={11} />
+              <Edit2 size={12} />
             </button>
           </div>
         </div>
       </div>
       {/* Mobile move buttons — visible only on touch/mobile */}
       {columns && columns.length > 1 && onMove && (
-        <div className="flex lg:hidden gap-1 px-3 pb-2">
+        <div className="flex lg:hidden gap-1 px-3 pb-3">
           {columns.filter(c => c.id !== card.column_id).map(col => {
             const colIdx = col.position % 3
             const cs = COL_STYLES[colIdx] ?? COL_STYLES[0]
             return (
               <button key={col.id}
                       onClick={() => onMove(card.id, col.id)}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all active:scale-95"
+                      className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-semibold transition-all active:scale-95 min-h-[42px]"
                       style={{ background: cs.accent + '14', color: cs.accent, border: `1px solid ${cs.accent}30` }}>
                 → {col.title}
               </button>

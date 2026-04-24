@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   KanbanSquare, BookOpen, CalendarDays, TrendingUp, Clock,
@@ -6,7 +6,7 @@ import {
   Send, X, Users, KeyRound, Eye, Plus, Trash2,
   GraduationCap, Star, Zap, Target, ArrowRight,
   BookMarked, Bell, CheckCircle2, AlertTriangle, BarChart3,
-  Pin, PinOff, Timer, Tag, Image as ImageIcon, Hash,
+  Pin, PinOff, Timer, Tag, Image as ImageIcon, Hash, Rss,
 } from 'lucide-react'
 import { format, formatDistanceToNow, parseISO, isToday, isTomorrow,
          differenceInDays, differenceInMinutes, areIntervalsOverlapping,
@@ -698,6 +698,7 @@ export default function DashboardPage() {
   const [showCreateNL,  setShowCreateNL]  = useState(false)
   const [showArchiveNL, setShowArchiveNL] = useState(false)
   const [nlExpanded,    setNlExpanded]    = useState(false)
+  const [showOptionalWidgets, setShowOptionalWidgets] = useState(false)
   const now = new Date()
 
   const load = useCallback(async (silent = false) => {
@@ -735,13 +736,17 @@ export default function DashboardPage() {
     return isToday(d) || isTomorrow(d) || differenceInDays(d, now) <= 3
   })
 
+  const nextEvaEvent = useMemo(() => {
+    return [...events]
+      .filter((ev: any) => parseISO(ev.start_at).getTime() > now.getTime())
+      .sort((a: any, b: any) => parseISO(a.start_at).getTime() - parseISO(b.start_at).getTime())[0] ?? null
+  }, [events, now])
+
   const quickLinks = [
     { to: '/kanban',   label: 'Kanban',      icon: KanbanSquare,  desc: 'Organize tarefas',    color: 'var(--accent-1)',  count: stats.boards },
     { to: '/grades',   label: 'Disciplinas', icon: BookOpen,      desc: 'Notas e frequência',  color: '#a855f7',          count: stats.subjects },
     { to: '/calendar', label: 'Calendário',  icon: CalendarDays,  desc: 'Provas e eventos',    color: '#f59e0b',          count: stats.events },
-    { to: '/entities', label: 'Entidades',   icon: Users,         desc: 'Grupos do curso',     color: '#10b981',          count: null },
-    { to: '/docentes', label: 'Docentes',    icon: BookMarked,    desc: 'Professores da EACH', color: '#06b6d4',          count: null },
-    { to: '/profile',  label: 'Perfil',      icon: Star,          desc: 'Conquistas e cartão', color: '#ec4899',          count: null },
+    { to: '/social/feed', label: 'Feed',     icon: Rss,           desc: 'Novidades e comunicados', color: '#ec4899',     count: null },
   ]
 
   const latestTag = latestNL?.tag ? NL_TAGS[latestNL.tag] : NL_TAGS['geral']
@@ -843,7 +848,7 @@ export default function DashboardPage() {
 
       {/* ── QUICK LINKS ─────────────────────────────────────────────────── */}
       <div className="animate-in-delay-1">
-        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
           {quickLinks.map(ql => (
             <QuickLink key={ql.to} {...ql} />
           ))}
@@ -1029,8 +1034,55 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* NERV HUD */}
-      <NervHUD events={events} />
+      {/* ── OPTIONAL EVA / NERV ───────────────────────────────────────── */}
+      <div className="rounded-2xl overflow-hidden animate-in-delay-3"
+           style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+        <button
+          onClick={() => setShowOptionalWidgets(v => !v)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+          style={{ borderBottom: showOptionalWidgets ? '1px solid var(--border)' : 'none' }}
+        >
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Opcional</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Painel EVA e HUD</p>
+          </div>
+          <ChevronDown size={14} style={{ color: 'var(--text-muted)', transform: showOptionalWidgets ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+        </button>
+        {showOptionalWidgets && (
+          <div className="grid gap-3 md:grid-cols-2 p-4 animate-in">
+            <div className="rounded-2xl p-4" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Timer size={14} style={{ color: 'var(--accent-3)' }} />
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>EvaCountdown</p>
+              </div>
+              {nextEvaEvent ? (
+                <>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{nextEvaEvent.title}</p>
+                  <p className="text-[11px] mb-2" style={{ color: 'var(--text-muted)' }}>
+                    {format(parseISO(nextEvaEvent.start_at), "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                  </p>
+                  <EvaCountdown targetDate={nextEvaEvent.start_at} label={nextEvaEvent.title} />
+                </>
+              ) : (
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Sem eventos futuros para contagem regressiva.</p>
+              )}
+            </div>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Pin size={14} style={{ color: 'var(--accent-3)' }} />
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>NervHUD</p>
+              </div>
+              <p className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
+                O HUD só aparece no tema EVA e fica desativado por padrão para reduzir ruído visual.
+              </p>
+              <div className="rounded-xl p-3 border border-dashed" style={{ borderColor: 'var(--border)' }}>
+                <NervHUD events={events} />
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Ative o tema EVA para visualizar o painel flutuante.</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -120,8 +120,8 @@ function AttendanceWidget({ subject, onUpdate }: {
   subject: Subject; onUpdate: (id: string, total: number, att: number) => void
 }) {
   // absent = faltas, which starts at 0. attended = presenças.
-  const absent    = subject.total_classes - subject.attended
-  const maxAbs    = Math.floor(subject.total_classes * 0.3)
+    <button onClick={onClick}
+            className={clsx('w-full text-left px-2 py-1.5 rounded-lg border transition-all text-[10px] cursor-pointer', status !== 'locked' && 'hover:scale-[1.03]', dimmed && 'opacity-25')}
   const pct       = subject.total_classes > 0 ? (absent / subject.total_classes) * 100 : 0
   const remaining = Math.max(0, maxAbs - absent)
   const ff        = absent > maxAbs && subject.total_classes > 0
