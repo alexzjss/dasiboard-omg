@@ -934,13 +934,13 @@ npm run dev
 |---|---|---|
 | `APP_ENV` | `development` | `development` habilita `/docs` (Swagger). Use `production` em produção. |
 | `APP_SECRET_KEY` | `changeme` | Segredo geral da aplicação. |
-| `ALLOWED_ORIGINS` | `http://localhost:5173` | Origins permitidas pelo CORS (lista separada por vírgula). |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` | Origins permitidas pelo CORS (JSON array ou lista separada por vírgula). |
 | `POSTGRES_HOST` | `db` | Host do PostgreSQL (nome do serviço Docker). |
 | `POSTGRES_PORT` | `5432` | Porta do PostgreSQL. |
 | `POSTGRES_DB` | `dasiboard` | Nome do banco de dados. |
 | `POSTGRES_USER` | `dasiboard` | Usuário do banco. |
 | `POSTGRES_PASSWORD` | `changeme` | Senha do banco. |
-| `JWT_SECRET_KEY` | `changeme-jwt-secret` | Segredo para assinar tokens JWT. **Troque em produção.** |
+| `JWT_SECRET_KEY` | — | Segredo para assinar tokens JWT (mín. 32 chars). Em `production` é obrigatório e não pode ser valor inseguro. |
 | `JWT_ALGORITHM` | `HS256` | Algoritmo JWT. |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Expiração do access token em minutos. |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | `7` | Expiração do refresh token em dias. |

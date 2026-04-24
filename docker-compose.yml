@@ -1,20 +1,18 @@
-version: "3.9"
-
 services:
   # ── PostgreSQL ──────────────────────────────────────────
   db:
     image: postgres:15-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       ${POSTGRES_DB}
-      POSTGRES_USER:     ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB:-dasiboard}
+      POSTGRES_USER:     ${POSTGRES_USER:-dasiboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # init.sql é executado automaticamente na primeira inicialização
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dasiboard} -d ${POSTGRES_DB:-dasiboard}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +23,33 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-changeme}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-dasiboard}
+      POSTGRES_USER: ${POSTGRES_USER:-dasiboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      GLOBAL_EVENTS_KEY: ${GLOBAL_EVENTS_KEY:-changeme-global-key}
+      ENTITY_KEY_DASI: ${ENTITY_KEY_DASI:-}
+      ENTITY_KEY_EACH_IN_SHELL: ${ENTITY_KEY_EACH_IN_SHELL:-}
+      ENTITY_KEY_HYPE: ${ENTITY_KEY_HYPE:-}
+      ENTITY_KEY_CONWAY: ${ENTITY_KEY_CONWAY:-}
+      ENTITY_KEY_CODELAB: ${ENTITY_KEY_CODELAB:-}
+      ENTITY_KEY_SINTESE: ${ENTITY_KEY_SINTESE:-}
+      ENTITY_KEY_SEMANA_SI: ${ENTITY_KEY_SEMANA_SI:-}
+      ENTITY_KEY_LAB_MINAS: ${ENTITY_KEY_LAB_MINAS:-}
+      ENTITY_KEY_PET_SI: ${ENTITY_KEY_PET_SI:-}
+      ENTITY_KEY_GRACE: ${ENTITY_KEY_GRACE:-}
     volumes:
       # Volume persistente para arquivos enviados pelos usuários.
       # Sem isso, uploads são perdidos a cada redeploy.

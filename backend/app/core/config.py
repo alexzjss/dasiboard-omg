@@ -2,7 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
 import os
 import secrets
-from pydantic import model_validator
+import json
+from pydantic import field_validator, model_validator
 
 
 class Settings(BaseSettings):
@@ -47,6 +48,29 @@ class Settings(BaseSettings):
     ENTITY_KEY_LAB_MINAS:     Optional[str] = None
     ENTITY_KEY_PET_SI:        Optional[str] = None
     ENTITY_KEY_GRACE:         Optional[str] = None
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value):
+        """
+        Accept both JSON array and comma-separated list from env var.
+        Examples:
+          ALLOWED_ORIGINS='["https://a.com","https://b.com"]'
+          ALLOWED_ORIGINS='https://a.com, https://b.com'
+        """
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return []
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [origin.strip() for origin in raw.split(",") if origin.strip()]
+        return value
 
     def get_entity_key(self, slug: str) -> Optional[str]:
         """
