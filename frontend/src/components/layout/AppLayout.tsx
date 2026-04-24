@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import React from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Rss, KanbanSquare, BookOpen,
   CalendarDays, User, GraduationCap, Users, X,
-  LogOut, Palette, Search, BookMarked, ChevronDown, Monitor, Settings,
-  MoreHorizontal,
+  LogOut, Palette, Search, BookMarked, Monitor, Settings,
+  ChevronRight,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import StudyMode from '@/components/study/StudyMode'
@@ -20,7 +21,6 @@ import { useTheme, THEMES, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
 import { LofiPlayer } from '@/components/LofiPlayer'
-import { ColorBlindFilters, ColorBlindButton, useColorBlindMode } from '@/components/ColorBlindMode'
 import { useLiteMode, LiteModeButton } from '@/components/LiteMode'
 import { ExpBar } from '@/components/ExpCounter'
 import { OfflineBanner, PWAInstallBanner } from '@/components/OfflineBanner'
@@ -35,22 +35,26 @@ import { useClockEasterEggs } from '@/hooks/useEasterEggs'
 import clsx from 'clsx'
 import toast from 'react-hot-toast'
 
-// Primary nav — always visible in bottom bar (max 5)
+// Primary nav — 5 main tabs always visible in bottom bar
 const NAV_PRIMARY = [
-  { to: '/',          label: 'Início',        icon: LayoutDashboard, end: true  },
-  { to: '/kanban',    label: 'Kanban',        icon: KanbanSquare,    end: false },
-  { to: '/grades',    label: 'Disciplinas',   icon: BookOpen,        end: false },
-  { to: '/calendar',  label: 'Calendário',    icon: CalendarDays,    end: false },
-  { to: '/profile',   label: 'Perfil',        icon: User,            end: false },
+  { to: '/',        label: 'Início',  icon: LayoutDashboard, end: true  },
+  { to: '/social',  label: 'Social',  icon: Users,           end: false },
+  { to: '/eventos', label: 'Eventos', icon: CalendarDays,    end: false },
+  { to: '/estudo',  label: 'Estudo',  icon: BookOpen,        end: false },
+  { to: '/perfil',  label: 'Perfil',  icon: User,            end: false },
 ]
-// Secondary nav — shown in desktop sidebar + overflow menu on mobile
-const NAV_SECONDARY = [
-  { to: '/entities',  label: 'Entidades',     icon: Users,           end: false },
-  { to: '/turma',     label: 'Turma',         icon: GraduationCap,   end: false },
-  { to: '/room',      label: 'Salas',         icon: Monitor,         end: false },
-  { to: '/feed',      label: 'Feed',          icon: Rss,             end: false },
-  { to: '/docentes',  label: 'Docentes',      icon: BookMarked,      end: false },
-  { to: '/settings',  label: 'Configurações', icon: Settings,        end: false },
+// Secondary nav — sub-pages shown in desktop sidebar
+const NAV_SECONDARY: { to: string; label: string; icon: React.ElementType; end: boolean; parent: string }[] = [
+  { to: '/social/feed',       label: 'Feed',            icon: Rss,           end: false, parent: '/social'  },
+  { to: '/social/entities',   label: 'Entidades',       icon: Users,         end: false, parent: '/social'  },
+  { to: '/social/turma',      label: 'Turma',           icon: GraduationCap, end: false, parent: '/social'  },
+  { to: '/social/room',       label: 'Salas',           icon: Monitor,       end: false, parent: '/social'  },
+  { to: '/eventos/calendar',  label: 'Calendário',      icon: CalendarDays,  end: false, parent: '/eventos' },
+  { to: '/estudo/grades',     label: 'Disciplinas',     icon: BookOpen,      end: false, parent: '/estudo'  },
+  { to: '/estudo/kanban',     label: 'Kanban',          icon: KanbanSquare,  end: false, parent: '/estudo'  },
+  { to: '/estudo/fluxogram',  label: 'Fluxograma',      icon: BookMarked,    end: false, parent: '/estudo'  },
+  { to: '/estudo/docentes',   label: 'Docentes',        icon: BookMarked,    end: false, parent: '/estudo'  },
+  { to: '/perfil/settings',   label: 'Configurações',   icon: Settings,      end: false, parent: '/perfil'  },
 ]
 const nav = [...NAV_PRIMARY, ...NAV_SECONDARY]
 
@@ -322,10 +326,9 @@ function DasiLogoClickable({ onEgg }: { onEgg: () => void }) {
   )
 }
 
-function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
+function SidebarContent({ onOpenPicker, liteMode, onLogoEgg }: {
   onOpenPicker: () => void
   onLogoEgg: () => void
-  colorBlind: ReturnType<typeof useColorBlindMode>
   liteMode: { active: boolean; toggle: () => void }
 }) {
   const { user, logout } = useAuthStore()
@@ -383,7 +386,7 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
 
       {/* Profile highlight */}
       <div className="px-3 pt-3 pb-1 relative z-10">
-        <NavLink to="/profile"
+        <NavLink to="/perfil"
                  className={({ isActive }) => clsx(
                    'flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all',
                    isActive ? 'nav-active' : 'nav-inactive'
@@ -410,28 +413,51 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
         </NavLink>
       </div>
 
-      {/* Nav */}
+      {/* Nav — primary tabs + sub-items */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10 overflow-y-auto">
-        {nav.filter(n => n.to !== '/profile').map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end}
-                   className={({ isActive }) => clsx(
-                     'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                     isActive ? 'nav-active' : 'nav-inactive'
-                   )}>
-            {({ isActive }) => (
-              <>
-                <Icon size={16} style={{ strokeWidth: isActive ? 2.5 : 2 }} />
-                <span>{label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {NAV_PRIMARY.map(({ to, label, icon: Icon, end }) => {
+          const subs = NAV_SECONDARY.filter(s => s.parent === to)
+          return (
+            <React.Fragment key={to}>
+              <NavLink to={to} end={end}
+                       className={({ isActive }) => clsx(
+                         'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+                         isActive ? 'nav-active' : 'nav-inactive'
+                       )}>
+                {({ isActive }) => (
+                  <>
+                    <Icon size={16} style={{ strokeWidth: isActive ? 2.5 : 2 }} />
+                    <span className="flex-1">{label}</span>
+                    {subs.length > 0 && (
+                      <ChevronRight size={12} style={{ opacity: 0.4 }} />
+                    )}
+                  </>
+                )}
+              </NavLink>
+              {/* Sub-items — shown when parent is active */}
+              {subs.length > 0 && subs.map(({ to: subTo, label: subLabel, icon: SubIcon }) => (
+                <NavLink key={subTo} to={subTo}
+                         className={({ isActive }) => clsx(
+                           'flex items-center gap-3 pl-9 pr-3 py-2 rounded-xl text-xs font-medium transition-all duration-150',
+                           isActive ? 'nav-active' : 'nav-inactive'
+                         )}>
+                  {({ isActive }) => (
+                    <>
+                      <SubIcon size={13} style={{ strokeWidth: isActive ? 2.5 : 2 }} />
+                      <span>{subLabel}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </React.Fragment>
+          )
+        })}
       </nav>
 
       {/* Tools */}
       <div className="relative z-10 px-3 pb-2" style={{ borderTop: '1px solid var(--border)' }}>
         <p className="text-[9px] font-bold uppercase tracking-widest mt-2 mb-1.5 px-0.5" style={{ color: 'var(--text-muted)', opacity: 0.55 }}>Ferramentas</p>
-        <div className="grid grid-cols-3 gap-1 mb-1">
+        <div className="grid grid-cols-2 gap-1 mb-1">
           <button
             onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
             className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.04] active:scale-[0.97]"
@@ -441,7 +467,6 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
             <Monitor size={13} />
             <span>Apresentar</span>
           </button>
-          <ColorBlindButton mode={colorBlind.mode} apply={colorBlind.apply} />
           <LiteModeButton active={liteMode.active} onToggle={liteMode.toggle} />
         </div>
         <LofiPlayer />
@@ -461,91 +486,48 @@ function SidebarContent({ onOpenPicker, colorBlind, liteMode, onLogoEgg }: {
 
 // ── App Layout ────────────────────────────────────────────────────────────────
 
-// ── Mobile Bottom Nav — 5 primary + overflow "..." drawer ─────────────────────
+// ── Mobile Bottom Nav — exactly 5 primary tabs, safe-area-aware ───────────────
 function MobileBottomNav() {
-  const location  = useLocation()
-  const [showMore, setShowMore] = useState(false)
-  const isSecondaryActive = NAV_SECONDARY.some(n => location.pathname.startsWith(n.to))
-
   return (
-    <>
-      <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 flex items-stretch mobile-bottomnav"
-        style={{ backgroundColor: 'var(--bg-surface)', borderTop: '1px solid var(--border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', zIndex: 'var(--z-nav, 30)' }}
-        aria-label="Navegação principal"
-      >
-        {NAV_PRIMARY.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end}
-                   aria-label={label}
-                   className={({ isActive }) => clsx(
-                     'flex-1 flex items-center justify-center transition-all duration-200 active:scale-75 select-none',
-                     isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
-                   )}>
-            {({ isActive }) => (
-              <div className="relative flex items-center justify-center" style={{ width: 48, height: 40 }}>
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 flex items-stretch mobile-bottomnav"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderTop: '1px solid var(--border)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        zIndex: 'var(--z-nav, 30)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+      aria-label="Navegação principal"
+    >
+      {NAV_PRIMARY.map(({ to, label, icon: Icon, end }) => (
+        <NavLink key={to} to={to} end={end}
+                 aria-label={label}
+                 className={({ isActive }) => clsx(
+                   'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200 active:scale-90 select-none min-h-[48px]',
+                   isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
+                 )}>
+          {({ isActive }) => (
+            <>
+              <div className="relative flex items-center justify-center" style={{ width: 40, height: 28 }}>
                 {isActive && (
-                  <div className="absolute inset-0 rounded-2xl transition-all duration-200"
+                  <div className="absolute inset-0 rounded-xl transition-all duration-200"
                        style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
                 )}
-                <Icon size={isActive ? 18 : 20} className="relative z-10 transition-all duration-200"
+                <Icon size={18} className="relative z-10 transition-all duration-200"
                       style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', strokeWidth: isActive ? 2.5 : 1.8 }}
                       aria-hidden="true" />
               </div>
-            )}
-          </NavLink>
-        ))}
-        {/* More button */}
-        <button
-          onClick={() => setShowMore(m => !m)}
-          aria-label="Mais páginas"
-          aria-expanded={showMore}
-          className={clsx(
-            'flex-1 flex items-center justify-center transition-all duration-200 active:scale-75 select-none',
-            (showMore || isSecondaryActive) ? 'nav-bottom-active' : 'nav-bottom-inactive'
+              <span className="text-[10px] font-medium leading-none"
+                    style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }}>
+                {label}
+              </span>
+            </>
           )}
-        >
-          <div className="relative flex items-center justify-center" style={{ width: 48, height: 40 }}>
-            {(showMore || isSecondaryActive) && (
-              <div className="absolute inset-0 rounded-2xl"
-                   style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
-            )}
-            <MoreHorizontal size={20} className="relative z-10"
-              style={{ color: (showMore || isSecondaryActive) ? 'var(--accent-3)' : 'var(--text-muted)' }}
-              aria-hidden="true" />
-          </div>
-        </button>
-      </nav>
-
-      {/* Overflow drawer */}
-      {showMore && (
-        <>
-          <div className="fixed inset-0 z-[var(--z-overlay,90)]" onClick={() => setShowMore(false)} aria-hidden="true" />
-          <div
-            className="lg:hidden fixed bottom-[60px] inset-x-3 rounded-2xl p-3 animate-in grid grid-cols-3 gap-2"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 -8px 40px rgba(0,0,0,0.3)', zIndex: 'var(--z-overlay, 90)' }}
-            role="menu" aria-label="Mais navegação"
-          >
-            {NAV_SECONDARY.map(({ to, label, icon: Icon }) => {
-              const isActive = location.pathname.startsWith(to)
-              return (
-                <NavLink key={to} to={to}
-                         role="menuitem"
-                         aria-label={label}
-                         onClick={() => setShowMore(false)}
-                         className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all active:scale-95"
-                         style={{ background: isActive ? 'var(--accent-soft)' : 'var(--bg-elevated)', border: `1px solid ${isActive ? 'var(--accent-1)' : 'var(--border)'}` }}>
-                  <Icon size={18} style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }} aria-hidden="true" />
-                  <span className="text-[10px] font-medium leading-none"
-                        style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }}>
-                    {label}
-                  </span>
-                </NavLink>
-              )
-            })}
-          </div>
-        </>
-      )}
-    </>
+        </NavLink>
+      ))}
+    </nav>
   )
 }
 
@@ -652,7 +634,6 @@ export default function AppLayout() {
   const isPixel  = false
   const isChrono = theme.id === 'dark-chrono'
   const saveStarter = (id: string) => { localStorage.setItem(STORAGE_KEYS.starter, id); setStarter(id) }
-  const colorBlind = useColorBlindMode()
   const liteMode  = useLiteMode()
   useChronoPortalSound()
   const { pending: achPending, dismiss: achDismiss } = useAchievementToast()
@@ -703,8 +684,6 @@ export default function AppLayout() {
         {panicAlert && <PanicBanner exams={exams} onActivate={activatePanic} onDismiss={dismissPanic} />}
         {panicOn && <PanicActiveBar exams={exams} onDeactivate={deactivatePanic} />}
         <NotificationBanner />
-        <ColorBlindFilters />
-        <OfflineBanner />
         <PWAInstallBanner />
         <BlueprintRuler />
         <ShellPrompt />
@@ -727,7 +706,7 @@ export default function AppLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-[var(--sidebar-w)] flex-col sidebar-bg shrink-0" style={{ zIndex: 10 }}>
-        <SidebarContent onOpenPicker={() => setShowPicker(true)} colorBlind={colorBlind} liteMode={liteMode}
+        <SidebarContent onOpenPicker={() => setShowPicker(true)} liteMode={liteMode}
                         onLogoEgg={() => { localStorage.setItem(STORAGE_KEYS.easterFound,'1'); setExternalEgg('dasi-flip') }} />
         {/* Chrono era badge on desktop sidebar */}
         {isChrono && chronoEra && (

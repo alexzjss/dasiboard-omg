@@ -24,7 +24,6 @@ export const STORAGE_KEYS = {
   alertedDeadlines: 'dasiboard-alerted-deadlines',
   entityCount:      'dasiboard-entity-count',
   roomCreated:      'dasiboard-room-created',
-  colorBlind:       'dasiboard-colorblind',
   focusMode:        'dasiboard-focus-mode',
   liteMode:         'dasiboard-lite-mode',
 } as const
