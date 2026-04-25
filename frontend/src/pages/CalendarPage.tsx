@@ -17,6 +17,7 @@ import api from '@/utils/api'
 import clsx from 'clsx'
 import { useEventReminders } from '@/hooks/usePushNotifications'
 import { addExp, EXP_REWARDS } from '@/components/ExpCounter'
+import AddEventModal from '@/components/AddEventModal'
 
 interface Event {
   id: string; title: string; description?: string
@@ -135,182 +136,10 @@ interface EventFormData {
   title: string; description: string; event_type: string
   start_at: string; end_at: string; all_day: boolean; color: string
   location: string; class_code: string; entity_id: string
-  recurring: boolean; recur_weeks: number
+  recurring: boolean; recur_weeks: number; entity_code?: string
 }
 
-function EventForm({
-  isGlobal, globalKey, setGlobalKey,
-  form, setForm, entities, isMemberOfEntity,
-  onSubmit, onCancel, editingEvent,
-}: {
-  isGlobal: boolean; globalKey: string; setGlobalKey: (v: string) => void
-  form: EventFormData; setForm: (f: EventFormData | ((prev: EventFormData) => EventFormData)) => void
-  entities: Entity[]; isMemberOfEntity: boolean
-  onSubmit: () => void; onCancel: () => void
-  editingEvent?: Event | null
-}) {
-  const set = (k: keyof EventFormData, v: any) => setForm(f => ({ ...f, [k]: v }))
 
-  return (
-    <div className="animate-in space-y-3 overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-          {isGlobal && <Globe size={14} className="text-pink-400"/>}
-          {editingEvent ? <><Pencil size={14}/> Editar Evento</> : isGlobal ? 'Evento Global' : 'Novo Evento'}
-        </h3>
-        <button onClick={onCancel} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
-      </div>
-
-      {isGlobal && (
-        <>
-          <p className="text-xs rounded-lg px-3 py-2"
-             style={{ background:'rgba(219,39,119,0.1)', border:'1px solid rgba(219,39,119,0.2)', color:'#f9a8d4' }}>
-            Visível para todos. Requer chave para criar/editar.
-          </p>
-          <div>
-            <label className="label flex items-center gap-1"><KeyRound size={11}/> Chave</label>
-            <input className="input text-sm" type="password" placeholder="Chave secreta"
-                   value={globalKey} onChange={e => setGlobalKey(e.target.value)}/>
-          </div>
-        </>
-      )}
-
-      <div>
-        <label className="label">Título</label>
-        <input className="input text-sm" placeholder="Nome do evento" value={form.title}
-               onChange={e => set('title', e.target.value)}/>
-      </div>
-      <div>
-        <label className="label">Tipo</label>
-        <select className="input text-sm" value={form.event_type}
-                onChange={e => set('event_type', e.target.value)}>
-          {Object.entries(TYPE_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-      </div>
-
-      {/* Entity binding */}
-      {entities.filter(e => e.is_member).length > 0 && (
-        <div>
-          <label className="label flex items-center gap-1"><Users size={11}/> Vincular entidade <span className="normal-case text-[10px]" style={{ color: 'var(--text-muted)' }}>(opcional)</span></label>
-          <select className="input text-sm" value={form.entity_id}
-                  onChange={e => set('entity_id', e.target.value)}>
-            <option value="">Nenhuma</option>
-            {entities.filter(e => e.is_member).map(e => (
-              <option key={e.id} value={e.id}>{e.icon_emoji} {e.short_name || e.name}</option>
-            ))}
-          </select>
-          {form.entity_id && (
-            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
-              Este evento também aparecerá no painel da entidade selecionada.
-            </p>
-          )}
-        </div>
-      )}
-
-      <div>
-        <label className="label">Código da turma</label>
-        <input className="input text-sm" placeholder="Ex: ACH2157" value={form.class_code}
-               onChange={e => set('class_code', e.target.value)}/>
-      </div>
-      <div>
-        <label className="label">Início</label>
-        <input type="datetime-local" className="input text-sm" value={form.start_at}
-               onChange={e => set('start_at', e.target.value)}/>
-      </div>
-      <div>
-        <label className="label">Fim <span className="normal-case text-[10px]" style={{ color:'var(--text-muted)' }}>(opcional)</span></label>
-        <input type="datetime-local" className="input text-sm" value={form.end_at}
-               onChange={e => set('end_at', e.target.value)}/>
-      </div>
-      {/* ── Event time preview ───────────────────────── */}
-      {form.start_at && (
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-             style={{ background: (form.color || 'var(--accent-1)') + '15', border: `1px solid ${form.color || 'var(--accent-1)'}33` }}>
-          <div className="w-2.5 h-full min-h-[36px] rounded-full shrink-0" style={{ background: form.color || 'var(--accent-3)' }} />
-          <div>
-            <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{form.title || 'Evento sem título'}</p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              {new Date(form.start_at).toLocaleString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
-              {form.end_at && ` → ${new Date(form.end_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`}
-              {form.start_at && form.end_at && (() => {
-                const mins = Math.round((new Date(form.end_at).getTime() - new Date(form.start_at).getTime()) / 60000)
-                if (mins > 0) return ` (${mins >= 60 ? `${Math.floor(mins/60)}h${mins%60 ? `${mins%60}min` : ''}` : `${mins}min`})`
-                return ''
-              })()}
-            </p>
-          </div>
-        </div>
-      )}
-      <div>
-        <label className="label">Local</label>
-        <input className="input text-sm" placeholder="Local (opcional)" value={form.location}
-               onChange={e => set('location', e.target.value)}/>
-      </div>
-      <div>
-        <label className="label">Descrição</label>
-        <textarea className="input text-sm resize-none h-14" placeholder="Descrição…" value={form.description}
-                  onChange={e => set('description', e.target.value)}/>
-      </div>
-
-      {/* Recurring */}
-      <div className="flex items-center gap-3 p-3 rounded-xl"
-           style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-        <Repeat size={13} style={{ color: form.recurring ? 'var(--accent-3)' : 'var(--text-muted)', flexShrink: 0 }} />
-        <div className="flex-1 min-w-0">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.recurring}
-                   onChange={e => set('recurring', e.target.checked)}
-                   className="rounded" />
-            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Repetir semanalmente</span>
-          </label>
-          {form.recurring && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>por</span>
-              <input type="number" min={1} max={52} value={form.recur_weeks}
-                     onChange={e => set('recur_weeks', Number(e.target.value))}
-                     className="input text-xs py-1 w-16" />
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>semanas</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <button className="btn-primary w-full justify-center" onClick={onSubmit}>
-        {editingEvent ? 'Salvar alterações' : 'Criar evento'}
-      </button>
-
-      {/* Google Calendar — só aparece quando título e data estão preenchidos */}
-      {form.title.trim() && form.start_at && (
-        <a
-          href={buildGoogleCalendarUrl({
-            title: form.title,
-            description: form.description || undefined,
-            location: form.location || undefined,
-            start_at: new Date(form.start_at).toISOString(),
-            end_at: form.end_at ? new Date(form.end_at).toISOString() : undefined,
-          })}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:opacity-80 active:scale-[0.98]"
-          style={{
-            background: 'rgba(66,133,244,0.10)',
-            border: '1px solid rgba(66,133,244,0.30)',
-            color: '#4285f4',
-          }}
-        >
-          {/* Google Calendar logo SVG inline */}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17 3h4v4l-9 9-4-4 9-9z" fill="#4285f4"/>
-            <path d="M3 17l4 4 9-9-4-4-9 9z" fill="#34a853"/>
-            <path d="M3 3h4v4H3V3z" fill="#fbbc04"/>
-            <path d="M17 17h4v4h-4v-4z" fill="#ea4335"/>
-          </svg>
-          Adicionar ao Google Calendário
-        </a>
-      )}
-    </div>
-  )
-}
 
 // ── Week Schedule View ────────────────────────────────────────────────────────
 function ScheduleView({ events, subjects, entities }: { events: Event[]; subjects: Subject[]; entities: Entity[] }) {
@@ -564,7 +393,7 @@ const FORM_DEFAULT: EventFormData = {
   title: '', description: '', event_type: 'personal',
   start_at: '', end_at: '', all_day: false, color: '#10B981',
   location: '', class_code: '', entity_id: '',
-  recurring: false, recur_weeks: 16,
+  recurring: false, recur_weeks: 16, entity_code: '',
 }
 
 // ── Agenda View — mobile-first list grouped by day ───────────────────────────
@@ -987,17 +816,22 @@ export default function CalendarPage() {
             )}
 
             {showForm ? (
-              <EventForm
-                isGlobal={isGlobalForm}
-                globalKey={globalKey} setGlobalKey={setGlobalKey}
-                form={form} setForm={setForm}
+              <AddEventModal
+                isOpen={showForm}
+                onClose={() => { setShowForm(false); setEditingEvent(null) }}
+                onSubmit={(formData, isGlobal, globalKey) => {
+                  setIsGlobalForm(isGlobal)
+                  setGlobalKey(globalKey)
+                  setForm(formData)
+                  createOrUpdateEvent()
+                }}
                 entities={entities}
-                isMemberOfEntity={entities.some(e => e.is_member)}
-                onSubmit={createOrUpdateEvent}
-                onCancel={() => { setShowForm(false); setEditingEvent(null) }}
                 editingEvent={editingEvent}
+                initialDate={selected || new Date()}
               />
-            ) : selected ? (
+            ) : null}
+            
+            {selected ? (
               <div className="animate-in overflow-y-auto">
                 <div className="flex items-center justify-between mb-3">
                   <div>
