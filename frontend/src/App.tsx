@@ -17,7 +17,6 @@ const CalendarPage              = lazy(() => import('@/pages/CalendarPage'))
 const ProfilePage               = lazy(() => import('@/pages/ProfilePage'))
 const DocentesPage              = lazy(() => import('@/pages/DocentesPage'))
 const EntitiesPage              = lazy(() => import('@/pages/EntitiesPage'))
-const FluxogramPage             = lazy(() => import('@/pages/FluxogramPage'))
 const SettingsPage              = lazy(() => import('@/pages/SettingsPage'))
 const StudyRoomPage             = lazy(() => import('@/pages/StudyRoomPage'))
 const PublicProfilePage         = lazy(() => import('@/pages/PublicProfilePage'))
@@ -86,7 +85,6 @@ export default function App() {
           <Route path="estudo" element={<S><EstudoPage /></S>} />
           <Route path="estudo/grades" element={<S><GradesPage /></S>} />
           <Route path="estudo/kanban" element={<S><KanbanPage /></S>} />
-          <Route path="estudo/fluxogram" element={<S><FluxogramPage /></S>} />
           <Route path="estudo/docentes" element={<S><DocentesPage /></S>} />
           <Route path="estudo/study" element={<S><StudyRoomPage /></S>} />
 
@@ -104,7 +102,6 @@ export default function App() {
           <Route path="calendar"    element={<Navigate to="/eventos/calendar" replace />} />
           <Route path="grades"      element={<Navigate to="/estudo/grades" replace />} />
           <Route path="kanban"      element={<Navigate to="/estudo/kanban" replace />} />
-          <Route path="fluxogram"   element={<Navigate to="/estudo/fluxogram" replace />} />
           <Route path="docentes"    element={<Navigate to="/estudo/docentes" replace />} />
           <Route path="study"       element={<Navigate to="/estudo/study" replace />} />
           <Route path="profile"     element={<Navigate to="/perfil" replace />} />

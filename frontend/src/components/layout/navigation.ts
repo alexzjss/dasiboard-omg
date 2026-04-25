@@ -25,7 +25,6 @@ export const NAV_SECONDARY: NavItem[] = [
   { to: '/eventos/calendar', label: 'Calendário', icon: CalendarDays, end: false, parent: '/eventos' },
   { to: '/estudo/grades', label: 'Disciplinas', icon: BookOpen, end: false, parent: '/estudo' },
   { to: '/estudo/kanban', label: 'Kanban', icon: KanbanSquare, end: false, parent: '/estudo' },
-  { to: '/estudo/fluxogram', label: 'Fluxograma', icon: BookMarked, end: false, parent: '/estudo' },
   { to: '/estudo/docentes', label: 'Docentes', icon: BookMarked, end: false, parent: '/estudo' },
   { to: '/perfil/settings', label: 'Configurações', icon: Settings, end: false, parent: '/perfil' },
 ]

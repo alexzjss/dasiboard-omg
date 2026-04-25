@@ -112,7 +112,25 @@ function exportICS(events: Event[]) {
   toast.success('Calendário exportado como .ics!')
 }
 
-// ── Event Form ────────────────────────────────────────────────────────────────
+// ── Google Calendar link ──────────────────────────────────────────────────────
+function buildGoogleCalendarUrl(ev: {
+  title: string; description?: string; location?: string
+  start_at: string; end_at?: string; all_day?: boolean
+}): string {
+  const fmt = (iso: string) => iso.replace(/[-:]/g, '').replace('.000Z', 'Z').slice(0, 15) + 'Z'
+  const start = fmt(ev.start_at)
+  const end   = ev.end_at ? fmt(ev.end_at) : fmt(new Date(new Date(ev.start_at).getTime() + 60 * 60 * 1000).toISOString())
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: ev.title,
+    dates: `${start}/${end}`,
+    ...(ev.description ? { details: ev.description } : {}),
+    ...(ev.location    ? { location: ev.location }    : {}),
+  })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+
 interface EventFormData {
   title: string; description: string; event_type: string
   start_at: string; end_at: string; all_day: boolean; color: string
@@ -260,6 +278,36 @@ function EventForm({
       <button className="btn-primary w-full justify-center" onClick={onSubmit}>
         {editingEvent ? 'Salvar alterações' : 'Criar evento'}
       </button>
+
+      {/* Google Calendar — só aparece quando título e data estão preenchidos */}
+      {form.title.trim() && form.start_at && (
+        <a
+          href={buildGoogleCalendarUrl({
+            title: form.title,
+            description: form.description || undefined,
+            location: form.location || undefined,
+            start_at: new Date(form.start_at).toISOString(),
+            end_at: form.end_at ? new Date(form.end_at).toISOString() : undefined,
+          })}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold transition-all hover:opacity-80 active:scale-[0.98]"
+          style={{
+            background: 'rgba(66,133,244,0.10)',
+            border: '1px solid rgba(66,133,244,0.30)',
+            color: '#4285f4',
+          }}
+        >
+          {/* Google Calendar logo SVG inline */}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 3h4v4l-9 9-4-4 9-9z" fill="#4285f4"/>
+            <path d="M3 17l4 4 9-9-4-4-9 9z" fill="#34a853"/>
+            <path d="M3 3h4v4H3V3z" fill="#fbbc04"/>
+            <path d="M17 17h4v4h-4v-4z" fill="#ea4335"/>
+          </svg>
+          Adicionar ao Google Calendário
+        </a>
+      )}
     </div>
   )
 }
@@ -994,6 +1042,23 @@ export default function CalendarPage() {
                               {ev.end_at && ` – ${format(parseISO(ev.end_at), 'HH:mm')}`}
                             </p>
                             {ev.location && <p className="text-xs mt-0.5" style={{ color:'var(--text-muted)' }}>📍 {ev.location}</p>}
+                            <a
+                              href={buildGoogleCalendarUrl({
+                                title: ev.title,
+                                description: ev.description,
+                                location: ev.location,
+                                start_at: ev.start_at,
+                                end_at: ev.end_at,
+                              })}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all hover:opacity-80"
+                              style={{ background: 'rgba(66,133,244,0.12)', border: '1px solid rgba(66,133,244,0.25)', color: '#4285f4' }}
+                            >
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M17 3h4v4l-9 9-4-4 9-9z" fill="#4285f4"/><path d="M3 17l4 4 9-9-4-4-9 9z" fill="#34a853"/><path d="M3 3h4v4H3V3z" fill="#fbbc04"/><path d="M17 17h4v4h-4v-4z" fill="#ea4335"/></svg>
+                              Google Cal
+                            </a>
                           </div>
                           {/* Edit + Delete buttons */}
                           <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all mt-0.5 shrink-0">

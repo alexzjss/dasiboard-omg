@@ -4,7 +4,19 @@ import { useEffect, useCallback, useState } from 'react'
 export async function requestPushPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) return 'denied'
   if (Notification.permission === 'granted') return 'granted'
-  return Notification.requestPermission()
+  try {
+    const result = Notification.requestPermission()
+    // Modern browsers return a Promise; older Safari uses callback
+    if (result && typeof (result as any).then === 'function') {
+      return await result
+    }
+    // Legacy callback-only API
+    return await new Promise<NotificationPermission>((resolve) => {
+      Notification.requestPermission(resolve)
+    })
+  } catch {
+    return Notification.permission
+  }
 }
 
 export function sendLocalNotification(title: string, opts?: NotificationOptions) {
@@ -71,13 +83,30 @@ export function NotificationBanner() {
   }, [])
 
   const request = async () => {
-    // Must be called from a user gesture — this button click IS a user gesture
     try {
-      const perm = await Notification.requestPermission()
+      let perm: NotificationPermission
+      // Safari uses callback API; modern browsers return a Promise
+      if (typeof Notification.requestPermission === 'function') {
+        const result = Notification.requestPermission()
+        if (result && typeof (result as any).then === 'function') {
+          perm = await result
+        } else {
+          // Legacy callback style
+          perm = await new Promise<NotificationPermission>((resolve) => {
+            Notification.requestPermission(resolve)
+          })
+        }
+      } else {
+        perm = 'denied'
+      }
       setPermission(perm)
+      if (perm === 'granted') {
+        // Force re-read from browser to ensure state is in sync
+        setPermission(Notification.permission)
+      }
     } catch {
-      // Safari older API
-      Notification.requestPermission((perm) => setPermission(perm))
+      // Fallback: re-read current state
+      setPermission(Notification.permission)
     }
     setShow(false)
   }

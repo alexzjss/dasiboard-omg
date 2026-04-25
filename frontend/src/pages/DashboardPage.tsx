@@ -767,100 +767,96 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <div className="hero-card relative overflow-hidden rounded-2xl"
+      {/* ── HERO compacto + quick links integrados ──────────────────────── */}
+      <div className="rounded-2xl overflow-hidden"
            style={{
              background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%)',
              border: '1px solid var(--border)',
              boxShadow: '0 4px 40px var(--accent-glow)',
-             contain: 'layout',
            }}>
-
-        <div className="relative z-10 p-5 md:p-7">
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div>
-              <p className="text-xs font-medium mb-0.5 capitalize" style={{ color: 'var(--text-muted)' }}>
+        <div className="p-4 md:p-6">
+          {/* Topo: saudação + botão refresh */}
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium capitalize" style={{ color: 'var(--text-muted)' }}>
                 {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
               </p>
-              <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="font-display text-xl md:text-2xl font-bold leading-tight truncate" style={{ color: 'var(--text-primary)' }}>
                 {greeting}, {firstName} {greetingEmoji}
               </h1>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                Sistemas de Informação · EACH · USP
-              </p>
             </div>
             <button onClick={() => load(true)} title="Atualizar"
                     className={`btn-ghost p-2 shrink-0 ${refreshing ? 'animate-spin' : ''}`}
                     disabled={refreshing}>
-              <RefreshCw size={15} />
+              <RefreshCw size={14} />
             </button>
           </div>
 
-          {!loading && (
-            <div className="flex flex-wrap gap-2">
+          {/* Stats chips — apenas se tiver dados */}
+          {!loading && (stats.avgGrade !== null || stats.subjects > 0 || stats.events > 0 || studyStats.streak > 0) && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {stats.avgGrade !== null && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
                      style={{ background: stats.avgGrade >= 5 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: stats.avgGrade >= 5 ? '#22c55e' : '#ef4444', border: `1px solid ${stats.avgGrade >= 5 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
-                  <TrendingUp size={11} /> {stats.avgGrade.toFixed(1)} média
+                  <TrendingUp size={9} /> {stats.avgGrade.toFixed(1)} média
                 </div>
               )}
               {stats.subjects > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
                      style={{ background: 'var(--accent-soft)', color: 'var(--accent-3)', border: '1px solid var(--accent-1)' }}>
-                  <BookOpen size={11} /> {stats.subjects} disciplina{stats.subjects !== 1 ? 's' : ''}
+                  <BookOpen size={9} /> {stats.subjects} disc.
                 </div>
               )}
               {stats.events > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
                      style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
-                  <Clock size={11} /> {stats.events} evento{stats.events !== 1 ? 's' : ''}
+                  <Clock size={9} /> {stats.events} eventos
                 </div>
               )}
               {studyStats.streak > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
                      style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316', border: '1px solid rgba(249,115,22,0.25)' }}>
-                  🔥 {studyStats.streak} dia{studyStats.streak !== 1 ? 's' : ''} de sequência
+                  🔥 {studyStats.streak} dias
                 </div>
               )}
             </div>
           )}
 
-          {!loading && urgentEvent && (
-            <button onClick={() => navigate('/calendar')}
-                    className="mt-3 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all hover:opacity-80 active:scale-[0.99]"
-                    style={{ background: TYPE_COLORS[urgentEvent.event_type] + '14', border: `1px solid ${TYPE_COLORS[urgentEvent.event_type]}33` }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                   style={{ background: TYPE_COLORS[urgentEvent.event_type] + '22' }}>
-                <Bell size={14} style={{ color: TYPE_COLORS[urgentEvent.event_type] }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold truncate" style={{ color: TYPE_COLORS[urgentEvent.event_type] }}>
-                  {isToday(parseISO(urgentEvent.start_at)) ? '⚡ Hoje' : isTomorrow(parseISO(urgentEvent.start_at)) ? '📅 Amanhã' : `📅 Em ${differenceInDays(parseISO(urgentEvent.start_at), now)} dias`}
-                  {' · '}{TYPE_LABELS[urgentEvent.event_type] ?? urgentEvent.event_type}
-                </p>
-                <p className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{urgentEvent.title}</p>
-              </div>
-              <ChevronRight size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-            </button>
-          )}
+          {/* Quick links — 2x2 no mobile, 4 colunas no desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {quickLinks.map(ql => (
+              <QuickLink key={ql.to} {...ql} />
+            ))}
+          </div>
         </div>
+
+        {/* Alerta de evento urgente — dentro do hero, sem margin extra */}
+        {!loading && urgentEvent && (
+          <button onClick={() => navigate('/calendar')}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all hover:opacity-80 active:scale-[0.995]"
+                  style={{ background: TYPE_COLORS[urgentEvent.event_type] + '12', borderTop: `1px solid ${TYPE_COLORS[urgentEvent.event_type]}25` }}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                 style={{ background: TYPE_COLORS[urgentEvent.event_type] + '22' }}>
+              <Bell size={13} style={{ color: TYPE_COLORS[urgentEvent.event_type] }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold" style={{ color: TYPE_COLORS[urgentEvent.event_type] }}>
+                {isToday(parseISO(urgentEvent.start_at)) ? '⚡ Hoje' : isTomorrow(parseISO(urgentEvent.start_at)) ? '📅 Amanhã' : `📅 Em ${differenceInDays(parseISO(urgentEvent.start_at), now)}d`}
+                {' · '}{TYPE_LABELS[urgentEvent.event_type] ?? urgentEvent.event_type}
+              </p>
+              <p className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>{urgentEvent.title}</p>
+            </div>
+            <ChevronRight size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          </button>
+        )}
       </div>
 
-      {/* ── QUICK LINKS ─────────────────────────────────────────────────── */}
-      <div className="animate-in-delay-1">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
-          {quickLinks.map(ql => (
-            <QuickLink key={ql.to} {...ql} />
-          ))}
-        </div>
-      </div>
+      {/* ── MAIN GRID: 48h timeline + sidebar ───────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-5 animate-in-delay-1">
 
-      {/* ── MAIN GRID: 48h timeline + stats ─────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-5 animate-in-delay-2">
-
-        {/* 48h Timeline — 3 cols */}
+        {/* 48h Timeline — 3 cols desktop, full width mobile */}
         <div className="lg:col-span-3">
-          <div className="flex items-center justify-between mb-3 px-0.5">
+          <div className="flex items-center justify-between mb-2 px-0.5">
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Próximas 48h</p>
             <Link to="/calendar" className="text-[10px] font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
                   style={{ color: 'var(--accent-3)' }}>
@@ -886,24 +882,37 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Study stats + widgets — 2 cols */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Sidebar: semestre + foco + estudo (colapsável no mobile) */}
+        <div className="lg:col-span-2 space-y-3">
 
-          {/* Semester progress */}
+          {/* Semestre */}
           <SemesterWidget />
 
           {/* Foco do dia */}
           {!loading && <FocusWidget subjects={subjects} />}
 
-          {/* Study stats */}
-          <div>
-            <div className="flex items-center justify-between mb-3 px-0.5">
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Estudo</p>
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>últimos 30 dias</span>
-            </div>
-            <div className="card space-y-3">
-              <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 28, lineHeight: 1 }}>
+          {/* Estudo — colapsável no mobile */}
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+            <button
+              onClick={() => setShowOptionalWidgets(v => !v)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left lg:hidden"
+              style={{ borderBottom: showOptionalWidgets ? '1px solid var(--border)' : 'none' }}
+            >
+              <div className="flex items-center gap-2">
+                <BarChart3 size={13} style={{ color: 'var(--accent-3)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Estatísticas de estudo</span>
+              </div>
+              <ChevronDown size={13} style={{ color: 'var(--text-muted)', transform: showOptionalWidgets ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+            </button>
+
+            <div className={`${showOptionalWidgets ? 'block' : 'hidden'} lg:block p-4 space-y-3`}>
+              <div className="hidden lg:flex items-center justify-between pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Estudo</p>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>30 dias</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span style={{ fontSize: 26, lineHeight: 1 }}>
                   {studyStats.streak >= 7 ? '🔥' : studyStats.streak >= 3 ? '⚡' : '📅'}
                 </span>
                 <div>
@@ -918,19 +927,16 @@ export default function DashboardPage() {
               </div>
 
               {/* Mini heatmap */}
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Atividade</p>
-                <div className="flex gap-1">
-                  {Array.from({ length: 14 }, (_, i) => {
-                    const d = new Date(); d.setDate(d.getDate() - 13 + i)
-                    const key = d.toISOString().slice(0, 10)
-                    const active = studyStats.sessionDates.includes(key)
-                    return (
-                      <div key={key} className="flex-1 h-4 rounded-sm" title={key}
-                           style={{ background: active ? 'var(--accent-1)' : 'var(--bg-elevated)', border: '1px solid var(--border)', opacity: active ? 1 : 0.5 }} />
-                    )
-                  })}
-                </div>
+              <div className="flex gap-0.5">
+                {Array.from({ length: 14 }, (_, i) => {
+                  const d = new Date(); d.setDate(d.getDate() - 13 + i)
+                  const key = d.toISOString().slice(0, 10)
+                  const active = studyStats.sessionDates.includes(key)
+                  return (
+                    <div key={key} className="flex-1 h-3 rounded-sm" title={key}
+                         style={{ background: active ? 'var(--accent-1)' : 'var(--bg-elevated)', border: '1px solid var(--border)', opacity: active ? 1 : 0.5 }} />
+                  )
+                })}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -955,23 +961,23 @@ export default function DashboardPage() {
       </div>
 
       {/* ── NEWSLETTER ──────────────────────────────────────────────────── */}
-      <div className="animate-in-delay-3">
+      <div className="animate-in-delay-2">
         {loading ? (
-          <div className="card shimmer h-20 rounded-2xl" />
+          <div className="card shimmer h-16 rounded-2xl" />
         ) : latestNL ? (
           <div className="rounded-2xl overflow-hidden"
                style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
             <div className="flex items-center justify-between gap-3 px-4 py-3"
                  style={{ background: 'linear-gradient(90deg, var(--accent-soft), transparent)', borderBottom: nlExpanded ? '1px solid var(--border)' : 'none' }}>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                      style={{ background: latestTag ? latestTag.color + '22' : 'var(--accent-soft)', border: `1px solid ${latestTag ? latestTag.color + '44' : 'var(--accent-1)'}` }}>
                   <span style={{ fontSize: 13 }}>{latestTag?.emoji ?? '📢'}</span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     {latestTag && (
-                      <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                      <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full"
                             style={{ background: latestTag.color + '18', color: latestTag.color }}>
                         {latestTag.label}
                       </span>
@@ -980,7 +986,7 @@ export default function DashboardPage() {
                       {formatDistanceToNow(parseISO(latestNL.created_at), { addSuffix: true, locale: ptBR })}
                     </span>
                   </div>
-                  <button className="text-sm font-bold text-left hover:opacity-80 transition-opacity"
+                  <button className="text-sm font-bold text-left hover:opacity-80 transition-opacity truncate block max-w-full"
                           style={{ color: 'var(--text-primary)' }}
                           onClick={() => setNlExpanded(v => !v)}>
                     {latestNL.title}
@@ -1034,19 +1040,23 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* ── OPTIONAL EVA / NERV ───────────────────────────────────────── */}
+      {/* ── EVA / NERV — colapsável ────────────────────────────────────── */}
       <div className="rounded-2xl overflow-hidden animate-in-delay-3"
            style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
         <button
           onClick={() => setShowOptionalWidgets(v => !v)}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left lg:flex"
           style={{ borderBottom: showOptionalWidgets ? '1px solid var(--border)' : 'none' }}
         >
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Opcional</p>
+          <div className="flex items-center gap-2">
+            <Timer size={13} style={{ color: 'var(--text-muted)' }} />
             <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Painel EVA e HUD</p>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+              opcional
+            </span>
           </div>
-          <ChevronDown size={14} style={{ color: 'var(--text-muted)', transform: showOptionalWidgets ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+          <ChevronDown size={13} style={{ color: 'var(--text-muted)', transform: showOptionalWidgets ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
         </button>
         {showOptionalWidgets && (
           <div className="grid gap-3 md:grid-cols-2 p-4 animate-in">
@@ -1064,7 +1074,7 @@ export default function DashboardPage() {
                   <EvaCountdown targetDate={nextEvaEvent.start_at} label={nextEvaEvent.title} />
                 </>
               ) : (
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Sem eventos futuros para contagem regressiva.</p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Sem eventos futuros.</p>
               )}
             </div>
             <div className="rounded-2xl p-4" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
@@ -1072,12 +1082,11 @@ export default function DashboardPage() {
                 <Pin size={14} style={{ color: 'var(--accent-3)' }} />
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>NervHUD</p>
               </div>
-              <p className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
-                O HUD só aparece no tema EVA e fica desativado por padrão para reduzir ruído visual.
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+                Ative o tema EVA para visualizar o painel flutuante.
               </p>
               <div className="rounded-xl p-3 border border-dashed" style={{ borderColor: 'var(--border)' }}>
                 <NervHUD events={events} />
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Ative o tema EVA para visualizar o painel flutuante.</p>
               </div>
             </div>
           </div>
