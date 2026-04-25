@@ -4,6 +4,7 @@
 
 Tudo que um estudante de SI precisa em um único lugar: Kanban de tarefas, controle de notas e frequência, calendário de eventos, salas de estudo colaborativas, perfil com conquistas, fluxograma curricular interativo e muito mais — com 34 temas visuais e um sistema de gamificação integrado.
 
+
 ---
 
 ## Sumário
