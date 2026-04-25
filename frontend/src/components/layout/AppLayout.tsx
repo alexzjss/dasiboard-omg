@@ -1,65 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import React from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Rss, KanbanSquare, BookOpen,
-  CalendarDays, User, GraduationCap, Users, X,
-  LogOut, Palette, Search, BookMarked, Monitor, Settings,
-  ChevronRight,
+  GraduationCap, X, Palette, Search,
 } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
-import StudyMode from '@/components/study/StudyMode'
-import { useEasterEggs, SafeEasterEggRenderer as EasterEggRenderer, triggerEasterEgg, useExternalEasterEgg, EasterEggId } from '@/hooks/useEasterEggs'
-import { usePresentationMode, PresentationControls, PresentationButton } from '@/components/PresentationMode'
-import { GlobalSearch, useGlobalSearch } from '@/components/GlobalSearch'
+import { SafeEasterEggRenderer as EasterEggRenderer, triggerEasterEgg } from '@/hooks/useEasterEggs'
+import { PresentationControls } from '@/components/PresentationMode'
+import { GlobalSearch } from '@/components/GlobalSearch'
 import Onboarding, { useOnboarding } from '@/components/onboarding/Onboarding'
 import { NotificationBanner } from '@/hooks/usePushNotifications'
 import storage, { STORAGE_KEYS } from '@/utils/storage'
-import { useScrollRestoration } from '@/hooks/useScrollRestoration'
-import { useSwipeNavigation, useKeyboardShortcuts } from '@/hooks/useInteractions'
 import { useTheme, THEMES, CHRONO_ERA_LABELS, CHRONO_ERA_EMOJI } from '@/context/ThemeContext'
 import { ThemeCursorStyle, GlowCursor } from '@/components/ThemeCursor'
 import DLCCanvas, { DLCLofiPlayer } from '@/components/DLCCanvas'
-import { LofiPlayer } from '@/components/LofiPlayer'
-import { useLiteMode, LiteModeButton } from '@/components/LiteMode'
-import { ExpBar } from '@/components/ExpCounter'
+import { useLiteMode } from '@/components/LiteMode'
 import { OfflineBanner, PWAInstallBanner } from '@/components/OfflineBanner'
 import { usePanicMode, PanicBanner, PanicActiveBar } from '@/components/PanicMode'
 import { useChronoPortalSound } from '@/hooks/useChronoPortal'
 import { BlueprintRuler } from '@/components/BlueprintRuler'
 import { ShellPrompt } from '@/components/ShellPrompt'
-import { EvaSyncBar } from '@/components/EvaSync'
 import { PortatilSaveState } from '@/components/PortatilSaveState'
-import { AchievementToast, useAchievementToast, triggerAchievementToast } from '@/components/AchievementToast'
-import { useClockEasterEggs } from '@/hooks/useEasterEggs'
+import { AchievementToast, useAchievementToast } from '@/components/AchievementToast'
 import BottomNav from '@/components/layout/BottomNav'
 import Sidebar from '@/components/layout/Sidebar'
 import { useAppLayoutChrome } from '@/components/layout/useAppLayoutChrome'
-import clsx from 'clsx'
-import toast from 'react-hot-toast'
-
-// Primary nav — 5 main tabs always visible in bottom bar
-const NAV_PRIMARY = [
-  { to: '/',        label: 'Início',  icon: LayoutDashboard, end: true  },
-  { to: '/social',  label: 'Social',  icon: Users,           end: false },
-  { to: '/eventos', label: 'Eventos', icon: CalendarDays,    end: false },
-  { to: '/estudo',  label: 'Estudo',  icon: BookOpen,        end: false },
-  { to: '/perfil',  label: 'Perfil',  icon: User,            end: false },
-]
-// Secondary nav — sub-pages shown in desktop sidebar
-const NAV_SECONDARY: { to: string; label: string; icon: React.ElementType; end: boolean; parent: string }[] = [
-  { to: '/social/feed',       label: 'Feed',            icon: Rss,           end: false, parent: '/social'  },
-  { to: '/social/entities',   label: 'Entidades',       icon: Users,         end: false, parent: '/social'  },
-  { to: '/social/turma',      label: 'Turma',           icon: GraduationCap, end: false, parent: '/social'  },
-  { to: '/social/room',       label: 'Salas',           icon: Monitor,       end: false, parent: '/social'  },
-  { to: '/eventos/calendar',  label: 'Calendário',      icon: CalendarDays,  end: false, parent: '/eventos' },
-  { to: '/estudo/grades',     label: 'Disciplinas',     icon: BookOpen,      end: false, parent: '/estudo'  },
-  { to: '/estudo/kanban',     label: 'Kanban',          icon: KanbanSquare,  end: false, parent: '/estudo'  },
-  { to: '/estudo/fluxogram',  label: 'Fluxograma',      icon: BookMarked,    end: false, parent: '/estudo'  },
-  { to: '/estudo/docentes',   label: 'Docentes',        icon: BookMarked,    end: false, parent: '/estudo'  },
-  { to: '/perfil/settings',   label: 'Configurações',   icon: Settings,      end: false, parent: '/perfil'  },
-]
-const nav = [...NAV_PRIMARY, ...NAV_SECONDARY]
 
 // ── Theme preview colors for visual picker ───────────────────────────────────
 const THEME_PREVIEWS: Record<string, { bg: string; accent: string; card: string }> = {
@@ -308,231 +271,7 @@ function ThemePicker({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ── Sidebar inner ─────────────────────────────────────────────────────────────
-
-// ── DASI Logo — 7 rapid clicks triggers easter egg ───────────────────────────
-function DasiLogoClickable({ onEgg }: { onEgg: () => void }) {
-  const clicksRef = useRef(0)
-  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const handle = () => {
-    clicksRef.current++
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (clicksRef.current >= 7) { clicksRef.current = 0; onEgg(); return }
-    timerRef.current = setTimeout(() => { clicksRef.current = 0 }, 1500)
-  }
-  return (
-    <button onClick={handle} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform active:scale-90"
-            style={{ background: 'var(--gradient-btn)', boxShadow: '0 2px 12px var(--accent-glow)' }}
-            title="DaSIboard" aria-label="DaSIboard">
-      <GraduationCap size={16} className="text-white" />
-    </button>
-  )
-}
-
-function SidebarContent({ onOpenPicker, liteMode, onLogoEgg }: {
-  onOpenPicker: () => void
-  onLogoEgg: () => void
-  liteMode: { active: boolean; toggle: () => void }
-}) {
-  const { user, logout } = useAuthStore()
-  const { theme } = useTheme()
-  const navigate = useNavigate()
-  const initials = user?.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U'
-
-  return (
-    <>
-      <div className="accent-orb" style={{ width: 160, height: 160, top: -60, left: -60 }} />
-
-      {/* Logo + Brand */}
-      <div className="flex items-center gap-3 px-4 py-4 relative z-10" style={{ borderBottom: '1px solid var(--border)' }}>
-        <DasiLogoClickable onEgg={onLogoEgg} />
-        <div className="flex-1 min-w-0">
-          <p className="font-display font-bold text-sm leading-tight" style={{ color: 'var(--text-primary)' }}>DaSIboard</p>
-          <p className="text-[10px] font-mono opacity-50 leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>SI · EACH · USP</p>
-        </div>
-
-      </div>
-
-      {/* Theme picker button */}
-      <div className="px-3 pt-3 relative z-10">
-        <button onClick={onOpenPicker}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)', color: 'var(--accent-3)' }}>
-          <div className="flex gap-0.5 shrink-0">
-            {[THEME_PREVIEWS[theme.id]?.bg ?? '#111',
-              THEME_PREVIEWS[theme.id]?.accent ?? '#888',
-              THEME_PREVIEWS[theme.id]?.card ?? '#222',
-            ].map((c, i) => (
-              <div key={i} className="w-3 h-3 rounded-sm" style={{ background: c, border: '1px solid rgba(255,255,255,0.15)' }} />
-            ))}
-          </div>
-          <span className="flex items-center gap-1.5 flex-1 min-w-0">
-            <span>{theme.emoji}</span>
-            <span className="truncate">{theme.name}</span>
-          </span>
-          <Palette size={11} style={{ opacity: 0.6 }} />
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="px-3 pt-2 relative z-10">
-        <button onClick={() => document.dispatchEvent(new CustomEvent('global-search:open'))}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-          <Search size={12} />
-          <span className="flex-1 text-left">Buscar...</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>⌘K</span>
-        </button>
-      </div>
-
-      <div className="h-px mx-4 mt-3" style={{ background: 'linear-gradient(90deg, transparent, var(--accent-1), transparent)', opacity: 0.35 }} />
-
-      {/* Profile highlight */}
-      <div className="px-3 pt-3 pb-1 relative z-10">
-        <NavLink to="/perfil"
-                 className={({ isActive }) => clsx(
-                   'flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all',
-                   isActive ? 'nav-active' : 'nav-inactive'
-                 )}
-                 style={{
-                   background: 'linear-gradient(135deg, var(--accent-soft), rgba(0,0,0,0.06))',
-                   border: '1px solid var(--accent-1)',
-                   boxShadow: '0 6px 18px rgba(0,0,0,0.22)',
-                 }}>
-          {user?.avatar_url ? (
-            <img src={user.avatar_url} alt={user.full_name}
-                 className="w-9 h-9 rounded-xl object-cover" />
-          ) : (
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold"
-                 style={{ background: 'var(--gradient-btn)', color: '#fff' }}>
-              {initials}
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user?.full_name}</p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
-          </div>
-          <User size={15} />
-        </NavLink>
-      </div>
-
-      {/* Nav — primary tabs + sub-items */}
-      <nav className="flex-1 px-3 py-3 space-y-0.5 relative z-10 overflow-y-auto">
-        {NAV_PRIMARY.map(({ to, label, icon: Icon, end }) => {
-          const subs = NAV_SECONDARY.filter(s => s.parent === to)
-          return (
-            <React.Fragment key={to}>
-              <NavLink to={to} end={end}
-                       className={({ isActive }) => clsx(
-                         'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                         isActive ? 'nav-active' : 'nav-inactive'
-                       )}>
-                {({ isActive }) => (
-                  <>
-                    <Icon size={16} style={{ strokeWidth: isActive ? 2.5 : 2 }} />
-                    <span className="flex-1">{label}</span>
-                    {subs.length > 0 && (
-                      <ChevronRight size={12} style={{ opacity: 0.4 }} />
-                    )}
-                  </>
-                )}
-              </NavLink>
-              {/* Sub-items — shown when parent is active */}
-              {subs.length > 0 && subs.map(({ to: subTo, label: subLabel, icon: SubIcon }) => (
-                <NavLink key={subTo} to={subTo}
-                         className={({ isActive }) => clsx(
-                           'flex items-center gap-3 pl-9 pr-3 py-2 rounded-xl text-xs font-medium transition-all duration-150',
-                           isActive ? 'nav-active' : 'nav-inactive'
-                         )}>
-                  {({ isActive }) => (
-                    <>
-                      <SubIcon size={13} style={{ strokeWidth: isActive ? 2.5 : 2 }} />
-                      <span>{subLabel}</span>
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </React.Fragment>
-          )
-        })}
-      </nav>
-
-      {/* Tools */}
-      <div className="relative z-10 px-3 pb-2" style={{ borderTop: '1px solid var(--border)' }}>
-        <p className="text-[9px] font-bold uppercase tracking-widest mt-2 mb-1.5 px-0.5" style={{ color: 'var(--text-muted)', opacity: 0.55 }}>Ferramentas</p>
-        <div className="grid grid-cols-2 gap-1 mb-1">
-          <button
-            onClick={() => document.dispatchEvent(new CustomEvent('presentation:toggle'))}
-            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-[10px] font-medium transition-all hover:scale-[1.04] active:scale-[0.97]"
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-            title="Modo Apresentação (Ctrl+Shift+P)"
-          >
-            <Monitor size={13} />
-            <span>Apresentar</span>
-          </button>
-          <LiteModeButton active={liteMode.active} onToggle={liteMode.toggle} />
-        </div>
-        <LofiPlayer />
-        <EvaSyncBar />
-        <div className="mt-1">
-          <StudyMode />
-        </div>
-      </div>
-
-      {/* User */}
-      <div className="px-3 pb-3 pt-2 relative z-10" style={{ borderTop: '1px solid var(--border)' }}>
-        <ExpBar />
-      </div>
-    </>
-  )
-}
-
 // ── App Layout ────────────────────────────────────────────────────────────────
-
-// ── Mobile Bottom Nav — exactly 5 primary tabs, safe-area-aware ───────────────
-function MobileBottomNav() {
-  return (
-    <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 flex items-stretch mobile-bottomnav"
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderTop: '1px solid var(--border)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        zIndex: 'var(--z-nav, 30)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-      aria-label="Navegação principal"
-    >
-      {NAV_PRIMARY.map(({ to, label, icon: Icon, end }) => (
-        <NavLink key={to} to={to} end={end}
-                 aria-label={label}
-                 className={({ isActive }) => clsx(
-                   'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200 active:scale-90 select-none min-h-[48px]',
-                   isActive ? 'nav-bottom-active' : 'nav-bottom-inactive'
-                 )}>
-          {({ isActive }) => (
-            <>
-              <div className="relative flex items-center justify-center" style={{ width: 40, height: 28 }}>
-                {isActive && (
-                  <div className="absolute inset-0 rounded-xl transition-all duration-200"
-                       style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-1)' }} />
-                )}
-                <Icon size={18} className="relative z-10 transition-all duration-200"
-                      style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)', strokeWidth: isActive ? 2.5 : 1.8 }}
-                      aria-hidden="true" />
-              </div>
-              <span className="text-[10px] font-medium leading-none"
-                    style={{ color: isActive ? 'var(--accent-3)' : 'var(--text-muted)' }}>
-                {label}
-              </span>
-            </>
-          )}
-        </NavLink>
-      ))}
-    </nav>
-  )
-}
 
 export default function AppLayout() {
   const location = useLocation()

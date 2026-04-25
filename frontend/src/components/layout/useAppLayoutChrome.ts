@@ -5,6 +5,9 @@ import { useGlobalSearch } from '@/components/GlobalSearch'
 import { usePresentationMode } from '@/components/PresentationMode'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { useSwipeNavigation, useKeyboardShortcuts } from '@/hooks/useInteractions'
+import { triggerAchievementToast } from '@/components/AchievementToast'
+import { STORAGE_KEYS } from '@/utils/storage'
+import toast from 'react-hot-toast'
 
 type UseAppLayoutChromeArgs = {
   pathname: string
@@ -57,6 +60,23 @@ export function useAppLayoutChrome({ pathname, cycleTheme, setShowPicker }: UseA
           body: 'Você tem 30 segundos para abrir o Kanban!', icon: '/logo192.png',
         })
       }
+      toast('🌋 O chão é lava! Abra o Kanban em 30s para ganhar a conquista!', { duration: 30000, icon: '🌋' })
+      setTimeout(() => {
+        if (window.location.pathname === '/kanban') {
+          localStorage.setItem(STORAGE_KEYS.easterFound, '1')
+          triggerAchievementToast({
+            id: 'ninja',
+            emoji: '🥷',
+            label: 'Reflexos de Ninja',
+            rarity: 'legendary',
+            category: 'secret',
+            desc: 'Abriu o Kanban no chão de lava',
+            hint: '???',
+            color: '#ef4444',
+            unlocked: true,
+          })
+        }
+      }, 30000)
     }
     checkLava()
     const timer = setInterval(checkLava, 30000)

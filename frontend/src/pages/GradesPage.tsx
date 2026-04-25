@@ -546,8 +546,8 @@ function FluxoNode({ sub, status, fluxoState, highlighted, dimmed, onClick }: {
     }
   })()
   return (
-    <button onClick={onClick} disabled={status === 'locked'}
-            className={clsx('w-full text-left px-2 py-1.5 rounded-lg border transition-all text-[10px]', status !== 'locked' && 'hover:scale-[1.03] cursor-pointer', dimmed && 'opacity-25')}
+    <button onClick={onClick}
+            className={clsx('w-full text-left px-2 py-1.5 rounded-lg border transition-all text-[10px] cursor-pointer', status !== 'locked' && 'hover:scale-[1.03]', dimmed && 'opacity-25')}
             style={{ ...bg, outline: highlighted ? `2px solid ${base}` : undefined, outlineOffset: highlighted ? '1px' : undefined }}>
       <div className="flex items-center gap-1 mb-0.5">
         {status === 'passed'      && <CheckCircle2 size={9} color="#22c55e"/>}
