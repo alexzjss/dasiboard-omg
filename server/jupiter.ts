@@ -9,6 +9,7 @@ type JupiterRow = { horent?: string; horsai?: string; seg?: string | null; ter?:
 const jupiterOrigin = 'https://uspdigital.usp.br'
 const loginUrl = `${jupiterOrigin}/jupiterweb/autenticar`
 const dwrUrl = `${jupiterOrigin}/jupiterweb/dwr/call/plaincall/GradeHorariaControleDWR.obterGradeHoraria.dwr`
+const browserHeaders = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36', Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8' }
 
 function encodeForm(values: Record<string, string>) { return new URLSearchParams(values).toString() }
 
@@ -60,16 +61,18 @@ function readDwrRows(body: string): JupiterRow[] {
 function normalizeCode(value: string | null | undefined) { return value?.replace(/^"|"$/g, '').trim().replace(/^\$/, '').split('-')[0].trim() || '' }
 
 export async function fetchJupiterSchedule(codpes: string, password: string, codpgm: string): Promise<ScheduleEntry[]> {
-  const initial = await get(`${jupiterOrigin}/jupiterweb/webLogin.jsp`)
-  const login = await post(loginUrl, encodeForm({ codpes, senusu: password, url: '' }), { Cookie: getCookies(initial.headers['set-cookie']), Referer: `${jupiterOrigin}/jupiterweb/webLogin.jsp` })
+  const initial = await get(`${jupiterOrigin}/jupiterweb/webLogin.jsp`, browserHeaders)
+  const login = await post(loginUrl, encodeForm({ codpes, senusu: password, url: '', Submit: ' Entrar ' }), { ...browserHeaders, Cookie: getCookies(initial.headers['set-cookie']), Referer: `${jupiterOrigin}/jupiterweb/webLogin.jsp` })
   const cookies = mergeCookies(initial.headers['set-cookie'], login.headers['set-cookie'])
-  if (!cookies || login.status >= 400) throw new Error('Não foi possível autenticar no JupiterWeb')
-  const gradePage = await get(`${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, { Cookie: cookies, Referer: loginUrl })
-  if (gradePage.status >= 400 || !/Grade\s+Hor/i.test(gradePage.body) || /Login Usuário|name=["']codpes["']/i.test(gradePage.body)) throw new Error('Não foi possível autenticar no JupiterWeb')
+  if (!cookies || login.status >= 400) throw new Error('O JupiterWeb recusou a autenticação')
+  const gradePage = await get(`${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, { ...browserHeaders, Cookie: cookies, Referer: loginUrl })
+  if (gradePage.status >= 400) throw new Error('O JupiterWeb não ficou disponível após o login')
+  if (/Login Usuário|name=["']codpes["']/i.test(gradePage.body)) throw new Error('O JupiterWeb recusou a autenticação')
+  if (!/Grade\s+Hor/i.test(gradePage.body)) throw new Error('A sessão do JupiterWeb não abriu a grade horária')
   const response = await post(dwrUrl, encodeForm({
     callCount: '1', nextReverseAjaxIndex: '0', 'c0-scriptName': 'GradeHorariaControleDWR', 'c0-methodName': 'obterGradeHoraria', 'c0-id': '0',
     'c0-param0': `string:${codpes}`, 'c0-param1': `string:${codpgm}`, batchId: '1', instanceId: '0', page: '/jupiterweb/gradeHoraria?codmnu=4759', scriptSessionId: `${randomUUID()}-*${randomUUID()}`,
-  }), { Cookie: cookies, Referer: `${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759` })
+  }), { ...browserHeaders, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', Cookie: cookies, Referer: `${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, 'X-Requested-With': 'XMLHttpRequest' })
   const rows = readDwrRows(response.body)
   const fields: Array<[keyof JupiterRow, number]> = [['seg', 0], ['ter', 1], ['qua', 2], ['qui', 3], ['sex', 4], ['sab', 5], ['dom', 6]]
   return rows.flatMap((row) => fields.flatMap(([field, weekday]) => {

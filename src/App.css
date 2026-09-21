@@ -78,8 +78,13 @@ label.import-button { display: none; }
 body { color: #eef1f7; background: #080b12; }
 body::before { content: ''; position: fixed; z-index: -2; inset: -18%; pointer-events: none; background: radial-gradient(circle at 14% 18%, #6d52c52e 0 1.5%, transparent 8%), radial-gradient(circle at 84% 22%, #3f83a626 0 1%, transparent 7%), radial-gradient(circle at 73% 76%, #b66b8f1f 0 1.2%, transparent 8%), radial-gradient(circle at 26% 86%, #4773bd1c 0 1%, transparent 7%); filter: blur(22px); opacity: .75; }
 body::after { content: ''; position: fixed; z-index: -1; inset: 0; pointer-events: none; opacity: .16; background-image: radial-gradient(#dce5ff 1px, transparent 1px); background-size: 88px 88px; mask-image: radial-gradient(ellipse at center, #000, transparent 72%); }
-.app-shell { position: relative; isolation: isolate; background: radial-gradient(circle at 9% 28%, #6652a51c 0 1%, transparent 16%), radial-gradient(circle at 92% 19%, #397a9b16 0 1%, transparent 14%), radial-gradient(circle at 82% 78%, #9d5d8614 0 1%, transparent 17%), #0b0f18e8; box-shadow: 0 0 0 1px #ffffff08, 0 28px 90px #00000045; }
-.app-shell::before { content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none; background: linear-gradient(145deg, #ffffff04, transparent 35%, #9476e608); }
+.app-shell { position: relative; isolation: isolate; background: #090d15; box-shadow: 0 0 0 1px #ffffff0c, 0 28px 90px #00000065; }
+.app-shell::before { content: ''; position: absolute; z-index: 0; inset: -8%; pointer-events: none; background: radial-gradient(ellipse at 18% 28%, #6450b344 0 3%, transparent 26%), radial-gradient(ellipse at 88% 18%, #237da344 0 2%, transparent 24%), radial-gradient(ellipse at 78% 80%, #a94d7d2e 0 3%, transparent 25%), radial-gradient(circle at 11% 20%, #c6baffaa 0 2px, transparent 4px), radial-gradient(circle at 87% 16%, #9de8ffbb 0 2px, transparent 4px), radial-gradient(circle at 74% 73%, #ffb8e099 0 2px, transparent 4px), radial-gradient(circle at 31% 88%, #8db8ff88 0 1px, transparent 3px); filter: blur(19px); opacity: .85; animation: nebula-drift 24s ease-in-out infinite alternate; }
+.app-shell::after { content: ''; position: absolute; z-index: 0; inset: 0; pointer-events: none; opacity: .38; background-image: radial-gradient(circle at 4% 12%, #d8edff 0 1px, transparent 2px), radial-gradient(circle at 15% 68%, #9cbcff 0 1px, transparent 2px), radial-gradient(circle at 27% 9%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 39% 32%, #b9d4ff 0 1px, transparent 2px), radial-gradient(circle at 52% 13%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 66% 43%, #a9caff 0 1px, transparent 2px), radial-gradient(circle at 79% 8%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 94% 54%, #b7d9ff 0 1px, transparent 2px), radial-gradient(circle at 59% 89%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 8% 92%, #a7c7ff 0 1px, transparent 2px); background-size: 100% 100%; animation: starfield-drift 18s linear infinite; }
+@keyframes nebula-drift { from { transform: translate3d(-1.5%, -1%, 0) scale(1); } to { transform: translate3d(1.5%, 1%, 0) scale(1.06); } }
+@keyframes starfield-drift { from { transform: scale(1); background-position: 0 0; } to { transform: scale(1.08); background-position: -18px 34px; } }
+@media (prefers-reduced-motion: reduce) { .app-shell::before, .app-shell::after { animation: none; } }
+.topbar { position: relative; z-index: 1; }
 .icon-button { color: #aab4c5; }
 .notification span { border-color: #0b0f18; }
 .user-summary strong { color: #e8ebf2; }
@@ -90,18 +95,18 @@ h1 span { color: #b3a0ff; }
 .eyebrow { color: #7e899d; }
 .date-button { color: #c6b9f8; border-color: #ffffff12; background: #151b28; box-shadow: 0 10px 24px #00000024; }
 .date-button .icon { color: #b5a2ff; }
-.section-block { border: 1px solid #ffffff0d; border-radius: 26px; padding: 28px; background: #111722d9; box-shadow: 0 18px 42px #0000002e, 0 1px 0 #ffffff08 inset; }
+.section-block { border: 1px solid #ffffff16; border-radius: 26px; padding: 28px; background: #161e2bdc; box-shadow: 0 18px 42px #00000045, 0 1px 0 #ffffff0d inset; }
 .section-heading h2 { color: #f0f2f7; }
 .import-button { border-color: #9f8ae833; color: #c9bdff; background: #211d35; }
-.jupiter-form input { color: #e7ebf2; border-color: #ffffff12; background: #0c121d; }
-.jupiter-form input::placeholder { color: #69758a; }
+.jupiter-form input { color: #f0f3f8; border-color: #ffffff1c; background: #0b121e; }
+.jupiter-form input::placeholder { color: #8995a8; }
 .jupiter-form input:focus { border-color: #8d78e4; box-shadow: 0 0 0 3px #8d78e41f; }
 .day { color: #7f8a9e; }
 .day strong { color: #bdc4d0; }
 .day.selected { background: #282142; border-color: #7562bf80; box-shadow: 0 9px 20px #0000002e; }
 .day.selected span, .day.selected strong { color: #d0c6ff; }
-.empty-schedule { border-color: #ffffff16; color: #7f8a9e; background: #0c121d; }
-.class-row { border-color: #ffffff0d; background: #151c28; box-shadow: 0 8px 22px #0000001c; }
+.empty-schedule { border-color: #ffffff1c; color: #9aa6b8; background: #0d1522; }
+.class-row { border-color: #ffffff16; background: #1a2432; box-shadow: 0 8px 22px #00000035; }
 .class-time strong { color: #e1e5ed; }
 .class-time span, .class-info p { color: #7e899d; }
 .class-info p span { color: #4d586b; }
@@ -109,11 +114,11 @@ h1 span { color: #b3a0ff; }
 .lavender .class-status { color: #aeb7c5; background: #202733; }
 .peach .class-status { color: #e5aa99; background: #362523; }
 .row-arrow { color: #7e899d; }
-.quick-card { border-color: #ffffff0d; background: #151c28; color: #7e899d; box-shadow: 0 8px 22px #0000001c; }
+.quick-card { border-color: #ffffff16; background: #1a2432; color: #9aa6b8; box-shadow: 0 8px 22px #00000035; }
 .quick-card strong { color: #e5e8ef; }
 .quick-icon.lilac { color: #c7baff; background: #2a2346; }
 .quick-icon.mint { color: #91d6b7; background: #17332d; }
-.bottom-nav { border-color: #ffffff14; background: #111722e8; box-shadow: 0 16px 40px #00000052; }
+.bottom-nav { border-color: #ffffff1c; background: #182130f2; box-shadow: 0 16px 40px #00000065; }
 .bottom-nav button { color: #6f7b90; }
 .bottom-nav button.active { color: #c8bbff; }
 
