@@ -111,7 +111,10 @@ function App() {
     } catch {
       throw new Error('Servidor de autenticação indisponível. Inicie `npm run dev:server` e tente novamente.')
     }
-    if (!response.ok) { const data = await response.json().catch(() => null) as { error?: string } | null; throw new Error(data?.error || 'Não foi possível concluir o login.') }
+    if (!response.ok) {
+      const data = await response.json().catch(() => null) as { error?: string } | null
+      throw new Error(data?.error || `Falha no servidor de autenticação (${response.status}).`)
+    }
     const data = await response.json() as { user: User }
     setUser(data.user)
   }

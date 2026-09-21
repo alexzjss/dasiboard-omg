@@ -1,5 +1,10 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "functions": {
+    "api/[...path].ts": {
+      "runtime": "nodejs22.x"
+    }
+  }
 }
