@@ -32,7 +32,10 @@ const googleClient = new OAuth2Client(googleClientId)
 const sessionKey = new TextEncoder().encode(sessionSecret)
 const sessionCookie = 'orbe_session'
 const isProduction = process.env.NODE_ENV === 'production'
-const allowedOrigins = new Set([frontendUrl, ...(isProduction ? [] : ['http://localhost:5173', 'http://127.0.0.1:5173'])])
+const vercelOrigins = [process.env.VERCEL_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL]
+  .filter((url): url is string => Boolean(url))
+  .flatMap((url) => [`https://${url}`, `http://${url}`])
+const allowedOrigins = new Set([frontendUrl, ...vercelOrigins, ...(isProduction ? [] : ['http://localhost:5173', 'http://127.0.0.1:5173'])])
 
 app.set('trust proxy', 1)
 app.use(cors({ origin: (origin, callback) => callback(null, origin ? allowedOrigins.has(origin) : true), credentials: true }))

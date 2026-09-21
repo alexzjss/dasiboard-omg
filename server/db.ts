@@ -22,7 +22,7 @@ let client: SupabaseClient | null = null
 
 function getClient() {
   if (client) return client
-  const url = process.env.SUPABASE_URL
+  const url = process.env.SUPABASE_URL?.replace(/\/+$/, '').replace(/\/rest\/v1$/, '')
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !serviceRoleKey) {
     throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required')
