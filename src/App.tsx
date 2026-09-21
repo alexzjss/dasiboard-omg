@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import './App.css'
 
@@ -35,13 +35,15 @@ function Icon({ name }: { name: IconName }) {
 function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<void> }) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [error, setError] = useState('')
-  const [pointerOffset, setPointerOffset] = useState({ x: 0, y: 0 })
+  const panelRef = useRef<HTMLElement>(null)
 
   function handlePointerMove(event: React.PointerEvent<HTMLElement>) {
+    if (window.matchMedia('(pointer: coarse)').matches) return
     const bounds = event.currentTarget.getBoundingClientRect()
     const horizontal = (event.clientX - bounds.left) / bounds.width - 0.5
     const vertical = (event.clientY - bounds.top) / bounds.height - 0.5
-    setPointerOffset({ x: horizontal * 18, y: vertical * 14 })
+    panelRef.current?.style.setProperty('--panel-x', `${horizontal * 18}px`)
+    panelRef.current?.style.setProperty('--panel-y', `${vertical * 14}px`)
   }
 
   async function handleSuccess(response: CredentialResponse) {
@@ -49,12 +51,10 @@ function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<voi
     try { await onLogin(response.credential) } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Não foi possível concluir o login.') }
   }
 
-  const panelStyle = { '--panel-x': `${pointerOffset.x}px`, '--panel-y': `${pointerOffset.y}px` } as React.CSSProperties
-
-  return <main className="login-shell" onPointerMove={handlePointerMove} onPointerLeave={() => setPointerOffset({ x: 0, y: 0 })}>
+  return <main className="login-shell" onPointerMove={handlePointerMove} onPointerLeave={() => { panelRef.current?.style.setProperty('--panel-x', '0px'); panelRef.current?.style.setProperty('--panel-y', '0px') }}>
     <div className="login-space" aria-hidden="true"><span className="space-node node-one"></span><span className="space-node node-two"></span><span className="space-node node-three"></span><span className="space-node node-four"></span><span className="space-node node-five"></span><span className="space-node node-six"></span><span className="space-node node-seven"></span><span className="space-node node-eight"></span><span className="space-node node-nine"></span></div>
     <div className="login-glow login-glow-one"></div><div className="login-glow login-glow-two"></div>
-    <section className="login-panel" style={panelStyle}>
+    <section className="login-panel" ref={panelRef}>
       <div className="login-brand"><strong>daSIboard</strong></div>
       <div className="login-copy"><p className="eyebrow">SEU CAMPUS, MAIS PERTO</p><h1>Olá, estudante<span>.</span></h1><p>Entre para acessar sua rotina acadêmica na USP em um só lugar.</p></div>
       <div className="login-action">
@@ -110,7 +110,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     } catch (error) { setImportError(error instanceof Error ? error.message : 'Não foi possível consultar o JupiterWeb.') }
     finally { setIsConsultingJupiter(false) }
   }
-  const visibleClasses = schedule.filter((entry) => entry.weekday === selectedDayIndex).map((entry, index) => ({ ...entry, time: entry.startsAt, end: entry.endsAt, kind: index === 0 ? 'main' : index % 2 ? 'lavender' : 'peach', status: index === 0 ? 'Agora' : index === 1 ? 'Próxima' : 'Depois', room: [entry.room, entry.building].filter(Boolean).join(' · ') }))
+  const visibleClasses = useMemo(() => schedule.filter((entry) => entry.weekday === selectedDayIndex).map((entry, index) => ({ ...entry, time: entry.startsAt, end: entry.endsAt, kind: index === 0 ? 'main' : index % 2 ? 'lavender' : 'peach', status: index === 0 ? 'Agora' : index === 1 ? 'Próxima' : 'Depois', room: [entry.room, entry.building].filter(Boolean).join(' · ') })), [schedule, selectedDayIndex])
   if (activeTab === 'Grade') return <CalendarView schedule={schedule} activeTab={activeTab} onSelectTab={setActiveTab} jupiterData={jupiterData} setJupiterData={setJupiterData} onConsult={consultJupiter} isConsulting={isConsultingJupiter} importError={importError} />
   return <main className="app-shell home-shell">
     <header className="topbar"><div></div><div className="topbar-actions"><button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button><div className="user-summary"><div><strong>{user.name}</strong></div><button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button></div></div></header>
