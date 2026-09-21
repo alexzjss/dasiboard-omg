@@ -129,6 +129,43 @@ body::after { content: ''; position: fixed; z-index: -1; inset: 0; pointer-event
   .calendar-import input, .calendar-import .import-button { width: 100%; }
   .calendar-import .import-button { grid-column: 1 / -1; }
 }
+.calendar-shell { width: min(100%, 1280px); }
+.calendar-content { width: min(100%, 1180px); margin: 0 auto; }
+.calendar-heading > div { min-width: 0; }
+.calendar-board { grid-template-columns: repeat(5, minmax(132px, 1fr)); overflow-x: auto; }
+.calendar-day { min-width: 0; }
+.calendar-day.today { border-color: #b69bff80; box-shadow: 0 0 0 1px #b69bff26 inset, 0 12px 28px #08061138; }
+.calendar-day.today header strong { color: #e2d7ff; }
+.calendar-event { min-width: 0; }
+.calendar-event > div { min-width: 0; }
+.calendar-import { flex-wrap: wrap; }
+.calendar-import input { flex: 1 1 150px; width: auto; }
+.calendar-import .import-button { flex: 0 1 auto; }
+.calendar-import input, .calendar-import .import-button, .date-button, .bottom-nav button { min-height: 42px; }
+.calendar-shell button:focus-visible, .calendar-shell input:focus-visible { outline: 2px solid #c7b5ff; outline-offset: 3px; }
+@media (max-width: 1040px) and (min-width: 761px) {
+  .calendar-content { padding-left: 32px; padding-right: 32px; }
+  .calendar-board { grid-template-columns: repeat(5, minmax(116px, 1fr)); gap: 8px; padding: 10px; }
+  .calendar-day { padding: 14px 9px; }
+  .calendar-day header { display: block; }
+  .calendar-day header small { display: block; margin-top: 6px; }
+  .calendar-event { grid-template-columns: 1fr; gap: 5px; }
+  .calendar-event-time { font-size: 9px; }
+}
+@media (max-width: 760px) {
+  .calendar-content { padding-top: 38px; }
+  .calendar-heading { margin-bottom: 24px; }
+  .calendar-caption { max-width: 220px; line-height: 1.45; }
+  .calendar-board { overflow: visible; }
+  .calendar-day.today { order: -1; }
+}
+@media (max-width: 420px) {
+  .calendar-heading h1 { font-size: 32px; }
+  .calendar-heading .date-button span { display: none; }
+  .calendar-day-list { grid-template-columns: 1fr; }
+  .calendar-import { grid-template-columns: 1fr; }
+  .calendar-import input, .calendar-import .import-button { grid-column: auto; }
+}
 .topbar { position: relative; z-index: 1; }
 .icon-button { color: #aab4c5; }
 .notification span { border-color: #0b0f18; }
