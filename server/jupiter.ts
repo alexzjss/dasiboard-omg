@@ -67,7 +67,7 @@ export async function fetchJupiterSchedule(codpes: string, password: string, cod
   if (!cookies || login.status >= 400) throw new Error('O JupiterWeb recusou a autenticação')
   const gradePage = await get(`${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, { ...browserHeaders, Cookie: cookies, Referer: loginUrl })
   if (gradePage.status >= 400) throw new Error('O JupiterWeb não ficou disponível após o login')
-  if (/Login Usuário|name=["']codpes["']/i.test(gradePage.body)) throw new Error('O JupiterWeb recusou a autenticação')
+  if (/Login\s+Usuário\s*:/i.test(gradePage.body)) throw new Error('O JupiterWeb recusou a autenticação')
   if (!/Grade\s+Hor/i.test(gradePage.body)) throw new Error('A sessão do JupiterWeb não abriu a grade horária')
   const response = await post(dwrUrl, encodeForm({
     callCount: '1', nextReverseAjaxIndex: '0', 'c0-scriptName': 'GradeHorariaControleDWR', 'c0-methodName': 'obterGradeHoraria', 'c0-id': '0',

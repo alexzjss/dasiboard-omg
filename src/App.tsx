@@ -9,10 +9,18 @@ type IconName = 'home' | 'calendar' | 'book' | 'more' | 'bell' | 'arrow' | 'cloc
 const developmentHomePath = '/dev/home'
 const developmentUser: User = { name: 'Estudante Local', email: 'estudante@usp.br' }
 
-const days = [
-  { label: 'Seg', date: '16' }, { label: 'Ter', date: '17' }, { label: 'Qua', date: '18' },
-  { label: 'Qui', date: '19' }, { label: 'Sex', date: '20' },
-]
+const weekdayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex']
+
+function getCurrentWeekDays() {
+  const today = new Date()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+  return weekdayLabels.map((label, index) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + index)
+    return { label, date: String(date.getDate()).padStart(2, '0') }
+  })
+}
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, string> = {
@@ -60,15 +68,33 @@ function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<voi
   </main>
 }
 
+function CalendarView({ schedule, activeTab, onSelectTab, jupiterData, setJupiterData, onConsult, isConsulting, importError }: { schedule: ScheduleEntry[]; activeTab: string; onSelectTab: (tab: string) => void; jupiterData: { codpes: string; password: string; codpgm: string }; setJupiterData: React.Dispatch<React.SetStateAction<{ codpes: string; password: string; codpgm: string }>>; onConsult: (event: React.FormEvent) => Promise<void>; isConsulting: boolean; importError: string }) {
+  const weekDays = getCurrentWeekDays()
+  return <main className="app-shell calendar-shell">
+    <div className="content calendar-content">
+      <section className="calendar-heading"><div><p className="eyebrow">SUA SEMANA</p><h1>Grade<span>.</span></h1><p className="calendar-caption">Aulas organizadas por dia e horário.</p></div><button className="date-button" onClick={() => onSelectTab('Início')}><Icon name="home" /><span>Hoje</span></button></section>
+      <form className="calendar-import" onSubmit={onConsult}><input aria-label="Número USP" placeholder="Número USP" inputMode="numeric" value={jupiterData.codpes} onChange={(event) => setJupiterData({ ...jupiterData, codpes: event.target.value })} required /><input aria-label="Senha do JupiterWeb" placeholder="Senha do JupiterWeb" type="password" value={jupiterData.password} onChange={(event) => setJupiterData({ ...jupiterData, password: event.target.value })} required /><input aria-label="Código do programa" placeholder="Programa" value={jupiterData.codpgm} onChange={(event) => setJupiterData({ ...jupiterData, codpgm: event.target.value })} required /><button className="import-button" type="submit" disabled={isConsulting}>{isConsulting ? 'Buscando...' : 'Atualizar pelo JupiterWeb'}</button></form>{importError && <p className="schedule-error calendar-error" role="alert">{importError}</p>}
+      <section className="calendar-board" aria-label="Grade horária semanal">
+        {weekDays.map((day, dayIndex) => <article className="calendar-day" key={day.label}><header><div><strong>{day.label}</strong><span>{day.date}</span></div><small>{schedule.filter((entry) => entry.weekday === dayIndex).length} aulas</small></header><div className="calendar-day-list">{schedule.filter((entry) => entry.weekday === dayIndex).sort((first, second) => first.startsAt.localeCompare(second.startsAt)).map((entry) => <div className="calendar-event" key={`${day.label}-${entry.code}-${entry.startsAt}`}><span className="calendar-event-time">{entry.startsAt}</span><div><strong>{entry.title}</strong><small>{entry.endsAt}{entry.room ? ` · ${entry.room}` : ''}</small></div></div>)}{!schedule.some((entry) => entry.weekday === dayIndex) && <p className="calendar-empty">Livre</p>}</div></article>)}
+      </section>
+    </div>
+    <nav className="bottom-nav" aria-label="Navegação principal">{[['Início', 'home'], ['Grade', 'calendar'], ['Disciplinas', 'book'], ['Mais', 'more']].map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon as IconName} /><span>{label}</span></button>)}</nav>
+  </main>
+}
+
 function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
-  const [selectedDay, setSelectedDay] = useState('Ter')
+  const todayIndex = (new Date().getDay() + 6) % 7
+  const todayLabel = weekdayLabels[todayIndex] || 'Seg'
+  const days = getCurrentWeekDays()
+  const [selectedDay, setSelectedDay] = useState(todayLabel)
   const [activeTab, setActiveTab] = useState('Início')
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([])
   const [importError, setImportError] = useState('')
   const isImporting = false
   const [jupiterData, setJupiterData] = useState({ codpes: '', password: '', codpgm: '1' })
   const [isConsultingJupiter, setIsConsultingJupiter] = useState(false)
-  const selectedDayIndex = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].indexOf(selectedDay)
+  const selectedDayIndex = weekdayLabels.indexOf(selectedDay)
+  const todayLabelText = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase()
   const initials = user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
   useEffect(() => {
     fetch('/api/schedule', { credentials: 'include' }).then(async (response) => { if (response.ok) setSchedule((await response.json() as { entries: ScheduleEntry[] }).entries) })
@@ -85,9 +111,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     finally { setIsConsultingJupiter(false) }
   }
   const visibleClasses = schedule.filter((entry) => entry.weekday === selectedDayIndex).map((entry, index) => ({ ...entry, time: entry.startsAt, end: entry.endsAt, kind: index === 0 ? 'main' : index % 2 ? 'lavender' : 'peach', status: index === 0 ? 'Agora' : index === 1 ? 'Próxima' : 'Depois', room: [entry.room, entry.building].filter(Boolean).join(' · ') }))
-  return <main className="app-shell">
+  if (activeTab === 'Grade') return <CalendarView schedule={schedule} activeTab={activeTab} onSelectTab={setActiveTab} jupiterData={jupiterData} setJupiterData={setJupiterData} onConsult={consultJupiter} isConsulting={isConsultingJupiter} importError={importError} />
+  return <main className="app-shell home-shell">
     <header className="topbar"><div></div><div className="topbar-actions"><button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button><div className="user-summary"><div><strong>{user.name}</strong></div><button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button></div></div></header>
-    <div className="content"><section className="welcome-row"><div><p className="eyebrow">TERÇA-FEIRA, 17 DE JUNHO</p><h1>Bom dia, {user.name.split(' ')[0]}<span>.</span></h1></div><button className="date-button" aria-label="Abrir calendário"><Icon name="calendar" /><span>17 Jun</span></button></section>
+    <div className="content"><section className="welcome-row"><div><p className="eyebrow">{todayLabelText}</p><h1>Bom dia, {user.name.split(' ')[0]}<span>.</span></h1></div><button className="date-button" aria-label="Abrir calendário"><Icon name="calendar" /><span>{days[todayIndex]?.date} {new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date()).replace('.', '')}</span></button></section>
       <section className="hero-card"><div className="hero-copy"><div className="live-label"><span className="live-dot"></span> ACONTECENDO AGORA</div><h2>Engenharia de<br />Software II</h2><p className="hero-meta"><Icon name="clock" /> 08:00 — 10:00 <span>·</span> Sala 4, Bloco B</p><button className="primary-button">Ver detalhes <Icon name="arrow" /></button></div><div className="hero-orbit" aria-hidden="true"><div className="orbit orbit-one"></div><div className="orbit orbit-two"></div><div className="orbit-core">ES<br /><small>II</small></div></div></section>
       <section className="section-block schedule-section"><div className="section-heading"><div><p className="eyebrow">SUA SEMANA</p><h2>Grade horária</h2></div><label className="import-button">Importar arquivo<input type="file" accept=".csv,.json,text/csv,application/json" onChange={importSchedule} disabled={isImporting} /></label></div><form className="jupiter-form" onSubmit={consultJupiter}><input aria-label="Número USP" placeholder="Número USP" inputMode="numeric" value={jupiterData.codpes} onChange={(event) => setJupiterData({ ...jupiterData, codpes: event.target.value })} required /><input aria-label="Senha do JupiterWeb" placeholder="Senha do JupiterWeb" type="password" value={jupiterData.password} onChange={(event) => setJupiterData({ ...jupiterData, password: event.target.value })} required /><input aria-label="Código do programa" placeholder="Programa" value={jupiterData.codpgm} onChange={(event) => setJupiterData({ ...jupiterData, codpgm: event.target.value })} required /><button className="import-button" type="submit" disabled={isConsultingJupiter}>{isConsultingJupiter ? 'Buscando...' : 'Buscar no JupiterWeb'}</button></form><p className="schedule-source">A senha é usada somente durante a consulta e não é armazenada.</p>{importError && <p className="schedule-error" role="alert">{importError}</p>}<div className="day-picker">{days.map((day) => <button key={day.label} className={`day ${selectedDay === day.label ? 'selected' : ''}`} onClick={() => setSelectedDay(day.label)}><span>{day.label}</span><strong>{day.date}</strong></button>)}</div><div className="class-list">{visibleClasses.length ? visibleClasses.map((item) => <article className={`class-row ${item.kind}`} key={`${item.code}-${item.time}`}><div className="class-time"><strong>{item.time}</strong><span>{item.end}</span></div><div className="class-indicator"></div><div className="class-info"><div className="class-title-line"><h3>{item.title}</h3><span className="class-status">{item.status}</span></div><p>{item.code} <span>·</span> {item.room}</p></div><button className="row-arrow" aria-label={`Abrir ${item.title}`}><Icon name="arrow" /></button></article>) : <p className="empty-schedule">Nenhuma aula neste dia.</p>}</div></section>
       <section className="section-block quick-section"><div className="section-heading"><div><h2>Para você</h2></div></div><div className="quick-grid"><button className="quick-card"><span className="quick-icon lilac"><Icon name="book" /></span><span><strong>Disciplinas</strong><small>6 ativas</small></span><Icon name="arrow" /></button><button className="quick-card"><span className="quick-icon mint"><Icon name="check" /></span><span><strong>Atividades</strong><small>2 pendentes</small></span><Icon name="arrow" /></button></div></section>
