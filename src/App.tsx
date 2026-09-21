@@ -38,17 +38,27 @@ function BrandMark() {
 function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<void> }) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [error, setError] = useState('')
+  const [pointerOffset, setPointerOffset] = useState({ x: 0, y: 0 })
+
+  function handlePointerMove(event: React.PointerEvent<HTMLElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const horizontal = (event.clientX - bounds.left) / bounds.width - 0.5
+    const vertical = (event.clientY - bounds.top) / bounds.height - 0.5
+    setPointerOffset({ x: horizontal * 18, y: vertical * 14 })
+  }
 
   async function handleSuccess(response: CredentialResponse) {
     if (!response.credential) return setError('Não foi possível concluir o login.')
     try { await onLogin(response.credential) } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Não foi possível concluir o login.') }
   }
 
-  return <main className="login-shell">
+  const panelStyle = { '--panel-x': `${pointerOffset.x}px`, '--panel-y': `${pointerOffset.y}px` } as React.CSSProperties
+
+  return <main className="login-shell" onPointerMove={handlePointerMove} onPointerLeave={() => setPointerOffset({ x: 0, y: 0 })}>
     <div className="login-space" aria-hidden="true"><span className="space-node node-one"></span><span className="space-node node-two"></span><span className="space-node node-three"></span><span className="space-node node-four"></span><span className="space-node node-five"></span><span className="space-node node-six"></span><span className="space-node node-seven"></span><span className="space-node node-eight"></span><span className="space-node node-nine"></span></div>
     <div className="login-glow login-glow-one"></div><div className="login-glow login-glow-two"></div>
-    <section className="login-panel">
-      <div className="login-brand"><BrandMark /><strong>daSIboard</strong></div>
+    <section className="login-panel" style={panelStyle}>
+      <div className="login-brand"><strong>daSIboard</strong></div>
       <div className="login-copy"><p className="eyebrow">SEU CAMPUS, MAIS PERTO</p><h1>Olá, estudante<span>.</span></h1><p>Entre para acessar sua rotina acadêmica na USP em um só lugar.</p></div>
       <div className="login-action">
         {clientId ? <div className="google-login-wrap"><GoogleLogin onSuccess={handleSuccess} onError={() => setError('O login foi cancelado. Tente novamente.')} useOneTap={false} theme="outline" shape="pill" size="large" text="signin_with" width="320" /></div> : <div className="setup-message"><Icon name="shield" /><span>Configure `VITE_GOOGLE_CLIENT_ID` para ativar o login Google.</span></div>}
