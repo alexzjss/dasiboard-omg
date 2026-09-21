@@ -9,6 +9,7 @@ type JupiterRow = { horent?: string; horsai?: string; seg?: string | null; ter?:
 const jupiterOrigin = 'https://uspdigital.usp.br'
 const loginUrl = `${jupiterOrigin}/jupiterweb/autenticar`
 const dwrUrl = `${jupiterOrigin}/jupiterweb/dwr/call/plaincall/GradeHorariaControleDWR.obterGradeHoraria.dwr`
+const courseUrl = `${jupiterOrigin}/jupiterweb/obterTurma`
 const browserHeaders = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36', Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8' }
 
 function encodeForm(values: Record<string, string>) { return new URLSearchParams(values).toString() }
@@ -58,7 +59,22 @@ function readDwrRows(body: string): JupiterRow[] {
   return rows
 }
 
-function normalizeCode(value: string | null | undefined) { return value?.replace(/^"|"$/g, '').trim().replace(/^\$/, '').split('-')[0].trim() || '' }
+function normalizeClass(value: string | null | undefined) {
+  const [code = '', sectionCode = ''] = value?.replace(/^"|"$/g, '').trim().replace(/^\$/, '').split('-') || []
+  return { code: code.trim(), sectionCode: sectionCode.trim() }
+}
+
+function stripHtml(value: string) { return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim() }
+
+async function getCourseDetails(code: string, sectionCode: string) {
+  const response = await get(`${courseUrl}?nomdis=&sgldis=${encodeURIComponent(code)}`, browserHeaders)
+  if (response.status >= 400) return { title: code, room: '' }
+  const text = stripHtml(response.body)
+  const titleMatch = text.match(new RegExp(`Disciplina:\\s*${code}\\s*-\\s*(.+?)\\s+(?:Clique|Lista de Turmas)`, 'i'))
+  const sectionMatch = sectionCode ? text.match(new RegExp(`Código da Turma:\\s*${sectionCode}.*?Observações:\\s*(.+?)\\s+Horário`, 'i')) : null
+  const room = sectionMatch?.[1]?.replace(/^\*+\s*TURMA EXTRA\*+\s*/i, '').trim() || ''
+  return { title: titleMatch?.[1]?.trim() || code, room }
+}
 
 export async function fetchJupiterSchedule(codpes: string, password: string, codpgm: string): Promise<ScheduleEntry[]> {
   const initial = await get(`${jupiterOrigin}/jupiterweb/webLogin.jsp`, browserHeaders)
@@ -75,8 +91,17 @@ export async function fetchJupiterSchedule(codpes: string, password: string, cod
   }), { ...browserHeaders, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', Cookie: cookies, Referer: `${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, 'X-Requested-With': 'XMLHttpRequest' })
   const rows = readDwrRows(response.body)
   const fields: Array<[keyof JupiterRow, number]> = [['seg', 0], ['ter', 1], ['qua', 2], ['qui', 3], ['sex', 4], ['sab', 5], ['dom', 6]]
-  return rows.flatMap((row) => fields.flatMap(([field, weekday]) => {
-    const code = normalizeCode(row[field])
-    return code && row.horent && row.horsai ? [{ weekday, startsAt: row.horent, endsAt: row.horsai, title: code, code, room: '', building: '' }] : []
+  const rawEntries = rows.flatMap((row) => fields.flatMap(([field, weekday]) => {
+    const classInfo = normalizeClass(row[field])
+    return classInfo.code && row.horent && row.horsai ? [{ weekday, startsAt: row.horent, endsAt: row.horsai, title: classInfo.code, code: classInfo.code, sectionCode: classInfo.sectionCode, room: '', building: '' }] : []
   }))
+  const details = new Map<string, { title: string; room: string }>()
+  await Promise.all([...new Set(rawEntries.map((entry) => `${entry.code}|${entry.sectionCode || ''}`))].map(async (key) => {
+    const [code, sectionCode] = key.split('|')
+    details.set(key, await getCourseDetails(code, sectionCode))
+  }))
+  return rawEntries.map((entry) => {
+    const detail = details.get(`${entry.code}|${entry.sectionCode || ''}`)
+    return { ...entry, title: detail?.title || entry.title, room: detail?.room || entry.room }
+  })
 }

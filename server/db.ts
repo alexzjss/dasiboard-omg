@@ -14,6 +14,7 @@ export type ScheduleEntry = {
   endsAt: string
   title: string
   code: string
+  sectionCode?: string
   room: string
   building: string
 }
