@@ -20,7 +20,7 @@ async function requestJupiter(url: string, method: 'GET' | 'POST', body = '', he
     const requestInstance = client(requestOptions, (response) => {
       const chunks: Buffer[] = []
       response.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
-      response.on('end', () => resolve({ status: response.statusCode || 0, headers: response.headers, body: Buffer.concat(chunks).toString('utf8') }))
+      response.on('end', () => resolve({ status: response.statusCode || 0, headers: response.headers, body: Buffer.concat(chunks).toString('latin1') }))
     })
     requestInstance.on('error', reject)
     requestInstance.write(body)
@@ -65,7 +65,7 @@ export async function fetchJupiterSchedule(codpes: string, password: string, cod
   const cookies = mergeCookies(initial.headers['set-cookie'], login.headers['set-cookie'])
   if (!cookies || login.status >= 400) throw new Error('Não foi possível autenticar no JupiterWeb')
   const gradePage = await get(`${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, { Cookie: cookies, Referer: loginUrl })
-  if (gradePage.status >= 400 || !/Grade Horária|gradeHoraria/i.test(gradePage.body) || /Login Usuário|name=["']codpes["']/i.test(gradePage.body)) throw new Error('Não foi possível autenticar no JupiterWeb')
+  if (gradePage.status >= 400 || !/Grade\s+Hor/i.test(gradePage.body) || /Login Usuário|name=["']codpes["']/i.test(gradePage.body)) throw new Error('Não foi possível autenticar no JupiterWeb')
   const response = await post(dwrUrl, encodeForm({
     callCount: '1', nextReverseAjaxIndex: '0', 'c0-scriptName': 'GradeHorariaControleDWR', 'c0-methodName': 'obterGradeHoraria', 'c0-id': '0',
     'c0-param0': `string:${codpes}`, 'c0-param1': `string:${codpgm}`, batchId: '1', instanceId: '0', page: '/jupiterweb/gradeHoraria?codmnu=4759', scriptSessionId: `${randomUUID()}-*${randomUUID()}`,
