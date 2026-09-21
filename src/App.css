@@ -1,4 +1,4 @@
-.app-shell { max-width: 1160px; min-height: 100vh; margin: 0 auto; background: #fbfafc; overflow: hidden; }
+.app-shell { width: 100%; min-height: 100vh; margin: 0; background: #fbfafc; overflow: hidden; }
 .topbar { height: 82px; padding: 0 64px; display: flex; align-items: center; justify-content: space-between; }
 .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; color: #fff; border-radius: 11px 15px 12px 15px; background: #6f48d5; transform: rotate(-8deg); box-shadow: 0 5px 13px #6f48d533; }
 .brand-mark svg { width: 27px; height: 27px; transform: rotate(8deg); overflow: visible; }
@@ -44,7 +44,7 @@ label.import-button { display: none; }
 .bottom-nav { position: fixed; z-index: 2; bottom: 20px; left: 50%; display: flex; justify-content: space-around; width: min(430px, calc(100% - 32px)); padding: 10px 8px; border: 1px solid #eee9f4; border-radius: 21px; background: #fffffff2; box-shadow: 0 12px 35px #3f2a5b1c; backdrop-filter: blur(16px); transform: translateX(-50%); }.bottom-nav button { display: grid; justify-items: center; gap: 4px; min-width: 70px; border: 0; color: #afa6b7; background: none; font-size: 9px; }.bottom-nav button .icon { width: 19px; height: 19px; }.bottom-nav button.active { color: #714bc7; }.bottom-nav button.active .icon { stroke-width: 2.4; }
 @media (max-width: 700px) { .topbar { height: 70px; padding: 0 22px; }.content { padding: 30px 22px 125px; }.welcome-row { align-items: flex-start; }.date-button span { display: none; }.date-button { padding: 10px; }.hero-card { min-height: 228px; padding: 25px 23px; border-radius: 21px; }.hero-orbit { position: absolute; right: -24px; bottom: -8px; opacity: .85; transform: scale(.78); }.hero-card h2 { font-size: 22px; }.section-block { margin-top: 35px; }.quick-grid { grid-template-columns: 1fr; }.class-row { gap: 10px; grid-template-columns: 43px 4px 1fr 20px; }.class-title-line { align-items: flex-start; gap: 8px; }.class-title-line h3 { font-size: 12px; }.class-status { white-space: nowrap; }.jupiter-form { display: grid; grid-template-columns: 1fr 1fr; }.jupiter-form input, .jupiter-form .import-button { width: 100%; }.jupiter-form .import-button { grid-column: 1 / -1; justify-content: center; } }
 /* Home spacing and controls */
-.app-shell { max-width: 1080px; background: #fbfbfd; }
+.app-shell { width: 100%; max-width: none; background: #fbfbfd; }
 .topbar { height: 96px; padding: 0 72px; }
 .topbar-actions { gap: 28px; }
 .avatar { width: 42px; height: 42px; padding: 3px; border: 1px solid #e8e5ed; border-radius: 50%; color: #6245a4; background: #f0ebfb; box-shadow: 0 4px 12px #3d285b12; }
@@ -129,8 +129,8 @@ body::after { content: ''; position: fixed; z-index: -1; inset: 0; pointer-event
   .calendar-import input, .calendar-import .import-button { width: 100%; }
   .calendar-import .import-button { grid-column: 1 / -1; }
 }
-.calendar-shell { width: min(100%, 1280px); }
-.calendar-content { width: min(100%, 1180px); margin: 0 auto; }
+.calendar-shell { width: 100%; }
+.calendar-content { width: min(100%, 1440px); margin: 0 auto; }
 .calendar-heading > div { min-width: 0; }
 .calendar-board { grid-template-columns: repeat(5, minmax(132px, 1fr)); overflow-x: auto; }
 .calendar-day { min-width: 0; }
