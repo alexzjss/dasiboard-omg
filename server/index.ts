@@ -16,7 +16,7 @@ declare global {
 }
 
 const port = Number(process.env.PORT || 3000)
-const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID
 const sessionSecret = process.env.SESSION_SECRET
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
 
@@ -99,7 +99,10 @@ app.post('/api/auth/google', isAllowedOrigin, async (req, res) => {
     }
     setSessionCookie(res, await createSession(user))
     res.json({ user: { name: user.name, email: user.email, picture: user.picture } })
-  } catch { res.status(401).json({ error: 'Invalid Google credential' }) }
+  } catch (error) {
+    console.error('Google authentication failed', error)
+    res.status(401).json({ error: 'Invalid Google credential' })
+  }
 })
 
 app.get('/api/auth/me', requireSession, (req, res) => res.json({ user: req.user }))
