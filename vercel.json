@@ -3,8 +3,6 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "functions": {
-    "api/[...path].ts": {
-      "runtime": "nodejs22.x"
-    }
+    "api/[...path].ts": {}
   }
 }
