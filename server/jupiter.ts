@@ -66,6 +66,11 @@ function normalizeClass(value: string | null | undefined) {
 
 function stripHtml(value: string) { return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim() }
 
+function isJupiterLoginPage(body: string) {
+  return /<form\b[^>]*action\s*=\s*["'][^"']*autenticar[^"']*["']/i.test(body)
+    || /Login\s+Usuário\s*:/i.test(stripHtml(body))
+}
+
 async function getCourseDetails(code: string, sectionCode: string) {
   const response = await get(`${courseUrl}?nomdis=&sgldis=${encodeURIComponent(code)}`, browserHeaders)
   if (response.status >= 400) return { title: code, room: '' }
@@ -83,9 +88,7 @@ export async function fetchJupiterSchedule(codpes: string, password: string, cod
   if (!cookies || login.status >= 400) throw new Error('O JupiterWeb recusou a autenticação')
   const gradePage = await get(`${jupiterOrigin}/jupiterweb/gradeHoraria?codmnu=4759`, { ...browserHeaders, Cookie: cookies, Referer: loginUrl })
   if (gradePage.status >= 400) throw new Error('O JupiterWeb não ficou disponível após o login')
-  const gradePageText = stripHtml(gradePage.body)
-  const isLoginPage = /(?:name|id)=["'](?:codpes|senusu)["']/i.test(gradePage.body) || /Login\s+Usuário\s*:/i.test(gradePageText)
-  if (isLoginPage) throw new Error('O JupiterWeb recusou a autenticação')
+  if (isJupiterLoginPage(gradePage.body)) throw new Error('O JupiterWeb recusou a autenticação')
   const response = await post(dwrUrl, encodeForm({
     callCount: '1', nextReverseAjaxIndex: '0', 'c0-scriptName': 'GradeHorariaControleDWR', 'c0-methodName': 'obterGradeHoraria', 'c0-id': '0',
     'c0-param0': `string:${codpes}`, 'c0-param1': `string:${codpgm}`, batchId: '1', instanceId: '0', page: '/jupiterweb/gradeHoraria?codmnu=4759', scriptSessionId: `${randomUUID()}-*${randomUUID()}`,
