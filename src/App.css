@@ -166,6 +166,35 @@ body::after { content: ''; position: fixed; z-index: -1; inset: 0; pointer-event
   .calendar-import { grid-template-columns: 1fr; }
   .calendar-import input, .calendar-import .import-button { grid-column: auto; }
 }
+
+/* Keep the main surfaces inside the viewport at every breakpoint. */
+@media (max-width: 760px) {
+  .app-shell { width: 100%; min-width: 0; }
+  .content, .calendar-content { width: 100%; padding-inline: clamp(16px, 5vw, 24px); }
+  .welcome-row, .calendar-heading { gap: 16px; }
+  .welcome-row h1 { max-width: 68vw; font-size: clamp(26px, 8vw, 34px); }
+  .section-block { padding: 20px 16px; border-radius: 20px; }
+  .section-heading { align-items: flex-start; }
+  .jupiter-form, .calendar-import { grid-template-columns: 1fr; gap: 10px; }
+  .jupiter-form input, .jupiter-form .import-button, .calendar-import input, .calendar-import .import-button { grid-column: auto; width: 100%; min-width: 0; }
+  .calendar-board { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 8px; }
+  .calendar-day { width: 100%; }
+  .calendar-day-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bottom-nav { bottom: max(12px, env(safe-area-inset-bottom)); width: calc(100% - 24px); }
+  .bottom-nav button { min-width: 0; flex: 1; }
+}
+
+@media (max-width: 420px) {
+  .topbar { padding-inline: 16px; }
+  .content, .calendar-content { padding-inline: 16px; }
+  .user-summary > div { display: none; }
+  .calendar-heading { align-items: flex-start; }
+  .calendar-heading h1 { font-size: 34px; }
+  .calendar-day-list { grid-template-columns: 1fr; }
+  .class-row { grid-template-columns: 40px 4px minmax(0, 1fr) 18px; padding-right: 8px; }
+  .class-title-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .class-info h3 { overflow-wrap: anywhere; }
+}
 .topbar { position: relative; z-index: 1; }
 .icon-button { color: #aab4c5; }
 .notification span { border-color: #0b0f18; }
