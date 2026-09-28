@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import './App.css'
 
@@ -280,8 +280,205 @@ const optativasData: Period[] = [
   },
 ]
 
+// ── Graph coloring ────────────────────────────────────────────────────────────
+// Each "chain" is defined by a root discipline code and a colour palette.
+// Colors propagate downstream through the prereq graph.
+const GRAPH_CHAINS: { root: string; color: string; label: string }[] = [
+  { root: 'ACH2001', color: '#7c5ce8', label: 'Programação' },        // purple
+  { root: 'ACH2011', color: '#0ea5a0', label: 'Cálculo' },            // teal
+  { root: 'ACH2013', color: '#e86c5c', label: 'Matemática Discreta' },// red-orange
+  { root: 'ACH2014', color: '#d97c2e', label: 'Fund. SI' },           // amber
+  { root: 'ACH0021', color: '#5b9bd5', label: 'Dados' },              // blue
+  { root: 'ACH2063', color: '#7cad58', label: 'Adm/Econ' },           // green
+]
+const CHAIN_NEUTRAL = '#525a6e'
+
+function computeNodeColors(periods: Period[]): Map<string, string> {
+  // Build flat discipline map
+  const discMap = new Map<string, Discipline>()
+  for (const p of periods) for (const d of p.disciplines) discMap.set(d.code, d)
+
+  // BFS propagation: assign color of the first chain that reaches each node
+  const colors = new Map<string, string>()
+
+  // Seed roots
+  for (const chain of GRAPH_CHAINS) {
+    if (discMap.has(chain.root)) colors.set(chain.root, chain.color)
+  }
+
+  // Multiple passes to propagate (max depth = 8 semesters)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const p of periods) {
+      for (const d of p.disciplines) {
+        if (colors.has(d.code)) continue
+        if (!d.prereqs) continue
+        // Find the first prereq that already has a color
+        for (const req of d.prereqs) {
+          if (colors.has(req.code)) {
+            colors.set(d.code, colors.get(req.code)!)
+            changed = true
+            break
+          }
+        }
+      }
+    }
+  }
+
+  // Remaining uncolored nodes
+  for (const p of periods) {
+    for (const d of p.disciplines) {
+      if (!colors.has(d.code)) colors.set(d.code, CHAIN_NEUTRAL)
+    }
+  }
+  return colors
+}
+
+// ── Graph view component ──────────────────────────────────────────────────────
+type EdgeInfo = { fromCode: string; toCode: string; color: string }
+type NodeRect = { code: string; x: number; y: number; w: number; h: number }
+
+function DisciplinasGraph({ periods }: { periods: Period[] }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [edges, setEdges] = useState<EdgeInfo[]>([])
+  const [svgSize, setSvgSize] = useState({ w: 0, h: 0 })
+  const colors = useRef(computeNodeColors(periods)).current
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const containerRect = container.getBoundingClientRect()
+    const rects = new Map<string, NodeRect>()
+
+    container.querySelectorAll<HTMLElement>('[data-code]').forEach((el) => {
+      const code = el.dataset.code!
+      const r = el.getBoundingClientRect()
+      rects.set(code, {
+        code,
+        x: r.left - containerRect.left,
+        y: r.top - containerRect.top,
+        w: r.width,
+        h: r.height,
+      })
+    })
+
+    const newEdges: EdgeInfo[] = []
+    for (const p of periods) {
+      for (const d of p.disciplines) {
+        if (!d.prereqs) continue
+        for (const req of d.prereqs) {
+          if (rects.has(req.code) && rects.has(d.code)) {
+            newEdges.push({ fromCode: req.code, toCode: d.code, color: colors.get(req.code) ?? CHAIN_NEUTRAL })
+          }
+        }
+      }
+    }
+
+    setSvgSize({ w: container.scrollWidth, h: container.scrollHeight })
+    setEdges(newEdges)
+  }, [periods, colors])
+
+  function buildPath(edge: EdgeInfo) {
+    const container = containerRef.current
+    if (!container) return ''
+    const containerRect = container.getBoundingClientRect()
+    const fromEl = container.querySelector<HTMLElement>(`[data-code="${edge.fromCode}"]`)
+    const toEl = container.querySelector<HTMLElement>(`[data-code="${edge.toCode}"]`)
+    if (!fromEl || !toEl) return ''
+    const fr = fromEl.getBoundingClientRect()
+    const tr = toEl.getBoundingClientRect()
+    // Offset by container's viewport position AND add scroll to get content-space coords
+    const ox = containerRect.left - container.scrollLeft
+    const oy = containerRect.top - container.scrollTop
+
+    const x1 = fr.right - ox
+    const y1 = fr.top - oy + fr.height / 2
+    const x2 = tr.left - ox
+    const y2 = tr.top - oy + tr.height / 2
+    const cx = (x1 + x2) / 2
+    return `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`
+  }
+
+  return (
+    <div className="disc-graph-wrap" ref={containerRef}>
+      <svg
+        className="disc-graph-svg"
+        width={svgSize.w}
+        height={svgSize.h}
+        style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+      >
+        {edges.map((e) => {
+          const d = buildPath(e)
+          if (!d) return null
+          return (
+            <path
+              key={`${e.fromCode}-${e.toCode}`}
+              d={d}
+              stroke={e.color}
+              strokeWidth="1.5"
+              strokeOpacity="0.55"
+              fill="none"
+              strokeDasharray="none"
+            />
+          )
+        })}
+      </svg>
+
+      <div className="disc-graph-grid">
+        {periods.map((period, pIdx) => (
+          <div key={period.label} className="disc-graph-col">
+            <div className="disc-graph-col-header">
+              <span className="disc-graph-sem-num">{pIdx + 1}º</span>
+              <span className="disc-graph-sem-label">sem.</span>
+            </div>
+            <div className="disc-graph-col-nodes">
+              {period.disciplines.map((disc) => {
+                const color = colors.get(disc.code) ?? CHAIN_NEUTRAL
+                return (
+                  <div
+                    key={disc.code}
+                    data-code={disc.code}
+                    className="disc-graph-node"
+                    style={{ '--node-color': color } as React.CSSProperties}
+                    title={`${disc.code} — ${disc.name}\n${disc.credAula}A ${disc.credTrab}T · ${disc.ch}h`}
+                  >
+                    <span className="disc-graph-node-code">{disc.code}</span>
+                    <span className="disc-graph-node-name">{disc.name}</span>
+                    {(disc.ce != null && disc.ce > 0 || disc.ext != null && disc.ext! > 0) && (
+                      <span className="disc-graph-node-ext">
+                        {disc.ce && disc.ce > 0 ? `CE ${disc.ce}h` : ''}
+                        {disc.ext && disc.ext > 0 ? ` EXT ${disc.ext}h` : ''}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="disc-graph-legend">
+        {GRAPH_CHAINS.map((chain) => (
+          <span key={chain.root} className="disc-graph-legend-item">
+            <span className="disc-graph-legend-dot" style={{ background: chain.color }} />
+            {chain.label}
+          </span>
+        ))}
+        <span className="disc-graph-legend-item">
+          <span className="disc-graph-legend-dot" style={{ background: CHAIN_NEUTRAL }} />
+          Isoladas
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function DisciplinasView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
   const [section, setSection] = useState<'obrigatorias' | 'optativas'>('obrigatorias')
+  const [viewMode, setViewMode] = useState<'list' | 'graph'>('list')
   const periods = section === 'obrigatorias' ? obrigatoriasData : optativasData
 
   return <main className="app-shell disc-shell">
@@ -289,44 +486,65 @@ function DisciplinasView({ activeTab, onSelectTab }: { activeTab: string; onSele
       <section className="disc-heading">
         <div><p className="eyebrow">SISTEMAS DE INFORMAÇÃO · EACH/USP</p><h1>Disciplinas<span>.</span></h1><p className="disc-caption">Grade curricular do curso.</p></div>
       </section>
-      <div className="disc-tabs">
-        <button className={`disc-tab${section === 'obrigatorias' ? ' active' : ''}`} onClick={() => setSection('obrigatorias')}>Obrigatórias</button>
-        <button className={`disc-tab${section === 'optativas' ? ' active' : ''}`} onClick={() => setSection('optativas')}>Optativas Eletivas</button>
+      <div className="disc-controls">
+        <div className="disc-tabs">
+          <button className={`disc-tab${section === 'obrigatorias' ? ' active' : ''}`} onClick={() => setSection('obrigatorias')}>Obrigatórias</button>
+          <button className={`disc-tab${section === 'optativas' ? ' active' : ''}`} onClick={() => setSection('optativas')}>Optativas Eletivas</button>
+        </div>
+        <div className="disc-view-toggle">
+          <button className={`disc-view-btn${viewMode === 'list' ? ' active' : ''}`} onClick={() => setViewMode('list')} title="Visualização em lista">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>
+            Lista
+          </button>
+          <button
+            className={`disc-view-btn${viewMode === 'graph' ? ' active' : ''}`}
+            onClick={() => setViewMode('graph')}
+            title="Visualização em grafo"
+            disabled={section === 'optativas'}
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="3" cy="8" r="1.8"/><circle cx="13" cy="4" r="1.8"/><circle cx="13" cy="12" r="1.8"/><line x1="4.8" y1="7.1" x2="11.2" y2="4.9"/><line x1="4.8" y1="8.9" x2="11.2" y2="11.1"/></svg>
+            Grafo
+          </button>
+        </div>
       </div>
-      <div className="disc-periods">
-        {periods.map((period) => (
-          <section key={period.label} className="disc-period">
-            <h2 className="disc-period-label">{period.label}</h2>
-            <div className="disc-list">
-              {period.disciplines.map((disc) => (
-                <article key={disc.code} className="disc-card">
-                  <div className="disc-card-main">
-                    <span className="disc-code">{disc.code}</span>
-                    <span className="disc-name">{disc.name}</span>
-                    <div className="disc-badges">
-                      <span className="disc-badge disc-badge-aula" title="Créditos Aula">{disc.credAula}A</span>
-                      <span className="disc-badge disc-badge-trab" title="Créditos Trabalho">{disc.credTrab}T</span>
-                      <span className="disc-badge disc-badge-ch" title="Carga horária">{disc.ch}h</span>
-                      {disc.ce != null && disc.ce > 0 && <span className="disc-badge disc-badge-ce" title="Carga horária de Estágio">CE {disc.ce}h</span>}
-                      {disc.cp != null && disc.cp > 0 && <span className="disc-badge disc-badge-cp" title="Práticas como Componentes Curriculares">CP {disc.cp}h</span>}
-                      {disc.ext != null && disc.ext > 0 && <span className="disc-badge disc-badge-ext" title="Atividades Extensionistas">EXT {disc.ext}h</span>}
-                    </div>
-                  </div>
-                  {disc.prereqs && disc.prereqs.length > 0 && (
-                    <div className="disc-prereqs">
-                      {disc.prereqs.map((req) => (
-                        <span key={req.code} className={`disc-prereq${req.type === 'Requisito' ? ' strong' : ''}`}>
-                          {req.code} — {req.name} <em>{req.type}</em>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+
+      {viewMode === 'graph' && section === 'obrigatorias'
+        ? <DisciplinasGraph periods={periods} />
+        : <div className="disc-periods">
+            {periods.map((period) => (
+              <section key={period.label} className="disc-period">
+                <h2 className="disc-period-label">{period.label}</h2>
+                <div className="disc-list">
+                  {period.disciplines.map((disc) => (
+                    <article key={disc.code} className="disc-card">
+                      <div className="disc-card-main">
+                        <span className="disc-code">{disc.code}</span>
+                        <span className="disc-name">{disc.name}</span>
+                        <div className="disc-badges">
+                          <span className="disc-badge disc-badge-aula" title="Créditos Aula">{disc.credAula}A</span>
+                          <span className="disc-badge disc-badge-trab" title="Créditos Trabalho">{disc.credTrab}T</span>
+                          <span className="disc-badge disc-badge-ch" title="Carga horária">{disc.ch}h</span>
+                          {disc.ce != null && disc.ce > 0 && <span className="disc-badge disc-badge-ce" title="Carga horária de Estágio">CE {disc.ce}h</span>}
+                          {disc.cp != null && disc.cp > 0 && <span className="disc-badge disc-badge-cp" title="Práticas como Componentes Curriculares">CP {disc.cp}h</span>}
+                          {disc.ext != null && disc.ext > 0 && <span className="disc-badge disc-badge-ext" title="Atividades Extensionistas">EXT {disc.ext}h</span>}
+                        </div>
+                      </div>
+                      {disc.prereqs && disc.prereqs.length > 0 && (
+                        <div className="disc-prereqs">
+                          {disc.prereqs.map((req) => (
+                            <span key={req.code} className={`disc-prereq${req.type === 'Requisito' ? ' strong' : ''}`}>
+                              {req.code} — {req.name} <em>{req.type}</em>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+      }
     </div>
     <nav className="bottom-nav" aria-label="Navegação principal">{[['Início', 'home'], ['Disciplinas', 'book'], ['Mais', 'more']].map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon as IconName} /><span>{label}</span></button>)}</nav>
   </main>

@@ -444,10 +444,16 @@ h1 span { color: #b3a0ff; }
 .disc-heading h1 { font-size: 42px; color: #f6f2ff; letter-spacing: -1.6px; }
 .disc-heading h1 span { color: #c4adff; }
 .disc-caption { margin-top: 10px; color: #a69ebd; font-size: 13px; }
-.disc-tabs { display: flex; gap: 8px; margin-bottom: 36px; }
+.disc-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
+.disc-tabs { display: flex; gap: 8px; }
 .disc-tab { padding: 9px 18px; border: 1px solid #ffffff18; border-radius: 12px; background: #1c1930; color: #8a85a0; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
 .disc-tab.active { background: #2d2550; border-color: #b69bff55; color: #d8ccff; }
 .disc-tab:hover:not(.active) { background: #22203a; color: #b0a8cc; }
+.disc-view-toggle { display: flex; gap: 4px; padding: 3px; border: 1px solid #ffffff14; border-radius: 11px; background: #12101e; }
+.disc-view-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 0; border-radius: 8px; background: transparent; color: #6e6a82; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .12s, color .12s; }
+.disc-view-btn.active { background: #2d2550; color: #d0c6ff; }
+.disc-view-btn:hover:not(.active):not(:disabled) { background: #1e1b32; color: #a8a0c4; }
+.disc-view-btn:disabled { opacity: .35; cursor: not-allowed; }
 .disc-periods { display: grid; gap: 40px; }
 .disc-period-label { font-size: 13px; font-weight: 700; letter-spacing: .6px; color: #8a85a0; text-transform: uppercase; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #ffffff14; }
 .disc-list { display: grid; gap: 8px; }
@@ -468,9 +474,48 @@ h1 span { color: #b3a0ff; }
 .disc-prereq em { font-style: normal; color: #6a7580; }
 .disc-prereq.strong { border-color: #ff9b5533; color: #d49070; }
 .disc-prereq.strong em { color: #c07850; }
+
+/* ── Graph view ─────────────────────────────────────────────────────────────── */
+/* When in graph mode, disc-content must expand to full width to allow horizontal scroll */
+.disc-shell:has(.disc-graph-wrap) .disc-content { width: 100%; max-width: none; padding-inline: 0; }
+.disc-shell:has(.disc-graph-wrap) .disc-heading,
+.disc-shell:has(.disc-graph-wrap) .disc-controls { padding-inline: 32px; }
+
+.disc-graph-wrap { position: relative; overflow-x: auto; overflow-y: visible; padding: 0 24px 40px; }
+.disc-graph-grid { display: flex; gap: 0; align-items: flex-start; min-width: max-content; padding-bottom: 80px; }
+.disc-graph-col { display: flex; flex-direction: column; align-items: stretch; width: 172px; flex-shrink: 0; }
+.disc-graph-col-header { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 52px; margin: 0 8px 12px; border-bottom: 1px solid #ffffff12; }
+.disc-graph-sem-num { font: 800 22px/1 'Manrope'; color: #f0eeff; }
+.disc-graph-sem-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: #6a6480; text-transform: uppercase; margin-top: 2px; }
+.disc-graph-col-nodes { display: flex; flex-direction: column; gap: 10px; padding: 0 8px; }
+.disc-graph-node {
+  position: relative;
+  padding: 10px 11px 9px;
+  border: 1px solid color-mix(in srgb, var(--node-color) 28%, #ffffff0d);
+  border-left: 3px solid var(--node-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--node-color) 10%, #131925);
+  cursor: default;
+  transition: background .15s, border-color .15s;
+}
+.disc-graph-node:hover {
+  background: color-mix(in srgb, var(--node-color) 18%, #131925);
+  border-color: color-mix(in srgb, var(--node-color) 55%, transparent);
+}
+.disc-graph-node-code { display: block; font: 700 9px/1 'Manrope'; letter-spacing: .5px; color: var(--node-color); opacity: .85; margin-bottom: 5px; }
+.disc-graph-node-name { display: block; font-size: 10.5px; color: #d8dce8; line-height: 1.35; font-weight: 500; }
+.disc-graph-node-ext { display: block; margin-top: 5px; font: 700 8px/1 'Manrope'; color: #c490e4; letter-spacing: .4px; }
+.disc-graph-svg path { transition: stroke-opacity .2s; }
+.disc-graph-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 18px 24px 0; }
+.disc-graph-legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #8a8fa8; font-weight: 600; }
+.disc-graph-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
 @media (max-width: 600px) {
   .disc-content { padding: 38px 16px 136px; }
+  .disc-shell:has(.disc-graph-wrap) .disc-heading,
+  .disc-shell:has(.disc-graph-wrap) .disc-controls { padding-inline: 16px; }
   .disc-heading h1 { font-size: 32px; }
   .disc-card-main { grid-template-columns: auto 1fr; }
   .disc-badges { justify-content: flex-start; margin-top: 6px; grid-column: 1 / -1; }
+  .disc-graph-col { width: 148px; }
 }
