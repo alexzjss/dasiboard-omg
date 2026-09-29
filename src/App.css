@@ -579,3 +579,148 @@ h1 span { color: #b3a0ff; }
   .doc-detail-grid { grid-template-columns: 1fr; gap: 10px; }
   .doc-detail-grid dt { color: #8a92a8; font-size: 10px; letter-spacing: .4px; text-transform: uppercase; margin-bottom: -4px; }
 }
+
+/* ── Entidades tab ─────────────────────────────────────────────────────────── */
+.ent-shell { background: #090d15; }
+.ent-content { width: min(100%, 680px); margin: 0 auto; padding: 56px 32px 148px; position: relative; z-index: 1; }
+.ent-heading { margin-bottom: 36px; }
+.ent-heading h1 { font-size: 42px; color: #f6f2ff; letter-spacing: -1.6px; }
+.ent-heading h1 span { color: #c4adff; }
+.ent-caption { margin-top: 10px; color: #a69ebd; font-size: 13px; }
+
+/* Grid of entity cards */
+.ent-grid { display: grid; gap: 10px; }
+.ent-card {
+  display: grid;
+  grid-template-columns: 52px 1fr 24px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #ffffff14;
+  border-left: 3px solid var(--ent-accent, #8b5cf6);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ent-bg, #1a1030) 80%, #0d1018);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  width: 100%;
+}
+.ent-card:hover {
+  border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 55%, #ffffff12);
+  background: color-mix(in srgb, var(--ent-bg, #1a1030) 95%, var(--ent-accent, #8b5cf6) 12%);
+}
+.ent-card:focus-visible { outline: 2px solid var(--ent-accent, #8b5cf6); outline-offset: 2px; }
+.ent-card-emoji { font-size: 26px; line-height: 1; text-align: center; }
+.ent-card-info { display: grid; gap: 3px; min-width: 0; }
+.ent-card-name { display: block; color: #f0f2f7; font-size: 15px; font-weight: 700; }
+.ent-card-type { display: block; color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 80%, #a0a0a0); font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; margin-top: 2px; }
+.ent-card-full { display: block; color: #7a839a; font-size: 11px; margin-top: 3px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ent-card-arrow { color: #4a5568; }
+.ent-card-arrow .icon { width: 16px; height: 16px; }
+
+/* Detail view */
+.ent-detail-content { width: min(100%, 680px); margin: 0 auto; padding: 56px 32px 148px; position: relative; z-index: 1; }
+.ent-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 36px;
+  padding: 9px 14px;
+  border: 1px solid #ffffff18;
+  border-radius: 12px;
+  color: #a69ebd;
+  background: #161e2b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .14s, color .14s;
+}
+.ent-back-btn .icon { width: 14px; height: 14px; transform: rotate(180deg); }
+.ent-back-btn:hover { background: #1e2840; color: #d0c6ff; }
+
+.ent-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 30%, #ffffff12);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--ent-bg, #1a1030) 85%, #090d15);
+  margin-bottom: 36px;
+}
+.ent-detail-emoji {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 18%, #090d15);
+  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 35%, transparent);
+  font-size: 36px;
+  flex-shrink: 0;
+}
+.ent-detail-title { font-size: 36px; letter-spacing: -1.4px; color: #f0f2f7; line-height: 1.05; }
+.ent-detail-title span { color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 90%, #ffffff); }
+.ent-detail-full { margin-top: 8px; color: #a69ebd; font-size: 13px; line-height: 1.5; }
+.ent-eyebrow { color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 80%, #a0a0a0) !important; }
+
+/* Instagram section */
+.ent-ig-section { }
+.ent-ig-section > .eyebrow { margin-bottom: 14px; }
+.ent-ig-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 25%, #ffffff12);
+  border-radius: 14px;
+  background: #161e2b;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: background .14s, border-color .14s;
+}
+.ent-ig-card:hover { background: #1c2637; border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 45%, #ffffff18); }
+.ent-ig-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 20%, #090d15);
+  color: var(--ent-accent, #8b5cf6);
+  flex-shrink: 0;
+}
+.ent-ig-info { display: grid; gap: 3px; }
+.ent-ig-info strong { color: #e8ebf2; font-size: 14px; }
+.ent-ig-info small { color: #6a7280; font-size: 11px; }
+
+/* Instagram embed iframe */
+.ent-ig-embed-wrap {
+  position: relative;
+  border: 1px solid #ffffff14;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0f1622;
+}
+.ent-ig-embed {
+  display: block;
+  width: 100%;
+  min-height: 560px;
+  border: 0;
+}
+
+/* Nav theming for ent-shell */
+.ent-shell .bottom-nav { background: #181428f2; border-color: var(--ent-accent, #8b5cf6)28; }
+.ent-shell .bottom-nav button.active { color: var(--ent-accent, #8b5cf6); }
+
+@media (max-width: 600px) {
+  .ent-content { padding: 38px 16px 136px; }
+  .ent-detail-content { padding: 38px 16px 136px; }
+  .ent-heading h1 { font-size: 32px; }
+  .ent-detail-title { font-size: 28px; }
+  .ent-detail-hero { gap: 16px; padding: 18px; }
+  .ent-detail-emoji { width: 58px; height: 58px; font-size: 28px; }
+  .ent-card { grid-template-columns: 42px 1fr 20px; gap: 10px; padding: 13px 14px; }
+  .ent-card-full { white-space: normal; }
+  .ent-ig-embed { min-height: 480px; }
+}

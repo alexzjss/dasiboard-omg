@@ -4,7 +4,7 @@ import './App.css'
 
 type User = { name: string; email: string; picture?: string }
 type ScheduleEntry = { weekday: number; startsAt: string; endsAt: string; title: string; code: string; room: string; building: string }
-type IconName = 'home' | 'calendar' | 'book' | 'more' | 'bell' | 'arrow' | 'clock' | 'check' | 'shield' | 'trash' | 'people'
+type IconName = 'home' | 'calendar' | 'book' | 'more' | 'bell' | 'arrow' | 'clock' | 'check' | 'shield' | 'trash' | 'people' | 'building'
 
 const developmentHomePath = '/dev/home'
 const developmentUser: User = { name: 'Estudante Local', email: 'estudante@usp.br' }
@@ -64,6 +64,7 @@ function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, string> = {
     home: 'M3 10.5 12 3l9 7.5M5.5 9v10h13V9M9 19v-5h6v5', calendar: 'M5 4h14a2 2 0 0 1 2 2v13H3V6a2 2 0 0 1 2-2ZM8 2v4M16 2v4M3 9h18',
     book: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16ZM4 5.5v16M8 7h8M8 11h8', more: 'M5 12h.01M12 12h.01M19 12h.01',
+    building: 'M3 21h18M3 7v14M21 7v14M6 3h12l3 4H3L6 3ZM9 21v-6h6v6',
     bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4', arrow: 'M5 12h14M13 6l6 6-6 6', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
     check: 'm5 12 4 4L19 6', shield: 'M12 3 20 6v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z',
     trash: 'M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6',
@@ -633,7 +634,7 @@ function DisciplinasView({ activeTab, onSelectTab }: { activeTab: string; onSele
           </div>
       }
     </div>
-    <nav className="bottom-nav" aria-label="Navegação principal">{([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Mais', 'more']] as [string, IconName][]).map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}</nav>
+    <nav className="bottom-nav" aria-label="Navegação principal">{([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][]).map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}</nav>
   </main>
 }
 
@@ -892,7 +893,7 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
     return matchName && matchCourse
   })
 
-  const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Mais', 'more']]
+  const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']]
 
   return <main className="app-shell doc-shell">
     <div className="doc-content">
@@ -974,6 +975,210 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
 
 
 
+// ── Entidades data ─────────────────────────────────────────────────────────────
+
+type Entidade = {
+  id: string
+  name: string
+  fullName: string
+  type: string
+  accentColor: string
+  bgColor: string
+  instagram: string
+  instagramHandle: string
+  emoji: string
+}
+
+const entidadesData: Entidade[] = [
+  {
+    id: 'dasi',
+    name: 'DASI',
+    fullName: 'Diretório Acadêmico de Sistemas de Informação',
+    type: 'Diretório Acadêmico',
+    accentColor: '#8b5cf6',
+    bgColor: '#1a1030',
+    instagram: 'https://www.instagram.com/dasiusp/',
+    instagramHandle: '@dasiusp',
+    emoji: '🦅',
+  },
+  {
+    id: 'sintese',
+    name: 'Síntese Jr.',
+    fullName: 'Empresa Júnior de Sistemas de Informação',
+    type: 'Empresa Júnior',
+    accentColor: '#2563eb',
+    bgColor: '#0e1a2e',
+    instagram: 'https://www.instagram.com/sintesejr/',
+    instagramHandle: '@sintesejr',
+    emoji: '⚡',
+  },
+  {
+    id: 'petsi',
+    name: 'PET-SI',
+    fullName: 'Programa de Educação Tutorial de Sistemas de Informação',
+    type: 'PET',
+    accentColor: '#be123c',
+    bgColor: '#1c0a0e',
+    instagram: 'https://www.instagram.com/petsieach/',
+    instagramHandle: '@petsieach',
+    emoji: '🦉',
+  },
+  {
+    id: 'hype',
+    name: 'Hype USP',
+    fullName: 'Grupo de Estudos em Dados e IA',
+    type: 'Grupo de Estudos',
+    accentColor: '#ea7c00',
+    bgColor: '#1e1000',
+    instagram: 'https://www.instagram.com/hype.usp/',
+    instagramHandle: '@hype.usp',
+    emoji: '📦',
+  },
+  {
+    id: 'codelab',
+    name: 'CodeLab Leste',
+    fullName: 'Grupo de Extensão em Tecnologia e Desenvolvimento Web',
+    type: 'Grupo de Extensão',
+    accentColor: '#ec4899',
+    bgColor: '#1e0a18',
+    instagram: 'https://www.instagram.com/uspcodelableste/',
+    instagramHandle: '@uspcodelableste',
+    emoji: '🧪',
+  },
+  {
+    id: 'eachintheshell',
+    name: 'Each in The Shell',
+    fullName: 'Grupo de Hacking e Cibersegurança',
+    type: 'Grupo de Estudos',
+    accentColor: '#f97316',
+    bgColor: '#1e0e00',
+    instagram: 'https://www.instagram.com/eachintheshell/',
+    instagramHandle: '@eachintheshell',
+    emoji: '🐱',
+  },
+  {
+    id: 'conway',
+    name: 'Conway USP',
+    fullName: 'Grupo de Estudos em Gamedev',
+    type: 'Grupo de Estudos',
+    accentColor: '#a78bfa',
+    bgColor: '#100a1e',
+    instagram: 'https://www.instagram.com/conway_usp/',
+    instagramHandle: '@conway_usp',
+    emoji: '🎮',
+  },
+  {
+    id: 'cossi',
+    name: 'COSSI',
+    fullName: 'Comissão Organizadora da Semana de SI',
+    type: 'Comissão',
+    accentColor: '#7c3aed',
+    bgColor: '#130c22',
+    instagram: 'https://www.instagram.com/semanadesi/',
+    instagramHandle: '@semanadesi',
+    emoji: '🗓️',
+  },
+]
+
+function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
+  const [selected, setSelected] = useState<Entidade | null>(null)
+  const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']]
+
+  if (selected) {
+    return (
+      <main className="app-shell ent-shell" style={{ '--ent-accent': selected.accentColor, '--ent-bg': selected.bgColor } as React.CSSProperties}>
+        <div className="ent-detail-content">
+          <button className="ent-back-btn" onClick={() => setSelected(null)} aria-label="Voltar para entidades">
+            <Icon name="arrow" />
+            <span>Entidades</span>
+          </button>
+          <div className="ent-detail-hero">
+            <div className="ent-detail-emoji" aria-hidden="true">{selected.emoji}</div>
+            <div>
+              <p className="eyebrow ent-eyebrow">{selected.type.toUpperCase()}</p>
+              <h1 className="ent-detail-title">{selected.name}<span>.</span></h1>
+              <p className="ent-detail-full">{selected.fullName}</p>
+            </div>
+          </div>
+
+          <div className="ent-ig-section">
+            <p className="eyebrow">INSTAGRAM</p>
+            <a
+              className="ent-ig-card"
+              href={selected.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Ver Instagram de ${selected.name}`}
+            >
+              <div className="ent-ig-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </div>
+              <div className="ent-ig-info">
+                <strong>{selected.instagramHandle}</strong>
+                <small>Ver perfil no Instagram ↗</small>
+              </div>
+            </a>
+
+            <div className="ent-ig-embed-wrap">
+              <iframe
+                className="ent-ig-embed"
+                src={`https://www.instagram.com/${selected.instagramHandle.replace('@', '')}/embed/`}
+                allowFullScreen
+                scrolling="no"
+                title={`Instagram de ${selected.name}`}
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+        <nav className="bottom-nav ent-nav" aria-label="Navegação principal">
+          {navItems.map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}
+        </nav>
+      </main>
+    )
+  }
+
+  return (
+    <main className="app-shell ent-shell">
+      <div className="ent-content">
+        <section className="ent-heading">
+          <p className="eyebrow">SISTEMAS DE INFORMAÇÃO · EACH/USP</p>
+          <h1>Entidades<span>.</span></h1>
+          <p className="ent-caption">Coletivos, grupos e organizações estudantis do curso.</p>
+        </section>
+        <div className="ent-grid">
+          {entidadesData.map((e) => (
+            <button
+              key={e.id}
+              className="ent-card"
+              style={{ '--ent-accent': e.accentColor, '--ent-bg': e.bgColor } as React.CSSProperties}
+              onClick={() => setSelected(e)}
+              aria-label={`Ver detalhes de ${e.name}`}
+            >
+              <div className="ent-card-emoji" aria-hidden="true">{e.emoji}</div>
+              <div className="ent-card-info">
+                <strong className="ent-card-name">{e.name}</strong>
+                <span className="ent-card-type">{e.type}</span>
+                <span className="ent-card-full">{e.fullName}</span>
+              </div>
+              <div className="ent-card-arrow">
+                <Icon name="arrow" />
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+      <nav className="bottom-nav ent-nav" aria-label="Navegação principal">
+        {navItems.map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}
+      </nav>
+    </main>
+  )
+}
+
 function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const todayIndex = (new Date().getDay() + 6) % 7
   const days = getCurrentWeekDays()
@@ -1023,6 +1228,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   if (activeTab === 'Disciplinas') return <DisciplinasView activeTab={activeTab} onSelectTab={setActiveTab} />
   if (activeTab === 'Docentes') return <DocentesView activeTab={activeTab} onSelectTab={setActiveTab} />
+  if (activeTab === 'Entidades') return <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} />
 
   return <main className="app-shell home-shell">
     <header className="topbar"><div></div><div className="topbar-actions"><button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button><div className="user-summary"><div><strong>{user.name}</strong></div><button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button></div></div></header>
@@ -1062,7 +1268,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         </div>
       </section>
     </div>
-    <nav className="bottom-nav" aria-label="Navegação principal">{([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Mais', 'more']] as [string, IconName][]).map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => setActiveTab(label)}><Icon name={icon} /><span>{label}</span></button>)}</nav>
+    <nav className="bottom-nav" aria-label="Navegação principal">{([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][]).map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => setActiveTab(label)}><Icon name={icon} /><span>{label}</span></button>)}</nav>
   </main>
 }
 
