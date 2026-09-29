@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import './App.css'
 
@@ -85,6 +85,224 @@ function Icon({ name }: { name: IconName }) {
   return <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" style={isFill ? { fill: 'currentColor', stroke: 'none' } : undefined}><path d={paths[name]} /></svg>
 }
 
+// ── Space background canvas ───────────────────────────────────────────────────
+type SpaceTheme = { nebula: string; star: string; accent: string }
+
+const SPACE_THEMES: Record<string, SpaceTheme> = {
+  home:       { nebula: '#6450b3', star: '#d8e8ff', accent: '#8b6eff' },
+  calendar:   { nebula: '#1e4080', star: '#c8deff', accent: '#5588ff' },
+  disc:       { nebula: '#1e4040', star: '#c8f0ef', accent: '#3eb8b5' },
+  docentes:   { nebula: '#3a1e50', star: '#e8d8ff', accent: '#b86eff' },
+  entidades:  { nebula: '#5c2a14', star: '#ffe8cc', accent: '#ff9040' },
+  login:      { nebula: '#1a0c2e', star: '#d8c8ff', accent: '#9060ff' },
+}
+
+function SpaceCanvas({ theme }: { theme: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const rafRef = useRef<number>(0)
+  const frameRef = useRef(0)
+  const prevTheme = useRef(theme)
+  const blendRef = useRef(1)
+  const themeFrom = useRef<SpaceTheme>(SPACE_THEMES[theme] ?? SPACE_THEMES.home)
+  const themeTo = useRef<SpaceTheme>(SPACE_THEMES[theme] ?? SPACE_THEMES.home)
+
+  const getTheme = useCallback(() => {
+    const f = blendRef.current
+    if (f >= 1) return themeTo.current
+    const lerp = (a: string, b: string, t: number) => {
+      const pc = (h: string) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)] as [number,number,number]
+      const [ar,ag,ab] = pc(a), [br,bg,bb] = pc(b)
+      const r = Math.round(ar + (br-ar)*t), g = Math.round(ag + (bg-ag)*t), bl = Math.round(ab + (bb-ab)*t)
+      return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`
+    }
+    return {
+      nebula: lerp(themeFrom.current.nebula, themeTo.current.nebula, f),
+      star:   lerp(themeFrom.current.star,   themeTo.current.star,   f),
+      accent: lerp(themeFrom.current.accent, themeTo.current.accent, f),
+    }
+  }, [])
+
+  useEffect(() => {
+    if (theme !== prevTheme.current) {
+      themeFrom.current = getTheme()
+      themeTo.current = SPACE_THEMES[theme] ?? SPACE_THEMES.home
+      blendRef.current = 0
+      prevTheme.current = theme
+    }
+  }, [theme, getTheme])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    type Star = { x: number; y: number; r: number; speed: number; twinkle: number; phase: number; layer: number }
+    type Nebula = { x: number; y: number; rx: number; ry: number; phase: number; speed: number }
+
+    const stars: Star[] = []
+    const nebulae: Nebula[] = []
+
+    function resize() {
+      if (!canvas) return
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+
+    function initParticles() {
+      stars.length = 0
+      nebulae.length = 0
+      const count = Math.min(280, Math.floor((window.innerWidth * window.innerHeight) / 5000))
+      for (let i = 0; i < count; i++) {
+        const layer = Math.random() < 0.3 ? 0 : Math.random() < 0.5 ? 1 : 2
+        stars.push({
+          x: Math.random(),
+          y: Math.random(),
+          r: layer === 0 ? 0.4 + Math.random() * 0.5 : layer === 1 ? 0.7 + Math.random() * 0.8 : 1 + Math.random() * 1.2,
+          speed: (0.003 + Math.random() * 0.006) * (layer + 1),
+          twinkle: 0.3 + Math.random() * 0.7,
+          phase: Math.random() * Math.PI * 2,
+          layer,
+        })
+      }
+      for (let i = 0; i < 6; i++) {
+        nebulae.push({
+          x: Math.random(),
+          y: Math.random(),
+          rx: 0.15 + Math.random() * 0.25,
+          ry: 0.10 + Math.random() * 0.18,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.0002 + Math.random() * 0.0003,
+        })
+      }
+    }
+
+    function draw(time: number) {
+      if (!canvas || !ctx) return
+      const W = canvas.width, H = canvas.height
+      const t = time * 0.001
+      const cur = getTheme()
+
+      // Blend transition
+      if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.015)
+
+      // Background
+      ctx.clearRect(0, 0, W, H)
+      const bg = ctx.createLinearGradient(0, 0, 0, H)
+      bg.addColorStop(0, '#070a12')
+      bg.addColorStop(1, '#0b0f1a')
+      ctx.fillStyle = bg
+      ctx.fillRect(0, 0, W, H)
+
+      // Nebula clouds (soft, blurred radial gradients)
+      for (const neb of nebulae) {
+        const nx = (neb.x + Math.sin(t * neb.speed + neb.phase) * 0.06) * W
+        const ny = (neb.y + Math.cos(t * neb.speed * 0.7 + neb.phase) * 0.05) * H
+        const rx = neb.rx * W, ry = neb.ry * H
+        const rad = ctx.createRadialGradient(nx, ny, 0, nx, ny, Math.max(rx, ry))
+        rad.addColorStop(0, cur.nebula + '28')
+        rad.addColorStop(0.4, cur.nebula + '12')
+        rad.addColorStop(1, 'transparent')
+        ctx.save()
+        ctx.scale(1, ry / rx)
+        ctx.beginPath()
+        ctx.arc(nx, ny * (rx / ry), rx, 0, Math.PI * 2)
+        ctx.fillStyle = rad
+        ctx.fill()
+        ctx.restore()
+      }
+
+      // Accent nebula (brighter center)
+      const acx = W * (0.5 + Math.sin(t * 0.08) * 0.15)
+      const acy = H * (0.35 + Math.cos(t * 0.06) * 0.12)
+      const accRad = ctx.createRadialGradient(acx, acy, 0, acx, acy, W * 0.35)
+      accRad.addColorStop(0, cur.accent + '14')
+      accRad.addColorStop(0.5, cur.accent + '08')
+      accRad.addColorStop(1, 'transparent')
+      ctx.beginPath()
+      ctx.arc(acx, acy, W * 0.35, 0, Math.PI * 2)
+      ctx.fillStyle = accRad
+      ctx.fill()
+
+      // Stars with parallax
+      for (const s of stars) {
+        const parallax = (s.layer + 1) * 0.003
+        const sx = ((s.x + t * s.speed * parallax) % 1) * W
+        const sy = ((s.y + t * s.speed * 0.3 * parallax) % 1) * H
+        const twinkleVal = s.twinkle * (0.5 + 0.5 * Math.sin(t * 1.5 + s.phase))
+        const alpha = 0.3 + twinkleVal * 0.7
+        ctx.globalAlpha = alpha
+        ctx.beginPath()
+        ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
+        ctx.fillStyle = s.layer === 2 ? cur.accent + 'cc' : cur.star
+        ctx.fill()
+      }
+
+      // Shooting star (occasional)
+      const shootCycle = 18 // seconds between shots
+      const shootT = t % shootCycle
+      if (shootT < 1.2) {
+        const seed = Math.floor(t / shootCycle)
+        const sx0 = ((seed * 0.371 % 1)) * W
+        const sy0 = ((seed * 0.618 % 1)) * H * 0.5
+        const dx = W * 0.25
+        const dy = H * 0.12
+        const progress = shootT / 1.2
+        const sx1 = sx0 + dx * progress
+        const sy1 = sy0 + dy * progress
+        const trail = 80
+        const grad = ctx.createLinearGradient(sx1 - trail, sy1 - trail * 0.4, sx1, sy1)
+        grad.addColorStop(0, 'rgba(255,255,255,0)')
+        grad.addColorStop(1, 'rgba(255,255,255,' + (0.8 * (1 - progress)).toFixed(2) + ')')
+        ctx.globalAlpha = 1
+        ctx.beginPath()
+        ctx.moveTo(sx1 - trail, sy1 - trail * 0.4)
+        ctx.lineTo(sx1, sy1)
+        ctx.strokeStyle = grad
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+      }
+
+      ctx.globalAlpha = 1
+      frameRef.current++
+      rafRef.current = requestAnimationFrame(draw)
+    }
+
+    resize()
+    initParticles()
+    window.addEventListener('resize', () => { resize(); initParticles() })
+    rafRef.current = requestAnimationFrame(draw)
+
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      window.removeEventListener('resize', resize)
+    }
+  }, [getTheme])
+
+  return <canvas ref={canvasRef} className="space-canvas" aria-hidden="true" />
+}
+
+// ── Page transition wrapper ───────────────────────────────────────────────────
+function PageTransition({ children, pageKey }: { children: React.ReactNode; pageKey: string }) {
+  const [displayed, setDisplayed] = useState(children)
+  const [key, setKey] = useState(pageKey)
+  const [animClass, setAnimClass] = useState('page-enter-active')
+
+  useEffect(() => {
+    if (pageKey === key) return
+    setAnimClass('page-exit')
+    const t = setTimeout(() => {
+      setDisplayed(children)
+      setKey(pageKey)
+      setAnimClass('page-enter')
+      requestAnimationFrame(() => requestAnimationFrame(() => setAnimClass('page-enter-active')))
+    }, 200)
+    return () => clearTimeout(t)
+  }, [pageKey, children, key])
+
+  return <div className={`page-transition ${animClass}`}>{displayed}</div>
+}
+
 function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<void> }) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [error, setError] = useState('')
@@ -105,8 +323,7 @@ function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<voi
   }
 
   return <main className="login-shell" onPointerMove={handlePointerMove} onPointerLeave={() => { panelRef.current?.style.setProperty('--panel-x', '0px'); panelRef.current?.style.setProperty('--panel-y', '0px') }}>
-    <div className="login-space" aria-hidden="true"><span className="space-node node-one"></span><span className="space-node node-two"></span><span className="space-node node-three"></span><span className="space-node node-four"></span><span className="space-node node-five"></span><span className="space-node node-six"></span><span className="space-node node-seven"></span><span className="space-node node-eight"></span><span className="space-node node-nine"></span></div>
-    <div className="login-glow login-glow-one"></div><div className="login-glow login-glow-two"></div>
+    <SpaceCanvas theme="login" />
     <section className="login-panel" ref={panelRef}>
       <div className="login-brand"><img src={appLogo} alt="daSIboard" className="login-brand-logo" /></div>
       <div className="login-copy"><p className="eyebrow">SEU CAMPUS, MAIS PERTO</p><h1>Olá, estudante<span>.</span></h1><p>Entre para acessar sua rotina acadêmica na USP em um só lugar.</p></div>
@@ -117,7 +334,6 @@ function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<voi
       </div>
       <p className="login-footer">Ao continuar, você concorda com o uso dos dados necessários para personalizar sua experiência acadêmica.</p>
     </section>
-    <div className="login-orbit" aria-hidden="true"><div className="login-orbit-ring ring-a"></div><div className="login-orbit-ring ring-b"></div><div className="login-orbit-core">O</div></div>
   </main>
 }
 
@@ -1228,17 +1444,92 @@ function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelect
   )
 }
 
-function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
+function HomeView({ user, onLogout, activeTab, onSelectTab, schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, onConsultJupiter, onClearSchedule }: {
+  user: User; onLogout: () => void; activeTab: string; onSelectTab: (t: string) => void
+  schedule: ScheduleEntry[]; hasStoredSchedule: boolean; importError: string
+  jupiterData: { codpes: string; password: string; codpgm: string }; setJupiterData: (d: { codpes: string; password: string; codpgm: string }) => void
+  isConsultingJupiter: boolean; onConsultJupiter: (e: React.FormEvent) => void; onClearSchedule: () => void
+}) {
   const todayIndex = (new Date().getDay() + 6) % 7
   const days = getCurrentWeekDays()
+  const todayLabelText = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase()
+  const initials = user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+  const greeting = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
+
+  return <main className="app-shell home-shell">
+    <header className="topbar">
+      <div className="topbar-brand"><img src={appLogo} alt="daSIboard" className="topbar-logo" /></div>
+      <div className="topbar-actions">
+        <button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button>
+        <div className="user-summary">
+          <div className="user-name-wrap"><strong>{user.name.split(' ')[0]}</strong></div>
+          <button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button>
+        </div>
+      </div>
+    </header>
+    <div className="content">
+      <section className="welcome-row">
+        <div><p className="eyebrow">{todayLabelText}</p><h1>{greeting}, {user.name.split(' ')[0]}<span>.</span></h1></div>
+        <button className="date-button" aria-label="Ir para hoje"><Icon name="calendar" /><span>{days[todayIndex]?.date} {new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date()).replace('.', '')}</span></button>
+      </section>
+
+      <section className="section-block schedule-section">
+        <div className="section-heading">
+          <div><p className="eyebrow">SUA SEMANA</p><h2>Grade horária<span className="grade-dot">.</span></h2></div>
+          {hasStoredSchedule
+            ? <button type="button" className="clear-schedule-button" onClick={onClearSchedule}><Icon name="trash" /><span>Atualizar grade</span></button>
+            : null}
+        </div>
+        {!hasStoredSchedule && (
+          <form className="jupiter-form" onSubmit={onConsultJupiter}>
+            <input aria-label="Número USP" placeholder="Número USP" inputMode="numeric" value={jupiterData.codpes} onChange={(e) => setJupiterData({ ...jupiterData, codpes: e.target.value })} required />
+            <input aria-label="Senha do JupiterWeb" placeholder="Senha do JupiterWeb" type="password" value={jupiterData.password} onChange={(e) => setJupiterData({ ...jupiterData, password: e.target.value })} required />
+            <input aria-label="Código do programa" placeholder="Programa" value={jupiterData.codpgm} onChange={(e) => setJupiterData({ ...jupiterData, codpgm: e.target.value })} required />
+            <button className="import-button" type="submit" disabled={isConsultingJupiter}>{isConsultingJupiter ? 'Buscando...' : 'Buscar no JupiterWeb'}</button>
+          </form>
+        )}
+        {importError && <p className="schedule-error" role="alert">{importError}</p>}
+        <div className="calendar-board home-calendar-board" aria-label="Grade horária semanal">
+          {days.map((day, dayIndex) => (
+            <article className={`calendar-day${dayIndex === todayIndex ? ' today' : ''}`} key={day.label}>
+              <header>
+                <div><strong>{day.label}</strong><span>{day.date}</span></div>
+                <small>{schedule.filter((e) => e.weekday === dayIndex).length} aulas</small>
+              </header>
+              <div className="calendar-day-list">
+                {schedule.filter((e) => e.weekday === dayIndex).sort((a, b) => a.startsAt.localeCompare(b.startsAt)).map((entry) => (
+                  <div className="calendar-event" key={`${day.label}-${entry.code}-${entry.startsAt}`}>
+                    <span className="calendar-event-time">{entry.startsAt}</span>
+                    <div><strong>{entry.title}</strong><small>{entry.endsAt}{entry.room ? ` · ${entry.room}` : ''}</small></div>
+                  </div>
+                ))}
+                {!schedule.some((e) => e.weekday === dayIndex) && <p className="calendar-empty">Livre</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+    <nav className="bottom-nav" aria-label="Navegação principal">
+      {([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][]).map(([label, icon]) => (
+        <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}>
+          <Icon name={icon} /><span>{label}</span>
+        </button>
+      ))}
+    </nav>
+  </main>
+}
+
+function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState('Início')
   const [schedule, setSchedule] = useState<ScheduleEntry[]>(() => loadStoredSchedule(user.email) ?? [])
   const [hasStoredSchedule, setHasStoredSchedule] = useState(() => loadStoredSchedule(user.email) !== null)
   const [importError, setImportError] = useState('')
   const [jupiterData, setJupiterData] = useState({ codpes: '', password: '', codpgm: '1' })
   const [isConsultingJupiter, setIsConsultingJupiter] = useState(false)
-  const todayLabelText = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase()
-  const initials = user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+
+  // Map tab names to space themes
+  const spaceTheme = activeTab === 'Disciplinas' ? 'disc' : activeTab === 'Docentes' ? 'docentes' : activeTab === 'Entidades' ? 'entidades' : 'home'
 
   useEffect(() => {
     if (hasStoredSchedule) return
@@ -1275,50 +1566,26 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     setImportError('')
   }
 
-  if (activeTab === 'Disciplinas') return <DisciplinasView activeTab={activeTab} onSelectTab={setActiveTab} />
-  if (activeTab === 'Docentes') return <DocentesView activeTab={activeTab} onSelectTab={setActiveTab} />
-  if (activeTab === 'Entidades') return <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} />
+  const pageKey = activeTab
+  const pageContent = activeTab === 'Disciplinas'
+    ? <DisciplinasView activeTab={activeTab} onSelectTab={setActiveTab} />
+    : activeTab === 'Docentes'
+    ? <DocentesView activeTab={activeTab} onSelectTab={setActiveTab} />
+    : activeTab === 'Entidades'
+    ? <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} />
+    : <HomeView
+        user={user} onLogout={onLogout} activeTab={activeTab} onSelectTab={setActiveTab}
+        schedule={schedule} hasStoredSchedule={hasStoredSchedule} importError={importError}
+        jupiterData={jupiterData} setJupiterData={setJupiterData}
+        isConsultingJupiter={isConsultingJupiter} onConsultJupiter={consultJupiter} onClearSchedule={clearSchedule}
+      />
 
-  return <main className="app-shell home-shell">
-    <header className="topbar"><div className="topbar-brand"><img src={appLogo} alt="daSIboard" className="topbar-logo" /></div><div className="topbar-actions"><button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button><div className="user-summary"><div><strong>{user.name}</strong></div><button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button></div></div></header>
-    <div className="content">
-      <section className="welcome-row">
-        <div><p className="eyebrow">{todayLabelText}</p><h1>Bom dia, {user.name.split(' ')[0]}<span>.</span></h1></div>
-        <button className="date-button" aria-label="Ir para hoje"><Icon name="calendar" /><span>{days[todayIndex]?.date} {new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date()).replace('.', '')}</span></button>
-      </section>
-
-      <section className="section-block schedule-section">
-        <div className="section-heading">
-          <div><p className="eyebrow">SUA SEMANA</p><h2>Grade horária<span className="grade-dot">.</span></h2></div>
-          {hasStoredSchedule
-            ? <button type="button" className="clear-schedule-button" onClick={clearSchedule}><Icon name="trash" /><span>Atualizar grade</span></button>
-            : null}
-        </div>
-        {!hasStoredSchedule && <form className="jupiter-form" onSubmit={consultJupiter}><input aria-label="Número USP" placeholder="Número USP" inputMode="numeric" value={jupiterData.codpes} onChange={(event) => setJupiterData({ ...jupiterData, codpes: event.target.value })} required /><input aria-label="Senha do JupiterWeb" placeholder="Senha do JupiterWeb" type="password" value={jupiterData.password} onChange={(event) => setJupiterData({ ...jupiterData, password: event.target.value })} required /><input aria-label="Código do programa" placeholder="Programa" value={jupiterData.codpgm} onChange={(event) => setJupiterData({ ...jupiterData, codpgm: event.target.value })} required /><button className="import-button" type="submit" disabled={isConsultingJupiter}>{isConsultingJupiter ? 'Buscando...' : 'Buscar no JupiterWeb'}</button></form>}
-        {importError && <p className="schedule-error" role="alert">{importError}</p>}
-        <div className="calendar-board home-calendar-board" aria-label="Grade horária semanal">
-          {days.map((day, dayIndex) => (
-            <article className={`calendar-day${dayIndex === todayIndex ? ' today' : ''}`} key={day.label}>
-              <header>
-                <div><strong>{day.label}</strong><span>{day.date}</span></div>
-                <small>{schedule.filter((e) => e.weekday === dayIndex).length} aulas</small>
-              </header>
-              <div className="calendar-day-list">
-                {schedule.filter((e) => e.weekday === dayIndex).sort((a, b) => a.startsAt.localeCompare(b.startsAt)).map((entry) => (
-                  <div className="calendar-event" key={`${day.label}-${entry.code}-${entry.startsAt}`}>
-                    <span className="calendar-event-time">{entry.startsAt}</span>
-                    <div><strong>{entry.title}</strong><small>{entry.endsAt}{entry.room ? ` · ${entry.room}` : ''}</small></div>
-                  </div>
-                ))}
-                {!schedule.some((e) => e.weekday === dayIndex) && <p className="calendar-empty">Livre</p>}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+  return (
+    <div className="dashboard-root">
+      <SpaceCanvas theme={spaceTheme} />
+      <PageTransition pageKey={pageKey}>{pageContent}</PageTransition>
     </div>
-    <nav className="bottom-nav" aria-label="Navegação principal">{([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][]).map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => setActiveTab(label)}><Icon name={icon} /><span>{label}</span></button>)}</nav>
-  </main>
+  )
 }
 
 function App() {
