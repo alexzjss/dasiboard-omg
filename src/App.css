@@ -6,6 +6,9 @@
 .brand-feather { fill: none; stroke: #e9c878; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
 .brand-iris { fill: #e9c878; stroke: #fff; stroke-width: 1.2; }
 .brand-pupil { fill: #6f48d5; }
+.topbar-brand { display: flex; align-items: center; }
+.topbar-logo { height: 36px; width: auto; display: block; }
+.login-brand-logo { height: 40px; width: auto; display: block; }
 .topbar-actions { display: flex; gap: 22px; align-items: center; }
 .icon-button, .date-button, .row-arrow { border: 0; background: none; color: inherit; }
 .icon-button { position: relative; padding: 7px; color: #857d90; }
@@ -689,105 +692,17 @@ h1 span { color: #b3a0ff; }
 /* Instagram section */
 .ent-ig-section > .eyebrow { margin-bottom: 14px; }
 
-/* Top link card */
-.ent-ig-card {
+/* Instagram official embed wrapper — lets instgrm inject its own iframe freely */
+.ent-ig-embed-wrap {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 25%, #ffffff12);
-  border-radius: 14px;
-  background: #161e2b;
-  text-decoration: none;
-  margin-bottom: 14px;
-  transition: background .14s, border-color .14s;
+  justify-content: center;
+  width: 100%;
+  /* The blockquote Instagram replaces is 540px max; let it breathe */
 }
-.ent-ig-card:hover { background: #1c2637; border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 50%, #ffffff18); }
-.ent-ig-avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 50%, transparent); }
-.ent-ig-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ent-ig-info { flex: 1; display: grid; gap: 2px; }
-.ent-ig-info strong { color: #e8ebf2; font-size: 13px; font-weight: 700; }
-.ent-ig-info small { color: #6a7280; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ent-ig-open-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 18%, #090d15);
-  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 40%, transparent);
-  color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 90%, #fff);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Preview card */
-.ent-ig-preview-box {
-  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 20%, #ffffff12);
-  border-radius: 18px;
-  background: #111825;
-  overflow: hidden;
-}
-.ent-ig-preview-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 18px;
-  border-bottom: 1px solid #ffffff0e;
-}
-.ent-ig-preview-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-  border: 2px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 50%, transparent);
-  flex-shrink: 0;
-}
-.ent-ig-preview-header > div { flex: 1; display: grid; gap: 2px; min-width: 0; }
-.ent-ig-preview-handle { display: block; color: #e8ebf2; font-size: 14px; font-weight: 700; }
-.ent-ig-preview-name { display: block; color: #6a7280; font-size: 11px; }
-.ent-ig-follow-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 16px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 85%, #000);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  flex-shrink: 0;
-  transition: opacity .14s;
-}
-.ent-ig-follow-btn:hover { opacity: .85; }
-.ent-ig-preview-body {
-  padding: 20px 18px 22px;
-  display: grid;
-  gap: 16px;
-}
-.ent-ig-preview-desc { color: #8a93a8; font-size: 13px; line-height: 1.6; margin: 0; }
-.ent-ig-preview-desc strong { color: #c4b8e0; }
-.ent-ig-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 20px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 15%, #161e2b);
-  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 35%, #ffffff12);
-  color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 90%, #fff);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  align-self: start;
-  transition: background .14s, border-color .14s;
-}
-.ent-ig-cta:hover {
-  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 25%, #161e2b);
-  border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 55%, #ffffff18);
+.ent-ig-embed-wrap .instagram-media {
+  /* Override the inline margin:auto Instagram sets so it respects our flex layout */
+  margin: 0 !important;
+  width: 100% !important;
 }
 
 /* Nav theming for ent-shell */

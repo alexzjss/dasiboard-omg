@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import './App.css'
 
+import appLogo from './assets/logo.png'
 import logoDAsi from './assets/dasi.jpg'
 import logoSintese from './assets/sintesejr.jpg'
 import logoPetsi from './assets/petsi.jpg'
@@ -107,7 +108,7 @@ function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<voi
     <div className="login-space" aria-hidden="true"><span className="space-node node-one"></span><span className="space-node node-two"></span><span className="space-node node-three"></span><span className="space-node node-four"></span><span className="space-node node-five"></span><span className="space-node node-six"></span><span className="space-node node-seven"></span><span className="space-node node-eight"></span><span className="space-node node-nine"></span></div>
     <div className="login-glow login-glow-one"></div><div className="login-glow login-glow-two"></div>
     <section className="login-panel" ref={panelRef}>
-      <div className="login-brand"><strong>daSIboard</strong></div>
+      <div className="login-brand"><img src={appLogo} alt="daSIboard" className="login-brand-logo" /></div>
       <div className="login-copy"><p className="eyebrow">SEU CAMPUS, MAIS PERTO</p><h1>Olá, estudante<span>.</span></h1><p>Entre para acessar sua rotina acadêmica na USP em um só lugar.</p></div>
       <div className="login-action">
         {clientId ? <div className="google-login-wrap"><GoogleLogin onSuccess={handleSuccess} onError={() => setError('O login foi cancelado. Tente novamente.')} useOneTap={false} theme="outline" shape="pill" size="large" text="signin_with" width="320" /></div> : <div className="setup-message"><Icon name="shield" /><span>Configure `VITE_GOOGLE_CLIENT_ID` para ativar o login Google.</span></div>}
@@ -1106,6 +1107,53 @@ function useNebulaAccent(color: string | null) {
   }, [color])
 }
 
+function InstagramEmbed({ url, name }: { url: string; name: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // Load the Instagram embed script once, then re-process on every url change
+    const process = () => {
+      const ig = (window as unknown as { instgrm?: { Embeds: { process: () => void } } }).instgrm
+      if (ig?.Embeds) {
+        ig.Embeds.process()
+      }
+    }
+
+    if (!(window as unknown as { instgrm?: unknown }).instgrm) {
+      const script = document.getElementById('ig-embed-script') ?? (() => {
+        const s = document.createElement('script')
+        s.id = 'ig-embed-script'
+        s.src = 'https://www.instagram.com/embed.js'
+        s.async = true
+        s.onload = process
+        document.body.appendChild(s)
+        return s
+      })()
+      void script
+    } else {
+      process()
+    }
+  }, [url])
+
+  return (
+    <div ref={wrapRef} className="ent-ig-embed-wrap">
+      <blockquote
+        className="instagram-media"
+        data-instgrm-permalink={url}
+        data-instgrm-version="14"
+        data-instgrm-captioned
+        style={{ background: '#FFF', border: 0, borderRadius: '3px', boxShadow: '0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)', margin: '1px', maxWidth: '540px', minWidth: '326px', padding: 0, width: 'calc(100% - 2px)' }}
+      >
+        <div style={{ padding: '16px' }}>
+          <a href={url} target="_blank" rel="noopener noreferrer" style={{ background: '#FFFFFF', lineHeight: 0, padding: 0, textAlign: 'center', textDecoration: 'none', width: '100%' }}>
+            Ver publicações de {name} no Instagram
+          </a>
+        </div>
+      </blockquote>
+    </div>
+  )
+}
+
 function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
   const [selected, setSelected] = useState<Entidade | null>(null)
   const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']]
@@ -1133,65 +1181,7 @@ function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelect
 
           <div className="ent-ig-section">
             <p className="eyebrow">INSTAGRAM</p>
-            <a
-              className="ent-ig-card"
-              href={selected.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Ver Instagram de ${selected.name}`}
-            >
-              <div className="ent-ig-avatar">
-                <img src={selected.logo} alt="" aria-hidden="true" className="ent-ig-avatar-img" />
-              </div>
-              <div className="ent-ig-info">
-                <strong>{selected.instagramHandle}</strong>
-                <small>{selected.fullName}</small>
-              </div>
-              <div className="ent-ig-open-badge">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-                <span>Abrir</span>
-              </div>
-            </a>
-
-            <div className="ent-ig-preview-box">
-              <div className="ent-ig-preview-header">
-                <img src={selected.logo} alt="" aria-hidden="true" className="ent-ig-preview-avatar" />
-                <div>
-                  <strong className="ent-ig-preview-handle">{selected.instagramHandle}</strong>
-                  <span className="ent-ig-preview-name">{selected.name}</span>
-                </div>
-                <a
-                  href={selected.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ent-ig-follow-btn"
-                >
-                  Seguir
-                </a>
-              </div>
-              <div className="ent-ig-preview-body">
-                <p className="ent-ig-preview-desc">
-                  Acompanhe as publicações, eventos e novidades de <strong>{selected.name}</strong> no Instagram.
-                </p>
-                <a
-                  href={selected.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ent-ig-cta"
-                >
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                  </svg>
-                  Ver perfil no Instagram ↗
-                </a>
-              </div>
-            </div>
+            <InstagramEmbed url={selected.instagram} name={selected.name} />
           </div>
         </div>
         <nav className="bottom-nav ent-nav" aria-label="Navegação principal">
@@ -1290,7 +1280,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   if (activeTab === 'Entidades') return <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} />
 
   return <main className="app-shell home-shell">
-    <header className="topbar"><div></div><div className="topbar-actions"><button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button><div className="user-summary"><div><strong>{user.name}</strong></div><button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button></div></div></header>
+    <header className="topbar"><div className="topbar-brand"><img src={appLogo} alt="daSIboard" className="topbar-logo" /></div><div className="topbar-actions"><button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button><div className="user-summary"><div><strong>{user.name}</strong></div><button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button></div></div></header>
     <div className="content">
       <section className="welcome-row">
         <div><p className="eyebrow">{todayLabelText}</p><h1>Bom dia, {user.name.split(' ')[0]}<span>.</span></h1></div>
