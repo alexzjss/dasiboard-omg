@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="18" fill="#4a2d8a"/>
+  <!-- Eagle head facing left -->
+  <!-- Beak -->
+  <polygon points="28,52 18,58 26,60" fill="#e8b84b"/>
+  <!-- Head/neck body -->
+  <ellipse cx="50" cy="55" rx="22" ry="26" fill="#c8c8c8"/>
+  <!-- White chest -->
+  <ellipse cx="50" cy="65" rx="14" ry="18" fill="#f0f0f0"/>
+  <!-- Dark cap/top of head -->
+  <ellipse cx="50" cy="40" rx="20" ry="14" fill="#3a3a3a"/>
+  <!-- Left side dark feathers -->
+  <ellipse cx="34" cy="52" rx="8" ry="14" fill="#3a3a3a"/>
+  <!-- Right side dark feathers -->
+  <ellipse cx="66" cy="52" rx="8" ry="14" fill="#3a3a3a"/>
+  <!-- Eye -->
+  <circle cx="43" cy="47" r="5" fill="#fff"/>
+  <circle cx="43" cy="47" r="3" fill="#2a1a00"/>
+  <circle cx="42" cy="46" r="1" fill="#fff"/>
+  <!-- Beak refined -->
+  <polygon points="30,52 18,57 27,60 30,56" fill="#e8b84b"/>
+  <!-- Forehead tuft -->
+  <path d="M38,28 Q42,20 50,22 Q55,18 60,24 Q65,20 68,28 Q60,30 50,28 Q42,30 38,28Z" fill="#c8c8c8"/>
+</svg>

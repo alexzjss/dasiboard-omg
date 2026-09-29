@@ -2,6 +2,15 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import './App.css'
 
+import logoDAsi from './assets/dasi.jpg'
+import logoSintese from './assets/sintesejr.jpg'
+import logoPetsi from './assets/petsi.jpg'
+import logoHype from './assets/hypeusp.jpg'
+import logoCodelab from './assets/codelableste.jpg'
+import logoEachInTheShell from './assets/eachintheshell.jpg'
+import logoConway from './assets/conway.jpg'
+import logoCossi from './assets/cossi.jpg'
+
 type User = { name: string; email: string; picture?: string }
 type ScheduleEntry = { weekday: number; startsAt: string; endsAt: string; title: string; code: string; room: string; building: string }
 type IconName = 'home' | 'calendar' | 'book' | 'more' | 'bell' | 'arrow' | 'clock' | 'check' | 'shield' | 'trash' | 'people' | 'building'
@@ -986,7 +995,7 @@ type Entidade = {
   bgColor: string
   instagram: string
   instagramHandle: string
-  emoji: string
+  logo: string
 }
 
 const entidadesData: Entidade[] = [
@@ -999,7 +1008,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#1a1030',
     instagram: 'https://www.instagram.com/dasiusp/',
     instagramHandle: '@dasiusp',
-    emoji: '🦅',
+    logo: logoDAsi,
   },
   {
     id: 'sintese',
@@ -1010,7 +1019,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#0e1a2e',
     instagram: 'https://www.instagram.com/sintesejr/',
     instagramHandle: '@sintesejr',
-    emoji: '⚡',
+    logo: logoSintese,
   },
   {
     id: 'petsi',
@@ -1021,7 +1030,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#1c0a0e',
     instagram: 'https://www.instagram.com/petsieach/',
     instagramHandle: '@petsieach',
-    emoji: '🦉',
+    logo: logoPetsi,
   },
   {
     id: 'hype',
@@ -1032,7 +1041,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#1e1000',
     instagram: 'https://www.instagram.com/hype.usp/',
     instagramHandle: '@hype.usp',
-    emoji: '📦',
+    logo: logoHype,
   },
   {
     id: 'codelab',
@@ -1043,7 +1052,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#1e0a18',
     instagram: 'https://www.instagram.com/uspcodelableste/',
     instagramHandle: '@uspcodelableste',
-    emoji: '🧪',
+    logo: logoCodelab,
   },
   {
     id: 'eachintheshell',
@@ -1054,7 +1063,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#1e0e00',
     instagram: 'https://www.instagram.com/eachintheshell/',
     instagramHandle: '@eachintheshell',
-    emoji: '🐱',
+    logo: logoEachInTheShell,
   },
   {
     id: 'conway',
@@ -1065,7 +1074,7 @@ const entidadesData: Entidade[] = [
     bgColor: '#100a1e',
     instagram: 'https://www.instagram.com/conway_usp/',
     instagramHandle: '@conway_usp',
-    emoji: '🎮',
+    logo: logoConway,
   },
   {
     id: 'cossi',
@@ -1076,13 +1085,32 @@ const entidadesData: Entidade[] = [
     bgColor: '#130c22',
     instagram: 'https://www.instagram.com/semanadesi/',
     instagramHandle: '@semanadesi',
-    emoji: '🗓️',
+    logo: logoCossi,
   },
 ]
+
+function useNebulaAccent(color: string | null) {
+  useEffect(() => {
+    const root = document.documentElement
+    if (color) {
+      root.style.setProperty('--nebula-accent', color)
+      root.classList.add('nebula-tinted')
+    } else {
+      root.style.removeProperty('--nebula-accent')
+      root.classList.remove('nebula-tinted')
+    }
+    return () => {
+      root.style.removeProperty('--nebula-accent')
+      root.classList.remove('nebula-tinted')
+    }
+  }, [color])
+}
 
 function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
   const [selected, setSelected] = useState<Entidade | null>(null)
   const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']]
+
+  useNebulaAccent(selected ? selected.accentColor : null)
 
   if (selected) {
     return (
@@ -1093,7 +1121,9 @@ function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelect
             <span>Entidades</span>
           </button>
           <div className="ent-detail-hero">
-            <div className="ent-detail-emoji" aria-hidden="true">{selected.emoji}</div>
+            <div className="ent-detail-logo-wrap">
+              <img src={selected.logo} alt={`Logo ${selected.name}`} className="ent-detail-logo" />
+            </div>
             <div>
               <p className="eyebrow ent-eyebrow">{selected.type.toUpperCase()}</p>
               <h1 className="ent-detail-title">{selected.name}<span>.</span></h1>
@@ -1110,28 +1140,57 @@ function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelect
               rel="noopener noreferrer"
               aria-label={`Ver Instagram de ${selected.name}`}
             >
-              <div className="ent-ig-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <div className="ent-ig-avatar">
+                <img src={selected.logo} alt="" aria-hidden="true" className="ent-ig-avatar-img" />
+              </div>
+              <div className="ent-ig-info">
+                <strong>{selected.instagramHandle}</strong>
+                <small>{selected.fullName}</small>
+              </div>
+              <div className="ent-ig-open-badge">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                 </svg>
-              </div>
-              <div className="ent-ig-info">
-                <strong>{selected.instagramHandle}</strong>
-                <small>Ver perfil no Instagram ↗</small>
+                <span>Abrir</span>
               </div>
             </a>
 
-            <div className="ent-ig-embed-wrap">
-              <iframe
-                className="ent-ig-embed"
-                src={`https://www.instagram.com/${selected.instagramHandle.replace('@', '')}/embed/`}
-                allowFullScreen
-                scrolling="no"
-                title={`Instagram de ${selected.name}`}
-                loading="lazy"
-              />
+            <div className="ent-ig-preview-box">
+              <div className="ent-ig-preview-header">
+                <img src={selected.logo} alt="" aria-hidden="true" className="ent-ig-preview-avatar" />
+                <div>
+                  <strong className="ent-ig-preview-handle">{selected.instagramHandle}</strong>
+                  <span className="ent-ig-preview-name">{selected.name}</span>
+                </div>
+                <a
+                  href={selected.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ent-ig-follow-btn"
+                >
+                  Seguir
+                </a>
+              </div>
+              <div className="ent-ig-preview-body">
+                <p className="ent-ig-preview-desc">
+                  Acompanhe as publicações, eventos e novidades de <strong>{selected.name}</strong> no Instagram.
+                </p>
+                <a
+                  href={selected.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ent-ig-cta"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                  Ver perfil no Instagram ↗
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -1159,7 +1218,7 @@ function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelect
               onClick={() => setSelected(e)}
               aria-label={`Ver detalhes de ${e.name}`}
             >
-              <div className="ent-card-emoji" aria-hidden="true">{e.emoji}</div>
+              <img src={e.logo} alt={`Logo ${e.name}`} className="ent-card-logo" />
               <div className="ent-card-info">
                 <strong className="ent-card-name">{e.name}</strong>
                 <span className="ent-card-type">{e.type}</span>

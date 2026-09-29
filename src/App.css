@@ -580,6 +580,29 @@ h1 span { color: #b3a0ff; }
   .doc-detail-grid dt { color: #8a92a8; font-size: 10px; letter-spacing: .4px; text-transform: uppercase; margin-bottom: -4px; }
 }
 
+/* ── Nebula tint when an entity is open ────────────────────────────────────── */
+:root.nebula-tinted body::before {
+  background:
+    radial-gradient(circle at 18% 22%, color-mix(in srgb, var(--nebula-accent) 40%, transparent) 0 2%, transparent 10%),
+    radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--nebula-accent) 25%, transparent) 0 1.5%, transparent 8%),
+    radial-gradient(circle at 70% 78%, color-mix(in srgb, var(--nebula-accent) 20%, transparent) 0 2%, transparent 9%),
+    radial-gradient(circle at 28% 84%, color-mix(in srgb, var(--nebula-accent) 18%, transparent) 0 1.2%, transparent 7%);
+  opacity: .9;
+  transition: background .6s ease;
+}
+:root.nebula-tinted .app-shell::before {
+  background:
+    radial-gradient(ellipse at 18% 28%, color-mix(in srgb, var(--nebula-accent) 55%, transparent) 0 3%, transparent 26%),
+    radial-gradient(ellipse at 86% 20%, color-mix(in srgb, var(--nebula-accent) 35%, transparent) 0 2%, transparent 22%),
+    radial-gradient(ellipse at 76% 82%, color-mix(in srgb, var(--nebula-accent) 28%, transparent) 0 3%, transparent 24%),
+    radial-gradient(circle at 11% 20%, color-mix(in srgb, var(--nebula-accent) 85%, #fff) 0 2px, transparent 4px),
+    radial-gradient(circle at 87% 16%, color-mix(in srgb, var(--nebula-accent) 85%, #fff) 0 2px, transparent 4px),
+    radial-gradient(circle at 74% 73%, color-mix(in srgb, var(--nebula-accent) 75%, #fff) 0 2px, transparent 4px),
+    radial-gradient(circle at 31% 88%, color-mix(in srgb, var(--nebula-accent) 70%, #fff) 0 1px, transparent 3px);
+  opacity: .9;
+  transition: background .6s ease;
+}
+
 /* ── Entidades tab ─────────────────────────────────────────────────────────── */
 .ent-shell { background: #090d15; }
 .ent-content { width: min(100%, 680px); margin: 0 auto; padding: 56px 32px 148px; position: relative; z-index: 1; }
@@ -595,7 +618,7 @@ h1 span { color: #b3a0ff; }
   grid-template-columns: 52px 1fr 24px;
   align-items: center;
   gap: 14px;
-  padding: 16px 18px;
+  padding: 14px 18px;
   border: 1px solid #ffffff14;
   border-left: 3px solid var(--ent-accent, #8b5cf6);
   border-radius: 16px;
@@ -610,7 +633,7 @@ h1 span { color: #b3a0ff; }
   background: color-mix(in srgb, var(--ent-bg, #1a1030) 95%, var(--ent-accent, #8b5cf6) 12%);
 }
 .ent-card:focus-visible { outline: 2px solid var(--ent-accent, #8b5cf6); outline-offset: 2px; }
-.ent-card-emoji { font-size: 26px; line-height: 1; text-align: center; }
+.ent-card-logo { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; display: block; }
 .ent-card-info { display: grid; gap: 3px; min-width: 0; }
 .ent-card-name { display: block; color: #f0f2f7; font-size: 15px; font-weight: 700; }
 .ent-card-type { display: block; color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 80%, #a0a0a0); font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; margin-top: 2px; }
@@ -648,69 +671,127 @@ h1 span { color: #b3a0ff; }
   background: color-mix(in srgb, var(--ent-bg, #1a1030) 85%, #090d15);
   margin-bottom: 36px;
 }
-.ent-detail-emoji {
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 18%, #090d15);
-  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 35%, transparent);
-  font-size: 36px;
+.ent-detail-logo-wrap {
   flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 40%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ent-accent, #8b5cf6) 30%, transparent);
 }
+.ent-detail-logo { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ent-detail-title { font-size: 36px; letter-spacing: -1.4px; color: #f0f2f7; line-height: 1.05; }
 .ent-detail-title span { color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 90%, #ffffff); }
 .ent-detail-full { margin-top: 8px; color: #a69ebd; font-size: 13px; line-height: 1.5; }
 .ent-eyebrow { color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 80%, #a0a0a0) !important; }
 
 /* Instagram section */
-.ent-ig-section { }
 .ent-ig-section > .eyebrow { margin-bottom: 14px; }
+
+/* Top link card */
 .ent-ig-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
+  padding: 12px 16px;
   border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 25%, #ffffff12);
   border-radius: 14px;
   background: #161e2b;
   text-decoration: none;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   transition: background .14s, border-color .14s;
 }
-.ent-ig-card:hover { background: #1c2637; border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 45%, #ffffff18); }
-.ent-ig-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 20%, #090d15);
-  color: var(--ent-accent, #8b5cf6);
+.ent-ig-card:hover { background: #1c2637; border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 50%, #ffffff18); }
+.ent-ig-avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 50%, transparent); }
+.ent-ig-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ent-ig-info { flex: 1; display: grid; gap: 2px; }
+.ent-ig-info strong { color: #e8ebf2; font-size: 13px; font-weight: 700; }
+.ent-ig-info small { color: #6a7280; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ent-ig-open-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 18%, #090d15);
+  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 40%, transparent);
+  color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 90%, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
   flex-shrink: 0;
 }
-.ent-ig-info { display: grid; gap: 3px; }
-.ent-ig-info strong { color: #e8ebf2; font-size: 14px; }
-.ent-ig-info small { color: #6a7280; font-size: 11px; }
 
-/* Instagram embed iframe */
-.ent-ig-embed-wrap {
-  position: relative;
-  border: 1px solid #ffffff14;
-  border-radius: 16px;
+/* Preview card */
+.ent-ig-preview-box {
+  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 20%, #ffffff12);
+  border-radius: 18px;
+  background: #111825;
   overflow: hidden;
-  background: #0f1622;
 }
-.ent-ig-embed {
+.ent-ig-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #ffffff0e;
+}
+.ent-ig-preview-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
   display: block;
-  width: 100%;
-  min-height: 560px;
-  border: 0;
+  border: 2px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 50%, transparent);
+  flex-shrink: 0;
+}
+.ent-ig-preview-header > div { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.ent-ig-preview-handle { display: block; color: #e8ebf2; font-size: 14px; font-weight: 700; }
+.ent-ig-preview-name { display: block; color: #6a7280; font-size: 11px; }
+.ent-ig-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 85%, #000);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity .14s;
+}
+.ent-ig-follow-btn:hover { opacity: .85; }
+.ent-ig-preview-body {
+  padding: 20px 18px 22px;
+  display: grid;
+  gap: 16px;
+}
+.ent-ig-preview-desc { color: #8a93a8; font-size: 13px; line-height: 1.6; margin: 0; }
+.ent-ig-preview-desc strong { color: #c4b8e0; }
+.ent-ig-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 15%, #161e2b);
+  border: 1px solid color-mix(in srgb, var(--ent-accent, #8b5cf6) 35%, #ffffff12);
+  color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 90%, #fff);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  align-self: start;
+  transition: background .14s, border-color .14s;
+}
+.ent-ig-cta:hover {
+  background: color-mix(in srgb, var(--ent-accent, #8b5cf6) 25%, #161e2b);
+  border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 55%, #ffffff18);
 }
 
 /* Nav theming for ent-shell */
-.ent-shell .bottom-nav { background: #181428f2; border-color: var(--ent-accent, #8b5cf6)28; }
+.ent-shell .bottom-nav { background: #181428f2; border-color: color-mix(in srgb, var(--ent-accent, #8b5cf6) 20%, #ffffff1c); }
 .ent-shell .bottom-nav button.active { color: var(--ent-accent, #8b5cf6); }
 
 @media (max-width: 600px) {
@@ -718,9 +799,11 @@ h1 span { color: #b3a0ff; }
   .ent-detail-content { padding: 38px 16px 136px; }
   .ent-heading h1 { font-size: 32px; }
   .ent-detail-title { font-size: 28px; }
-  .ent-detail-hero { gap: 16px; padding: 18px; }
-  .ent-detail-emoji { width: 58px; height: 58px; font-size: 28px; }
-  .ent-card { grid-template-columns: 42px 1fr 20px; gap: 10px; padding: 13px 14px; }
+  .ent-detail-hero { flex-direction: column; align-items: flex-start; gap: 16px; padding: 18px; }
+  .ent-detail-logo-wrap { width: 64px; height: 64px; }
+  .ent-card { grid-template-columns: 44px 1fr 20px; gap: 10px; padding: 12px 14px; }
+  .ent-card-logo { width: 44px; height: 44px; }
   .ent-card-full { white-space: normal; }
-  .ent-ig-embed { min-height: 480px; }
+  .ent-ig-open-badge span { display: none; }
+  .ent-ig-info small { display: none; }
 }
