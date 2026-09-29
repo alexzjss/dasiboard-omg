@@ -86,18 +86,18 @@ function Icon({ name }: { name: IconName }) {
 }
 
 // ── Space background canvas ───────────────────────────────────────────────────
-type SpaceTheme = { nebula: string; star: string; accent: string }
+type SpaceTheme = { nebula: string; star: string; accent: string; glow: string }
 
 const SPACE_THEMES: Record<string, SpaceTheme> = {
-  home:       { nebula: '#6450b3', star: '#d8e8ff', accent: '#8b6eff' },
-  calendar:   { nebula: '#1e4080', star: '#c8deff', accent: '#5588ff' },
-  disc:       { nebula: '#1e4040', star: '#c8f0ef', accent: '#3eb8b5' },
-  docentes:   { nebula: '#3a1e50', star: '#e8d8ff', accent: '#b86eff' },
-  entidades:  { nebula: '#5c2a14', star: '#ffe8cc', accent: '#ff9040' },
-  login:      { nebula: '#1a0c2e', star: '#d8c8ff', accent: '#9060ff' },
+  home:       { nebula: '#6450b3', star: '#d8e8ff', accent: '#8b6eff', glow: '#7c5ce830' },
+  calendar:   { nebula: '#1e4080', star: '#c8deff', accent: '#5588ff', glow: '#3355cc28' },
+  disc:       { nebula: '#1e4040', star: '#c8f0ef', accent: '#3eb8b5', glow: '#2a8c8a28' },
+  docentes:   { nebula: '#3a1e50', star: '#e8d8ff', accent: '#b86eff', glow: '#8844cc30' },
+  entidades:  { nebula: '#5c2a14', star: '#ffe8cc', accent: '#ff9040', glow: '#cc5500' },
+  login:      { nebula: '#1a0c2e', star: '#d8c8ff', accent: '#9060ff', glow: '#6030cc28' },
 }
 
-function SpaceCanvas({ theme }: { theme: string }) {
+function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const frameRef = useRef(0)
@@ -105,20 +105,23 @@ function SpaceCanvas({ theme }: { theme: string }) {
   const blendRef = useRef(1)
   const themeFrom = useRef<SpaceTheme>(SPACE_THEMES[theme] ?? SPACE_THEMES.home)
   const themeTo = useRef<SpaceTheme>(SPACE_THEMES[theme] ?? SPACE_THEMES.home)
+  const liveAccentRef = useRef(liveAccent)
+  liveAccentRef.current = liveAccent
 
   const getTheme = useCallback(() => {
     const f = blendRef.current
     if (f >= 1) return themeTo.current
-    const lerp = (a: string, b: string, t: number) => {
+    const lerpStr = (a: string, b: string, t: number) => {
       const pc = (h: string) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)] as [number,number,number]
       const [ar,ag,ab] = pc(a), [br,bg,bb] = pc(b)
       const r = Math.round(ar + (br-ar)*t), g = Math.round(ag + (bg-ag)*t), bl = Math.round(ab + (bb-ab)*t)
       return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`
     }
     return {
-      nebula: lerp(themeFrom.current.nebula, themeTo.current.nebula, f),
-      star:   lerp(themeFrom.current.star,   themeTo.current.star,   f),
-      accent: lerp(themeFrom.current.accent, themeTo.current.accent, f),
+      nebula: lerpStr(themeFrom.current.nebula, themeTo.current.nebula, f),
+      star:   lerpStr(themeFrom.current.star,   themeTo.current.star,   f),
+      accent: lerpStr(themeFrom.current.accent, themeTo.current.accent, f),
+      glow:   themeTo.current.glow,
     }
   }, [])
 
@@ -177,31 +180,57 @@ function SpaceCanvas({ theme }: { theme: string }) {
       }
     }
 
+    function hexToRgb(hex: string) {
+      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
+      return `${r},${g},${b}`
+    }
+
     function draw(time: number) {
       if (!canvas || !ctx) return
       const W = canvas.width, H = canvas.height
       const t = time * 0.001
       const cur = getTheme()
+      const live = liveAccentRef.current   // entity-specific accent override
 
       // Blend transition
-      if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.015)
+      if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.018)
 
-      // Background
+      // Background — slightly tinted when live accent present
       ctx.clearRect(0, 0, W, H)
       const bg = ctx.createLinearGradient(0, 0, 0, H)
       bg.addColorStop(0, '#070a12')
-      bg.addColorStop(1, '#0b0f1a')
+      bg.addColorStop(1, live ? '#0e0a14' : '#0b0f1a')
       ctx.fillStyle = bg
       ctx.fillRect(0, 0, W, H)
+
+      // Large entity-accent glow when in entity detail (very dramatic, low alpha)
+      if (live) {
+        const rgb = hexToRgb(live.length === 7 ? live : '#ff9040')
+        // Bottom-left bloom
+        const bloom1 = ctx.createRadialGradient(W * 0.15, H * 0.75, 0, W * 0.15, H * 0.75, W * 0.65)
+        bloom1.addColorStop(0, `rgba(${rgb},0.18)`)
+        bloom1.addColorStop(0.5, `rgba(${rgb},0.07)`)
+        bloom1.addColorStop(1, 'transparent')
+        ctx.fillStyle = bloom1
+        ctx.fillRect(0, 0, W, H)
+        // Top-right bloom
+        const bloom2 = ctx.createRadialGradient(W * 0.85, H * 0.18, 0, W * 0.85, H * 0.18, W * 0.55)
+        bloom2.addColorStop(0, `rgba(${rgb},0.14)`)
+        bloom2.addColorStop(0.6, `rgba(${rgb},0.04)`)
+        bloom2.addColorStop(1, 'transparent')
+        ctx.fillStyle = bloom2
+        ctx.fillRect(0, 0, W, H)
+      }
 
       // Nebula clouds (soft, blurred radial gradients)
       for (const neb of nebulae) {
         const nx = (neb.x + Math.sin(t * neb.speed + neb.phase) * 0.06) * W
         const ny = (neb.y + Math.cos(t * neb.speed * 0.7 + neb.phase) * 0.05) * H
         const rx = neb.rx * W, ry = neb.ry * H
+        const nebulaColor = live ? live : cur.nebula
         const rad = ctx.createRadialGradient(nx, ny, 0, nx, ny, Math.max(rx, ry))
-        rad.addColorStop(0, cur.nebula + '28')
-        rad.addColorStop(0.4, cur.nebula + '12')
+        rad.addColorStop(0, nebulaColor + '35')
+        rad.addColorStop(0.4, nebulaColor + '18')
         rad.addColorStop(1, 'transparent')
         ctx.save()
         ctx.scale(1, ry / rx)
@@ -212,17 +241,28 @@ function SpaceCanvas({ theme }: { theme: string }) {
         ctx.restore()
       }
 
-      // Accent nebula (brighter center)
-      const acx = W * (0.5 + Math.sin(t * 0.08) * 0.15)
-      const acy = H * (0.35 + Math.cos(t * 0.06) * 0.12)
-      const accRad = ctx.createRadialGradient(acx, acy, 0, acx, acy, W * 0.35)
-      accRad.addColorStop(0, cur.accent + '14')
-      accRad.addColorStop(0.5, cur.accent + '08')
+      // Accent nebula (brighter center, slow drift)
+      const acx = W * (0.5 + Math.sin(t * 0.07) * 0.18)
+      const acy = H * (0.32 + Math.cos(t * 0.055) * 0.14)
+      const acR = W * (live ? 0.45 : 0.38)
+      const accentColor = live ?? cur.accent
+      const accRad = ctx.createRadialGradient(acx, acy, 0, acx, acy, acR)
+      accRad.addColorStop(0, accentColor + (live ? '22' : '1a'))
+      accRad.addColorStop(0.45, accentColor + '0c')
       accRad.addColorStop(1, 'transparent')
       ctx.beginPath()
-      ctx.arc(acx, acy, W * 0.35, 0, Math.PI * 2)
+      ctx.arc(acx, acy, acR, 0, Math.PI * 2)
       ctx.fillStyle = accRad
       ctx.fill()
+
+      // Secondary accent blob
+      const ac2x = W * (0.72 + Math.sin(t * 0.04 + 1.2) * 0.12)
+      const ac2y = H * (0.65 + Math.cos(t * 0.035 + 0.8) * 0.1)
+      const acc2 = ctx.createRadialGradient(ac2x, ac2y, 0, ac2x, ac2y, W * 0.28)
+      acc2.addColorStop(0, accentColor + '14')
+      acc2.addColorStop(1, 'transparent')
+      ctx.beginPath(); ctx.arc(ac2x, ac2y, W * 0.28, 0, Math.PI * 2)
+      ctx.fillStyle = acc2; ctx.fill()
 
       // Stars with parallax
       for (const s of stars) {
@@ -230,36 +270,34 @@ function SpaceCanvas({ theme }: { theme: string }) {
         const sx = ((s.x + t * s.speed * parallax) % 1) * W
         const sy = ((s.y + t * s.speed * 0.3 * parallax) % 1) * H
         const twinkleVal = s.twinkle * (0.5 + 0.5 * Math.sin(t * 1.5 + s.phase))
-        const alpha = 0.3 + twinkleVal * 0.7
+        const alpha = 0.35 + twinkleVal * 0.65
         ctx.globalAlpha = alpha
         ctx.beginPath()
         ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
-        ctx.fillStyle = s.layer === 2 ? cur.accent + 'cc' : cur.star
+        ctx.fillStyle = s.layer === 2 ? accentColor + 'cc' : cur.star
         ctx.fill()
       }
 
       // Shooting star (occasional)
-      const shootCycle = 18 // seconds between shots
+      const shootCycle = 16
       const shootT = t % shootCycle
-      if (shootT < 1.2) {
+      if (shootT < 1.4) {
         const seed = Math.floor(t / shootCycle)
-        const sx0 = ((seed * 0.371 % 1)) * W
-        const sy0 = ((seed * 0.618 % 1)) * H * 0.5
-        const dx = W * 0.25
-        const dy = H * 0.12
-        const progress = shootT / 1.2
-        const sx1 = sx0 + dx * progress
-        const sy1 = sy0 + dy * progress
-        const trail = 80
-        const grad = ctx.createLinearGradient(sx1 - trail, sy1 - trail * 0.4, sx1, sy1)
-        grad.addColorStop(0, 'rgba(255,255,255,0)')
-        grad.addColorStop(1, 'rgba(255,255,255,' + (0.8 * (1 - progress)).toFixed(2) + ')')
+        const sx0 = ((seed * 0.371 % 1)) * W * 0.8
+        const sy0 = ((seed * 0.618 % 1)) * H * 0.45
+        const progress = shootT / 1.4
+        const sx1 = sx0 + W * 0.28 * progress
+        const sy1 = sy0 + H * 0.14 * progress
+        const trail = 90
+        const sGrad = ctx.createLinearGradient(sx1 - trail, sy1 - trail * 0.45, sx1, sy1)
+        sGrad.addColorStop(0, 'rgba(255,255,255,0)')
+        sGrad.addColorStop(1, `rgba(255,255,255,${(0.85 * (1 - progress)).toFixed(2)})`)
         ctx.globalAlpha = 1
         ctx.beginPath()
-        ctx.moveTo(sx1 - trail, sy1 - trail * 0.4)
+        ctx.moveTo(sx1 - trail, sy1 - trail * 0.45)
         ctx.lineTo(sx1, sy1)
-        ctx.strokeStyle = grad
-        ctx.lineWidth = 1.5
+        ctx.strokeStyle = sGrad
+        ctx.lineWidth = 1.6
         ctx.stroke()
       }
 
@@ -301,6 +339,146 @@ function PageTransition({ children, pageKey }: { children: React.ReactNode; page
   }, [pageKey, children, key])
 
   return <div className={`page-transition ${animClass}`}>{displayed}</div>
+}
+
+// ── Onboarding overlay ────────────────────────────────────────────────────────
+const ONBOARDING_KEY = 'orbe_onboarding_done'
+
+const ONBOARDING_STEPS = [
+  {
+    icon: '🌌',
+    title: 'Bem-vindo ao daSIboard',
+    body: 'Seu painel acadêmico para o curso de Sistemas de Informação da EACH/USP. Tudo em um só lugar, no seu estilo.',
+    cta: 'Próximo',
+  },
+  {
+    icon: '📅',
+    title: 'Sua grade, sempre à mão',
+    body: 'Conecte seu JupiterWeb e veja sua grade horária automaticamente organizada por dia. Sem copiar, sem confusão.',
+    cta: 'Próximo',
+  },
+  {
+    icon: '📚',
+    title: 'Explore o curso',
+    body: 'Veja todas as disciplinas obrigatórias e optativas, pré-requisitos e materiais disponíveis no DriveEACH.',
+    cta: 'Próximo',
+  },
+  {
+    icon: '🏛️',
+    title: 'Conheça as entidades',
+    body: 'DASI, PET-SI, Síntese Jr., Hype USP e muito mais. Acompanhe as publicações e fique por dentro do que acontece.',
+    cta: 'Começar',
+  },
+]
+
+function OnboardingFlow({ onDone }: { onDone: () => void }) {
+  const [step, setStep] = useState(0)
+  const [exiting, setExiting] = useState(false)
+  const current = ONBOARDING_STEPS[step]
+  const isLast = step === ONBOARDING_STEPS.length - 1
+
+  function advance() {
+    if (isLast) {
+      setExiting(true)
+      setTimeout(() => { localStorage.setItem(ONBOARDING_KEY, '1'); onDone() }, 350)
+    } else {
+      setStep(s => s + 1)
+    }
+  }
+
+  function skip() {
+    setExiting(true)
+    setTimeout(() => { localStorage.setItem(ONBOARDING_KEY, '1'); onDone() }, 350)
+  }
+
+  return (
+    <div className={`onboarding-overlay${exiting ? ' onboarding-exit' : ''}`} role="dialog" aria-modal="true" aria-label="Boas-vindas ao daSIboard">
+      <div className="onboarding-panel">
+        <div className="onboarding-icon" aria-hidden="true">{current.icon}</div>
+        <div className="onboarding-dots" aria-hidden="true">
+          {ONBOARDING_STEPS.map((_, i) => <span key={i} className={`onboarding-dot${i === step ? ' active' : ''}`} />)}
+        </div>
+        <h2 className="onboarding-title">{current.title}</h2>
+        <p className="onboarding-body">{current.body}</p>
+        <button className="onboarding-cta" onClick={advance}>{current.cta}</button>
+        {!isLast && <button className="onboarding-skip" onClick={skip}>Pular introdução</button>}
+      </div>
+    </div>
+  )
+}
+
+// ── User profile menu ─────────────────────────────────────────────────────────
+function UserMenu({ user, onLogout, onClose, onOpenProfile }: { user: User; onLogout: () => void; onClose: () => void; onOpenProfile: () => void }) {
+  const initials = user.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <>
+      <div className="user-menu-backdrop" onClick={onClose} aria-hidden="true" />
+      <div className="user-menu-sheet" role="dialog" aria-label="Menu do usuário">
+        <div className="user-menu-handle" aria-hidden="true" />
+        <div className="user-menu-header">
+          <div className="user-menu-avatar">
+            {user.picture ? <img src={user.picture} alt={user.name} /> : <span>{initials}</span>}
+          </div>
+          <div className="user-menu-info">
+            <strong>{user.name}</strong>
+            <span>{user.email}</span>
+          </div>
+        </div>
+        <div className="user-menu-items">
+          <button className="user-menu-item" onClick={() => { onOpenProfile(); onClose() }}>
+            <svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span>Meu perfil</span>
+          </button>
+          <button className="user-menu-item user-menu-logout" onClick={() => { onLogout(); onClose() }}>
+            <svg className="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <span>Sair da conta</span>
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Profile page ──────────────────────────────────────────────────────────────
+function ProfilePage({ user, onBack, onLogout }: { user: User; onBack: () => void; onLogout: () => void }) {
+  const initials = user.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+  return (
+    <main className="app-shell profile-shell">
+      <div className="profile-content">
+        <button className="ent-back-btn" onClick={onBack} aria-label="Voltar">
+          <Icon name="arrow" /><span>Voltar</span>
+        </button>
+        <div className="profile-hero">
+          <div className="profile-avatar-lg">
+            {user.picture ? <img src={user.picture} alt={user.name} /> : <span>{initials}</span>}
+          </div>
+          <div>
+            <p className="eyebrow">ESTUDANTE · EACH/USP</p>
+            <h1 className="profile-name">{user.name}<span>.</span></h1>
+            <p className="profile-email">{user.email}</p>
+          </div>
+        </div>
+        <div className="profile-section">
+          <p className="eyebrow">CONTA</p>
+          <div className="profile-items">
+            <div className="profile-item"><span className="profile-item-label">E-mail</span><span className="profile-item-value">{user.email}</span></div>
+            <div className="profile-item"><span className="profile-item-label">Instituição</span><span className="profile-item-value">USP — EACH</span></div>
+          </div>
+        </div>
+        <button className="profile-logout-btn" onClick={onLogout}>
+          <svg className="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          Sair da conta
+        </button>
+      </div>
+    </main>
+  )
 }
 
 function LoginScreen({ onLogin }: { onLogin: (credential: string) => Promise<void> }) {
@@ -1108,16 +1286,27 @@ const docentesData: Docente[] = [
 
 const ALL_COURSES = Array.from(new Set(docentesData.map((d) => d.curso))).sort()
 
+const DOC_PAGE_SIZE = 20
+
 function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
   const [query, setQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(DOC_PAGE_SIZE)
 
   const filtered = docentesData.filter((d) => {
     const matchName = d.nome.toLowerCase().includes(query.toLowerCase())
     const matchCourse = selectedCourse === '' || d.curso === selectedCourse
     return matchName && matchCourse
   })
+
+  const visible = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
+
+  function handleFilterChange(newQuery: string, newCourse: string) {
+    setQuery(newQuery); setSelectedCourse(newCourse)
+    setExpandedRow(null); setVisibleCount(DOC_PAGE_SIZE)
+  }
 
   const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']]
 
@@ -1137,14 +1326,14 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
             type="search"
             placeholder="Pesquisar por nome…"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setExpandedRow(null) }}
+            onChange={(e) => handleFilterChange(e.target.value, selectedCourse)}
             aria-label="Pesquisar docente por nome"
           />
         </div>
         <select
           className="doc-select"
           value={selectedCourse}
-          onChange={(e) => { setSelectedCourse(e.target.value); setExpandedRow(null) }}
+          onChange={(e) => handleFilterChange(query, e.target.value)}
           aria-label="Filtrar por curso"
         >
           <option value="">Todos os cursos</option>
@@ -1152,18 +1341,17 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
         </select>
       </div>
 
-      <p className="doc-count" aria-live="polite">{filtered.length} docente{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}</p>
+      <p className="doc-count" aria-live="polite">
+        {filtered.length} docente{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
+        {hasMore && <span className="doc-count-showing"> · mostrando {visibleCount}</span>}
+      </p>
 
       <div className="doc-list" role="list">
-        {filtered.length === 0
+        {visible.length === 0
           ? <p className="doc-empty">Nenhum docente encontrado para os filtros aplicados.</p>
-          : filtered.map((d) => {
+          : visible.map((d) => {
               const isOpen = expandedRow === d.nome
-              return <article
-                key={d.nome}
-                className={`doc-card${isOpen ? ' open' : ''}`}
-                role="listitem"
-              >
+              return <article key={d.nome} className={`doc-card${isOpen ? ' open' : ''}`} role="listitem">
                 <button
                   className="doc-card-trigger"
                   onClick={() => setExpandedRow(isOpen ? null : d.nome)}
@@ -1192,6 +1380,12 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
             })
         }
       </div>
+
+      {hasMore && (
+        <button className="doc-load-more" onClick={() => setVisibleCount(c => c + DOC_PAGE_SIZE)}>
+          Ver mais {Math.min(DOC_PAGE_SIZE, filtered.length - visibleCount)} docentes
+        </button>
+      )}
     </div>
     <nav className="bottom-nav" aria-label="Navegação principal">
       {navItems.map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}
@@ -1370,11 +1564,18 @@ function InstagramEmbed({ url, name }: { url: string; name: string }) {
   )
 }
 
-function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
+function EntidadesView({ activeTab, onSelectTab, onEntityAccent, onOpenUserMenu }: { activeTab: string; onSelectTab: (tab: string) => void; onEntityAccent: (c: string | null) => void; onOpenUserMenu: () => void }) {
   const [selected, setSelected] = useState<Entidade | null>(null)
   const navItems: [string, IconName][] = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']]
 
   useNebulaAccent(selected ? selected.accentColor : null)
+
+  useEffect(() => {
+    onEntityAccent(selected ? selected.accentColor : null)
+    return () => onEntityAccent(null)
+  }, [selected, onEntityAccent])
+
+  void onOpenUserMenu // used in future topbar; avoid lint warning
 
   if (selected) {
     return (
@@ -1444,8 +1645,27 @@ function EntidadesView({ activeTab, onSelectTab }: { activeTab: string; onSelect
   )
 }
 
-function HomeView({ user, onLogout, activeTab, onSelectTab, schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, onConsultJupiter, onClearSchedule }: {
-  user: User; onLogout: () => void; activeTab: string; onSelectTab: (t: string) => void
+// ── Shared topbar with user menu trigger ──────────────────────────────────────
+function AppTopbar({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: () => void }) {
+  const initials = user.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+  return (
+    <header className="topbar">
+      <div className="topbar-brand"><img src={appLogo} alt="daSIboard" className="topbar-logo" /></div>
+      <div className="topbar-actions">
+        <button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button>
+        <div className="user-summary">
+          <div className="user-name-wrap"><strong>{user.name.split(' ')[0]}</strong></div>
+          <button className="avatar" aria-label="Abrir menu do usuário" onClick={onOpenUserMenu}>
+            {user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}
+          </button>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function HomeView({ user, onOpenUserMenu, activeTab, onSelectTab, schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, onConsultJupiter, onClearSchedule }: {
+  user: User; onOpenUserMenu: () => void; activeTab: string; onSelectTab: (t: string) => void
   schedule: ScheduleEntry[]; hasStoredSchedule: boolean; importError: string
   jupiterData: { codpes: string; password: string; codpgm: string }; setJupiterData: (d: { codpes: string; password: string; codpgm: string }) => void
   isConsultingJupiter: boolean; onConsultJupiter: (e: React.FormEvent) => void; onClearSchedule: () => void
@@ -1453,20 +1673,10 @@ function HomeView({ user, onLogout, activeTab, onSelectTab, schedule, hasStoredS
   const todayIndex = (new Date().getDay() + 6) % 7
   const days = getCurrentWeekDays()
   const todayLabelText = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase()
-  const initials = user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
   const greeting = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
   return <main className="app-shell home-shell">
-    <header className="topbar">
-      <div className="topbar-brand"><img src={appLogo} alt="daSIboard" className="topbar-logo" /></div>
-      <div className="topbar-actions">
-        <button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button>
-        <div className="user-summary">
-          <div className="user-name-wrap"><strong>{user.name.split(' ')[0]}</strong></div>
-          <button className="avatar" aria-label="Sair da conta" onClick={onLogout}>{user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}</button>
-        </div>
-      </div>
-    </header>
+    <AppTopbar user={user} onOpenUserMenu={onOpenUserMenu} />
     <div className="content">
       <section className="welcome-row">
         <div><p className="eyebrow">{todayLabelText}</p><h1>{greeting}, {user.name.split(' ')[0]}<span>.</span></h1></div>
@@ -1527,9 +1737,15 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [importError, setImportError] = useState('')
   const [jupiterData, setJupiterData] = useState({ codpes: '', password: '', codpgm: '1' })
   const [isConsultingJupiter, setIsConsultingJupiter] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [entityAccent, setEntityAccent] = useState<string | null>(null)
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY))
 
   // Map tab names to space themes
   const spaceTheme = activeTab === 'Disciplinas' ? 'disc' : activeTab === 'Docentes' ? 'docentes' : activeTab === 'Entidades' ? 'entidades' : 'home'
+  const handleEntityAccent = useCallback((c: string | null) => setEntityAccent(c), [])
+  const openUserMenu = useCallback(() => setUserMenuOpen(true), [])
 
   useEffect(() => {
     if (hasStoredSchedule) return
@@ -1566,15 +1782,26 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     setImportError('')
   }
 
+  if (showProfile) {
+    return (
+      <div className="dashboard-root">
+        <SpaceCanvas theme="home" />
+        <PageTransition pageKey="profile">
+          <ProfilePage user={user} onBack={() => setShowProfile(false)} onLogout={onLogout} />
+        </PageTransition>
+      </div>
+    )
+  }
+
   const pageKey = activeTab
   const pageContent = activeTab === 'Disciplinas'
     ? <DisciplinasView activeTab={activeTab} onSelectTab={setActiveTab} />
     : activeTab === 'Docentes'
     ? <DocentesView activeTab={activeTab} onSelectTab={setActiveTab} />
     : activeTab === 'Entidades'
-    ? <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} />
+    ? <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} onEntityAccent={handleEntityAccent} onOpenUserMenu={openUserMenu} />
     : <HomeView
-        user={user} onLogout={onLogout} activeTab={activeTab} onSelectTab={setActiveTab}
+        user={user} onOpenUserMenu={openUserMenu} activeTab={activeTab} onSelectTab={setActiveTab}
         schedule={schedule} hasStoredSchedule={hasStoredSchedule} importError={importError}
         jupiterData={jupiterData} setJupiterData={setJupiterData}
         isConsultingJupiter={isConsultingJupiter} onConsultJupiter={consultJupiter} onClearSchedule={clearSchedule}
@@ -1582,8 +1809,17 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   return (
     <div className="dashboard-root">
-      <SpaceCanvas theme={spaceTheme} />
+      <SpaceCanvas theme={spaceTheme} liveAccent={entityAccent ?? undefined} />
       <PageTransition pageKey={pageKey}>{pageContent}</PageTransition>
+      {userMenuOpen && (
+        <UserMenu
+          user={user}
+          onLogout={onLogout}
+          onClose={() => setUserMenuOpen(false)}
+          onOpenProfile={() => setShowProfile(true)}
+        />
+      )}
+      {showOnboarding && <OnboardingFlow onDone={() => setShowOnboarding(false)} />}
     </div>
   )
 }
