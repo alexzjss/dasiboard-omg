@@ -85,6 +85,42 @@ function Icon({ name }: { name: IconName }) {
   return <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" style={isFill ? { fill: 'currentColor', stroke: 'none' } : undefined}><path d={paths[name]} /></svg>
 }
 
+export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][] }: {
+  activeTab: string
+  onSelectTab: (tab: string) => void
+  className?: string
+  items?: [string, IconName][]
+}) {
+  const [isVisible, setIsVisible] = useState(true)
+  const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      const scrollingDown = currentScrollY > lastScrollY.current
+      const isAtTop = currentScrollY <= 0
+
+      setIsVisible(isAtTop || !scrollingDown)
+      lastScrollY.current = currentScrollY
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  return (
+    <nav className={`bottom-nav ${className} ${isVisible ? 'is-visible' : 'is-hidden'}`.trim()} aria-label="Navegação principal">
+      {items.map(([label, icon]) => (
+        <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}>
+          <Icon name={icon} />
+          <span>{label}</span>
+        </button>
+      ))}
+    </nav>
+  )
+}
+
 // ── Space background canvas ───────────────────────────────────────────────────
 type SpaceTheme = { nebula: string; star: string; accent: string; glow: string }
 
@@ -1038,7 +1074,7 @@ function DisciplinasView({ activeTab, onSelectTab }: { activeTab: string; onSele
           </div>
       }
     </div>
-    <nav className="bottom-nav" aria-label="Navegação principal">{([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][]).map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}</nav>
+    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} />
   </main>
 }
 
@@ -1387,9 +1423,7 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
         </button>
       )}
     </div>
-    <nav className="bottom-nav" aria-label="Navegação principal">
-      {navItems.map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}
-    </nav>
+    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} items={navItems} />
   </main>
 }
 
@@ -1601,9 +1635,7 @@ function EntidadesView({ activeTab, onSelectTab, onEntityAccent, onOpenUserMenu 
             <InstagramEmbed url={selected.instagram} name={selected.name} />
           </div>
         </div>
-        <nav className="bottom-nav ent-nav" aria-label="Navegação principal">
-          {navItems.map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}
-        </nav>
+        <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} className="ent-nav" items={navItems} />
       </main>
     )
   }
@@ -1638,9 +1670,7 @@ function EntidadesView({ activeTab, onSelectTab, onEntityAccent, onOpenUserMenu 
           ))}
         </div>
       </div>
-      <nav className="bottom-nav ent-nav" aria-label="Navegação principal">
-        {navItems.map(([label, icon]) => <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}><Icon name={icon} /><span>{label}</span></button>)}
-      </nav>
+      <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} className="ent-nav" items={navItems} />
     </main>
   )
 }
@@ -1720,13 +1750,7 @@ function HomeView({ user, onOpenUserMenu, activeTab, onSelectTab, schedule, hasS
         </div>
       </section>
     </div>
-    <nav className="bottom-nav" aria-label="Navegação principal">
-      {([['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][]).map(([label, icon]) => (
-        <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}>
-          <Icon name={icon} /><span>{label}</span>
-        </button>
-      ))}
-    </nav>
+    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} />
   </main>
 }
 

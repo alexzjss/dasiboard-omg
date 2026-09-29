@@ -255,6 +255,8 @@ h1 span { color: #b3a0ff; }
   bottom: max(16px, env(safe-area-inset-bottom, 16px));
   left: 50%;
   transform: translateX(-50%);
+  opacity: 1;
+  pointer-events: auto;
   display: flex; justify-content: space-around;
   width: min(440px, calc(100% - 24px));
   padding: 8px 6px;
@@ -264,6 +266,12 @@ h1 span { color: #b3a0ff; }
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.bottom-nav.is-hidden {
+  transform: translateX(-50%) translateY(calc(100% + 18px));
+  opacity: 0;
+  pointer-events: none;
 }
 .bottom-nav button {
   display: grid; justify-items: center; gap: 4px;
