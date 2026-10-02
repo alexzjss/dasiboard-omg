@@ -85,38 +85,31 @@ function Icon({ name }: { name: IconName }) {
   return <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" style={isFill ? { fill: 'currentColor', stroke: 'none' } : undefined}><path d={paths[name]} /></svg>
 }
 
-export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][] }: {
+export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][], profileAction, profileAvatar, profileName }: {
   activeTab: string
   onSelectTab: (tab: string) => void
   className?: string
   items?: [string, IconName][]
+  profileAction?: () => void
+  profileAvatar?: string
+  profileName?: string
 }) {
-  const [isVisible, setIsVisible] = useState(true)
-  const lastScrollY = useRef(0)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      const scrollingDown = currentScrollY > lastScrollY.current
-      const isAtTop = currentScrollY <= 0
-
-      setIsVisible(isAtTop || !scrollingDown)
-      lastScrollY.current = currentScrollY
-    }
-
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  const initials = (profileName ?? 'Usuário').split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'U'
 
   return (
-    <nav className={`bottom-nav ${className} ${isVisible ? 'is-visible' : 'is-hidden'}`.trim()} aria-label="Navegação principal">
+    <nav className={`bottom-nav ${className}`.trim()} aria-label="Navegação principal">
       {items.map(([label, icon]) => (
-        <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}>
+        <button key={label} type="button" className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)} aria-current={activeTab === label ? 'page' : undefined}>
           <Icon name={icon} />
           <span>{label}</span>
         </button>
       ))}
+      {profileAction && (
+        <button type="button" className="bottom-nav-profile" onClick={profileAction} aria-label="Abrir perfil do usuário">
+          {profileAvatar ? <img src={profileAvatar} alt="" /> : <span className="bottom-nav-profile-badge" aria-hidden="true">{initials}</span>}
+          <span>Perfil</span>
+        </button>
+      )}
     </nav>
   )
 }
@@ -987,7 +980,7 @@ function DisciplinasGraph({ periods }: { periods: Period[] }) {
   )
 }
 
-function DisciplinasView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
+function DisciplinasView({ activeTab, onSelectTab, onOpenUserMenu }: { activeTab: string; onSelectTab: (tab: string) => void; onOpenUserMenu: () => void }) {
   const [section, setSection] = useState<'obrigatorias' | 'optativas'>('obrigatorias')
   const [viewMode, setViewMode] = useState<'list' | 'graph'>('list')
   const periods = section === 'obrigatorias' ? obrigatoriasData : optativasData
@@ -1074,7 +1067,7 @@ function DisciplinasView({ activeTab, onSelectTab }: { activeTab: string; onSele
           </div>
       }
     </div>
-    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} />
+    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} profileAction={onOpenUserMenu} />
   </main>
 }
 
@@ -1324,7 +1317,7 @@ const ALL_COURSES = Array.from(new Set(docentesData.map((d) => d.curso))).sort()
 
 const DOC_PAGE_SIZE = 20
 
-function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectTab: (tab: string) => void }) {
+function DocentesView({ activeTab, onSelectTab, onOpenUserMenu }: { activeTab: string; onSelectTab: (tab: string) => void; onOpenUserMenu: () => void }) {
   const [query, setQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
@@ -1423,7 +1416,7 @@ function DocentesView({ activeTab, onSelectTab }: { activeTab: string; onSelectT
         </button>
       )}
     </div>
-    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} items={navItems} />
+    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} items={navItems} profileAction={onOpenUserMenu} />
   </main>
 }
 
@@ -1609,8 +1602,6 @@ function EntidadesView({ activeTab, onSelectTab, onEntityAccent, onOpenUserMenu 
     return () => onEntityAccent(null)
   }, [selected, onEntityAccent])
 
-  void onOpenUserMenu // used in future topbar; avoid lint warning
-
   if (selected) {
     return (
       <main className="app-shell ent-shell" style={{ '--ent-accent': selected.accentColor, '--ent-bg': selected.bgColor } as React.CSSProperties}>
@@ -1635,7 +1626,7 @@ function EntidadesView({ activeTab, onSelectTab, onEntityAccent, onOpenUserMenu 
             <InstagramEmbed url={selected.instagram} name={selected.name} />
           </div>
         </div>
-        <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} className="ent-nav" items={navItems} />
+        <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} className="ent-nav" items={navItems} profileAction={onOpenUserMenu} />
       </main>
     )
   }
@@ -1670,27 +1661,8 @@ function EntidadesView({ activeTab, onSelectTab, onEntityAccent, onOpenUserMenu 
           ))}
         </div>
       </div>
-      <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} className="ent-nav" items={navItems} />
+      <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} className="ent-nav" items={navItems} profileAction={onOpenUserMenu} />
     </main>
-  )
-}
-
-// ── Shared topbar with user menu trigger ──────────────────────────────────────
-function AppTopbar({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: () => void }) {
-  const initials = user.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
-  return (
-    <header className="topbar">
-      <div className="topbar-brand"><img src={appLogo} alt="daSIboard" className="topbar-logo" /></div>
-      <div className="topbar-actions">
-        <button className="icon-button notification" aria-label="Notificações"><Icon name="bell" /><span></span></button>
-        <div className="user-summary">
-          <div className="user-name-wrap"><strong>{user.name.split(' ')[0]}</strong></div>
-          <button className="avatar" aria-label="Abrir menu do usuário" onClick={onOpenUserMenu}>
-            {user.picture ? <img src={user.picture} alt={`Foto de ${user.name}`} /> : initials}
-          </button>
-        </div>
-      </div>
-    </header>
   )
 }
 
@@ -1706,7 +1678,6 @@ function HomeView({ user, onOpenUserMenu, activeTab, onSelectTab, schedule, hasS
   const greeting = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
   return <main className="app-shell home-shell">
-    <AppTopbar user={user} onOpenUserMenu={onOpenUserMenu} />
     <div className="content">
       <section className="welcome-row">
         <div><p className="eyebrow">{todayLabelText}</p><h1>{greeting}, {user.name.split(' ')[0]}<span>.</span></h1></div>
@@ -1750,7 +1721,7 @@ function HomeView({ user, onOpenUserMenu, activeTab, onSelectTab, schedule, hasS
         </div>
       </section>
     </div>
-    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} />
+    <BottomNav activeTab={activeTab} onSelectTab={onSelectTab} profileAction={onOpenUserMenu} profileAvatar={user.picture} profileName={user.name} />
   </main>
 }
 
@@ -1819,9 +1790,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   const pageKey = activeTab
   const pageContent = activeTab === 'Disciplinas'
-    ? <DisciplinasView activeTab={activeTab} onSelectTab={setActiveTab} />
+    ? <DisciplinasView activeTab={activeTab} onSelectTab={setActiveTab} onOpenUserMenu={openUserMenu} />
     : activeTab === 'Docentes'
-    ? <DocentesView activeTab={activeTab} onSelectTab={setActiveTab} />
+    ? <DocentesView activeTab={activeTab} onSelectTab={setActiveTab} onOpenUserMenu={openUserMenu} />
     : activeTab === 'Entidades'
     ? <EntidadesView activeTab={activeTab} onSelectTab={setActiveTab} onEntityAccent={handleEntityAccent} onOpenUserMenu={openUserMenu} />
     : <HomeView

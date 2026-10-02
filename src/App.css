@@ -252,39 +252,78 @@ h1 span { color: #b3a0ff; }
 /* ── Bottom nav ──────────────────────────────────────────────────────────────── */
 .bottom-nav {
   position: fixed; z-index: 20;
-  bottom: max(16px, env(safe-area-inset-bottom, 16px));
-  left: 50%;
+  left: 50%; bottom: max(16px, env(safe-area-inset-bottom, 16px));
   transform: translateX(-50%);
-  opacity: 1;
-  pointer-events: auto;
-  display: flex; justify-content: space-around;
-  width: min(440px, calc(100% - 24px));
-  padding: 8px 6px;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  width: min(560px, calc(100% - 18px));
+  padding: 8px 8px 10px;
   border: 1px solid rgba(182,155,255,0.18);
-  border-radius: 22px;
-  background: rgba(18,15,36,0.88);
+  border-radius: 24px;
+  background: rgba(17,14,29,0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  box-shadow: 0 14px 38px rgba(0,0,0,0.58), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.bottom-nav.is-hidden {
-  transform: translateX(-50%) translateY(calc(100% + 18px));
-  opacity: 0;
-  pointer-events: none;
-}
-.bottom-nav button {
-  display: grid; justify-items: center; gap: 4px;
-  flex: 1; min-width: 0; min-height: 44px;
+.bottom-nav button,
+.bottom-nav-profile {
+  display: grid; justify-items: center; align-content: center; gap: 5px;
+  min-width: 0; min-height: 54px;
   border: 0; background: none; color: #6f7b90;
-  font-size: 9px; font-weight: 600; letter-spacing: 0.4px;
-  border-radius: 14px;
-  transition: color 0.18s, background 0.18s;
+  font: 700 9px/1 'DM Sans', sans-serif;
+  letter-spacing: 0.18px;
+  border-radius: 16px;
+  padding: 6px 4px;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
-.bottom-nav button .icon { width: 20px; height: 20px; transition: transform 0.2s; }
-.bottom-nav button.active { color: #c8bbff; background: rgba(140,108,255,0.12); }
+.bottom-nav button:hover,
+.bottom-nav-profile:hover { color: #a8b4c8; }
+.bottom-nav button:focus-visible,
+.bottom-nav-profile:focus-visible {
+  outline: 2px solid rgba(196,170,255,0.9);
+  outline-offset: 2px;
+}
+.bottom-nav button .icon { width: 20px; height: 20px; transition: transform 0.2s ease, stroke-width 0.2s ease; }
+.bottom-nav button.active,
+.bottom-nav-profile.active {
+  color: #c8bbff;
+  background: rgba(140,108,255,0.12);
+  box-shadow: inset 0 0 0 1px rgba(182,155,255,0.14);
+}
 .bottom-nav button.active .icon { stroke-width: 2.4; transform: scale(1.08); }
-.bottom-nav button:not(.active):hover { color: #a8b4c8; }
+.bottom-nav button span,
+.bottom-nav-profile span:last-child {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.18px;
+  white-space: nowrap;
+}
+.bottom-nav-profile {
+  position: relative;
+  color: #dfe8fa;
+}
+.bottom-nav-profile img,
+.bottom-nav-profile-badge {
+  width: 25px; height: 25px; border-radius: 50%;
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.bottom-nav-profile img { object-fit: cover; border: 1px solid rgba(255,255,255,0.12); }
+.bottom-nav-profile-badge {
+  background: linear-gradient(135deg, #201c37, #312766);
+  color: #d9ccff; font-size: 9px; font-weight: 800;
+  border: 1px solid rgba(196,170,255,0.2);
+}
+.bottom-nav-profile:hover { color: #f3ecff; }
+@media (min-width: 720px) {
+  .bottom-nav {
+    width: min(620px, calc(100% - 40px));
+    padding: 10px 10px 12px;
+    gap: 8px;
+  }
+  .bottom-nav button,
+  .bottom-nav-profile {
+    min-height: 58px;
+  }
+}
 
 /* ── Quick grid ──────────────────────────────────────────────────────────────── */
 .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
@@ -922,18 +961,20 @@ h1 span { color: #b3a0ff; }
 .doc-load-more:hover { background: rgba(40,32,72,0.9); border-color: rgba(182,155,255,0.35); color: #d0c6ff; }
 
 /* ── Bottom nav improvements ─────────────────────────────────────────────────── */
-/* Force bottom-nav always visible over all content */
 .bottom-nav { z-index: 50 !important; }
-/* Active pill indicator */
 .bottom-nav button { position: relative; }
 .bottom-nav button.active::after {
   content: '';
-  position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-  width: 18px; height: 3px; border-radius: 2px;
-  background: currentColor; opacity: 0.7;
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 3px; border-radius: 999px;
+  background: currentColor; opacity: 0.72;
 }
-/* Nav label font improvement */
-.bottom-nav button span { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
+.bottom-nav-profile { position: relative; }
+.bottom-nav-profile::before {
+  content: '';
+  position: absolute; inset: 0 auto auto 50%; transform: translateX(-50%);
+  width: 0; height: 0;
+}
 
 /* ── Responsive: mobile hero fixes ───────────────────────────────────────────── */
 @media (max-width: 520px) {
