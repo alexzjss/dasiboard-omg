@@ -367,7 +367,8 @@ function PageTransition({ children, pageKey }: { children: React.ReactNode; page
     return () => clearTimeout(t)
   }, [pageKey, children, key])
 
-  return <div className={`page-transition ${animClass}`}>{displayed}</div>
+  const content = pageKey === key ? children : displayed
+  return <div className={`page-transition ${animClass}`}>{content}</div>
 }
 
 // ── Onboarding overlay ────────────────────────────────────────────────────────
