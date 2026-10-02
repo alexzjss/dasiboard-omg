@@ -804,6 +804,7 @@ h1 span { color: #b3a0ff; }
   background: rgba(4,6,12,0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
   animation: onboarding-in 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 .onboarding-overlay.onboarding-exit {
@@ -819,6 +820,7 @@ h1 span { color: #b3a0ff; }
   border-radius: 28px;
   background: rgba(14,12,24,0.9);
   box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(180,155,255,0.08) inset;
+  pointer-events: auto;
   animation: onboarding-panel-in 0.38s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes onboarding-panel-in { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: none; } }

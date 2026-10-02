@@ -72,3 +72,11 @@ export async function saveSchedule(googleSub: string, entries: ScheduleEntry[]) 
   if (error) throw new Error(`Could not save schedule: ${error.message}`)
   return { entries: data.entries, importedAt: data.imported_at }
 }
+
+export async function deleteSchedule(googleSub: string) {
+  const { data: user, error: userError } = await getClient()
+    .from('users').select('id').eq('google_sub', googleSub).single<{ id: string }>()
+  if (userError) throw new Error(`Could not find user: ${userError.message}`)
+  const { error } = await getClient().from('schedule_imports').delete().eq('user_id', user.id)
+  if (error) throw new Error(`Could not delete schedule: ${error.message}`)
+}

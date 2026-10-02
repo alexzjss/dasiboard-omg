@@ -4,7 +4,7 @@ import cors from 'cors'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import { SignJWT, jwtVerify } from 'jose'
-import { getSchedule, saveSchedule, type ScheduleEntry, upsertUser } from './db.js'
+import { deleteSchedule, getSchedule, saveSchedule, type ScheduleEntry, upsertUser } from './db.js'
 import { fetchJupiterSchedule } from './jupiter.js'
 
 type SessionUser = { sub: string; name: string; email: string; picture?: string }
@@ -121,6 +121,16 @@ app.put('/api/schedule', isAllowedOrigin, requireSession, async (req, res) => {
   if (!validEntries) return res.status(400).json({ error: 'A grade horária é inválida' })
   try { res.json(await saveSchedule(req.user!.sub, entries)) }
   catch (error) { console.error(error); res.status(503).json({ error: 'Não foi possível salvar a grade horária' }) }
+})
+
+app.delete('/api/schedule', isAllowedOrigin, requireSession, async (req, res) => {
+  try {
+    await deleteSchedule(req.user!.sub)
+    res.status(204).end()
+  } catch (error) {
+    console.error(error)
+    res.status(503).json({ error: 'Não foi possível remover a grade horária' })
+  }
 })
 
 app.post('/api/schedule/jupiter', isAllowedOrigin, requireSessionInProduction, async (req, res) => {

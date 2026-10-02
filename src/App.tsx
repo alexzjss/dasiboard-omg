@@ -406,6 +406,14 @@ function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const current = ONBOARDING_STEPS[step]
   const isLast = step === ONBOARDING_STEPS.length - 1
 
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') skip()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  })
+
   function advance() {
     if (isLast) {
       setExiting(true)
@@ -1693,9 +1701,9 @@ function HomeView({ user, onOpenUserMenu, activeTab, onSelectTab, schedule, hasS
         </div>
         {!hasStoredSchedule && (
           <form className="jupiter-form" onSubmit={onConsultJupiter}>
-            <input aria-label="Número USP" placeholder="Número USP" inputMode="numeric" value={jupiterData.codpes} onChange={(e) => setJupiterData({ ...jupiterData, codpes: e.target.value })} required />
-            <input aria-label="Senha do JupiterWeb" placeholder="Senha do JupiterWeb" type="password" value={jupiterData.password} onChange={(e) => setJupiterData({ ...jupiterData, password: e.target.value })} required />
-            <input aria-label="Código do programa" placeholder="Programa" value={jupiterData.codpgm} onChange={(e) => setJupiterData({ ...jupiterData, codpgm: e.target.value })} required />
+            <input aria-label="Número USP" placeholder="Número USP" type="text" inputMode="numeric" autoComplete="username" value={jupiterData.codpes} onChange={(e) => setJupiterData({ ...jupiterData, codpes: e.target.value })} required />
+            <input aria-label="Senha do JupiterWeb" placeholder="Senha do JupiterWeb" type="password" autoComplete="current-password" value={jupiterData.password} onChange={(e) => setJupiterData({ ...jupiterData, password: e.target.value })} required />
+            <input aria-label="Código do programa" placeholder="Programa" type="text" inputMode="numeric" autoComplete="off" value={jupiterData.codpgm} onChange={(e) => setJupiterData({ ...jupiterData, codpgm: e.target.value })} required />
             <button className="import-button" type="submit" disabled={isConsultingJupiter}>{isConsultingJupiter ? 'Buscando...' : 'Buscar no JupiterWeb'}</button>
           </form>
         )}
@@ -1743,18 +1751,16 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const openUserMenu = useCallback(() => setUserMenuOpen(true), [])
 
   useEffect(() => {
-    if (hasStoredSchedule) return
     fetch('/api/schedule', { credentials: 'include' }).then(async (response) => {
       if (response.ok) {
-        const data = await response.json() as { entries: ScheduleEntry[] }
-        if (data.entries.length > 0) {
-          setSchedule(data.entries)
-          saveStoredSchedule(user.email, data.entries)
-          setHasStoredSchedule(true)
-        }
+        const data = await response.json() as { entries: ScheduleEntry[]; importedAt: string | null }
+        setSchedule(data.entries)
+        setHasStoredSchedule(data.importedAt !== null)
+        if (data.importedAt !== null) saveStoredSchedule(user.email, data.entries)
+        else clearStoredSchedule(user.email)
       }
     }).catch(() => { /* server unavailable, use cached data */ })
-  }, [hasStoredSchedule, user.email])
+  }, [user.email])
 
   async function consultJupiter(event: React.FormEvent) {
     event.preventDefault(); setImportError(''); setIsConsultingJupiter(true)
@@ -1770,11 +1776,20 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     finally { setIsConsultingJupiter(false) }
   }
 
-  function clearSchedule() {
-    clearStoredSchedule(user.email)
-    setSchedule([])
-    setHasStoredSchedule(false)
+  async function clearSchedule() {
     setImportError('')
+    try {
+      const response = await fetch('/api/schedule', { method: 'DELETE', credentials: 'include' })
+      if (!response.ok) {
+        const data = await response.json().catch(() => null) as { error?: string } | null
+        throw new Error(data?.error || 'Não foi possível remover a grade horária.')
+      }
+      clearStoredSchedule(user.email)
+      setSchedule([])
+      setHasStoredSchedule(false)
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Não foi possível remover a grade horária.')
+    }
   }
 
   if (showProfile) {
