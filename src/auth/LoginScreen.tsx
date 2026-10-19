@@ -39,6 +39,7 @@ export function LoginScreen() {
   const resolvedTheme = useResolvedTheme()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [error, setError] = useState('')
+  const currentOrigin = window.location.origin
 
   async function handleSuccess(response: CredentialResponse) {
     if (!response.credential) return setError('Não foi possível concluir o login.')
@@ -58,7 +59,7 @@ export function LoginScreen() {
         <p>Grade do JupiterWeb, disciplinas com pré-requisitos, docentes e as entidades da EACH. Entra com o e-mail da USP e bora.</p>
       </div>
       <div className="login-action">
-        {clientId ? <div className="google-login-wrap"><GoogleLogin key={resolvedTheme} onSuccess={handleSuccess} onError={() => setError('O login foi cancelado. Tenta de novo.')} useOneTap={false} theme={resolvedTheme === 'light' ? 'outline' : 'filled_black'} shape="pill" size="large" text="signin_with" width="320" /></div> : <div className="setup-message"><Icon name="shield" /><span>Falta configurar o <code className="mono">VITE_GOOGLE_CLIENT_ID</code> pra ativar o login com Google.</span></div>}
+        {clientId ? <div className="google-login-wrap"><GoogleLogin key={resolvedTheme} onSuccess={handleSuccess} onError={() => setError(`O Google recusou esta origem (${currentOrigin}). Cadastre-a como origem JavaScript autorizada no cliente OAuth.`)} useOneTap={false} theme={resolvedTheme === 'light' ? 'outline' : 'filled_black'} shape="pill" size="large" text="signin_with" width="320" /></div> : <div className="setup-message"><Icon name="shield" /><span>Falta configurar o <code className="mono">VITE_GOOGLE_CLIENT_ID</code> pra ativar o login com Google.</span></div>}
         {error && <p className="login-error" role="alert">{error}</p>}
         <p className="login-note"><Icon name="shield" /> Só contas <strong className="mono">@usp.br</strong></p>
       </div>

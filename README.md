@@ -54,5 +54,28 @@ dasiboard-omg-main/
 *   **Dashboard Interativo**: Interface responsiva e em tempo real servida pelo React.
 *   **Sessões Persistentes**: Gerenciamento de estado de usuário integrado com o backend Supabase.
 
-## 📜 Licença
+## 🔐 Configuração do login Google
 
+O botão de login usa o Google Identity Services no navegador. O valor de
+`VITE_GOOGLE_CLIENT_ID` precisa ser um cliente OAuth do tipo **Aplicativo da Web**
+e cada origem usada para abrir o app deve estar cadastrada no Google Cloud:
+
+1. Acesse **Google Cloud Console → APIs e serviços → Credenciais**.
+2. Abra o cliente OAuth correspondente ao `VITE_GOOGLE_CLIENT_ID`.
+3. Em **Origens JavaScript autorizadas**, adicione as origens exatas, sem caminho
+   ou barra final. Por exemplo:
+   - `http://localhost:5173`
+   - `http://127.0.0.1:5173` (se usado localmente)
+   - `https://<seu-projeto>.vercel.app`
+   - `https://<seu-dominio.com>` (se houver domínio personalizado)
+4. Salve, aguarde a propagação e faça um novo deploy/recarregamento.
+
+O erro `400: origin_mismatch` ocorre antes de o pedido chegar ao servidor e
+significa que a origem mostrada na barra do navegador não está nessa lista.
+Não adicione caminhos como `/login`, nem use `*`. No Vercel, configure
+`VITE_GOOGLE_CLIENT_ID` como variável de ambiente de **Build** e
+`GOOGLE_CLIENT_ID`, `SESSION_SECRET`, `FRONTEND_URL` e as variáveis do Supabase
+como variáveis de **Runtime**, usando `FRONTEND_URL` igual ao domínio público
+principal (por exemplo, `https://<seu-dominio.com>`).
+
+## 📜 Licença
