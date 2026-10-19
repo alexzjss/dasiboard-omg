@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { getResolvedTheme, subscribeTheme } from '../lib/theme'
 
 type SpaceTheme = { nebula: string; star: string; accent: string; glow: string }
 
@@ -21,6 +22,9 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
   const themeTo = useRef<SpaceTheme>(SPACE_THEMES[theme] ?? SPACE_THEMES.home)
   const liveAccentRef = useRef(liveAccent)
   liveAccentRef.current = liveAccent
+  const lightRef = useRef(false)
+  const reducedRef = useRef(false)
+  const redrawRef = useRef<(() => void) | null>(null)
 
   const getTheme = useCallback(() => {
     const f = blendRef.current
@@ -43,10 +47,13 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
     if (theme !== prevTheme.current) {
       themeFrom.current = getTheme()
       themeTo.current = SPACE_THEMES[theme] ?? SPACE_THEMES.home
-      blendRef.current = 0
+      blendRef.current = reducedRef.current ? 1 : 0
       prevTheme.current = theme
     }
+    redrawRef.current?.()
   }, [theme, getTheme])
+
+  useEffect(() => { redrawRef.current?.() }, [liveAccent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -99,26 +106,35 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
       return `${r},${g},${b}`
     }
 
-    function draw(time: number) {
+    function drawFrame(time: number) {
       if (!canvas || !ctx) return
       const W = canvas.width, H = canvas.height
       const t = time * 0.001
+      const light = lightRef.current
+      const animated = !reducedRef.current
       const cur = getTheme()
       const live = liveAccentRef.current   // entity-specific accent override
 
       // Blend transition
-      if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.018)
+      if (!animated) blendRef.current = 1
+      else if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.018)
 
       // Background — slightly tinted when live accent present
       ctx.clearRect(0, 0, W, H)
       const bg = ctx.createLinearGradient(0, 0, 0, H)
-      bg.addColorStop(0, '#070a12')
-      bg.addColorStop(1, live ? '#0e0a14' : '#0b0f1a')
+      if (light) {
+        // "céu diurno": degradê claro, sem nebulosa
+        bg.addColorStop(0, '#e9eff9')
+        bg.addColorStop(1, '#f6f8fc')
+      } else {
+        bg.addColorStop(0, '#070a12')
+        bg.addColorStop(1, live ? '#0e0a14' : '#0b0f1a')
+      }
       ctx.fillStyle = bg
       ctx.fillRect(0, 0, W, H)
 
       // Large entity-accent glow when in entity detail (very dramatic, low alpha)
-      if (live) {
+      if (live && !light) {
         const rgb = hexToRgb(live.length === 7 ? live : '#ff9040')
         // Bottom-left bloom
         const bloom1 = ctx.createRadialGradient(W * 0.15, H * 0.75, 0, W * 0.15, H * 0.75, W * 0.65)
@@ -136,8 +152,8 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
         ctx.fillRect(0, 0, W, H)
       }
 
-      // Nebula clouds (soft, blurred radial gradients)
-      for (const neb of nebulae) {
+      // Nebula clouds (soft, blurred radial gradients) — só no tema escuro
+      for (const neb of light ? [] : nebulae) {
         const nx = (neb.x + Math.sin(t * neb.speed + neb.phase) * 0.06) * W
         const ny = (neb.y + Math.cos(t * neb.speed * 0.7 + neb.phase) * 0.05) * H
         const rx = neb.rx * W, ry = neb.ry * H
@@ -161,8 +177,8 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
       const acR = W * (live ? 0.45 : 0.38)
       const accentColor = live ?? cur.accent
       const accRad = ctx.createRadialGradient(acx, acy, 0, acx, acy, acR)
-      accRad.addColorStop(0, accentColor + (live ? '22' : '1a'))
-      accRad.addColorStop(0.45, accentColor + '0c')
+      accRad.addColorStop(0, accentColor + (light ? '0c' : live ? '22' : '1a'))
+      accRad.addColorStop(0.45, accentColor + (light ? '05' : '0c'))
       accRad.addColorStop(1, 'transparent')
       ctx.beginPath()
       ctx.arc(acx, acy, acR, 0, Math.PI * 2)
@@ -173,7 +189,7 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
       const ac2x = W * (0.72 + Math.sin(t * 0.04 + 1.2) * 0.12)
       const ac2y = H * (0.65 + Math.cos(t * 0.035 + 0.8) * 0.1)
       const acc2 = ctx.createRadialGradient(ac2x, ac2y, 0, ac2x, ac2y, W * 0.28)
-      acc2.addColorStop(0, accentColor + '14')
+      acc2.addColorStop(0, accentColor + (light ? '06' : '14'))
       acc2.addColorStop(1, 'transparent')
       ctx.beginPath(); ctx.arc(ac2x, ac2y, W * 0.28, 0, Math.PI * 2)
       ctx.fillStyle = acc2; ctx.fill()
@@ -184,18 +200,18 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
         const sx = ((s.x + t * s.speed * parallax) % 1) * W
         const sy = ((s.y + t * s.speed * 0.3 * parallax) % 1) * H
         const twinkleVal = s.twinkle * (0.5 + 0.5 * Math.sin(t * 1.5 + s.phase))
-        const alpha = 0.35 + twinkleVal * 0.65
+        const alpha = light ? 0.12 + twinkleVal * 0.2 : 0.35 + twinkleVal * 0.65
         ctx.globalAlpha = alpha
         ctx.beginPath()
         ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
-        ctx.fillStyle = s.layer === 2 ? accentColor + 'cc' : cur.star
+        ctx.fillStyle = light ? '#2c3556' : s.layer === 2 ? accentColor + 'cc' : cur.star
         ctx.fill()
       }
 
       // Shooting star (occasional)
       const shootCycle = 16
       const shootT = t % shootCycle
-      if (shootT < 1.4) {
+      if (shootT < 1.4 && !light && animated) {
         const seed = Math.floor(t / shootCycle)
         const sx0 = ((seed * 0.371 % 1)) * W * 0.8
         const sy0 = ((seed * 0.618 % 1)) * H * 0.45
@@ -217,17 +233,50 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
 
       ctx.globalAlpha = 1
       frameRef.current++
-      rafRef.current = requestAnimationFrame(draw)
     }
+
+    function loop(time: number) {
+      drawFrame(time)
+      rafRef.current = requestAnimationFrame(loop)
+    }
+
+    // Quadro estático (prefers-reduced-motion) ou repintura após resize/tema
+    function drawStatic() { drawFrame(20000) }
+
+    function start() {
+      cancelAnimationFrame(rafRef.current)
+      if (reducedRef.current) drawStatic()
+      else rafRef.current = requestAnimationFrame(loop)
+    }
+
+    function onResize() { resize(); initParticles(); if (reducedRef.current) drawStatic() }
+
+    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    function syncEnvironment() {
+      lightRef.current = getResolvedTheme() === 'light'
+      const wasReduced = reducedRef.current
+      reducedRef.current = motionMq.matches
+      if (wasReduced !== reducedRef.current) start()
+      else if (reducedRef.current) drawStatic()
+    }
+
+    lightRef.current = getResolvedTheme() === 'light'
+    reducedRef.current = motionMq.matches
+    redrawRef.current = () => { if (reducedRef.current) drawStatic() }
 
     resize()
     initParticles()
-    window.addEventListener('resize', () => { resize(); initParticles() })
-    rafRef.current = requestAnimationFrame(draw)
+    window.addEventListener('resize', onResize)
+    const unsubscribeTheme = subscribeTheme(syncEnvironment)
+    motionMq.addEventListener('change', syncEnvironment)
+    start()
 
     return () => {
       cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', onResize)
+      unsubscribeTheme()
+      motionMq.removeEventListener('change', syncEnvironment)
+      redrawRef.current = null
     }
   }, [getTheme])
 

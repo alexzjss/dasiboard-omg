@@ -4,7 +4,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
+  z-index: var(--z-canvas);
   pointer-events: none;
   display: block;
 }
@@ -19,7 +19,7 @@
 /* ── Page transition ─────────────────────────────────────────────────────────── */
 .page-transition {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-content);
   min-height: 100vh;
 }
 .page-enter {
@@ -41,7 +41,6 @@
 /* ── Reduced motion ──────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .page-enter, .page-exit, .page-enter-active { transition: none !important; animation: none !important; }
-  .space-canvas { display: none; }
-  body { background: #080b12; }
+  body { background: var(--bg); }
 }
 

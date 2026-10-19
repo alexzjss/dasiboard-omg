@@ -1,13 +1,37 @@
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/authContext'
 import { Icon } from '../../components/Icon'
 import { getInitials } from '../../lib/user'
+import { getThemePref, setThemePref, type ThemePref } from '../../lib/theme'
+
+const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
+  { value: 'system', label: 'Sistema' },
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Escuro' },
+]
 
 export function PerfilPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [themePref, setThemePrefState] = useState<ThemePref>(getThemePref)
+  const themeRefs = useRef<(HTMLButtonElement | null)[]>([])
   if (!user) return null
   const initials = getInitials(user)
+
+  function chooseTheme(pref: ThemePref) {
+    setThemePrefState(pref)
+    setThemePref(pref)
+  }
+
+  function onThemeKeyDown(e: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+    if (!step) return
+    e.preventDefault()
+    const next = (index + step + THEME_OPTIONS.length) % THEME_OPTIONS.length
+    chooseTheme(THEME_OPTIONS[next].value)
+    themeRefs.current[next]?.focus()
+  }
 
   function goBack() {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
@@ -36,6 +60,24 @@ export function PerfilPage() {
           <div className="profile-items">
             <div className="profile-item"><span className="profile-item-label">E-mail</span><span className="profile-item-value">{user.email}</span></div>
             <div className="profile-item"><span className="profile-item-label">Instituição</span><span className="profile-item-value">USP — EACH</span></div>
+          </div>
+        </div>
+        <div className="profile-section">
+          <p className="eyebrow" id="theme-label">APARÊNCIA</p>
+          <div className="segmented" role="radiogroup" aria-labelledby="theme-label">
+            {THEME_OPTIONS.map((opt, i) => (
+              <button
+                key={opt.value}
+                ref={el => { themeRefs.current[i] = el }}
+                type="button"
+                role="radio"
+                aria-checked={themePref === opt.value}
+                tabIndex={themePref === opt.value ? 0 : -1}
+                className={`segmented-option${themePref === opt.value ? ' active' : ''}`}
+                onClick={() => chooseTheme(opt.value)}
+                onKeyDown={e => onThemeKeyDown(e, i)}
+              >{opt.label}</button>
+            ))}
           </div>
         </div>
         <button className="profile-logout-btn" onClick={() => void logout()}>

@@ -4,11 +4,13 @@ import { Navigate } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { SpaceCanvas } from '../components/SpaceCanvas'
 import { useAuth } from './authContext'
+import { useResolvedTheme } from '../lib/theme'
 
 const appLogo = '/logo.png'
 
 export function LoginScreen() {
   const { status, login } = useAuth()
+  const resolvedTheme = useResolvedTheme()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [error, setError] = useState('')
   const panelRef = useRef<HTMLElement>(null)
@@ -36,7 +38,7 @@ export function LoginScreen() {
       <div className="login-brand"><img src={appLogo} alt="daSIboard" className="login-brand-logo" /></div>
       <div className="login-copy"><p className="eyebrow">SEU CAMPUS, MAIS PERTO</p><h1>Olá, estudante<span>.</span></h1><p>Entre para acessar sua rotina acadêmica na USP em um só lugar.</p></div>
       <div className="login-action">
-        {clientId ? <div className="google-login-wrap"><GoogleLogin onSuccess={handleSuccess} onError={() => setError('O login foi cancelado. Tente novamente.')} useOneTap={false} theme="outline" shape="pill" size="large" text="signin_with" width="320" /></div> : <div className="setup-message"><Icon name="shield" /><span>Configure `VITE_GOOGLE_CLIENT_ID` para ativar o login Google.</span></div>}
+        {clientId ? <div className="google-login-wrap"><GoogleLogin key={resolvedTheme} onSuccess={handleSuccess} onError={() => setError('O login foi cancelado. Tente novamente.')} useOneTap={false} theme={resolvedTheme === 'light' ? 'outline' : 'filled_black'} shape="pill" size="large" text="signin_with" width="320" /></div> : <div className="setup-message"><Icon name="shield" /><span>Configure `VITE_GOOGLE_CLIENT_ID` para ativar o login Google.</span></div>}
         {error && <p className="login-error" role="alert">{error}</p>}
         <p className="login-note"><Icon name="shield" /> Acesso exclusivo para contas <strong>@usp.br</strong></p>
       </div>

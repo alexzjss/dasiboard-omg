@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Aplica o tema salvo antes da primeira pintura (mesma chave de src/lib/storage.ts).
+      try { var t = localStorage.getItem('orbe_theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+    </script>
     <title>dasiboard-omg</title>
   </head>
   <body>

@@ -1,6 +1,6 @@
 /* ── Bottom nav ──────────────────────────────────────────────────────────────── */
 .bottom-nav {
-  position: fixed; z-index: 30;
+  position: fixed; z-index: var(--z-nav);
   bottom: max(16px, env(safe-area-inset-bottom, 16px));
   left: 50%;
   transform: translateX(-50%);
@@ -8,13 +8,13 @@
   pointer-events: auto;
   display: flex; justify-content: space-around;
   width: min(440px, calc(100% - 24px));
-  padding: 8px 6px;
-  border: 1px solid rgba(182,155,255,0.18);
-  border-radius: 22px;
-  background: rgba(18,15,36,0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  padding: var(--s-2) 6px;
+  border: 1px solid var(--accent-line-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-glass);
+  backdrop-filter: blur(var(--blur-nav));
+  -webkit-backdrop-filter: blur(var(--blur-nav));
+  box-shadow: var(--shadow-2);
   transition: transform 0.22s ease, opacity 0.22s ease;
   will-change: transform, opacity;
 }
@@ -24,27 +24,25 @@
   pointer-events: none;
 }
 .bottom-nav button {
-  display: grid; justify-items: center; gap: 4px;
+  display: grid; justify-items: center; gap: var(--s-1);
   flex: 1; min-width: 0; min-height: 44px;
-  border: 0; background: none; color: #6f7b90;
+  border: 0; background: none; color: var(--text-muted);
   font-size: 9px; font-weight: 600; letter-spacing: 0.4px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   transition: color 0.18s, background 0.18s;
 }
 .bottom-nav button .icon { width: 20px; height: 20px; transition: transform 0.2s; }
-.bottom-nav button.active { color: #c8bbff; background: rgba(140,108,255,0.12); }
+.bottom-nav button.active { color: var(--accent-2); background: var(--accent-soft); }
 .bottom-nav button.active .icon { stroke-width: 2.4; transform: scale(1.08); }
-.bottom-nav button:not(.active):hover { color: #a8b4c8; }
+.bottom-nav button:not(.active):hover { color: var(--text-2); }
 
 /* ── Bottom nav improvements ─────────────────────────────────────────────────── */
-/* Force bottom-nav always visible over all content */
-.bottom-nav { z-index: 50 !important; }
 /* Active pill indicator */
 .bottom-nav button { position: relative; }
 .bottom-nav button.active::after {
   content: '';
   position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-  width: 18px; height: 3px; border-radius: 2px;
+  width: 18px; height: 3px; border-radius: var(--r-sm);
   background: currentColor; opacity: 0.7;
 }
 /* Nav label font improvement */

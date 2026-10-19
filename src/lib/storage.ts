@@ -48,3 +48,17 @@ export function markOnboardingDone() {
   try { localStorage.setItem(ONBOARDING_KEY, '1') }
   catch { /* storage unavailable */ }
 }
+
+const THEME_KEY = 'orbe_theme'
+
+export function loadThemePref(): 'system' | 'light' | 'dark' | null {
+  try {
+    const raw = localStorage.getItem(THEME_KEY)
+    return raw === 'system' || raw === 'light' || raw === 'dark' ? raw : null
+  } catch { return null }
+}
+
+export function saveThemePref(pref: 'system' | 'light' | 'dark') {
+  try { localStorage.setItem(THEME_KEY, pref) }
+  catch { /* storage unavailable */ }
+}
