@@ -17,7 +17,7 @@ export function HomePage() {
   return <HomeContent user={user} onOpenUserMenu={openUserMenu} />
 }
 
-function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: () => void }) {
+function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: (trigger?: HTMLElement | null) => void }) {
   const { schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, consultJupiter, clearSchedule } = useSchedule(user)
   const now = useNow()
   const dateLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now)
@@ -31,6 +31,7 @@ function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: () 
         <h1>{greeting}, {user.name.split(' ')[0]}</h1>
       </section>
 
+      <div className="home-grid">
       <DayOrbit schedule={schedule} now={now} hasSchedule={hasStoredSchedule} />
 
       {hasStoredSchedule
@@ -43,6 +44,7 @@ function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: () 
             <JupiterImportForm jupiterData={jupiterData} setJupiterData={setJupiterData} isConsulting={isConsultingJupiter} onSubmit={consultJupiter} />
             {importError && <p className="schedule-error" role="alert">{importError}</p>}
           </section>}
+      </div>
     </div>
   </main>
 }

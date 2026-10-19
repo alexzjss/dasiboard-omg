@@ -42,7 +42,7 @@
 .profile-logout-btn:hover { background: var(--danger-soft); border-color: var(--danger-line); }
 
 /* ── Responsive: mobile hero fixes ───────────────────────────────────────────── */
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .profile-hero { flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px; }
   .profile-avatar-lg { width: 58px; height: 58px; }
 }
@@ -63,3 +63,7 @@
 }
 .segmented-option:hover:not(.active) { background: var(--hover); color: var(--text); }
 .segmented-option.active { background: var(--surface-2); color: var(--area); box-shadow: inset 0 0 0 1px var(--area); }
+
+@media (min-width: 1024px) {
+  .profile-content { padding-bottom: var(--s-8); }
+}

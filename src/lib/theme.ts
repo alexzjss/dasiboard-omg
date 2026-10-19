@@ -2,6 +2,11 @@ import { useSyncExternalStore } from 'react'
 import { loadThemePref, saveThemePref } from './storage'
 
 export type ThemePref = 'system' | 'light' | 'dark'
+export const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
+  { value: 'system', label: 'Sistema' },
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Escuro' },
+]
 export type ResolvedTheme = 'light' | 'dark'
 
 const LIGHT_QUERY = '(prefers-color-scheme: light)'
@@ -10,8 +15,20 @@ export function isThemePref(v: unknown): v is ThemePref {
   return v === 'system' || v === 'light' || v === 'dark'
 }
 
+let memoryPref: ThemePref | null = null
+const prefListeners = new Set<() => void>()
+
 export function getThemePref(): ThemePref {
-  return loadThemePref() ?? 'system'
+  return loadThemePref() ?? memoryPref ?? 'system'
+}
+
+/** Preferência salva, reativa: Perfil e sidebar ficam sincronizados. */
+export function useThemePref(): ThemePref {
+  return useSyncExternalStore(
+    (cb) => { prefListeners.add(cb); return () => { prefListeners.delete(cb) } },
+    getThemePref,
+    () => 'system',
+  )
 }
 
 /** Aplica a preferência em <html>. "system" remove o atributo e deixa o CSS seguir o SO. */
@@ -22,8 +39,10 @@ export function applyTheme(pref: ThemePref) {
 }
 
 export function setThemePref(pref: ThemePref) {
+  memoryPref = pref
   saveThemePref(pref)
   applyTheme(pref)
+  prefListeners.forEach((cb) => cb())
 }
 
 /** Tema efetivo, já resolvendo "system" pelo prefers-color-scheme. */

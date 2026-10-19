@@ -1,20 +1,35 @@
-import { useEffect } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import type { User } from '../auth/types'
+import { useDialogFocus } from '../lib/useDialogFocus'
 import { getInitials } from '../lib/user'
 
-export function UserMenu({ user, onLogout, onClose, onOpenProfile }: { user: User; onLogout: () => void; onClose: () => void; onOpenProfile: () => void }) {
-  const initials = getInitials(user)
+const POPOVER_WIDTH = 280
 
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [onClose])
+export function UserMenu({ user, anchor, onLogout, onClose, onOpenProfile }: { user: User; anchor?: HTMLElement | null; onLogout: () => void; onClose: () => void; onOpenProfile: () => void }) {
+  const initials = getInitials(user)
+  const sheetRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(sheetRef, onClose, anchor)
+
+  // No desktop (>= 1024px) o CSS trata a folha como popover; aqui só calculamos onde ancorar.
+  useLayoutEffect(() => {
+    const el = sheetRef.current
+    if (!el || !anchor || !anchor.isConnected) return
+    const r = anchor.getBoundingClientRect()
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - POPOVER_WIDTH - 8))
+    el.style.setProperty('--pop-left', `${left}px`)
+    if (r.top > window.innerHeight / 2) {
+      el.style.setProperty('--pop-bottom', `${window.innerHeight - r.top + 8}px`)
+      el.style.setProperty('--pop-top', 'auto')
+    } else {
+      el.style.setProperty('--pop-top', `${r.bottom + 8}px`)
+      el.style.setProperty('--pop-bottom', 'auto')
+    }
+  }, [anchor])
 
   return (
     <>
       <div className="user-menu-backdrop" onClick={onClose} aria-hidden="true" />
-      <div className="user-menu-sheet" role="dialog" aria-label="Menu do usuário">
+      <div className="user-menu-sheet" ref={sheetRef} role="dialog" aria-modal="true" aria-label="Menu do usuário">
         <div className="user-menu-handle" aria-hidden="true" />
         <div className="user-menu-header">
           <div className="user-menu-avatar">

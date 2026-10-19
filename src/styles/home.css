@@ -1,10 +1,21 @@
 /* ── Content ─────────────────────────────────────────────────────────────────── */
 .content {
   position: relative; z-index: var(--z-content);
-  width: min(100%, 1280px); margin: 0 auto;
-  padding: clamp(24px, 5vw, 48px) clamp(16px, 5vw, 64px) 120px;
+  width: min(100%, 1200px); margin: 0 auto;
+  padding: var(--s-6) var(--s-4) 120px;
 }
 .welcome-row { margin-bottom: var(--s-6); }
+.home-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+.home-grid > .section-block { margin-top: 0; min-width: 0; }
+@media (min-width: 640px) {
+  .content { padding: var(--s-8) var(--s-8) 120px; }
+  /* Tablet: órbita do dia (vertical) à esquerda, mapa da semana / importação à direita */
+  .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .content { padding-bottom: var(--s-8); }
+  .home-grid { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* Cartões: superfície sólida com borda de 1px (sem vidro, sem blur) */
 .section-block {
@@ -114,9 +125,10 @@
 @container (max-height: 30px) { .week-event-room { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 
 /* ── Importar do JupiterWeb ──────────────────────────────────────────────────── */
-.jupiter-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
+.jupiter-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
 .jupiter-form input, .import-button { min-height: 46px; }
 .jupiter-form input {
+  width: 100%; min-width: 0;
   padding: 11px 13px;
   border: 1px solid var(--line); border-radius: var(--r-md);
   color: var(--text); background: var(--surface-inset);
@@ -147,9 +159,9 @@
 .clear-schedule-button .icon { width: 15px; height: 15px; }
 .clear-schedule-button:hover { border-color: var(--area); color: var(--area); }
 
-/* ── Celular: a órbita fica vertical ─────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .jupiter-form { grid-template-columns: 1fr; }
+/* ── Celular e tablet: a órbita fica vertical ───────────────────────────────── */
+@media (max-width: 1023px) {
+  .jupiter-form { grid-template-columns: minmax(0, 1fr); }
   .week { --hour-h: 44px; }
   .week-map { grid-template-columns: 26px repeat(5, minmax(0, 1fr)); column-gap: 3px; }
   .week-day-head { flex-direction: column; align-items: center; gap: 0; font-size: 11px; }

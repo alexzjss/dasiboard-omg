@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { ALL_COURSES, DOC_PAGE_SIZE, docentesData } from './data'
+import { BP_DESKTOP, useMediaQuery } from '../../lib/useMediaQuery'
+import { ALL_COURSES, DOC_PAGE_SIZE, docentesData, type Docente } from './data'
 
 export function DocentesPage() {
   const [query, setQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(DOC_PAGE_SIZE)
+  const isDesktop = useMediaQuery(BP_DESKTOP)
 
   const filtered = docentesData.filter((d) => {
     const matchName = d.nome.toLowerCase().includes(query.toLowerCase())
@@ -57,6 +59,22 @@ export function DocentesPage() {
         {hasMore && <span className="doc-count-showing"> · mostrando {visibleCount}</span>}
       </p>
 
+      {isDesktop && visible.length > 0 ? (
+        <div className="doc-table-wrap">
+          <table className="doc-table">
+            <thead>
+              <tr><th scope="col">Docente</th><th scope="col">Curso</th><th scope="col">Sala</th><th scope="col">E-mail</th><th scope="col" className="doc-th-end"><span className="sr-only">Detalhes</span></th></tr>
+            </thead>
+            <tbody>
+              {visible.map((d) => {
+                const isOpen = expandedRow === d.nome
+                const id = `doc-detail-${d.nome.replace(/\s+/g, '-')}`
+                return <DocRow key={d.nome} id={id} isOpen={isOpen} d={d} onToggle={() => setExpandedRow(isOpen ? null : d.nome)} />
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
       <div className="doc-list" role="list">
         {visible.length === 0
           ? <p className="doc-empty">Ninguém por aqui com esses filtros. Tenta outro nome ou curso.</p>
@@ -91,6 +109,7 @@ export function DocentesPage() {
             })
         }
       </div>
+      )}
 
       {hasMore && (
         <button className="doc-load-more" onClick={() => setVisibleCount(c => c + DOC_PAGE_SIZE)}>
@@ -102,3 +121,29 @@ export function DocentesPage() {
 }
 
 
+
+function DocRow({ d, id, isOpen, onToggle }: { d: Docente; id: string; isOpen: boolean; onToggle: () => void }) {
+  return <>
+    <tr className={`doc-row${isOpen ? ' open' : ''}`} onClick={onToggle}>
+      <td>
+        <button type="button" className="doc-row-trigger" aria-expanded={isOpen} aria-controls={id}>
+          <span className="doc-avatar" aria-hidden="true">{d.nome.split(' ').slice(0, 2).map((p) => p[0]).join('').toUpperCase()}</span>
+          <strong className="doc-name">{d.nome}</strong>
+        </button>
+      </td>
+      <td className="doc-cell-course">{d.curso}</td>
+      <td className="mono doc-cell-sala">{d.sala || '—'}</td>
+      <td>{d.email ? <a href={`mailto:${d.email}`} className="doc-link" onClick={(e) => e.stopPropagation()}>{d.email}</a> : '—'}</td>
+      <td className="doc-th-end"><svg className="doc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></td>
+    </tr>
+    {isOpen && <tr className="doc-row-detail">
+      <td colSpan={5}>
+        <div id={id} className="doc-detail-inline" role="region" aria-label={`Detalhes de ${d.nome}`}>
+          {d.telefone && <p><span className="doc-detail-key">Telefone</span> <span className="mono">{d.telefone}</span></p>}
+          {d.pesquisa && <p><span className="doc-detail-key">Linha de pesquisa</span> {d.pesquisa}</p>}
+          <a href={d.lattes} className="doc-badge-link" target="_blank" rel="noopener noreferrer">Currículo Lattes ↗</a>
+        </div>
+      </td>
+    </tr>}
+  </>
+}

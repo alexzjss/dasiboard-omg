@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 
-export type LayoutContextValue = { openUserMenu: () => void }
+export type LayoutContextValue = { openUserMenu: (trigger?: HTMLElement | null) => void }
 
 export const LayoutContext = createContext<LayoutContextValue>({ openUserMenu: () => undefined })
 

@@ -37,6 +37,10 @@
 .nav-icon { position: relative; display: grid; place-items: center; width: 36px; height: 36px; }
 .nav-icon .icon { width: 20px; height: 20px; transition: stroke-width 0.15s; }
 .bottom-nav button.active .icon { stroke-width: 2.2; }
+
+@media (min-width: 640px) {
+  .bottom-nav { width: min(520px, calc(100% - 48px)); }
+}
 .nav-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1px; line-height: 1; }
 
 /* Anel orbital do item ativo: uma órbita fina com um satélite */

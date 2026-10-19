@@ -62,3 +62,14 @@ export function saveThemePref(pref: 'system' | 'light' | 'dark') {
   try { localStorage.setItem(THEME_KEY, pref) }
   catch { /* storage unavailable */ }
 }
+
+const SIDEBAR_KEY = 'orbe_sidebar_collapsed'
+
+export function loadSidebarCollapsed(): boolean {
+  try { return localStorage.getItem(SIDEBAR_KEY) === '1' } catch { return false }
+}
+
+export function saveSidebarCollapsed(collapsed: boolean) {
+  try { localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0') }
+  catch { /* storage unavailable */ }
+}

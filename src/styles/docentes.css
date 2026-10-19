@@ -76,7 +76,7 @@
 }
 .doc-badge-link:hover { background: var(--hover); }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .doc-content { padding: var(--s-8) var(--s-4) 112px; }
   .doc-heading h1 { font-size: 28px; }
   .doc-controls { flex-direction: column; }
@@ -103,3 +103,36 @@
   .doc-detail { animation: none; }
   .doc-chevron { transition: none; }
 }
+
+/* ── Docentes: tabela no desktop ─────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .doc-content { width: min(100%, 1200px); padding-bottom: var(--s-8); }
+}
+.doc-table-wrap { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); overflow: hidden; }
+.doc-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+.doc-table th {
+  padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line);
+  color: var(--text-muted); font-size: 12px; font-weight: 700; text-align: left;
+  background: var(--surface-2);
+}
+.doc-table th:nth-child(1) { width: 32%; }
+.doc-table th:nth-child(2) { width: 24%; }
+.doc-table th:nth-child(3) { width: 12%; }
+.doc-table th:nth-child(5) { width: 56px; }
+.doc-table td { padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--line-soft); color: var(--text-2); overflow-wrap: anywhere; vertical-align: middle; }
+.doc-row { cursor: pointer; transition: background 0.15s; }
+.doc-row:hover, .doc-row.open { background: var(--surface-2); }
+.doc-row-trigger {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%; min-height: 44px;
+  padding: 0; border: 0; background: none; text-align: left; color: inherit;
+}
+.doc-row-trigger .doc-name { white-space: normal; }
+.doc-cell-course { color: var(--text-muted); }
+.doc-th-end { text-align: right; }
+.doc-th-end .doc-chevron { margin-left: auto; display: block; }
+.doc-row.open .doc-chevron { transform: rotate(180deg); }
+.doc-row-detail td { padding: var(--s-2) var(--s-4) var(--s-4) calc(var(--s-4) + 54px); background: var(--surface-2); }
+.doc-detail-inline { display: grid; gap: var(--s-2); max-width: 80ch; line-height: 1.55; }
+.doc-detail-inline p { color: var(--text-2); font-size: 13px; }
+.doc-detail-key { margin-right: var(--s-2); color: var(--text-muted); font-weight: 600; }
+.doc-detail-inline .doc-badge-link { justify-self: start; }

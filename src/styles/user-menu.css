@@ -59,6 +59,22 @@
 .user-menu-logout .icon { color: var(--danger); }
 .user-menu-logout:hover { background: var(--danger-soft); color: var(--danger); }
 
+.user-menu-item { min-height: 48px; }
+
+/* Desktop: popover ancorado ao gatilho (posição vem de --pop-* definidos em UserMenu.tsx) */
+@media (min-width: 1024px) {
+  .user-menu-backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }
+  .user-menu-sheet {
+    left: var(--pop-left, 12px); top: var(--pop-top, auto); bottom: var(--pop-bottom, 12px);
+    transform: none; width: 280px;
+    padding: 0 0 var(--s-2);
+    border: 1px solid var(--line); border-radius: var(--r-md);
+    animation: pop-in 0.15s ease-out;
+  }
+  .user-menu-handle { display: none; }
+  .user-menu-header { padding: var(--s-4); }
+}
+@keyframes pop-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .user-menu-backdrop, .user-menu-sheet { animation: none; }

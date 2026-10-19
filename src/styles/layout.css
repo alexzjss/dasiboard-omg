@@ -28,8 +28,8 @@
 }
 .page-enter-active {
   opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.28s cubic-bezier(0.4,0,0.2,1), transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  transform: none; /* sem transform: evita criar bloco de contenção para elementos fixed */
+  transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1), transform 0.18s cubic-bezier(0.4,0,0.2,1);
 }
 .page-exit {
   opacity: 0;

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { isIOS } from '../lib/platform'
 import { Icon, type IconName } from './Icon'
+import { NavOrbit } from './NavOrbit'
 
 export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][] }: {
   activeTab: string
@@ -12,13 +14,15 @@ export function BottomNav({ activeTab, onSelectTab, className = '', items = [['I
   const frameRef = useRef<number | null>(null)
 
   useEffect(() => {
+    const ios = isIOS()
     const handleScroll = () => {
       if (frameRef.current !== null) return
 
       frameRef.current = window.requestAnimationFrame(() => {
         const currentScrollY = window.scrollY
         const scrollingDown = currentScrollY > lastScrollY.current
-        const shouldBeVisible = currentScrollY <= 0 || !scrollingDown
+        // No iOS a barra nao esconde ao rolar: o Safari ja mexe na propria barra.
+        const shouldBeVisible = ios || currentScrollY <= 0 || !scrollingDown
 
         setIsVisible((prev) => (prev === shouldBeVisible ? prev : shouldBeVisible))
         lastScrollY.current = currentScrollY
@@ -40,12 +44,7 @@ export function BottomNav({ activeTab, onSelectTab, className = '', items = [['I
         <button key={label} type="button" className={activeTab === label ? 'active' : ''} aria-current={activeTab === label ? 'page' : undefined} onClick={() => onSelectTab(label)}>
           <span className="nav-icon">
             <Icon name={icon} />
-            {activeTab === label && (
-              <svg className="nav-orbit" viewBox="0 0 36 36" aria-hidden="true">
-                <circle className="nav-orbit-ring" cx="18" cy="18" r="16" />
-                <circle className="nav-orbit-dot" cx="18" cy="2" r="2.6" />
-              </svg>
-            )}
+            {activeTab === label && <NavOrbit />}
           </span>
           <span className="nav-label">{label}</span>
         </button>
