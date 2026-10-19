@@ -43,6 +43,13 @@ app.set('trust proxy', 1)
 app.use(cors({ origin: (origin, callback) => callback(null, origin ? allowedOrigins.has(origin) : true), credentials: true }))
 app.use(express.json({ limit: '16kb' }))
 app.use(cookieParser())
+app.disable('x-powered-by')
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.setHeader('X-Frame-Options', 'DENY')
+  next()
+})
 
 function isAllowedOrigin(req: Request, res: Response, next: NextFunction) {
   const origin = req.get('origin')
@@ -82,12 +89,31 @@ async function requireSession(req: Request, res: Response, next: NextFunction) {
   } catch { res.status(401).json({ error: 'Invalid or expired session' }) }
 }
 
-function requireSessionInProduction(req: Request, res: Response, next: NextFunction) {
-  if (process.env.NODE_ENV !== 'production') return next()
-  return requireSession(req, res, next)
+// In-memory fixed-window rate limit. On Vercel each instance keeps its own counters.
+function rateLimit(name: string, max: number, windowMs: number) {
+  const hits = new Map<string, { count: number; resetAt: number }>()
+  return (req: Request, res: Response, next: NextFunction) => {
+    const now = Date.now()
+    const key = `${name}:${req.ip}:${req.user?.sub ?? ''}`
+    const entry = hits.get(key)
+    if (!entry || entry.resetAt <= now) {
+      if (hits.size > 10_000) hits.clear()
+      hits.set(key, { count: 1, resetAt: now + windowMs })
+      return next()
+    }
+    if (++entry.count > max) {
+      res.setHeader('Retry-After', String(Math.ceil((entry.resetAt - now) / 1000)))
+      return res.status(429).json({ error: 'Muitas tentativas. Aguarde um pouco e tente novamente.' })
+    }
+    next()
+  }
 }
 
-app.post('/api/auth/google', isAllowedOrigin, async (req, res) => {
+function logError(context: string, error: unknown) {
+  console.error(context, error instanceof Error ? error.name : typeof error)
+}
+
+app.post('/api/auth/google', isAllowedOrigin, rateLimit('login', 10, 60_000), async (req, res) => {
   const credential = typeof req.body?.credential === 'string' ? req.body.credential : ''
   if (!credential) return res.status(400).json({ error: 'Google credential is required' })
   try {
@@ -100,13 +126,13 @@ app.post('/api/auth/google', isAllowedOrigin, async (req, res) => {
     try {
       await upsertUser(user)
     } catch (error) {
-      console.error(error)
+      logError('Saving user failed', error)
       return res.status(503).json({ error: 'Database is not configured or unavailable' })
     }
     setSessionCookie(req, res, await createSession(user))
     res.json({ user: { name: user.name, email: user.email, picture: user.picture } })
   } catch (error) {
-    console.error('Google authentication failed', error)
+    logError('Google authentication failed', error)
     res.status(401).json({ error: 'Invalid Google credential' })
   }
 })
@@ -115,7 +141,7 @@ app.get('/api/auth/me', requireSession, (req, res) => res.json({ user: req.user 
 
 app.get('/api/schedule', requireSession, async (req, res) => {
   try { res.json(await getSchedule(req.user!.sub)) }
-  catch (error) { console.error(error); res.status(503).json({ error: 'Não foi possível carregar a grade horária' }) }
+  catch (error) { logError('Loading schedule failed', error); res.status(503).json({ error: 'Não foi possível carregar a grade horária' }) }
 })
 
 app.put('/api/schedule', isAllowedOrigin, requireSession, async (req, res) => {
@@ -126,10 +152,10 @@ app.put('/api/schedule', isAllowedOrigin, requireSession, async (req, res) => {
     && typeof entry.title === 'string' && typeof entry.code === 'string' && typeof entry.room === 'string' && typeof entry.building === 'string')
   if (!validEntries) return res.status(400).json({ error: 'A grade horária é inválida' })
   try { res.json(await saveSchedule(req.user!.sub, entries)) }
-  catch (error) { console.error(error); res.status(503).json({ error: 'Não foi possível salvar a grade horária' }) }
+  catch (error) { logError('Saving schedule failed', error); res.status(503).json({ error: 'Não foi possível salvar a grade horária' }) }
 })
 
-app.post('/api/schedule/jupiter', isAllowedOrigin, requireSessionInProduction, async (req, res) => {
+app.post('/api/schedule/jupiter', isAllowedOrigin, requireSession, rateLimit('jupiter', 5, 10 * 60_000), async (req, res) => {
   const codpes = typeof req.body?.codpes === 'string' ? req.body.codpes.trim() : ''
   const password = typeof req.body?.password === 'string' ? req.body.password : ''
   const codpgm = typeof req.body?.codpgm === 'string' ? req.body.codpgm.trim() : ''
@@ -139,7 +165,7 @@ app.post('/api/schedule/jupiter', isAllowedOrigin, requireSessionInProduction, a
     if (req.user) return res.json(await saveSchedule(req.user.sub, entries))
     res.json({ entries, importedAt: null })
   } catch (error) {
-    console.error(error)
+    logError('Jupiter import failed', error)
     res.status(502).json({ error: error instanceof Error ? error.message : 'Não foi possível consultar o JupiterWeb' })
   }
 })
