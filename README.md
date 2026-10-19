@@ -76,6 +76,16 @@ Não adicione caminhos como `/login`, nem use `*`. No Vercel, configure
 `VITE_GOOGLE_CLIENT_ID` como variável de ambiente de **Build** e
 `GOOGLE_CLIENT_ID`, `SESSION_SECRET`, `FRONTEND_URL` e as variáveis do Supabase
 como variáveis de **Runtime**, usando `FRONTEND_URL` igual ao domínio público
-principal (por exemplo, `https://<seu-dominio.com>`).
+principal (por exemplo, `https://<seu-dominio.com>`). O backend também reconhece
+automaticamente `VERCEL_URL` e `VERCEL_PROJECT_PRODUCTION_URL`. Se o projeto
+usar mais de um domínio próprio, informe-os em `ALLOWED_ORIGINS`, separados por
+vírgulas, por exemplo:
+
+```text
+ALLOWED_ORIGINS=https://app.exemplo.com,https://www.exemplo.com
+```
+
+Esses valores são normalizados para a origem (protocolo + host + porta), então
+uma barra final em `FRONTEND_URL` não causa diferença.
 
 ## 📜 Licença

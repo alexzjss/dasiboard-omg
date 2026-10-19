@@ -34,10 +34,29 @@ const sessionCookie = 'orbe_session'
 const sessionDays = 30
 const renewAfterSeconds = 24 * 60 * 60
 const isProduction = process.env.NODE_ENV === 'production'
-const vercelOrigins = [process.env.VERCEL_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL]
-  .filter((url): url is string => Boolean(url))
-  .flatMap((url) => [`https://${url}`, `http://${url}`])
-const allowedOrigins = new Set([frontendUrl, ...vercelOrigins, ...(isProduction ? [] : ['http://localhost:5173', 'http://127.0.0.1:5173'])])
+
+function toOrigin(value: string) {
+  const candidate = value.trim()
+  if (!candidate) return null
+  const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(candidate) ? candidate : `https://${candidate}`
+  try {
+    const url = new URL(withProtocol)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    return url.origin
+  } catch {
+    return null
+  }
+}
+
+const configuredOrigins = [
+  frontendUrl,
+  ...(process.env.ALLOWED_ORIGINS || '').split(','),
+  process.env.VERCEL_URL || '',
+  process.env.VERCEL_PROJECT_PRODUCTION_URL || '',
+]
+  .map(toOrigin)
+  .filter((origin): origin is string => origin !== null)
+const allowedOrigins = new Set([...configuredOrigins, ...(isProduction ? [] : ['http://localhost:5173', 'http://127.0.0.1:5173'])])
 
 app.set('trust proxy', 1)
 app.use(cors({ origin: (origin, callback) => callback(null, origin ? allowedOrigins.has(origin) : true), credentials: true }))
