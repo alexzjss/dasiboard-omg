@@ -54,3 +54,9 @@
   .bottom-nav, .nav-orbit { transition: none; animation: none; }
   .nav-orbit-dot { animation: none; }
 }
+
+/* Perfil na bottom nav */
+.bottom-nav-profile img,
+.bottom-nav-profile-badge { width: 24px; height: 24px; border-radius: 50%; }
+.bottom-nav-profile img { object-fit: cover; border: 1px solid var(--line-strong); }
+.bottom-nav-profile-badge { display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--text); background: var(--surface-3); }

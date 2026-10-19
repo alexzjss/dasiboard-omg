@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { isIOS } from '../lib/platform'
 import { Icon, type IconName } from './Icon'
 import { NavOrbit } from './NavOrbit'
+import { getInitials } from '../lib/user'
 
-export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][] }: {
+export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Docentes', 'people'], ['Entidades', 'building']] as [string, IconName][], profileAction, profileAvatar, profileName }: {
   activeTab: string
   onSelectTab: (tab: string) => void
   className?: string
   items?: [string, IconName][]
+  profileAction?: (trigger: HTMLElement) => void
+  profileAvatar?: string
+  profileName?: string
 }) {
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollY = useRef(0)
@@ -49,6 +53,14 @@ export function BottomNav({ activeTab, onSelectTab, className = '', items = [['I
           <span className="nav-label">{label}</span>
         </button>
       ))}
+      {profileAction && (
+        <button type="button" className="bottom-nav-profile" onClick={(event) => profileAction(event.currentTarget)} aria-label="Abrir menu do usuário">
+          <span className="nav-icon">
+            {profileAvatar ? <img src={profileAvatar} alt="" /> : <span className="bottom-nav-profile-badge mono" aria-hidden="true">{getInitials({ name: profileName ?? 'Usuário', email: '' })}</span>}
+          </span>
+          <span className="nav-label">Perfil</span>
+        </button>
+      )}
     </nav>
   )
 }

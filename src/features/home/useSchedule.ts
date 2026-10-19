@@ -14,18 +14,16 @@ export function useSchedule(user: User) {
   const [isConsultingJupiter, setIsConsultingJupiter] = useState(false)
 
   useEffect(() => {
-    if (hasStoredSchedule) return
     apiFetch('/api/schedule').then(async (response) => {
       if (response.ok) {
-        const data = await response.json() as { entries: ScheduleEntry[] }
-        if (data.entries.length > 0) {
-          setSchedule(data.entries)
-          saveStoredSchedule(user.email, data.entries)
-          setHasStoredSchedule(true)
-        }
+        const data = await response.json() as { entries: ScheduleEntry[]; importedAt: string | null }
+        setSchedule(data.entries)
+        setHasStoredSchedule(data.importedAt !== null)
+        if (data.importedAt !== null) saveStoredSchedule(user.email, data.entries)
+        else clearStoredSchedule(user.email)
       }
     }).catch(() => { /* server unavailable, use cached data */ })
-  }, [hasStoredSchedule, user.email])
+  }, [user.email])
 
   async function consultJupiter(event: React.FormEvent) {
     event.preventDefault(); setImportError(''); setIsConsultingJupiter(true)
@@ -41,11 +39,20 @@ export function useSchedule(user: User) {
     finally { setIsConsultingJupiter(false) }
   }
 
-  function clearSchedule() {
-    clearStoredSchedule(user.email)
-    setSchedule([])
-    setHasStoredSchedule(false)
+  async function clearSchedule() {
     setImportError('')
+    try {
+      const response = await apiFetch('/api/schedule', { method: 'DELETE' })
+      if (!response.ok) {
+        const data = await response.json().catch(() => null) as { error?: string } | null
+        throw new Error(data?.error || 'Não foi possível remover a grade horária.')
+      }
+      clearStoredSchedule(user.email)
+      setSchedule([])
+      setHasStoredSchedule(false)
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Não foi possível remover a grade horária.')
+    }
   }
 
   return { schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, consultJupiter, clearSchedule }

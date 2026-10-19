@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { markOnboardingDone } from '../lib/storage'
 import { Icon, type IconName } from './Icon'
 
@@ -48,6 +48,14 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
     setExiting(true)
     setTimeout(() => { markOnboardingDone(); onDone() }, 350)
   }
+
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') skip()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  })
 
   return (
     <div className={`onboarding-overlay${exiting ? ' onboarding-exit' : ''}`} role="dialog" aria-modal="true" aria-label="Boas-vindas ao daSIboard">

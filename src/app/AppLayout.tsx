@@ -67,6 +67,9 @@ export function AppLayout() {
             onSelectTab={selectTab}
             items={NAV_ITEMS.map((i) => [i.label, i.icon])}
             className={section === 'entidades' ? 'ent-nav' : ''}
+            profileAction={openUserMenu}
+            profileAvatar={user?.picture}
+            profileName={user?.name}
           />
         </div>
       )}
