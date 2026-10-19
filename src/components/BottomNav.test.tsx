@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { BottomNav } from './App'
+import { BottomNav } from './BottomNav'
 
 describe('BottomNav', () => {
   it('esconde ao rolar para baixo e reaparece ao rolar para cima', async () => {

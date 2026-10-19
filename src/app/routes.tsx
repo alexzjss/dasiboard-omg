@@ -1,0 +1,34 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { useAuth } from '../auth/authContext'
+import { LoginScreen } from '../auth/LoginScreen'
+import { DisciplinasPage } from '../features/disciplinas/DisciplinasPage'
+import { DocentesPage } from '../features/docentes/DocentesPage'
+import { EntidadesPage } from '../features/entidades/EntidadesPage'
+import { HomePage } from '../features/home/HomePage'
+import { PerfilPage } from '../features/perfil/PerfilPage'
+import { AppLayout } from './AppLayout'
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { status } = useAuth()
+  if (status === 'loading') return <main className="auth-loading" aria-label="Carregando autenticação"></main>
+  if (status === 'anonymous') return <Navigate to="/entrar" replace />
+  return children
+}
+
+export function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/entrar" element={<LoginScreen />} />
+      <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+        <Route index element={<HomePage />} />
+        {import.meta.env.DEV && <Route path="dev/home" element={<HomePage />} />}
+        <Route path="disciplinas" element={<DisciplinasPage />} />
+        <Route path="docentes" element={<DocentesPage />} />
+        <Route path="entidades" element={<EntidadesPage />} />
+        <Route path="entidades/:slug" element={<EntidadesPage />} />
+        <Route path="perfil" element={<PerfilPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  )
+}

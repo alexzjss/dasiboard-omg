@@ -1,0 +1,49 @@
+/* ── Login screen ────────────────────────────────────────────────────────────── */
+.login-shell {
+  position: relative; min-height: 100dvh;
+  display: grid; place-items: center; overflow: hidden;
+  background: #070910;
+}
+.login-brand-logo { height: 40px; width: auto; display: block; }
+.login-panel {
+  position: relative; z-index: 1;
+  width: min(460px, calc(100% - 32px));
+  padding: clamp(28px,6vw,48px) clamp(20px,6vw,52px) clamp(24px,5vw,38px);
+  border: 1px solid rgba(140,104,212,0.3);
+  border-radius: 28px;
+  background: rgba(18,14,30,0.88);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(196,170,255,0.06) inset;
+  transform: translate3d(var(--panel-x,0px), var(--panel-y,0px), 0);
+  transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1);
+}
+.login-brand { display: flex; align-items: center; }
+.login-copy { margin-top: clamp(40px,8vw,60px); }
+.login-copy h1 { color: #fff; font-size: clamp(38px,8vw,50px); letter-spacing: -2px; line-height: 1.04; text-shadow: 0 0 30px rgba(166,120,255,0.3); }
+.login-copy > p:last-child { max-width: 280px; margin-top: 14px; color: #b4a8ca; font-size: 14px; line-height: 1.55; }
+.login-action { margin-top: 32px; }
+.google-login-wrap {
+  display: flex; justify-content: center; padding: 5px;
+  border-radius: 999px; background: rgba(157,108,255,0.1);
+  box-shadow: 0 0 0 1px rgba(182,142,255,0.25), 0 0 22px rgba(139,92,246,0.4);
+}
+.google-login-wrap > div { border-radius: 999px; overflow: hidden; }
+.setup-message {
+  display: flex; align-items: center; gap: 10px; padding: 13px 15px;
+  border-radius: 13px; color: #c1b4d4; background: rgba(36,27,53,0.85);
+  font-size: 11px; line-height: 1.4;
+}
+.setup-message .icon { flex: 0 0 auto; width: 17px; color: #ad82ff; }
+.login-error { margin-top: 12px; color: #f095a1; font-size: 11px; line-height: 1.4; }
+.login-note {
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+  margin-top: 18px; color: #aa9dbf; font-size: 10px;
+}
+.login-note .icon { width: 13px; color: #ad82ff; }
+.login-note strong { color: #d0b8ff; }
+.login-footer { margin-top: 44px; color: #837693; font-size: 9px; line-height: 1.55; text-align: center; }
+
+/* ── Auth loading ────────────────────────────────────────────────────────────── */
+.auth-loading { min-height: 100dvh; background: #070910; }
+
