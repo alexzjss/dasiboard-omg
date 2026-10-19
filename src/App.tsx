@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import './App.css'
 
-import appLogo from './assets/logo.png'
+const appLogo = '/logo.png'
 import logoDAsi from './assets/dasi.jpg'
 import logoSintese from './assets/sintesejr.jpg'
 import logoPetsi from './assets/petsi.jpg'
@@ -93,20 +93,29 @@ export function BottomNav({ activeTab, onSelectTab, className = '', items = [['I
 }) {
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollY = useRef(0)
+  const frameRef = useRef<number | null>(null)
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      const scrollingDown = currentScrollY > lastScrollY.current
-      const isAtTop = currentScrollY <= 0
+      if (frameRef.current !== null) return
 
-      setIsVisible(isAtTop || !scrollingDown)
-      lastScrollY.current = currentScrollY
+      frameRef.current = window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY
+        const scrollingDown = currentScrollY > lastScrollY.current
+        const shouldBeVisible = currentScrollY <= 0 || !scrollingDown
+
+        setIsVisible((prev) => (prev === shouldBeVisible ? prev : shouldBeVisible))
+        lastScrollY.current = currentScrollY
+        frameRef.current = null
+      })
     }
 
     handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => {
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current)
+      window.removeEventListener('scroll', handleScroll)
+    }
   }, [])
 
   return (
@@ -1856,18 +1865,28 @@ function App() {
 
   useEffect(() => {
     if (developmentHome) return
-    fetch('/api/auth/me', { credentials: 'include' }).then(async (response) => {
-      if (response.ok) {
-        const data = await response.json() as { user: User }
-        setUser(data.user)
-        saveStoredUser(data.user)
-      } else {
-        setUser(null)
-        saveStoredUser(null)
-      }
-    }).catch(() => {
-      // Server unreachable — keep using cached user if available
-    }).finally(() => setAuthReady(true))
+    let lastCheck = 0
+    function checkSession() {
+      lastCheck = Date.now()
+      return fetch('/api/auth/me', { credentials: 'include' }).then(async (response) => {
+        if (response.ok) {
+          const data = await response.json() as { user: User }
+          setUser(data.user)
+          saveStoredUser(data.user)
+        } else if (response.status === 401) {
+          setUser(null)
+          saveStoredUser(null)
+        }
+      }).catch(() => {
+        // Server unreachable: keep the cached user instead of logging out
+      })
+    }
+    checkSession().finally(() => setAuthReady(true))
+    function onVisible() {
+      if (document.visibilityState === 'visible' && Date.now() - lastCheck > 10 * 60 * 1000) void checkSession()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [developmentHome])
 
   useEffect(() => { document.title = user ? 'daSIboard · Seu campus' : 'daSIboard · Entrar' }, [user])
@@ -1889,7 +1908,8 @@ function App() {
   }
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch { /* sign out locally anyway */ }
+    if (user) clearStoredSchedule(user.email)
     saveStoredUser(null)
     setUser(null)
   }

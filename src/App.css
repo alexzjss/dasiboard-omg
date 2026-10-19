@@ -251,7 +251,7 @@ h1 span { color: #b3a0ff; }
 
 /* ── Bottom nav ──────────────────────────────────────────────────────────────── */
 .bottom-nav {
-  position: fixed; z-index: 20;
+  position: fixed; z-index: 30;
   bottom: max(16px, env(safe-area-inset-bottom, 16px));
   left: 50%;
   transform: translateX(-50%);
@@ -266,7 +266,8 @@ h1 span { color: #b3a0ff; }
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  will-change: transform, opacity;
 }
 .bottom-nav.is-hidden {
   transform: translateX(-50%) translateY(calc(100% + 18px));

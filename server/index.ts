@@ -31,6 +31,8 @@ const app = express()
 const googleClient = new OAuth2Client(googleClientId)
 const sessionKey = new TextEncoder().encode(sessionSecret)
 const sessionCookie = 'orbe_session'
+const sessionDays = 30
+const renewAfterSeconds = 24 * 60 * 60
 const isProduction = process.env.NODE_ENV === 'production'
 const vercelOrigins = [process.env.VERCEL_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL]
   .filter((url): url is string => Boolean(url))
@@ -52,16 +54,16 @@ async function createSession(user: SessionUser) {
   return new SignJWT(user)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime(`${sessionDays}d`)
     .sign(sessionKey)
 }
 
-function setSessionCookie(res: Response, token: string) {
+function setSessionCookie(req: Request, res: Response, token: string) {
   res.cookie(sessionCookie, token, {
     httpOnly: true,
-    secure: isProduction,
+    secure: isProduction || req.secure,
     sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: sessionDays * 24 * 60 * 60 * 1000,
     path: '/',
   })
 }
@@ -72,6 +74,10 @@ async function requireSession(req: Request, res: Response, next: NextFunction) {
   try {
     const { payload } = await jwtVerify(token, sessionKey, { algorithms: ['HS256'] })
     req.user = { sub: String(payload.sub), name: String(payload.name), email: String(payload.email), picture: payload.picture ? String(payload.picture) : undefined }
+    // Sliding session: reissue the token once it is older than a day
+    if (typeof payload.iat === 'number' && Date.now() / 1000 - payload.iat > renewAfterSeconds) {
+      setSessionCookie(req, res, await createSession(req.user))
+    }
     next()
   } catch { res.status(401).json({ error: 'Invalid or expired session' }) }
 }
@@ -97,7 +103,7 @@ app.post('/api/auth/google', isAllowedOrigin, async (req, res) => {
       console.error(error)
       return res.status(503).json({ error: 'Database is not configured or unavailable' })
     }
-    setSessionCookie(res, await createSession(user))
+    setSessionCookie(req, res, await createSession(user))
     res.json({ user: { name: user.name, email: user.email, picture: user.picture } })
   } catch (error) {
     console.error('Google authentication failed', error)

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { BottomNav } from './App'
 
 describe('BottomNav', () => {
-  it('esconde ao rolar para baixo e reaparece ao rolar para cima', () => {
+  it('esconde ao rolar para baixo e reaparece ao rolar para cima', async () => {
     render(<BottomNav activeTab="Início" onSelectTab={() => undefined} />)
 
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
@@ -11,10 +11,12 @@ describe('BottomNav', () => {
 
     Object.defineProperty(window, 'scrollY', { value: 300, writable: true })
     fireEvent.scroll(window)
+    await act(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))))
     expect(nav.classList.contains('is-visible')).toBe(false)
 
     Object.defineProperty(window, 'scrollY', { value: 200, writable: true })
     fireEvent.scroll(window)
+    await act(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))))
     expect(nav.classList.contains('is-visible')).toBe(true)
   })
 })
