@@ -50,6 +50,8 @@ function toOrigin(value: string) {
 
 const configuredOrigins = [
   frontendUrl,
+  'https://dasiboard.vercel.app',
+  'https://sieach.vercel.app',
   ...(process.env.ALLOWED_ORIGINS || '').split(','),
   process.env.VERCEL_URL || '',
   process.env.VERCEL_PROJECT_PRODUCTION_URL || '',

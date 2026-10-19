@@ -66,8 +66,9 @@ e cada origem usada para abrir o app deve estar cadastrada no Google Cloud:
    ou barra final. Por exemplo:
    - `http://localhost:5173`
    - `http://127.0.0.1:5173` (se usado localmente)
-   - `https://<seu-projeto>.vercel.app`
-   - `https://<seu-dominio.com>` (se houver domínio personalizado)
+   - `https://dasiboard.vercel.app`
+   - `https://sieach.vercel.app`
+   - `https://<seu-dominio.com>` (se houver outro domínio personalizado)
 4. Salve, aguarde a propagação e faça um novo deploy/recarregamento.
 
 O erro `400: origin_mismatch` ocorre antes de o pedido chegar ao servidor e
@@ -76,7 +77,8 @@ Não adicione caminhos como `/login`, nem use `*`. No Vercel, configure
 `VITE_GOOGLE_CLIENT_ID` como variável de ambiente de **Build** e
 `GOOGLE_CLIENT_ID`, `SESSION_SECRET`, `FRONTEND_URL` e as variáveis do Supabase
 como variáveis de **Runtime**, usando `FRONTEND_URL` igual ao domínio público
-principal (por exemplo, `https://<seu-dominio.com>`). O backend também reconhece
+principal (por exemplo, `https://dasiboard.vercel.app`). O backend já reconhece
+`https://dasiboard.vercel.app` e `https://sieach.vercel.app`, além de reconhecer
 automaticamente `VERCEL_URL` e `VERCEL_PROJECT_PRODUCTION_URL`. Se o projeto
 usar mais de um domínio próprio, informe-os em `ALLOWED_ORIGINS`, separados por
 vírgulas, por exemplo:
