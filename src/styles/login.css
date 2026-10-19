@@ -2,48 +2,55 @@
 .login-shell {
   position: relative; min-height: 100dvh;
   display: grid; place-items: center; overflow: hidden;
+  padding: var(--s-6) 0;
   background: var(--bg-deep);
 }
 .login-brand-logo { height: 40px; width: auto; display: block; }
 .login-panel {
   position: relative; z-index: var(--z-content);
+  display: flex; flex-direction: column; align-items: flex-start;
   width: min(460px, calc(100% - 32px));
-  padding: clamp(28px,6vw,48px) clamp(20px,6vw,52px) clamp(24px,5vw,38px);
-  border: 1px solid var(--accent-line);
+  padding: clamp(24px,6vw,40px) clamp(20px,6vw,44px) clamp(20px,5vw,32px);
+  border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--surface-glass);
-  backdrop-filter: blur(var(--blur-nav));
-  -webkit-backdrop-filter: blur(var(--blur-nav));
+  background: var(--surface-1);
   box-shadow: var(--shadow-2);
-  transform: translate3d(var(--panel-x,0px), var(--panel-y,0px), 0);
-  transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1);
 }
-.login-brand { display: flex; align-items: center; }
-.login-copy { margin-top: clamp(40px,8vw,60px); }
-.login-copy h1 { color: var(--text); font-size: clamp(38px,8vw,50px); letter-spacing: -2px; line-height: 1.04; text-shadow: var(--text-glow); }
-.login-copy > p:last-child { max-width: 280px; margin-top: 14px; color: var(--text-2); font-size: 14px; line-height: 1.55; }
-.login-action { margin-top: var(--s-8); }
-.google-login-wrap {
-  display: flex; justify-content: center; padding: 5px;
-  border-radius: var(--r-pill); background: var(--accent-soft);
-  box-shadow: 0 0 0 1px var(--accent-line), 0 0 22px color-mix(in srgb, var(--accent-fill) 40%, transparent);
-}
-.google-login-wrap > div { border-radius: var(--r-pill); overflow: hidden; }
+.login-planet { width: min(220px, 62%); height: auto; margin: var(--s-6) auto 0; overflow: visible; }
+.login-orbit { fill: none; stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 5; }
+.login-ring { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; opacity: 0.55; }
+.login-ring-front { opacity: 0.95; }
+.login-planet-stop-a { stop-color: var(--accent-fill-2); }
+.login-planet-stop-b { stop-color: var(--accent-fill); }
+.login-planet-band { fill: var(--on-accent); opacity: 0.18; }
+.login-moon { fill: var(--sun); }
+.login-moon-orbit { transform-origin: 110px 80px; animation: login-moon-spin 24s linear infinite; }
+@keyframes login-moon-spin { to { transform: rotate(360deg); } }
+
+.login-copy { margin-top: var(--s-6); }
+.login-copy h1 { color: var(--text); font-size: clamp(26px,7vw,32px); letter-spacing: -1px; line-height: 1.12; }
+.login-copy p { max-width: 36ch; margin-top: var(--s-3); color: var(--text-2); font-size: 14px; line-height: 1.55; }
+.login-action { width: 100%; margin-top: var(--s-6); }
+.google-login-wrap { display: flex; justify-content: center; min-height: 44px; }
 .setup-message {
   display: flex; align-items: center; gap: 10px; padding: 13px 15px;
-  border-radius: var(--r-md); color: var(--text-2); background: var(--surface-1);
-  font-size: 11px; line-height: 1.4;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md); color: var(--text-2); background: var(--surface-inset);
+  font-size: 13px; line-height: 1.4;
 }
 .setup-message .icon { flex: 0 0 auto; width: 17px; color: var(--accent); }
-.login-error { margin-top: var(--s-3); color: var(--danger); font-size: 11px; line-height: 1.4; }
+.login-error { margin-top: var(--s-3); color: var(--danger); font-size: 13px; line-height: 1.4; text-align: center; }
 .login-note {
   display: flex; justify-content: center; align-items: center; gap: 6px;
-  margin-top: 18px; color: var(--text-muted); font-size: 10px;
+  margin-top: var(--s-4); color: var(--text-muted); font-size: 13px;
 }
-.login-note .icon { width: 13px; color: var(--accent); }
-.login-note strong { color: var(--accent-2); }
-.login-footer { margin-top: 44px; color: var(--text-muted); font-size: 9px; line-height: 1.55; text-align: center; }
+.login-note .icon { width: 14px; color: var(--accent); }
+.login-note strong { color: var(--text-2); }
+.login-footer { margin-top: var(--s-6); color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .login-moon-orbit { animation: none; }
+}
 
 /* ── Auth loading ────────────────────────────────────────────────────────────── */
 .auth-loading { min-height: 100dvh; background: var(--bg-deep); }
-

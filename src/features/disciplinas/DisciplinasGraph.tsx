@@ -1,154 +1,170 @@
-import { useLayoutEffect, useRef, useState } from 'react'
-import { DRIVE_URLS, type Period } from './data'
+import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { DRIVE_URLS, type Discipline, type Period } from './data'
 import { CHAIN_NEUTRAL, GRAPH_CHAINS, computeNodeColors } from './graphColors'
 
-type EdgeInfo = { fromCode: string; toCode: string; color: string }
-type NodeRect = { code: string; x: number; y: number; w: number; h: number }
+const COL_W = 148
+const PAD_X = 16
+const HEADER_H = 60
+const ROW_H = 116
+const DOT_ZONE = 44
 
+type Placed = { disc: Discipline; semester: number; x: number; y: number; diameter: number }
+
+function transitive(start: string, edges: Map<string, string[]>) {
+  const seen = new Set<string>()
+  const stack = [...(edges.get(start) ?? [])]
+  while (stack.length) {
+    const code = stack.pop()!
+    if (seen.has(code)) continue
+    seen.add(code)
+    stack.push(...(edges.get(code) ?? []))
+  }
+  return seen
+}
+
+/** Constelação: cada disciplina é uma estrela (tamanho = créditos), pré-requisitos viram linhas, uma coluna por semestre. */
 export function DisciplinasGraph({ periods }: { periods: Period[] }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [edges, setEdges] = useState<EdgeInfo[]>([])
-  const [svgSize, setSvgSize] = useState({ w: 0, h: 0 })
-  const colors = useRef(computeNodeColors(periods)).current
+  const [selected, setSelected] = useState<string | null>(null)
+  const colors = useMemo(() => computeNodeColors(periods), [periods])
 
-  useLayoutEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const containerRect = container.getBoundingClientRect()
-    const rects = new Map<string, NodeRect>()
-
-    container.querySelectorAll<HTMLElement>('[data-code]').forEach((el) => {
-      const code = el.dataset.code!
-      const r = el.getBoundingClientRect()
-      rects.set(code, {
-        code,
-        x: r.left - containerRect.left,
-        y: r.top - containerRect.top,
-        w: r.width,
-        h: r.height,
+  const { placed, byCode, lines, width, height, prereqsOf, unlocksOf } = useMemo(() => {
+    const placed: Placed[] = []
+    const byCode = new Map<string, Placed>()
+    let maxRows = 0
+    periods.forEach((period, semester) => {
+      maxRows = Math.max(maxRows, period.disciplines.length)
+      period.disciplines.forEach((disc, row) => {
+        const item: Placed = {
+          disc, semester,
+          x: PAD_X + semester * COL_W + COL_W / 2,
+          y: HEADER_H + row * ROW_H + DOT_ZONE / 2,
+          diameter: Math.min(38, 12 + (disc.credAula + disc.credTrab) * 3.2),
+        }
+        placed.push(item)
+        byCode.set(disc.code, item)
       })
     })
-
-    const newEdges: EdgeInfo[] = []
-    for (const p of periods) {
-      for (const d of p.disciplines) {
-        if (!d.prereqs) continue
-        for (const req of d.prereqs) {
-          if (rects.has(req.code) && rects.has(d.code)) {
-            newEdges.push({ fromCode: req.code, toCode: d.code, color: colors.get(req.code) ?? CHAIN_NEUTRAL })
-          }
-        }
+    const prereqsOf = new Map<string, string[]>()
+    const unlocksOf = new Map<string, string[]>()
+    const lines: { from: string; to: string }[] = []
+    for (const { disc } of placed) {
+      for (const req of disc.prereqs ?? []) {
+        if (!byCode.has(req.code)) continue
+        lines.push({ from: req.code, to: disc.code })
+        prereqsOf.set(disc.code, [...(prereqsOf.get(disc.code) ?? []), req.code])
+        unlocksOf.set(req.code, [...(unlocksOf.get(req.code) ?? []), disc.code])
       }
     }
+    return { placed, byCode, lines, width: PAD_X * 2 + periods.length * COL_W, height: HEADER_H + maxRows * ROW_H + 8, prereqsOf, unlocksOf }
+  }, [periods])
 
-    setSvgSize({ w: container.scrollWidth, h: container.scrollHeight })
-    setEdges(newEdges)
-  }, [periods, colors])
+  const before = useMemo(() => (selected ? transitive(selected, prereqsOf) : new Set<string>()), [selected, prereqsOf])
+  const after = useMemo(() => (selected ? transitive(selected, unlocksOf) : new Set<string>()), [selected, unlocksOf])
+  const chosen = selected ? byCode.get(selected)?.disc : undefined
+  const chosenDrive = chosen ? DRIVE_URLS[chosen.code] : undefined
 
-  function buildPath(edge: EdgeInfo) {
-    const container = containerRef.current
-    if (!container) return ''
-    const containerRect = container.getBoundingClientRect()
-    const fromEl = container.querySelector<HTMLElement>(`[data-code="${edge.fromCode}"]`)
-    const toEl = container.querySelector<HTMLElement>(`[data-code="${edge.toCode}"]`)
-    if (!fromEl || !toEl) return ''
-    const fr = fromEl.getBoundingClientRect()
-    const tr = toEl.getBoundingClientRect()
-    // Offset by container's viewport position AND add scroll to get content-space coords
-    const ox = containerRect.left - container.scrollLeft
-    const oy = containerRect.top - container.scrollTop
+  function stateOf(code: string) {
+    if (!selected) return ''
+    if (code === selected) return 'is-selected'
+    if (before.has(code)) return 'is-before'
+    if (after.has(code)) return 'is-after'
+    return 'is-dim'
+  }
 
-    const x1 = fr.right - ox
-    const y1 = fr.top - oy + fr.height / 2
-    const x2 = tr.left - ox
-    const y2 = tr.top - oy + tr.height / 2
-    const cx = (x1 + x2) / 2
-    return `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`
+  function lineState(from: string, to: string) {
+    if (!selected) return ''
+    const inBefore = (from === selected || before.has(from)) && (to === selected || before.has(to))
+    const inAfter = (to === selected || after.has(to)) && (from === selected || after.has(from))
+    return inBefore || inAfter ? 'is-lit' : 'is-dim'
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'Escape') setSelected(null)
   }
 
   return (
-    <div className="disc-graph-wrap" ref={containerRef}>
-      <svg
-        className="disc-graph-svg"
-        width={svgSize.w}
-        height={svgSize.h}
-        style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
-      >
-        {edges.map((e) => {
-          const d = buildPath(e)
-          if (!d) return null
-          return (
-            <path
-              key={`${e.fromCode}-${e.toCode}`}
-              d={d}
-              stroke={e.color}
-              strokeWidth="1.5"
-              strokeOpacity="0.55"
-              fill="none"
-              strokeDasharray="none"
-            />
-          )
-        })}
-      </svg>
-
-      <div className="disc-graph-grid">
-        {periods.map((period, pIdx) => (
-          <div key={period.label} className="disc-graph-col">
-            <div className="disc-graph-col-header">
-              <span className="disc-graph-sem-num">{pIdx + 1}º</span>
-              <span className="disc-graph-sem-label">sem.</span>
+    <div className="const" onKeyDown={onKeyDown}>
+      <div className={`const-detail${chosen ? ' has-selection' : ''}`} aria-live="polite">
+        {chosen ? (
+          <>
+            <div className="const-detail-head">
+              <div>
+                <span className="const-detail-code mono">{chosen.code}</span>
+                <h3>{chosen.name}</h3>
+              </div>
+              <button type="button" className="const-clear" onClick={() => setSelected(null)}>Limpar</button>
             </div>
-            <div className="disc-graph-col-nodes">
-              {period.disciplines.map((disc) => {
-                const color = colors.get(disc.code) ?? CHAIN_NEUTRAL
-                const driveUrl = DRIVE_URLS[disc.code]
-                return (
-                  <div
-                    key={disc.code}
-                    data-code={disc.code}
-                    className={`disc-graph-node${driveUrl ? ' disc-graph-node-linked' : ''}`}
-                    style={{ '--node-color': color } as React.CSSProperties}
-                    title={driveUrl ? `${disc.code} — ${disc.name}\nClique para abrir no DriveEACH` : `${disc.code} — ${disc.name}\n${disc.credAula}A ${disc.credTrab}T · ${disc.ch}h`}
-                    onClick={driveUrl ? () => window.open(driveUrl, '_blank', 'noopener') : undefined}
-                    role={driveUrl ? 'link' : undefined}
-                    tabIndex={driveUrl ? 0 : undefined}
-                    onKeyDown={driveUrl ? (e: React.KeyboardEvent) => e.key === 'Enter' && window.open(driveUrl, '_blank', 'noopener') : undefined}
-                  >
-                    <span className="disc-graph-node-code">{disc.code}</span>
-                    <span className="disc-graph-node-name">{disc.name}</span>
-                    {driveUrl && (
-                      <span className="disc-graph-node-drive">
-                        <svg viewBox="0 0 10 10" width="7" height="7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 1.5H1.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V6M6 1h3v3M9 1 4.5 5.5"/></svg>
-                        Drive
-                      </span>
-                    )}
-                    {(disc.ce != null && disc.ce > 0 || disc.ext != null && disc.ext! > 0) && (
-                      <span className="disc-graph-node-ext">
-                        {disc.ce && disc.ce > 0 ? `CE ${disc.ce}h` : ''}
-                        {disc.ext && disc.ext > 0 ? ` EXT ${disc.ext}h` : ''}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
+            <p className="const-detail-meta mono">
+              {chosen.credAula}A + {chosen.credTrab}T · {chosen.ch}h
+              {chosen.ce ? ` · CE ${chosen.ce}h` : ''}{chosen.cp ? ` · CP ${chosen.cp}h` : ''}{chosen.ext ? ` · EXT ${chosen.ext}h` : ''}
+            </p>
+            <dl className="const-detail-rel">
+              <dt>Antes dela</dt>
+              <dd>
+                {chosen.prereqs?.length
+                  ? chosen.prereqs.map((r) => <span key={r.code} className="const-rel"><span className="mono">{r.code}</span> {r.name} <em>({r.type})</em></span>)
+                  : 'Sem pré-requisito. Dá pra pegar de cara.'}
+              </dd>
+              <dt>Ela libera</dt>
+              <dd>
+                {unlocksOf.get(chosen.code)?.length
+                  ? unlocksOf.get(chosen.code)!.map((code) => <span key={code} className="const-rel"><span className="mono">{code}</span> {byCode.get(code)?.disc.name}</span>)
+                  : 'Nenhuma disciplina depende dela.'}
+              </dd>
+            </dl>
+            {chosenDrive && <a className="const-drive-link" href={chosenDrive} target="_blank" rel="noopener noreferrer">Abrir no DriveEACH ↗</a>}
+          </>
+        ) : (
+          <p className="const-hint">Toca numa estrela pra ver o que vem antes e o que ela libera. O tamanho é o total de créditos; ↗ marca quem tem material no Drive.</p>
+        )}
       </div>
 
-      <div className="disc-graph-legend">
+      <div className="const-scroll" role="region" aria-label="Constelação de disciplinas. Role para o lado para ver todos os semestres." tabIndex={0}>
+        <div className="const-sky" style={{ width, height }}>
+          {periods.map((period, i) => (
+            <div key={period.label} className="const-col" style={{ left: PAD_X + i * COL_W, width: COL_W, height }}>
+              <span className="const-sem mono">{i + 1}º</span>
+              <span className="const-sem-label">semestre</span>
+            </div>
+          ))}
+          <svg className="const-lines" width={width} height={height} aria-hidden="true" focusable="false">
+            {lines.map(({ from, to }) => {
+              const a = byCode.get(from)!, b = byCode.get(to)!
+              return (
+                <line
+                  key={`${from}-${to}`} className={`const-line ${lineState(from, to)}`}
+                  x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={colors.get(from) ?? CHAIN_NEUTRAL}
+                />
+              )
+            })}
+          </svg>
+          {placed.map(({ disc, x, y, diameter }) => {
+            const hasDrive = Boolean(DRIVE_URLS[disc.code])
+            return (
+              <button
+                key={disc.code}
+                type="button"
+                className={`const-node ${stateOf(disc.code)}`}
+                style={{ left: x - (COL_W - 12) / 2, top: y - DOT_ZONE / 2, width: COL_W - 12, '--star': colors.get(disc.code) ?? CHAIN_NEUTRAL, '--d': `${diameter}px` } as CSSProperties}
+                aria-pressed={selected === disc.code}
+                onClick={() => setSelected(selected === disc.code ? null : disc.code)}
+              >
+                <span className="const-dot" aria-hidden="true" />
+                <span className="const-code mono">{disc.code}{hasDrive && <span className="const-drive-mark" aria-hidden="true">↗</span>}</span>
+                <span className="const-name">{disc.name}</span>
+                <span className="sr-only">, {disc.credAula + disc.credTrab} créditos{hasDrive ? ', tem material no Drive' : ''}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <ul className="const-legend" aria-label="Cores por trilha">
         {GRAPH_CHAINS.map((chain) => (
-          <span key={chain.root} className="disc-graph-legend-item">
-            <span className="disc-graph-legend-dot" style={{ background: chain.color }} />
-            {chain.label}
-          </span>
+          <li key={chain.root}><span className="const-legend-dot" style={{ background: chain.color }} aria-hidden="true" />{chain.label}</li>
         ))}
-        <span className="disc-graph-legend-item">
-          <span className="disc-graph-legend-dot" style={{ background: CHAIN_NEUTRAL }} />
-          Isoladas
-        </span>
-      </div>
+        <li><span className="const-legend-dot" style={{ background: CHAIN_NEUTRAL }} aria-hidden="true" />Isoladas</li>
+      </ul>
     </div>
   )
 }

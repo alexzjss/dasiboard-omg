@@ -25,9 +25,8 @@ export function DocentesPage() {
   return <main className="app-shell doc-shell">
     <div className="doc-content">
       <section className="doc-heading">
-        <p className="eyebrow">EACH · USP</p>
-        <h1>Docentes<span>.</span></h1>
-        <p className="doc-caption">Lista de docentes da EACH/USP em ordem alfabética. Clique em um nome para ver mais detalhes.</p>
+        <h1>Docentes</h1>
+        <p className="doc-caption">Docentes da EACH em ordem alfabética. Toca num nome pra ver contato, sala e linha de pesquisa.</p>
       </section>
 
       <div className="doc-controls">
@@ -60,7 +59,7 @@ export function DocentesPage() {
 
       <div className="doc-list" role="list">
         {visible.length === 0
-          ? <p className="doc-empty">Nenhum docente encontrado para os filtros aplicados.</p>
+          ? <p className="doc-empty">Ninguém por aqui com esses filtros. Tenta outro nome ou curso.</p>
           : visible.map((d) => {
               const isOpen = expandedRow === d.nome
               return <article key={d.nome} className={`doc-card${isOpen ? ' open' : ''}`} role="listitem">
@@ -80,12 +79,12 @@ export function DocentesPage() {
                 {isOpen && <div className="doc-detail" id={`doc-detail-${d.nome.replace(/\s+/g, '-')}`} role="region" aria-label={`Detalhes de ${d.nome}`}>
                   <dl className="doc-detail-grid">
                     {d.email && <><dt>E-mail</dt><dd><a href={`mailto:${d.email}`} className="doc-link">{d.email}</a></dd></>}
-                    {d.sala && <><dt>Sala</dt><dd>{d.sala}</dd></>}
-                    {d.telefone && <><dt>Telefone</dt><dd>{d.telefone}</dd></>}
+                    {d.sala && <><dt>Sala</dt><dd className="mono">{d.sala}</dd></>}
+                    {d.telefone && <><dt>Telefone</dt><dd className="mono">{d.telefone}</dd></>}
                     {d.pesquisa && <><dt>Linha de Pesquisa</dt><dd className="doc-pesquisa">{d.pesquisa}</dd></>}
                   </dl>
                   <div className="doc-detail-links">
-                    <a href={d.lattes} className="doc-badge-link" target="_blank" rel="noopener noreferrer">CV Lattes ↗</a>
+                    <a href={d.lattes} className="doc-badge-link" target="_blank" rel="noopener noreferrer">Currículo Lattes ↗</a>
                   </div>
                 </div>}
               </article>

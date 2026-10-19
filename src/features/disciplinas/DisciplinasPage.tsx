@@ -4,32 +4,33 @@ import { DisciplinasGraph } from './DisciplinasGraph'
 
 export function DisciplinasPage() {
   const [section, setSection] = useState<'obrigatorias' | 'optativas'>('obrigatorias')
-  const [viewMode, setViewMode] = useState<'list' | 'graph'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'graph'>('graph')
   const periods = section === 'obrigatorias' ? obrigatoriasData : optativasData
 
   return <main className="app-shell disc-shell">
     <div className="disc-content">
       <section className="disc-heading">
-        <div><p className="eyebrow">SISTEMAS DE INFORMAÇÃO · EACH/USP</p><h1>Disciplinas<span>.</span></h1><p className="disc-caption">Grade curricular do curso.</p></div>
+        <div><h1>Disciplinas</h1><p className="disc-caption">O currículo de SI da EACH, semestre a semestre. Quem tem material no DriveEACH abre direto.</p></div>
       </section>
       <div className="disc-controls">
-        <div className="disc-tabs">
-          <button className={`disc-tab${section === 'obrigatorias' ? ' active' : ''}`} onClick={() => setSection('obrigatorias')}>Obrigatórias</button>
-          <button className={`disc-tab${section === 'optativas' ? ' active' : ''}`} onClick={() => setSection('optativas')}>Optativas Eletivas</button>
+        <div className="disc-tabs" role="group" aria-label="Tipo de disciplina">
+          <button className={`disc-tab${section === 'obrigatorias' ? ' active' : ''}`} aria-pressed={section === 'obrigatorias'} onClick={() => setSection('obrigatorias')}>Obrigatórias</button>
+          <button className={`disc-tab${section === 'optativas' ? ' active' : ''}`} aria-pressed={section === 'optativas'} onClick={() => setSection('optativas')}>Optativas Eletivas</button>
         </div>
-        <div className="disc-view-toggle">
-          <button className={`disc-view-btn${viewMode === 'list' ? ' active' : ''}`} onClick={() => setViewMode('list')} title="Visualização em lista">
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>
+        <div className="disc-view-toggle" role="group" aria-label="Modo de visualização">
+          <button className={`disc-view-btn${viewMode === 'list' ? ' active' : ''}`} aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>
+            <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg>
             Lista
           </button>
           <button
             className={`disc-view-btn${viewMode === 'graph' ? ' active' : ''}`}
             onClick={() => setViewMode('graph')}
-            title="Visualização em grafo"
+            title={section === 'optativas' ? 'A constelação só existe para as obrigatórias' : undefined}
+            aria-pressed={viewMode === 'graph'}
             disabled={section === 'optativas'}
           >
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="3" cy="8" r="1.8"/><circle cx="13" cy="4" r="1.8"/><circle cx="13" cy="12" r="1.8"/><line x1="4.8" y1="7.1" x2="11.2" y2="4.9"/><line x1="4.8" y1="8.9" x2="11.2" y2="11.1"/></svg>
-            Grafo
+            <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="3" cy="8" r="1.8"/><circle cx="13" cy="4" r="1.8"/><circle cx="13" cy="12" r="1.8"/><line x1="4.8" y1="7.1" x2="11.2" y2="4.9"/><line x1="4.8" y1="8.9" x2="11.2" y2="11.1"/></svg>
+            Constelação
           </button>
         </div>
       </div>
@@ -54,7 +55,7 @@ export function DisciplinasPage() {
                       title={driveUrl ? `Abrir ${disc.name} no DriveEACH` : undefined}
                     >
                       <div className="disc-card-main">
-                        <span className="disc-code">{disc.code}</span>
+                        <span className="disc-code mono">{disc.code}</span>
                         <span className="disc-name">{disc.name}</span>
                         <div className="disc-badges">
                           {driveUrl && (

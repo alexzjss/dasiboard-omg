@@ -50,20 +50,19 @@ export function PerfilPage() {
             {user.picture ? <img src={user.picture} alt={user.name} /> : <span>{initials}</span>}
           </div>
           <div>
-            <p className="eyebrow">ESTUDANTE · EACH/USP</p>
-            <h1 className="profile-name">{user.name}<span>.</span></h1>
+            <h1 className="profile-name">{user.name}</h1>
             <p className="profile-email">{user.email}</p>
           </div>
         </div>
         <div className="profile-section">
-          <p className="eyebrow">CONTA</p>
+          <h2 className="section-label">Conta</h2>
           <div className="profile-items">
             <div className="profile-item"><span className="profile-item-label">E-mail</span><span className="profile-item-value">{user.email}</span></div>
             <div className="profile-item"><span className="profile-item-label">Instituição</span><span className="profile-item-value">USP — EACH</span></div>
           </div>
         </div>
         <div className="profile-section">
-          <p className="eyebrow" id="theme-label">APARÊNCIA</p>
+          <h2 className="section-label" id="theme-label">Aparência</h2>
           <div className="segmented" role="radiogroup" aria-labelledby="theme-label">
             {THEME_OPTIONS.map((opt, i) => (
               <button

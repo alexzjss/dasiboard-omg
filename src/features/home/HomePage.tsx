@@ -2,11 +2,13 @@ import { useAuth } from '../../auth/authContext'
 import type { User } from '../../auth/types'
 import { Icon } from '../../components/Icon'
 import { useLayout } from '../../app/layoutContext'
-import { getCurrentWeekDays, getGreeting } from '../../lib/date'
+import { getGreeting } from '../../lib/date'
 import { AppTopbar } from './AppTopbar'
+import { DayOrbit } from './DayOrbit'
 import { JupiterImportForm } from './JupiterImportForm'
-import { ScheduleBoard } from './ScheduleBoard'
+import { useNow } from './useNow'
 import { useSchedule } from './useSchedule'
+import { WeekMap } from './WeekMap'
 
 export function HomePage() {
   const { user } = useAuth()
@@ -17,32 +19,30 @@ export function HomePage() {
 
 function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: () => void }) {
   const { schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, consultJupiter, clearSchedule } = useSchedule(user)
-  const todayIndex = (new Date().getDay() + 6) % 7
-  const days = getCurrentWeekDays()
-  const todayLabelText = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()).toUpperCase()
-  const greeting = getGreeting()
+  const now = useNow()
+  const dateLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now)
+  const greeting = getGreeting(now)
 
   return <main className="app-shell home-shell">
     <AppTopbar user={user} onOpenUserMenu={onOpenUserMenu} />
     <div className="content">
       <section className="welcome-row">
-        <div><p className="eyebrow">{todayLabelText}</p><h1>{greeting}, {user.name.split(' ')[0]}<span>.</span></h1></div>
-        <button className="date-button" aria-label="Ir para hoje"><Icon name="calendar" /><span>{days[todayIndex]?.date} {new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date()).replace('.', '')}</span></button>
+        <p className="eyebrow">{dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}</p>
+        <h1>{greeting}, {user.name.split(' ')[0]}</h1>
       </section>
 
-      <section className="section-block schedule-section">
-        <div className="section-heading">
-          <div><p className="eyebrow">SUA SEMANA</p><h2>Grade horária<span className="grade-dot">.</span></h2></div>
-          {hasStoredSchedule
-            ? <button type="button" className="clear-schedule-button" onClick={clearSchedule}><Icon name="trash" /><span>Atualizar grade</span></button>
-            : null}
-        </div>
-        {!hasStoredSchedule && (
-          <JupiterImportForm jupiterData={jupiterData} setJupiterData={setJupiterData} isConsulting={isConsultingJupiter} onSubmit={consultJupiter} />
-        )}
-        {importError && <p className="schedule-error" role="alert">{importError}</p>}
-        <ScheduleBoard schedule={schedule} />
-      </section>
+      <DayOrbit schedule={schedule} now={now} hasSchedule={hasStoredSchedule} />
+
+      {hasStoredSchedule
+        ? <WeekMap schedule={schedule} now={now} action={
+            <button type="button" className="clear-schedule-button" onClick={clearSchedule}><Icon name="trash" /><span>Importar de novo</span></button>
+          } />
+        : <section className="section-block import-block" id="importar" aria-labelledby="import-title">
+            <h2 id="import-title">Cadê sua grade?</h2>
+            <p className="section-hint">Puxa direto do JupiterWeb: número USP, senha e o código do programa. As aulas caem na órbita de hoje e no mapa da semana. A senha não fica salva no navegador.</p>
+            <JupiterImportForm jupiterData={jupiterData} setJupiterData={setJupiterData} isConsulting={isConsultingJupiter} onSubmit={consultJupiter} />
+            {importError && <p className="schedule-error" role="alert">{importError}</p>}
+          </section>}
     </div>
   </main>
 }

@@ -25,8 +25,3 @@ export const SECTION_LABEL: Record<Section, string> = {
 export const SECTION_SPACE_THEME: Record<Section, string> = {
   home: 'home', disciplinas: 'disc', docentes: 'docentes', entidades: 'entidades', perfil: 'home',
 }
-
-/** Class of the page shell the section used before the nav moved to the layout (keeps per-area nav colours). */
-export const SECTION_NAV_SHELL: Record<Section, string | undefined> = {
-  home: undefined, disciplinas: 'disc-shell', docentes: 'doc-shell', entidades: 'ent-shell', perfil: undefined,
-}

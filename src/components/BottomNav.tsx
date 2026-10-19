@@ -37,9 +37,17 @@ export function BottomNav({ activeTab, onSelectTab, className = '', items = [['I
   return (
     <nav className={`bottom-nav ${className} ${isVisible ? 'is-visible' : 'is-hidden'}`.trim()} aria-label="Navegação principal">
       {items.map(([label, icon]) => (
-        <button key={label} className={activeTab === label ? 'active' : ''} onClick={() => onSelectTab(label)}>
-          <Icon name={icon} />
-          <span>{label}</span>
+        <button key={label} type="button" className={activeTab === label ? 'active' : ''} aria-current={activeTab === label ? 'page' : undefined} onClick={() => onSelectTab(label)}>
+          <span className="nav-icon">
+            <Icon name={icon} />
+            {activeTab === label && (
+              <svg className="nav-orbit" viewBox="0 0 36 36" aria-hidden="true">
+                <circle className="nav-orbit-ring" cx="18" cy="18" r="16" />
+                <circle className="nav-orbit-dot" cx="18" cy="2" r="2.6" />
+              </svg>
+            )}
+          </span>
+          <span className="nav-label">{label}</span>
         </button>
       ))}
     </nav>

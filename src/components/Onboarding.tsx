@@ -1,30 +1,31 @@
 import { useState } from 'react'
 import { markOnboardingDone } from '../lib/storage'
+import { Icon, type IconName } from './Icon'
 
-const ONBOARDING_STEPS = [
+const ONBOARDING_STEPS: { icon: IconName; title: string; body: string; cta: string }[] = [
   {
-    icon: '🌌',
+    icon: 'home',
     title: 'Bem-vindo ao daSIboard',
-    body: 'Seu painel acadêmico para o curso de Sistemas de Informação da EACH/USP. Tudo em um só lugar, no seu estilo.',
+    body: 'Feito por e pra quem estuda SI na EACH. Aqui ficam sua grade, as disciplinas, os docentes e as entidades.',
     cta: 'Próximo',
   },
   {
-    icon: '📅',
-    title: 'Sua grade, sempre à mão',
-    body: 'Conecte seu JupiterWeb e veja sua grade horária automaticamente organizada por dia. Sem copiar, sem confusão.',
+    icon: 'calendar',
+    title: 'Sua grade, na órbita',
+    body: 'Importa do JupiterWeb e a gente mostra o que rola hoje e na semana. Sem copiar horário na mão.',
     cta: 'Próximo',
   },
   {
-    icon: '📚',
-    title: 'Explore o curso',
-    body: 'Veja todas as disciplinas obrigatórias e optativas, pré-requisitos e materiais disponíveis no DriveEACH.',
+    icon: 'book',
+    title: 'O curso em constelação',
+    body: 'Cada disciplina é uma estrela e as linhas mostram os pré-requisitos. Quem tem material no DriveEACH abre direto.',
     cta: 'Próximo',
   },
   {
-    icon: '🏛️',
-    title: 'Conheça as entidades',
-    body: 'DASI, PET-SI, Síntese Jr., Hype USP e muito mais. Acompanhe as publicações e fique por dentro do que acontece.',
-    cta: 'Começar',
+    icon: 'building',
+    title: 'Conhece as entidades',
+    body: 'DASI, PET-SI, Síntese Jr., Hype USP e mais. Descobre quem faz o quê no curso.',
+    cta: 'Bora',
   },
 ]
 
@@ -51,7 +52,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
   return (
     <div className={`onboarding-overlay${exiting ? ' onboarding-exit' : ''}`} role="dialog" aria-modal="true" aria-label="Boas-vindas ao daSIboard">
       <div className="onboarding-panel">
-        <div className="onboarding-icon" aria-hidden="true">{current.icon}</div>
+        <div className="onboarding-icon" aria-hidden="true"><Icon name={current.icon} /></div>
         <div className="onboarding-dots" aria-hidden="true">
           {ONBOARDING_STEPS.map((_, i) => <span key={i} className={`onboarding-dot${i === step ? ' active' : ''}`} />)}
         </div>

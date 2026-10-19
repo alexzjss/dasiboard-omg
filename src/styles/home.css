@@ -1,217 +1,182 @@
 /* ── Content ─────────────────────────────────────────────────────────────────── */
 .content {
   position: relative; z-index: var(--z-content);
-  padding: clamp(24px, 5vw, 56px) clamp(16px, 5vw, 72px) 120px;
+  width: min(100%, 1280px); margin: 0 auto;
+  padding: clamp(24px, 5vw, 48px) clamp(16px, 5vw, 64px) 120px;
 }
+.welcome-row { margin-bottom: var(--s-6); }
 
-
-/* ── Welcome row ─────────────────────────────────────────────────────────────── */
-.welcome-row {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  gap: var(--s-4); flex-wrap: wrap;
-}
-.date-button {
-  flex-shrink: 0;
-  display: inline-flex; gap: var(--s-2); align-items: center;
-  padding: 10px 14px; border: 1px solid var(--line);
-  border-radius: var(--r-md); background: var(--surface-1);
-  color: var(--accent-2); font-size: 12px; font-weight: 700;
-  box-shadow: var(--shadow-1);
-  transition: border-color 0.15s, background 0.15s;
-  white-space: nowrap;
-}
-.date-button:hover { border-color: var(--accent-line); background: var(--surface-2); }
-.date-button .icon { width: 15px; height: 15px; color: var(--accent); }
-
-/* ── Section block ───────────────────────────────────────────────────────────── */
+/* Cartões: superfície sólida com borda de 1px (sem vidro, sem blur) */
 .section-block {
-  margin-top: clamp(32px, 5vw, 56px);
+  margin-top: var(--s-4);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  padding: clamp(18px, 4vw, 28px);
+  padding: clamp(16px, 3vw, 24px);
   background: var(--surface-1);
-  box-shadow: var(--shadow-2);
 }
-.section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s-3); }
-.section-heading h2 { font-size: clamp(17px,3vw,21px); letter-spacing: -0.5px; color: var(--text); }
+.section-block h2 { font-size: clamp(18px, 3vw, 21px); letter-spacing: -0.4px; }
+.section-hint { margin-top: var(--s-2); max-width: 62ch; color: var(--text-muted); font-size: 14px; line-height: 1.55; }
 
-/* ── Grade dot ───────────────────────────────────────────────────────────────── */
-.grade-dot { color: var(--accent); }
+/* ── Órbita do dia ───────────────────────────────────────────────────────────── */
+.orbit-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--s-1) var(--s-4); }
+.orbit-summary { color: var(--text-2); font-size: 14px; line-height: 1.45; }
+.orbit-summary a { font-weight: 600; }
+.orbit.is-empty .orbit-plane { opacity: 0.45; }
 
-/* ── Jupiter form ────────────────────────────────────────────────────────────── */
-.jupiter-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: var(--s-5);
+/* Desktop/tablet: horizontal */
+.orbit-plane { position: relative; height: 136px; margin: var(--s-5) var(--s-6) 0; }
+.orbit-line { position: absolute; left: 0; right: 0; top: 67px; height: 2px; border-radius: var(--r-pill); background: var(--line-strong); }
+.orbit-tick { position: absolute; top: 0; bottom: 0; left: calc(var(--p) * 1%); width: 0; }
+.orbit-tick::before { content: ''; position: absolute; left: 0; top: 26px; bottom: 26px; width: 1px; background: var(--line-soft); }
+.orbit-tick span { position: absolute; top: 0; left: 0; transform: translateX(-50%); color: var(--text-muted); font-size: 11px; display: none; }
+.orbit-tick.is-major span { display: block; }
+.orbit-segments { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
+.orbit-seg {
+  position: absolute;
+  top: calc(30px + var(--lane) * 74px / var(--lanes)); height: calc(74px / var(--lanes));
+  left: calc(var(--p0) * 1%); width: calc(var(--len) * 1%);
+  container-type: size;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--s-1) var(--s-2); overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--area) 38%, var(--line));
+  border-left: 3px solid var(--area);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--area) 13%, var(--surface-1));
+  transition: opacity 0.2s, box-shadow 0.2s;
 }
-.jupiter-form input, .import-button {
-  min-height: 46px;
+.orbit-seg-code { color: var(--text); font-size: 12px; font-weight: 700; line-height: 1.3; }
+.orbit-seg-title { color: var(--text-2); font-size: 12px; line-height: 1.25; overflow: hidden; }
+.orbit-seg-time { color: var(--text-muted); font-size: 10.5px; line-height: 1.3; }
+.orbit-seg.is-past { opacity: 0.55; }
+.orbit-seg.is-now {
+  border-color: var(--sun); border-left-color: var(--sun);
+  background: color-mix(in srgb, var(--sun) 16%, var(--surface-1));
+  box-shadow: 0 0 0 1px var(--sun), 0 0 20px color-mix(in srgb, var(--sun) 45%, transparent);
 }
+.orbit-seg.is-now .orbit-seg-time { color: var(--text-2); }
+
+.orbit-now { position: absolute; z-index: 2; top: 18px; bottom: 0; left: calc(var(--p) * 1%); width: 2px; margin-left: -1px; background: var(--sun); transition: left 0.2s ease; }
+.orbit-now::before {
+  content: ''; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; margin-left: -5px;
+  border-radius: 50%; background: var(--sun);
+  animation: orbit-pulse 2.4s ease-out infinite;
+}
+.orbit-now-label {
+  position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  padding: 1px var(--s-2); border: 1px solid var(--sun); border-radius: var(--r-pill);
+  background: var(--surface-1); color: var(--sun); font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+@keyframes orbit-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sun) 55%, transparent); } 100% { box-shadow: 0 0 0 10px transparent; } }
+
+@container (max-width: 130px) { .orbit-seg-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+@container (max-width: 84px) { .orbit-seg-time { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+@container (max-height: 56px) { .orbit-seg-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+@container (max-height: 36px) { .orbit-seg-time { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+
+/* ── Mapa da semana ──────────────────────────────────────────────────────────── */
+.week { --hour-h: 48px; }
+.week-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-4); }
+.week-map {
+  display: grid; grid-template-columns: 34px repeat(5, minmax(0, 1fr)); column-gap: var(--s-1);
+  grid-template-rows: auto calc(var(--rows) * var(--hour-h));
+}
+.week-day-head {
+  display: flex; align-items: baseline; justify-content: center; gap: var(--s-2);
+  padding-bottom: var(--s-2); border-bottom: 2px solid transparent;
+  color: var(--text-muted); font-size: 12px; font-weight: 600;
+}
+.week-day-head .mono { color: var(--text); font-size: 14px; font-weight: 700; }
+.week-day-head.is-today { border-bottom-color: var(--area); color: var(--area); }
+.week-hours { display: grid; grid-auto-rows: var(--hour-h); }
+.week-hours span { color: var(--text-muted); font-size: 10.5px; line-height: 1; padding-top: 3px; }
+.week-col {
+  position: relative; margin: 0; padding: 0; list-style: none;
+  border-radius: var(--r-sm);
+  background-image: repeating-linear-gradient(to bottom, var(--line-soft) 0 1px, transparent 1px var(--hour-h));
+  background-color: var(--surface-inset);
+}
+.week-col.is-today { background-color: color-mix(in srgb, var(--area) 8%, var(--surface-inset)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 35%, transparent); }
+.week-event {
+  position: absolute;
+  left: calc(2px + var(--lane) * (100% - 4px) / var(--lanes)); width: calc((100% - 4px) / var(--lanes) - 1px);
+  top: calc(var(--t) * var(--hour-h) / 60);
+  height: calc(var(--d) * var(--hour-h) / 60 - 2px);
+  container-type: size;
+  display: flex; flex-direction: column; gap: 1px; overflow: hidden;
+  padding: 3px 4px;
+  border-left: 3px solid var(--area); border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--area) 20%, var(--surface-1));
+}
+.week-event-code { color: var(--text); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
+.week-event-room { color: var(--text-2); font-size: 9.5px; line-height: 1.2; overflow-wrap: anywhere; }
+.week-event.is-now { background: color-mix(in srgb, var(--sun) 24%, var(--surface-1)); border-left-color: var(--sun); box-shadow: 0 0 0 1px var(--sun), 0 0 12px color-mix(in srgb, var(--sun) 45%, transparent); }
+.week-now { position: absolute; left: 0; right: 0; top: calc(var(--t) * var(--hour-h) / 60); height: 2px; margin-top: -1px; background: var(--sun); pointer-events: none; list-style: none; }
+@container (max-height: 30px) { .week-event-room { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+
+/* ── Importar do JupiterWeb ──────────────────────────────────────────────────── */
+.jupiter-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
+.jupiter-form input, .import-button { min-height: 46px; }
 .jupiter-form input {
   padding: 11px 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  color: var(--text);
-  background: var(--surface-inset);
-  font: inherit; font-size: 13px;
-  outline: none;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  color: var(--text); background: var(--surface-inset);
+  font: inherit; font-size: 14px; outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .jupiter-form input::placeholder { color: var(--text-muted); }
-.jupiter-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+.jupiter-form input:focus { border-color: var(--area); box-shadow: 0 0 0 3px var(--focus-ring); }
 .import-button {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 11px var(--s-4); border: 1px solid var(--accent-line);
-  border-radius: var(--r-md); color: var(--accent-2); background: var(--surface-3);
-  font-size: 12px; font-weight: 700; cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  padding: 11px var(--s-4); border: 1px solid var(--area);
+  border-radius: var(--r-md); color: var(--on-accent); background: var(--accent-fill);
+  font-size: 14px; font-weight: 700;
+  transition: background 0.15s, opacity 0.15s;
 }
-.import-button:hover { background: var(--surface-3); border-color: var(--accent-line-strong); }
+.import-button:hover { background: var(--accent-fill-2); }
 .import-button:disabled { opacity: 0.6; cursor: wait; }
 .jupiter-form .import-button { grid-column: 1 / -1; }
-.schedule-error { margin-top: 10px; color: var(--danger); font-size: 12px; line-height: 1.4; }
+.schedule-error { margin-top: var(--s-3); color: var(--danger); font-size: 13px; line-height: 1.4; }
 
-/* ── Clear schedule ──────────────────────────────────────────────────────────── */
 .clear-schedule-button {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: var(--s-2) 13px; border: 1px solid var(--danger-line);
-  border-radius: var(--r-sm); color: var(--danger); background: var(--surface-1);
-  font-size: 11px; font-weight: 700; cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: 44px; padding: 0 var(--s-3); border: 1px solid var(--line);
+  border-radius: var(--r-sm); color: var(--text-2); background: transparent;
+  font-size: 13px; font-weight: 600;
+  transition: border-color 0.15s, color 0.15s;
 }
-.clear-schedule-button .icon { width: 13px; stroke-width: 1.8; }
-.clear-schedule-button:hover { background: var(--danger-soft); border-color: var(--danger-line); }
+.clear-schedule-button .icon { width: 15px; height: 15px; }
+.clear-schedule-button:hover { border-color: var(--area); color: var(--area); }
 
-/* ── Schedule empty ──────────────────────────────────────────────────────────── */
-.empty-schedule, .schedule-empty-day {
-  padding: 22px; border: 1px dashed var(--line);
-  border-radius: var(--r-md); color: var(--text-muted); background: var(--surface-inset);
-  font-size: 12px; text-align: center;
-}
-
-/* ── Calendar board (home) ───────────────────────────────────────────────────── */
-.home-calendar-board { margin-top: var(--s-5); }
-.calendar-board {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px; padding: var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface-1);
-  box-shadow: var(--shadow-2);
-  overflow-x: auto;
-}
-.calendar-day {
-  min-height: 280px; padding: 14px 11px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md); background: var(--surface-1);
-}
-.calendar-day:nth-child(even) { background: var(--surface-1); }
-.calendar-day.today {
-  border-color: var(--accent-line-strong);
-  box-shadow: 0 0 0 1px var(--accent-line-soft) inset, var(--shadow-1);
-}
-.calendar-day header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
-  padding-bottom: var(--s-3); border-bottom: 1px solid var(--line);
-}
-.calendar-day header div { display: flex; align-items: baseline; gap: 7px; }
-.calendar-day header strong { color: var(--accent-2); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; }
-.calendar-day header span { color: var(--text); font: 700 20px 'Manrope'; }
-.calendar-day.today header strong { color: var(--accent-2); }
-.calendar-day header small { color: var(--text-muted); font-size: 9px; }
-.calendar-day-list { display: grid; gap: var(--s-2); padding-top: var(--s-3); }
-.calendar-event {
-  display: grid; grid-template-columns: 34px 1fr; gap: 7px;
-  padding: 9px var(--s-2); border-left: 3px solid var(--accent);
-  border-radius: var(--r-sm); background: var(--surface-3);
-}
-.calendar-event-time { color: var(--accent-2); font: 700 10px 'Manrope'; }
-.calendar-event strong, .calendar-event small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.calendar-event strong { color: var(--text); font-size: 11px; }
-.calendar-event small { margin-top: var(--s-1); color: var(--text-muted); font-size: 9px; }
-.calendar-empty { padding-top: 10px; color: var(--text-muted); font-size: 10px; text-align: center; }
-
-/* ── Quick grid ──────────────────────────────────────────────────────────────── */
-.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-top: 18px; }
-.quick-card {
-  display: flex; align-items: center; gap: var(--s-3);
-  min-height: 72px; padding: 13px 15px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md); text-align: left;
-  background: var(--surface-1); color: var(--text-muted);
-  box-shadow: var(--shadow-1);
-  transition: border-color 0.15s, background 0.15s;
-}
-.quick-card:hover { border-color: var(--line-strong); background: var(--surface-2); }
-.quick-card > span:nth-child(2) { flex: 1; min-width: 0; }
-.quick-card strong, .quick-card small { display: block; }
-.quick-card strong { color: var(--text); font-size: 13px; }
-.quick-card small { margin-top: 3px; font-size: 10px; }
-.quick-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--r-sm); flex-shrink: 0; }
-.quick-icon .icon { width: 17px; }
-.lilac { color: var(--accent-2); background: var(--surface-3); }
-.mint { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, var(--surface-1)); }
-
-/* ── Calendar page ───────────────────────────────────────────────────────────── */
-.calendar-shell { background: transparent; }
-.calendar-content {
-  width: min(100%, 1440px); margin: 0 auto;
-  padding: clamp(24px,4vw,56px) clamp(16px,4vw,64px) 120px;
-  position: relative; z-index: var(--z-content);
-}
-.calendar-heading {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: var(--s-5); margin-bottom: var(--s-7);
-}
-.calendar-heading > div { min-width: 0; }
-.calendar-heading h1 { font-size: clamp(30px,5vw,44px); color: var(--text); letter-spacing: -1.5px; }
-.calendar-heading h1 span { color: var(--accent-2); }
-.calendar-caption { margin-top: 9px; color: var(--text-muted); font-size: 13px; }
-.calendar-import {
-  display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;
-}
-.calendar-import input {
-  flex: 1 1 150px; min-width: 0;
-  padding: var(--s-3) 13px; border: 1px solid var(--line);
-  border-radius: var(--r-md); color: var(--text); background: var(--surface-inset);
-  font: inherit; font-size: 13px; outline: none; min-height: 46px;
-}
-.calendar-import input::placeholder { color: var(--text-muted); }
-.calendar-import input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
-.calendar-import .import-button { flex: 0 1 auto; min-height: 46px; }
-.schedule-saved-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
-  margin-bottom: 18px; padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--accent-line-soft); border-radius: var(--r-md);
-  background: var(--surface-1); color: var(--text-muted); font-size: 12px;
-}
-.schedule-saved-bar .clear-schedule-button { background: var(--surface-3); border-color: var(--danger-line); color: var(--danger); }
-.calendar-error { margin: 0 0 18px; }
-.calendar-heading .date-button { color: var(--accent-2); border-color: var(--accent-line); background: var(--surface-3); }
-.calendar-heading .date-button .icon { color: var(--accent-2); }
-
-.calendar-shell .bottom-nav button.active { color: var(--accent-2); }
-
-@media (max-width: 1024px) {
-  .calendar-board { grid-template-columns: 1fr; }
-  .calendar-day { min-height: 0; }
-  .calendar-day-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
+/* ── Celular: a órbita fica vertical ─────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .calendar-heading { align-items: flex-start; flex-direction: column; gap: var(--s-3); }
-  .calendar-day-list { grid-template-columns: 1fr; }
-  .calendar-import { flex-direction: column; }
-  .calendar-import input, .calendar-import .import-button { width: 100%; }
+  .jupiter-form { grid-template-columns: 1fr; }
+  .week { --hour-h: 44px; }
+  .week-map { grid-template-columns: 26px repeat(5, minmax(0, 1fr)); column-gap: 3px; }
+  .week-day-head { flex-direction: column; align-items: center; gap: 0; font-size: 11px; }
+  .week-event-code { font-size: 9.5px; }
+  .week-event-room { font-size: 8.5px; }
+
+  .orbit-plane { height: 736px; margin: var(--s-5) 0 0; }
+  .orbit.is-empty .orbit-plane { display: none; }
+  .orbit-line { left: 50px; right: auto; top: 0; bottom: 0; width: 2px; height: auto; }
+  .orbit-tick { left: 0; right: 0; top: calc(var(--p) * 1%); bottom: auto; width: auto; height: 0; }
+  .orbit-tick::before { left: 50px; right: 0; top: 0; bottom: auto; width: auto; height: 1px; }
+  .orbit-tick span, .orbit-tick.is-major span { display: block; top: 0; left: 0; transform: translateY(-50%); }
+  .orbit-seg {
+    left: calc(62px + var(--lane) * (100% - 62px) / var(--lanes)); right: auto; width: calc((100% - 62px) / var(--lanes) - 2px);
+    top: calc(var(--p0) * 1%); height: calc(var(--len) * 1%);
+    padding: 3px var(--s-2); flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s-2); align-content: flex-start;
+  }
+  .orbit-seg-title { flex: 1 1 100%; order: 3; }
+  .orbit-seg-time { order: 2; }
+  .orbit-now { left: 0; right: 0; bottom: auto; top: calc(var(--p) * 1%); width: auto; height: 2px; margin: -1px 0 0; transition: top 0.2s ease; }
+  .orbit-now::before { top: -4px; left: 51px; margin-left: 0; }
+  .orbit-now-word { display: none; }
+  .orbit-tick.is-near-now span { visibility: hidden; }
+  .orbit-now-label { left: 0; bottom: auto; top: -10px; transform: none; }
 }
 
-/* ── Responsive content ──────────────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .welcome-row { flex-direction: column; gap: 14px; }
-  .date-button { align-self: flex-start; }
-  .quick-grid { grid-template-columns: 1fr; }
-  .calendar-board { padding: var(--s-2); }
-  .jupiter-form { gap: var(--s-2); }
+@media (prefers-reduced-motion: reduce) {
+  .orbit-now, .orbit-seg { transition: none; }
+  .orbit-now::before { animation: none; }
 }
-

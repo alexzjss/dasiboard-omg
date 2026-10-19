@@ -66,6 +66,18 @@
   --area-entidades: #ff9040;
   --area-disc-text: #7de8e5;
 
+  /* Cor por área em uso de texto/foco/anel (contraste AA por tema) e o "sol" do marcador de agora */
+  --area-home-ink: #a58cff;
+  --area-disc-ink: #5fd0cd;
+  --area-docentes-ink: #c690ff;
+  --area-entidades-ink: #ff9a55;
+  --area: var(--area-home-ink);
+  --sun: #ffd479;
+  --sun-soft: rgba(255, 212, 121, 0.14);
+
+  /* Tipografia: coordenadas de mapa estelar (códigos, horários, salas) */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
   /* Entidades: peso do tom de cada entidade sobre a superfície */
   --ent-bg-weight: 80%;
   --ent-bg-weight-hover: 90%;
@@ -145,6 +157,13 @@
 
   --area-disc-text: #0f6f6c;
 
+  --area-home-ink: #5b3fd0;
+  --area-disc-ink: #0f6f6c;
+  --area-docentes-ink: #7a2fc0;
+  --area-entidades-ink: #a8470a;
+  --sun: #a85a00;
+  --sun-soft: rgba(168, 90, 0, 0.12);
+
   --ent-bg-weight: 10%;
   --ent-bg-weight-hover: 16%;
   --ent-label-weight: 55%;
@@ -198,6 +217,13 @@
     --ext: #8a3fb8;
 
     --area-disc-text: #0f6f6c;
+
+    --area-home-ink: #5b3fd0;
+    --area-disc-ink: #0f6f6c;
+    --area-docentes-ink: #7a2fc0;
+    --area-entidades-ink: #a8470a;
+    --sun: #a85a00;
+    --sun-soft: rgba(168, 90, 0, 0.12);
 
     --ent-bg-weight: 10%;
     --ent-bg-weight-hover: 16%;

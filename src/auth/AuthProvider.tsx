@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [developmentHome])
 
-  useEffect(() => { document.title = user ? 'daSIboard · Seu campus' : 'daSIboard · Entrar' }, [user])
+  useEffect(() => { document.title = user ? 'daSIboard' : 'daSIboard · Entrar' }, [user])
 
   const value = useMemo<AuthContextValue>(() => {
     async function login(credential: string) {

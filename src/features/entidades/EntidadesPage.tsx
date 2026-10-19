@@ -26,14 +26,14 @@ export function EntidadesPage() {
               <img src={selected.logo} alt={`Logo ${selected.name}`} className="ent-detail-logo" />
             </div>
             <div>
-              <p className="eyebrow ent-eyebrow">{selected.type.toUpperCase()}</p>
-              <h1 className="ent-detail-title">{selected.name}<span>.</span></h1>
+              <p className="section-label ent-eyebrow">{selected.type}</p>
+              <h1 className="ent-detail-title">{selected.name}</h1>
               <p className="ent-detail-full">{selected.fullName}</p>
             </div>
           </div>
 
           <div className="ent-ig-section">
-            <p className="eyebrow">INSTAGRAM</p>
+            <h2 className="section-label">No Instagram</h2>
             <InstagramEmbed url={selected.instagram} name={selected.name} />
           </div>
         </div>
@@ -45,9 +45,8 @@ export function EntidadesPage() {
     <main className="app-shell ent-shell">
       <div className="ent-content">
         <section className="ent-heading">
-          <p className="eyebrow">SISTEMAS DE INFORMAÇÃO · EACH/USP</p>
-          <h1>Entidades<span>.</span></h1>
-          <p className="ent-caption">Coletivos, grupos e organizações estudantis do curso.</p>
+          <h1>Entidades</h1>
+          <p className="ent-caption">Grupos, coletivos e empresas juniores que movimentam SI. Escolhe um pra ver as novidades.</p>
         </section>
         <div className="ent-grid">
           {entidadesData.map((e) => (
