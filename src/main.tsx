@@ -15,6 +15,8 @@ import './styles/entidades.css'
 import './styles/onboarding.css'
 import './styles/user-menu.css'
 import './styles/perfil.css'
+import './styles/comunidade.css'
+import './styles/pessoa.css'
 import App from './app/App.tsx'
 
 createRoot(document.getElementById('root')!).render(

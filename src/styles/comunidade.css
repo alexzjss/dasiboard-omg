@@ -1,0 +1,10 @@
+/* Comunidade (T7) e botão de conexão compartilhado */
+.connect-button { display: inline-flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+.connect-button button { min-height: 44px; padding: 0 var(--s-4); border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font-weight: 600; }
+.connect-button.is-compact button { min-height: 36px; padding: 0 var(--s-3); font-size: 13px; }
+.connect-button[data-state='none'] .connect-button-main,
+.connect-button[data-state='pending_received'] .connect-button-main { background: var(--area); border-color: var(--area); color: var(--on-accent); }
+.connect-button[data-state='accepted'] .connect-button-main { color: var(--area); }
+.connect-button button:disabled { opacity: 0.6; cursor: progress; }
+.connect-button button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.connect-button-error { flex-basis: 100%; color: var(--danger); font-size: 12px; }

@@ -2,7 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '../auth/authContext'
 import { LoginScreen } from '../auth/LoginScreen'
 import { DisciplinasPage } from '../features/disciplinas/DisciplinasPage'
-import { DocentesPage } from '../features/docentes/DocentesPage'
+import { ComunidadePage } from '../features/comunidade/ComunidadePage'
+import { PersonPage } from '../features/comunidade/PersonPage'
 import { EntidadesPage } from '../features/entidades/EntidadesPage'
 import { HomePage } from '../features/home/HomePage'
 import { PerfilPage } from '../features/perfil/PerfilPage'
@@ -23,8 +24,8 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         {import.meta.env.DEV && <Route path="dev/home" element={<HomePage />} />}
         <Route path="disciplinas" element={<DisciplinasPage />} />
-        {/* Placeholder até a página /comunidade (T7): por enquanto mostra a aba Docentes atual. */}
-        <Route path="comunidade" element={<DocentesPage />} />
+        <Route path="comunidade" element={<ComunidadePage />} />
+        <Route path="comunidade/:handle" element={<PersonPage />} />
         <Route path="docentes" element={<Navigate to="/comunidade?aba=docentes" replace />} />
         <Route path="entidades" element={<EntidadesPage />} />
         <Route path="entidades/:slug" element={<EntidadesPage />} />
