@@ -35,3 +35,7 @@ Invite codes (`entities.invite_code_hash`) start empty; an entity admin or super
 ## Fase 1 (foto, tecnologias, cargos e badges)
 
 Rodar `schema.sql` de novo no SQL Editor aplica a Fase 1: as colunas novas usam `add column if not exists`, a tabela `badge_definitions` é criada e o bucket `avatars` (público, até 2 MB, webp/png/jpeg) é criado pelo próprio SQL.
+
+## Fase 2 (notificações, avisos e push)
+
+Rodar `schema.sql` de novo no SQL Editor aplica a Fase 2: as tabelas `notifications`, `announcements` e `push_subscriptions` são criadas com `create table if not exists`, com RLS habilitado e sem políticas. Para o push no navegador (Tarefa 6) é preciso configurar as variáveis VAPID no servidor.

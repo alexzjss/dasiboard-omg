@@ -203,3 +203,49 @@ alter table public.badge_definitions enable row level security;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('avatars', 'avatars', true, 2097152, array['image/webp', 'image/png', 'image/jpeg'])
 on conflict (id) do nothing;
+
+-- Fase 2: notificações, avisos e push
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  type text not null check (type in ('connection_request','connection_accepted','entity_joined','entity_role_changed','entity_removed','badge_awarded','announcement')),
+  actor_id uuid references public.users(id) on delete set null,
+  entity_id text references public.entities(id) on delete cascade,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  read_at timestamptz
+);
+
+create index if not exists notifications_user_created_idx on public.notifications(user_id, created_at desc, id desc);
+create index if not exists notifications_user_unread_idx on public.notifications(user_id) where read_at is null;
+
+create table if not exists public.announcements (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid references public.users(id) on delete set null,
+  entity_id text references public.entities(id) on delete cascade,
+  audience text not null check (audience in ('all','course','cohort','entity')),
+  audience_value text,
+  title text not null check (char_length(title) between 1 and 80),
+  body text not null check (char_length(body) between 1 and 500),
+  link text,
+  recipients int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists announcements_entity_created_idx on public.announcements(entity_id, created_at desc);
+
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  kind text not null default 'web' check (kind in ('web','fcm')),
+  endpoint text not null unique,
+  keys jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now()
+);
+
+create index if not exists push_subscriptions_user_idx on public.push_subscriptions(user_id);
+
+alter table public.notifications enable row level security;
+alter table public.announcements enable row level security;
+alter table public.push_subscriptions enable row level security;
