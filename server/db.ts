@@ -1,4 +1,9 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getClient } from './lib/supabase.js'
+import { logError } from './lib/errors.js'
+import { ensureProfileWithHandle, supabaseHandleStore } from './social/handles.js'
+import { extractCourses, syncUserCourses } from './social/courses.js'
+
+export { getClient }
 
 type StoredUser = {
   id: string
@@ -19,21 +24,6 @@ export type ScheduleEntry = {
   building: string
 }
 
-let client: SupabaseClient | null = null
-
-function getClient() {
-  if (client) return client
-  const url = process.env.SUPABASE_URL?.replace(/\/+$/, '').replace(/\/rest\/v1$/, '')
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
-  if (!url || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) are required')
-  }
-  client = createClient(url, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-  return client
-}
-
 export async function upsertUser(user: { sub: string; email: string; name: string; picture?: string }) {
   const { data, error } = await getClient()
     .from('users')
@@ -48,6 +38,7 @@ export async function upsertUser(user: { sub: string; email: string; name: strin
     .single<StoredUser>()
 
   if (error) throw new Error(`Could not save user: ${error.message}`)
+  await ensureProfileWithHandle(supabaseHandleStore(getClient()), data.id, data.email)
   return data
 }
 
@@ -70,6 +61,9 @@ export async function saveSchedule(googleSub: string, entries: ScheduleEntry[]) 
     .upsert({ user_id: user.id, source: 'jupiterweb', entries, imported_at: new Date().toISOString() }, { onConflict: 'user_id' })
     .select('entries, imported_at').single<{ entries: ScheduleEntry[]; imported_at: string }>()
   if (error) throw new Error(`Could not save schedule: ${error.message}`)
+  // user_courses is derived data (only code and title, never times or rooms); best effort.
+  try { await syncUserCourses(getClient(), user.id, extractCourses(entries)) }
+  catch (syncError) { logError('Syncing user_courses failed', syncError) }
   return { entries: data.entries, importedAt: data.imported_at }
 }
 
@@ -79,4 +73,6 @@ export async function deleteSchedule(googleSub: string) {
   if (userError) throw new Error(`Could not find user: ${userError.message}`)
   const { error } = await getClient().from('schedule_imports').delete().eq('user_id', user.id)
   if (error) throw new Error(`Could not delete schedule: ${error.message}`)
+  try { await syncUserCourses(getClient(), user.id, []) }
+  catch (syncError) { logError('Clearing user_courses failed', syncError) }
 }

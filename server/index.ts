@@ -5,7 +5,10 @@ import express from 'express'
 import { allowedOrigins, port } from './lib/config.js'
 import { securityHeaders } from './lib/middleware.js'
 import authRouter from './routes/auth.js'
+import adminRouter from './routes/admin.js'
+import entitiesRouter from './routes/entities.js'
 import scheduleRouter from './routes/schedule.js'
+import socialRouter from './routes/social.js'
 
 const app = express()
 
@@ -18,9 +21,12 @@ app.use(securityHeaders)
 
 app.use(authRouter)
 app.use(scheduleRouter)
+app.use(socialRouter)
+app.use(entitiesRouter)
+app.use(adminRouter)
 
 export default app
 
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && !process.env.VITEST) {
   app.listen(port, () => console.log(`Auth server listening on port ${port}`))
 }

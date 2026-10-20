@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { jwtVerify, SignJWT } from 'jose'
-import { isProduction, sessionSecret } from './config.js'
+import { devFakeSession, isProduction, sessionSecret } from './config.js'
 
 export type SessionUser = { sub: string; name: string; email: string; picture?: string }
 
@@ -9,6 +9,9 @@ declare global {
     interface Request { user?: SessionUser }
   }
 }
+
+// Dev user used by DEV_FAKE_SESSION=1 (created by `npm run seed:dev`).
+export const devUser: SessionUser = { sub: 'dev-local-sub', name: 'Estudante Local', email: 'estudante@usp.br' }
 
 const sessionKey = new TextEncoder().encode(sessionSecret)
 const sessionCookie = 'orbe_session'
@@ -39,6 +42,10 @@ export function clearSessionCookie(res: Response) {
 
 export async function requireSession(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies[sessionCookie]
+  if (!token && devFakeSession) {
+    req.user = devUser
+    return next()
+  }
   if (!token) return res.status(401).json({ error: 'Authentication required' })
   try {
     const { payload } = await jwtVerify(token, sessionKey, { algorithms: ['HS256'] })

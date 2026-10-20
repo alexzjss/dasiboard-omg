@@ -104,4 +104,60 @@ prefixo `VITE_` e não a exponha no frontend. Depois de salvar as variáveis, fa
 um novo deploy. O esquema em [supabase/schema.sql](./supabase/schema.sql) também
 precisa ter sido executado no projeto Supabase.
 
+### Sistema social (Comunidade): variáveis de ambiente
+
+As rotas sociais (`/api/me/*`, `/api/people`, `/api/connections`, `/api/feed`,
+`/api/entities/*`, `/api/admin/*`) usam as variáveis abaixo, todas **somente de
+servidor** (Runtime na Vercel, sem prefixo `VITE_`):
+
+```text
+INVITE_CODE_PEPPER=<texto aleatório com 32+ caracteres>
+SUPERADMIN_EMAILS=voce@usp.br,outra.pessoa@usp.br
+```
+
+*   `INVITE_CODE_PEPPER` (**obrigatória em produção**, mínimo de 32 caracteres):
+    segredo usado no HMAC-SHA256 dos códigos de convite das entidades. O banco
+    guarda só o hash; o código em texto aparece uma única vez, para quem o gera.
+    **Não troque depois de gerar códigos**: todos os códigos existentes deixariam de
+    valer (basta gerar novos). Gere um valor com
+    `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
+    Fora de produção, se ausente, é derivada de `SESSION_SECRET` com um aviso.
+    Sem ela em produção o servidor **não inicia**: configure antes do deploy.
+*   `SUPERADMIN_EMAILS` (opcional): e-mails (separados por vírgula, sem distinção de
+    maiúsculas) que podem gerar códigos e promover admins em qualquer entidade.
+*   `DEV_FAKE_SESSION=1` (**apenas desenvolvimento**, veja abaixo). O servidor
+    lança erro no boot se esta variável estiver ativa com `NODE_ENV=production` ou
+    na Vercel. Nunca a configure na Vercel.
+
+Roteamento na Vercel: todas as rotas novas caem no catch-all `api/[...path].ts`
+(que importa `server/index.ts`); apenas `/api/auth/*`, `/api/schedule` e
+`/api/schedule/jupiter` têm arquivos próprios. Subcaminhos como
+`/api/people/:handle` ou `/api/entities/:id/members` são atendidos pelo Express.
+Antes do deploy, aplique `supabase/migrations/2026-10-20-social.sql` (veja
+`supabase/README.md`).
+
+### Dados de demonstração para desenvolvimento local
+
+Sem uma sessão real do Google, as telas sociais ficariam vazias. Com um Supabase
+**de desenvolvimento** configurado em `.env`:
+
+```bash
+npm run seed:dev                 # cria ~15 alunos fictícios @usp.br, conexões, pedidos e membros
+DEV_FAKE_SESSION=1 npm run dev:server   # as requisições sem cookie viram o usuário estudante@usp.br
+```
+
+O script recusa rodar se `SUPABASE_URL` não parecer de desenvolvimento (aceita
+`localhost` e hosts com rótulo `dev`, `staging`, `test`, `sandbox`, `local` ou
+`preview`); para confirmar que o banco é de desenvolvimento, use
+`SEED_DEV_CONFIRM=1 npm run seed:dev`. Ele também se recusa a rodar com
+`NODE_ENV=production`. É idempotente e mexe só nos usuários fictícios e no usuário
+de desenvolvimento. Ao final, imprime um código de convite de demonstração da
+entidade Síntese Jr.
+
+### Testes
+
+`npm test` (ou `npx vitest run`) roda os testes do front-end (jsdom) e do servidor
+(`server/**/*.test.ts`, ambiente node, Supabase substituído por uma camada de dados
+em memória).
+
 ## 📜 Licença

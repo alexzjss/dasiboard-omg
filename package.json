@@ -7,10 +7,12 @@
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
-    "build:server": "tsc -p tsconfig.server.json",
+    "build:server": "tsc -p tsconfig.server.build.json",
     "lint": "oxlint",
     "start:server": "node dist-server/index.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:dev": "tsx server/scripts/seedDev.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",
@@ -33,9 +35,11 @@
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
+    "@types/supertest": "^7.2.1",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.1.1",
     "oxlint": "^1.81.0",
+    "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",

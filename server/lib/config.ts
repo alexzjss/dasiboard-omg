@@ -15,6 +15,35 @@ export const sessionSecret: string = rawSessionSecret
 export { port, frontendUrl }
 export const isProduction = process.env.NODE_ENV === 'production'
 
+// Demo mode (docs/plans/2026-10-20-sistema-social.md, section 5): never allowed in production.
+// Vercel always sets VERCEL, so it is treated as production even if NODE_ENV is odd.
+export const devFakeSession = process.env.DEV_FAKE_SESSION === '1'
+if (devFakeSession && (isProduction || process.env.VERCEL)) {
+  throw new Error('DEV_FAKE_SESSION=1 must never be enabled in production')
+}
+if (devFakeSession) console.warn('DEV_FAKE_SESSION is active: requests without a cookie act as the local dev user')
+
+// Pepper for the HMAC of invite codes. Required (32+ chars) in production;
+// in development it is derived from SESSION_SECRET, with a warning.
+function resolveInvitePepper() {
+  const configured = process.env.INVITE_CODE_PEPPER
+  if (configured) {
+    if (configured.length < 32) throw new Error('INVITE_CODE_PEPPER must contain at least 32 characters')
+    return configured
+  }
+  if (isProduction || process.env.VERCEL) throw new Error('INVITE_CODE_PEPPER is required (at least 32 characters)')
+  console.warn('INVITE_CODE_PEPPER not set: deriving it from SESSION_SECRET (development only)')
+  return `invite-pepper:${rawSessionSecret}`
+}
+export const inviteCodePepper: string = resolveInvitePepper()
+
+export const superadminEmails: ReadonlySet<string> = new Set(
+  (process.env.SUPERADMIN_EMAILS || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean),
+)
+export function isSuperadminEmail(email: string) {
+  return superadminEmails.has(email.trim().toLowerCase())
+}
+
 function toOrigin(value: string) {
   const candidate = value.trim()
   if (!candidate) return null
