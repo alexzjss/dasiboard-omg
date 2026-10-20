@@ -2,10 +2,12 @@ import { useState, type MouseEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/authContext'
 import { Icon } from '../../components/Icon'
+import { removeAvatar } from '../../lib/socialApi'
 import { getInitials } from '../../lib/user'
 import { ThemeSelector } from '../../components/ThemeSelector'
 import { useMyProfile } from '../comunidade/hooks/useMyProfile'
 import { AdminSection } from './AdminSection'
+import { AvatarEditor } from './avatar/AvatarEditor'
 import { ProfileEditor } from './ProfileEditor'
 import { ProfilePreview } from './ProfilePreview'
 import { MyCourses, MyEntities, PendingRequests, PrivacyControls } from './ProfileSections'
@@ -27,8 +29,21 @@ export function PerfilPage() {
   const navigate = useNavigate()
   const { profile: me, loading, error, reload, update } = useMyProfile()
   const [preview, setPreview] = useState(false)
+  const [editingAvatar, setEditingAvatar] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   if (!user) return null
   const initials = getInitials(user)
+  const picture = me?.profile.picture ?? user.picture
+
+  async function restoreGooglePhoto() {
+    setAvatarError(null)
+    try {
+      await removeAvatar()
+      await reload()
+    } catch {
+      setAvatarError('Não foi possível voltar para a foto do Google.')
+    }
+  }
 
   function goBack() {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
@@ -64,12 +79,21 @@ export function PerfilPage() {
         </button>
         <div className="profile-hero">
           <div className="profile-avatar-lg">
-            {user.picture ? <img src={user.picture} alt={user.name} /> : <span>{initials}</span>}
+            {picture ? <img src={picture} alt={user.name} /> : <span>{initials}</span>}
           </div>
           <div>
             <h1 className="profile-name">{user.name}</h1>
             <p className="profile-email">{user.email}</p>
             {me && <p className="profile-email mono">@{me.profile.handle}</p>}
+            {me && (
+              <div className="profile-avatar-actions">
+                <button type="button" className="pf-btn" onClick={() => setEditingAvatar(true)}>Trocar foto</button>
+                {me.profile.hasCustomAvatar && (
+                  <button type="button" className="pf-btn is-quiet" onClick={() => void restoreGooglePhoto()}>Usar foto do Google</button>
+                )}
+              </div>
+            )}
+            {avatarError && <p className="pf-error" role="alert">{avatarError}</p>}
           </div>
         </div>
 
@@ -137,6 +161,7 @@ export function PerfilPage() {
           </div>
         </div>
       </div>
+    <AvatarEditor open={editingAvatar} onClose={() => setEditingAvatar(false)} onSaved={() => void reload()} />
     </main>
   )
 }

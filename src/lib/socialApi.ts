@@ -268,3 +268,14 @@ export const grantEntityBadge = (id: string, defId: string, handle: string) =>
   request<void>(`/api/entities/${enc(id)}/badges/${enc(defId)}/holders/${enc(handle)}`, { method: 'PUT' })
 export const revokeEntityBadge = (id: string, defId: string, handle: string) =>
   request<void>(`/api/entities/${enc(id)}/badges/${enc(defId)}/holders/${enc(handle)}`, { method: 'DELETE' })
+
+// ---------- foto de perfil ----------
+
+export type AvatarContentType = 'image/webp' | 'image/png' | 'image/jpeg'
+
+export const requestAvatarUpload = (contentType: AvatarContentType) =>
+  request<{ uploadUrl: string; path: string }>('/api/me/avatar/upload-url', { method: 'POST', json: { contentType } })
+
+export const confirmAvatar = (path: string) => request<{ picture: string }>('/api/me/avatar', { method: 'PUT', json: { path } })
+
+export const removeAvatar = () => request<{ picture: string | null }>('/api/me/avatar', { method: 'DELETE' })

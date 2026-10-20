@@ -67,3 +67,39 @@
 @media (min-width: 1024px) {
   .profile-content { padding-bottom: var(--s-8); }
 }
+
+/* ── Foto de perfil: ações e editor com recorte ──────────────────────────────── */
+.profile-avatar-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
+.avatar-backdrop {
+  position: fixed; inset: 0; z-index: var(--z-menu);
+  background: var(--overlay);
+  backdrop-filter: blur(var(--blur-overlay)); -webkit-backdrop-filter: blur(var(--blur-overlay));
+}
+.avatar-modal {
+  position: fixed; z-index: var(--z-modal); top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(360px, calc(100% - 2 * var(--s-4))); max-height: 92dvh; overflow-y: auto;
+  display: grid; gap: var(--s-3); justify-items: center;
+  padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-1); box-shadow: var(--shadow-2);
+}
+.avatar-modal .pf-field { width: 100%; }
+.avatar-modal input[type='range'] { width: 100%; }
+.avatar-title { font-size: 18px; color: var(--text); }
+.avatar-pick { position: relative; cursor: pointer; display: inline-flex; align-items: center; min-height: 44px; }
+.avatar-pick:focus-within { outline: 2px solid var(--area); outline-offset: 2px; }
+.avatar-file { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.avatar-stage {
+  position: relative; max-width: 100%; aspect-ratio: 1; overflow: hidden; touch-action: none;
+  border-radius: var(--r-sm); background: var(--surface-inset);
+  display: grid; place-items: center;
+}
+.avatar-stage.has-image { cursor: grab; }
+.avatar-stage.has-image:active { cursor: grabbing; }
+.avatar-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.avatar-empty { position: relative; }
+.avatar-mask {
+  position: absolute; inset: 0; pointer-events: none; border-radius: 50%;
+  box-shadow: 0 0 0 999px color-mix(in srgb, var(--surface-1) 60%, transparent);
+  border: 2px solid var(--accent-line);
+}
+.avatar-actions { display: flex; justify-content: flex-end; gap: var(--s-2); width: 100%; }
