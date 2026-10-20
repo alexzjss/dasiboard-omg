@@ -90,3 +90,50 @@ export function validateProfilePatch(body: unknown, now = new Date()): Validated
   }
   return { ok: true, value: out }
 }
+
+export type AnnouncementInput = {
+  audience: 'all' | 'course' | 'cohort' | 'entity'
+  audienceValue: string | null
+  title: string
+  body: string
+  link: string | null
+}
+
+function isSafeLink(raw: string): boolean {
+  if (raw.length > 300 || /[\s\\]/.test(raw)) return false
+  if (raw.startsWith('/')) return !raw.startsWith('//')
+  try { return new URL(raw).protocol === 'https:' && raw.startsWith('https://') } catch { return false }
+}
+
+// scope 'entity': the route fixes the audience, so the body never chooses one.
+export function validateAnnouncement(body: unknown, scope: 'admin' | 'entity', now = new Date()): Validated<AnnouncementInput> {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return { ok: false, error: 'Dados inválidos' }
+  const input = body as Record<string, unknown>
+  const title = typeof input.title === 'string' ? input.title.trim() : ''
+  const text = typeof input.body === 'string' ? input.body.trim() : ''
+  if (title.length < 1 || title.length > 80) return { ok: false, error: 'O título deve ter de 1 a 80 caracteres' }
+  if (text.length < 1 || text.length > 500) return { ok: false, error: 'O texto deve ter de 1 a 500 caracteres' }
+
+  let link: string | null = null
+  if (input.link !== undefined && input.link !== null && input.link !== '') {
+    const raw = typeof input.link === 'string' ? input.link.trim() : ''
+    if (!isSafeLink(raw)) return { ok: false, error: 'Link inválido' }
+    link = raw
+  }
+  if (scope === 'entity') return { ok: true, value: { audience: 'entity', audienceValue: null, title, body: text, link } }
+
+  const audience = input.audience
+  if (audience !== 'all' && audience !== 'course' && audience !== 'cohort' && audience !== 'entity') return { ok: false, error: 'Público inválido' }
+  if (audience === 'all') return { ok: true, value: { audience, audienceValue: null, title, body: text, link } }
+  const value = typeof input.audienceValue === 'string' ? input.audienceValue.trim() : ''
+  if (audience === 'cohort') {
+    const year = Number(value)
+    if (!/^\d{4}$/.test(value) || year < 2000 || year > now.getFullYear() + 1) return { ok: false, error: 'Turma inválida' }
+  } else if (audience === 'course') {
+    // eslint-disable-next-line no-control-regex
+    if (!value || value.length > 80 || /[\u0000-\u001F\u007F]/.test(value)) return { ok: false, error: 'Curso inválido' }
+  } else if (!ENTITY_ID_PATTERN.test(value)) {
+    return { ok: false, error: 'Entidade inválida' }
+  }
+  return { ok: true, value: { audience, audienceValue: value, title, body: text, link } }
+}

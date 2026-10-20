@@ -517,3 +517,42 @@ export async function getEntitiesByIds(ids: string[]): Promise<EntityRow[]> {
   if (safe.length === 0) return []
   return check('Could not load entities', await getClient().from('entities').select('id, name').in('id', safe).returns<EntityRow[]>()) ?? []
 }
+
+// ---------- announcements ----------
+
+export type Audience = 'all' | 'course' | 'cohort' | 'entity'
+const AUDIENCE_CAP = 5000
+const AUDIENCE_PAGE = 1000
+
+// Pages through the table (Supabase caps a single response) up to AUDIENCE_CAP ids.
+export async function resolveAudience(audience: Audience, value: string | null): Promise<string[]> {
+  const ids: string[] = []
+  for (let from = 0; from < AUDIENCE_CAP; from += AUDIENCE_PAGE) {
+    let query = audience === 'entity'
+      ? getClient().from('entity_members').select('user_id').eq('entity_id', value ?? '').is('left_at', null)
+      : getClient().from('student_profiles').select('user_id')
+    if (audience === 'course') query = query.eq('course', value ?? '')
+    if (audience === 'cohort') query = query.eq('entry_year', Number(value))
+    const rows = check('Could not resolve audience', await query.order('user_id').range(from, from + AUDIENCE_PAGE - 1).returns<{ user_id: string }[]>()) ?? []
+    ids.push(...rows.map((row) => row.user_id))
+    if (rows.length < AUDIENCE_PAGE) break
+  }
+  return ids
+}
+
+export async function createAnnouncement(input: {
+  authorId: string; entityId: string | null; audience: Audience; audienceValue: string | null
+  title: string; body: string; link: string | null; recipients: number
+}): Promise<{ id: string }> {
+  const saved = check('Could not save announcement', await getClient().from('announcements').insert({
+    author_id: input.authorId, entity_id: input.entityId, audience: input.audience, audience_value: input.audienceValue,
+    title: input.title, body: input.body, link: input.link, recipients: input.recipients,
+  }).select('id').single<{ id: string }>())
+  return { id: saved!.id }
+}
+
+export async function countEntityAnnouncementsSince(entityId: string, sinceIso: string): Promise<number> {
+  const { count, error } = await getClient().from('announcements').select('id', { count: 'exact', head: true }).eq('entity_id', entityId).gte('created_at', sinceIso)
+  if (error) throw new Error(`Could not count announcements: ${error.message}`)
+  return count ?? 0
+}

@@ -301,3 +301,15 @@ export const requestAvatarUpload = (contentType: AvatarContentType) =>
 export const confirmAvatar = (path: string) => request<{ picture: string }>('/api/me/avatar', { method: 'PUT', json: { path } })
 
 export const removeAvatar = () => request<{ picture: string | null }>('/api/me/avatar', { method: 'DELETE' })
+
+// ---------- avisos ----------
+
+export type AnnouncementAudience = 'all' | 'course' | 'cohort' | 'entity'
+export type NewAnnouncement = { title: string; body: string; link?: string }
+export type AdminAnnouncement = NewAnnouncement & { audience: AnnouncementAudience; audienceValue?: string }
+
+export const sendAdminAnnouncement = (input: AdminAnnouncement) =>
+  request<{ id: string; recipients: number }>('/api/admin/announcements', { method: 'POST', json: input })
+
+export const sendEntityAnnouncement = (entityId: string, input: NewAnnouncement) =>
+  request<{ id: string; recipients: number }>(`/api/entities/${enc(entityId)}/announcements`, { method: 'POST', json: input })

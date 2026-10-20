@@ -5,6 +5,7 @@ import {
 } from '../../lib/socialApi'
 import { Avatar } from '../comunidade/components/Avatar'
 import { entidadesData, type Entidade } from '../entidades/data'
+import { AnnouncementForm } from './AnnouncementForm'
 import { BadgesAdmin } from './BadgesAdmin'
 import { adminErrorMessage } from './logic'
 
@@ -151,6 +152,7 @@ export function AdminSection({ adminOf, isSuperadmin, selfHandle }: { adminOf: s
         <article className="pf-admin-card" style={{ '--ent-accent': 'var(--area)' } as CSSProperties} aria-labelledby="pf-admin-badges">
           <h3 id="pf-admin-badges" className="pf-admin-title">Administração</h3>
           <BadgesAdmin title="Badges da administração" />
+          <AnnouncementForm scope="admin" />
         </article>
       )}
       {entities.map((ent) => (
@@ -159,6 +161,7 @@ export function AdminSection({ adminOf, isSuperadmin, selfHandle }: { adminOf: s
           <InviteCode entity={ent} />
           <Members entity={ent} selfHandle={selfHandle} isSuperadmin={isSuperadmin} />
           <BadgesAdmin title={`Badges da ${ent.name}`} entityId={ent.id} />
+          <AnnouncementForm scope={{ entityId: ent.id }} />
         </article>
       ))}
     </div>

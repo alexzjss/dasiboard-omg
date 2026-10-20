@@ -21,10 +21,11 @@ export const store = {
   schedules: new Set<string>(),
   avatarObjects: new Set<string>(),
   notifications: [] as Real.NotificationRow[],
+  announcements: [] as (Parameters<typeof Real.createAnnouncement>[0] & { id: string; createdAt: string })[],
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.announcements = []; definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -218,6 +219,21 @@ export async function markAllRead(userId: string) {
   for (const n of store.notifications) if (n.userId === userId && n.readAt === null) n.readAt = new Date().toISOString()
 }
 export async function getEntitiesByIds(ids: string[]) { return ids.flatMap((id) => { const e = store.entities.get(id); return e ? [{ id: e.id, name: e.name }] : [] }) }
+
+export async function resolveAudience(audience: Real.Audience, value: string | null) {
+  if (audience === 'entity') return findUserIdsByEntity(value ?? '')
+  return [...store.people.values()]
+    .filter((row) => audience === 'all' || (audience === 'course' ? row.profile.course === value : row.profile.entry_year === Number(value)))
+    .map((row) => row.user.id).slice(0, 5000)
+}
+export async function createAnnouncement(input: Parameters<typeof Real.createAnnouncement>[0]) {
+  const id = randomUUID()
+  store.announcements.push({ ...input, id, createdAt: new Date().toISOString() })
+  return { id }
+}
+export async function countEntityAnnouncementsSince(entityId: string, sinceIso: string) {
+  return store.announcements.filter((a) => a.entityId === entityId && a.createdAt >= sinceIso).length
+}
 
 // Compile-time check that the fake keeps the same exports/signatures as the real data layer.
 export const __contract: typeof Real = {} as typeof Self
