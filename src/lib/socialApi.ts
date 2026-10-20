@@ -221,3 +221,40 @@ export const setEntityAdmin = (id: string, handle: string, admin: boolean) =>
     method: 'PUT',
     json: { admin },
   })
+
+// ---------- badges concedidas (administração e entidades) ----------
+
+export type BadgeDefinition = {
+  id: string
+  kind: 'admin_award' | 'entity_award'
+  entityId: string | null
+  label: string
+  description: string | null
+  icon: string
+  color: string
+}
+export type NewBadgeDefinition = { label: string; description?: string; icon: string; color: string }
+
+export async function listAdminBadges(signal?: AbortSignal): Promise<BadgeDefinition[]> {
+  return (await request<{ definitions: BadgeDefinition[] }>('/api/admin/badges', { signal })).definitions
+}
+export async function createAdminBadge(input: NewBadgeDefinition): Promise<BadgeDefinition> {
+  return (await request<{ definition: BadgeDefinition }>('/api/admin/badges', { method: 'POST', json: input })).definition
+}
+export const archiveAdminBadge = (defId: string) => request<void>(`/api/admin/badges/${enc(defId)}`, { method: 'DELETE' })
+export const grantAdminBadge = (defId: string, handle: string) =>
+  request<void>(`/api/admin/badges/${enc(defId)}/holders/${enc(handle)}`, { method: 'PUT' })
+export const revokeAdminBadge = (defId: string, handle: string) =>
+  request<void>(`/api/admin/badges/${enc(defId)}/holders/${enc(handle)}`, { method: 'DELETE' })
+
+export async function listEntityBadges(id: string, signal?: AbortSignal): Promise<BadgeDefinition[]> {
+  return (await request<{ definitions: BadgeDefinition[] }>(`/api/entities/${enc(id)}/badges`, { signal })).definitions
+}
+export async function createEntityBadge(id: string, input: NewBadgeDefinition): Promise<BadgeDefinition> {
+  return (await request<{ definition: BadgeDefinition }>(`/api/entities/${enc(id)}/badges`, { method: 'POST', json: input })).definition
+}
+export const archiveEntityBadge = (id: string, defId: string) => request<void>(`/api/entities/${enc(id)}/badges/${enc(defId)}`, { method: 'DELETE' })
+export const grantEntityBadge = (id: string, defId: string, handle: string) =>
+  request<void>(`/api/entities/${enc(id)}/badges/${enc(defId)}/holders/${enc(handle)}`, { method: 'PUT' })
+export const revokeEntityBadge = (id: string, defId: string, handle: string) =>
+  request<void>(`/api/entities/${enc(id)}/badges/${enc(defId)}/holders/${enc(handle)}`, { method: 'DELETE' })

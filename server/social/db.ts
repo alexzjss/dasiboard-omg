@@ -1,4 +1,5 @@
 import { getClient } from '../lib/supabase.js'
+import type { BadgeColor, BadgeIcon } from './badgeCatalog.js'
 import { ensureProfileWithHandle, supabaseHandleStore } from './handles.js'
 import type { ConnectionRow, Visibility } from './privacy.js'
 
@@ -297,6 +298,38 @@ export async function revokeBadge(userId: string, kind: BadgeKind, sourceId: str
   const rows = check('Could not revoke badge', await getClient().from('user_badges').update({ revoked_at: new Date().toISOString() })
     .eq('user_id', userId).eq('kind', kind).eq('source_id', sourceId).is('revoked_at', null).select('id').returns<{ id: string }[]>()) ?? []
   return rows.length > 0
+}
+
+export type BadgeDefinition = {
+  id: string; kind: 'admin_award' | 'entity_award'; entityId: string | null; label: string; description: string | null; icon: BadgeIcon; color: BadgeColor
+}
+type RawDefinition = { id: string; kind: BadgeDefinition['kind']; entity_id: string | null; label: string; description: string | null; icon: BadgeIcon; color: BadgeColor }
+const DEFINITION_SELECT = 'id, kind, entity_id, label, description, icon, color'
+const toDefinition = (row: RawDefinition): BadgeDefinition => ({ id: row.id, kind: row.kind, entityId: row.entity_id, label: row.label, description: row.description, icon: row.icon, color: row.color })
+
+export async function listBadgeDefinitions(filter: { kind: 'admin_award' } | { entityId: string }): Promise<BadgeDefinition[]> {
+  let query = getClient().from('badge_definitions').select(DEFINITION_SELECT).is('archived_at', null)
+  query = 'entityId' in filter ? query.eq('kind', 'entity_award').eq('entity_id', filter.entityId) : query.eq('kind', 'admin_award')
+  return (check('Could not load badge definitions', await query.order('created_at', { ascending: true }).returns<RawDefinition[]>()) ?? []).map(toDefinition)
+}
+
+export async function getBadgeDefinition(id: string): Promise<BadgeDefinition | null> {
+  if (!UUID.test(id)) return null
+  const row = check('Could not load badge definition', await getClient().from('badge_definitions').select(DEFINITION_SELECT).eq('id', id).is('archived_at', null).maybeSingle<RawDefinition>())
+  return row ? toDefinition(row) : null
+}
+
+export async function createBadgeDefinition(input: Omit<BadgeDefinition, 'id'> & { createdBy: string }): Promise<BadgeDefinition> {
+  const row = check('Could not create badge definition', await getClient().from('badge_definitions').insert({
+    kind: input.kind, entity_id: input.entityId, label: input.label, description: input.description, icon: input.icon, color: input.color, created_by: input.createdBy,
+  }).select(DEFINITION_SELECT).single<RawDefinition>())
+  if (!row) throw new Error('Could not create badge definition')
+  return toDefinition(row)
+}
+
+export async function archiveBadgeDefinition(id: string): Promise<void> {
+  const { error } = await getClient().from('badge_definitions').update({ archived_at: new Date().toISOString() }).eq('id', id)
+  if (error) throw new Error(`Could not archive badge definition: ${error.message}`)
 }
 
 export type AchievementStats = {

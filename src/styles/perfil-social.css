@@ -77,6 +77,15 @@
 .pf-admin-block { display: grid; gap: var(--s-3); justify-items: start; }
 .pf-admin-block > div[id] { width: 100%; }
 .pf-admin-block > div[hidden] { display: none; }
+.pf-badge-form, .pf-badge-defs { width: 100%; }
+.pf-badge-form { display: grid; gap: var(--s-3); }
+.pf-badge-grid { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.pf-badge-preview { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+.pf-swatch { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line-strong); cursor: pointer; }
+.pf-swatch.is-selected { outline: 2px solid var(--text); outline-offset: 2px; }
+.pf-badge-def { display: grid; gap: var(--s-2); justify-items: start; }
+.pf-badge-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); width: 100%; }
+.pf-badge-actions .com-input { flex: 1 1 140px; width: auto; }
 .pf-code-reveal { display: grid; gap: var(--s-2); width: 100%; }
 .pf-code-box { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; padding: var(--s-3); border-radius: var(--r-md); border: 1px solid var(--accent-line); background: var(--surface-1); }
 .pf-code-value { font-size: 18px; font-weight: 700; letter-spacing: 1px; color: var(--text); user-select: all; overflow-wrap: anywhere; }

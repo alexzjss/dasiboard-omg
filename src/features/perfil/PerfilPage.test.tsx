@@ -20,6 +20,8 @@ vi.mock('../../lib/socialApi', async (orig) => {
     rotateInviteCode: vi.fn(),
     removeEntityMember: vi.fn(),
     setEntityAdmin: vi.fn(),
+    listAdminBadges: vi.fn(),
+    listEntityBadges: vi.fn(),
   }
 })
 
@@ -52,6 +54,8 @@ beforeEach(() => {
   vi.stubGlobal('matchMedia', (q: string) => ({ matches: false, media: q, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined }))
   vi.mocked(api.getMyProfile).mockResolvedValue(me())
   vi.mocked(api.listConnections).mockResolvedValue([])
+  vi.mocked(api.listAdminBadges).mockResolvedValue([])
+  vi.mocked(api.listEntityBadges).mockResolvedValue([])
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 afterEach(() => { cleanup(); vi.clearAllMocks(); vi.restoreAllMocks(); vi.unstubAllGlobals() })

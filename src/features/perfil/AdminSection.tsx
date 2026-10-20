@@ -5,6 +5,7 @@ import {
 } from '../../lib/socialApi'
 import { Avatar } from '../comunidade/components/Avatar'
 import { entidadesData, type Entidade } from '../entidades/data'
+import { BadgesAdmin } from './BadgesAdmin'
 import { adminErrorMessage } from './logic'
 
 function InviteCode({ entity }: { entity: Entidade }) {
@@ -146,11 +147,18 @@ export function AdminSection({ adminOf, isSuperadmin, selfHandle }: { adminOf: s
   const entities = entidadesData.filter((e) => isSuperadmin || adminOf.includes(e.id))
   return (
     <div className="pf-admin">
+      {isSuperadmin && (
+        <article className="pf-admin-card" style={{ '--ent-accent': 'var(--area)' } as CSSProperties} aria-labelledby="pf-admin-badges">
+          <h3 id="pf-admin-badges" className="pf-admin-title">Administração</h3>
+          <BadgesAdmin title="Badges da administração" />
+        </article>
+      )}
       {entities.map((ent) => (
         <article key={ent.id} className="pf-admin-card" style={{ '--ent-accent': ent.accentColor } as CSSProperties} aria-labelledby={`pf-admin-${ent.id}`}>
           <h3 id={`pf-admin-${ent.id}`} className="pf-admin-title"><img src={ent.logo} alt="" />{ent.name}</h3>
           <InviteCode entity={ent} />
           <Members entity={ent} selfHandle={selfHandle} isSuperadmin={isSuperadmin} />
+          <BadgesAdmin title={`Badges da ${ent.name}`} entityId={ent.id} />
         </article>
       ))}
     </div>

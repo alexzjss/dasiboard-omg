@@ -22,7 +22,7 @@ export const store = {
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -143,6 +143,24 @@ export async function revokeBadge(userId: string, kind: Real.BadgeKind, sourceId
   if (found) found.revoked_at = new Date().toISOString()
   return !!found
 }
+const definitions = new Map<string, Real.BadgeDefinition & { archived: boolean }>()
+export async function listBadgeDefinitions(filter: { kind: 'admin_award' } | { entityId: string }) {
+  return [...definitions.values()].filter((d) => !d.archived && ('entityId' in filter ? d.kind === 'entity_award' && d.entityId === filter.entityId : d.kind === 'admin_award')).map(({ archived: _archived, ...d }) => d)
+}
+export async function getBadgeDefinition(id: string) {
+  const found = definitions.get(id)
+  if (!found || found.archived) return null
+  const { archived: _archived, ...d } = found
+  return d
+}
+export async function createBadgeDefinition(input: Omit<Real.BadgeDefinition, 'id'> & { createdBy: string }) {
+  const { createdBy: _createdBy, ...rest } = input
+  const definition = { id: randomUUID(), ...rest }
+  definitions.set(definition.id, { ...definition, archived: false })
+  return definition
+}
+export async function archiveBadgeDefinition(id: string) { const found = definitions.get(id); if (found) found.archived = true }
+
 export async function getAchievementStats(userId: string): Promise<Real.AchievementStats> {
   const profile = store.people.get(userId)?.profile
   const hasLink = Object.values(profile?.links ?? {}).some((value) => typeof value === 'string' && value.trim() !== '')
