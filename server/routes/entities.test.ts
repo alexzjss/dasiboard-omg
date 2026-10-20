@@ -292,3 +292,38 @@ describe('PUT /api/entities/:id/members/:handle/title', () => {
     expect((await api.put('/api/entities/dasi/members/nobody/title').send({ title: 'X' })).status).toBe(404)
   })
 })
+
+describe('notificações de entidade', () => {
+  const of = (userId: string) => store.notifications.filter((n) => n.userId === userId)
+
+  it('entrar com o código notifica os admins, e não o novo membro', async () => {
+    const a1 = student('Adm1'); const a2 = student('Adm2'); const ana = student('Ana')
+    addMember('dasi', a1.id, 'admin'); addMember('dasi', a2.id, 'admin')
+    const api = await as(ana)
+    await api.post('/api/entities/join').send({ code: CODE })
+    await api.post('/api/entities/join').send({ code: CODE })
+    expect(of(a1.id)).toMatchObject([{ type: 'entity_joined', actorId: ana.id, entityId: 'dasi' }])
+    expect(of(a2.id)).toHaveLength(1)
+    expect(of(ana.id)).toHaveLength(0)
+  })
+
+  it('definir cargo notifica o membro; repetir ou limpar não notifica', async () => {
+    const adm = student('Adm'); const lia = student('Lia')
+    addMember('dasi', adm.id, 'admin'); addMember('dasi', lia.id)
+    const api = await as(adm)
+    await api.put(`/api/entities/dasi/members/${lia.handle}/title`).send({ title: 'Presidente' })
+    await api.put(`/api/entities/dasi/members/${lia.handle}/title`).send({ title: 'Presidente' })
+    await api.put(`/api/entities/dasi/members/${lia.handle}/title`).send({ title: null })
+    expect(of(lia.id)).toMatchObject([{ type: 'entity_role_changed', actorId: adm.id, entityId: 'dasi', payload: { title: 'Presidente' } }])
+    expect(of(adm.id)).toHaveLength(0)
+  })
+
+  it('remover notifica o membro; sair por conta própria não', async () => {
+    const adm = student('Adm'); const lia = student('Lia'); const mia = student('Mia')
+    addMember('dasi', adm.id, 'admin'); addMember('dasi', lia.id); addMember('dasi', mia.id)
+    await (await as(adm)).delete(`/api/entities/dasi/members/${lia.handle}`)
+    await (await as(mia)).delete('/api/entities/dasi/membership')
+    expect(of(lia.id)).toMatchObject([{ type: 'entity_removed', actorId: adm.id, entityId: 'dasi' }])
+    expect(of(mia.id)).toHaveLength(0)
+  })
+})

@@ -5,7 +5,7 @@ import { logError } from '../lib/errors.js'
 import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
 import { requireSession } from '../lib/session.js'
-import { syncAutoBadges } from '../social/achievements.js'
+import { syncAutoBadgesAndNotify } from '../social/achievements.js'
 import { getUserBySub } from '../social/db.js'
 
 const router = Router()
@@ -14,7 +14,7 @@ const router = Router()
 async function syncBadgesFor(sub: string) {
   try {
     const user = await getUserBySub(sub)
-    if (user) await syncAutoBadges(user.id)
+    if (user) await syncAutoBadgesAndNotify(user.id)
   } catch (error) { logError('Syncing automatic badges failed', error) }
 }
 

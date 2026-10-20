@@ -144,3 +144,15 @@ describe('entity badges', () => {
     expect((await api.post('/api/entities/petsi/badges').send(NEW_BADGE)).status).toBe(201)
   })
 })
+
+describe('notificações de badge', () => {
+  it('conceder notifica uma vez; conceder de novo não', async () => {
+    const root = superadmin()
+    const bia = student('Bia')
+    const api = await as(root)
+    const def = (await api.post('/api/admin/badges').send(NEW_BADGE)).body.definition
+    await api.put(`/api/admin/badges/${def.id}/holders/${bia.handle}`)
+    await api.put(`/api/admin/badges/${def.id}/holders/${bia.handle}`)
+    expect(store.notifications).toMatchObject([{ userId: bia.id, type: 'badge_awarded', actorId: root.id, payload: { label: 'Monitora' } }])
+  })
+})

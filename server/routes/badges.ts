@@ -7,6 +7,7 @@ import {
   archiveBadgeDefinition, awardBadge, createBadgeDefinition, getBadgeDefinition, getMembership, getPersonByHandle, isActiveMember, listBadgeDefinitions, revokeBadge,
   type BadgeDefinition, type EntityRow,
 } from '../social/db.js'
+import { notify } from '../social/notify.js'
 import { isBadgeColor, isBadgeIcon } from '../social/badgeCatalog.js'
 import { isValidHandle } from '../social/handles.js'
 import { loadViewer, requireEntityAdmin, requireSuperadmin, viewerOf } from '../social/guards.js'
@@ -68,7 +69,8 @@ const grant = (entityIdOf: (res: Response) => string | null) => async (req: Requ
   const target = isValidHandle(handle) ? await getPersonByHandle(handle) : null
   if (!target) return res.status(404).json(entityId === null ? PERSON_NOT_FOUND : MEMBER_NOT_FOUND)
   if (entityId !== null && !isActiveMember(await getMembership(entityId, target.user.id))) return res.status(404).json(MEMBER_NOT_FOUND)
-  await awardBadge(target.user.id, { kind: def.kind, sourceId: def.id, label: def.label, icon: def.icon, color: def.color, entityId: def.entityId })
+  const result = await awardBadge(target.user.id, { kind: def.kind, sourceId: def.id, label: def.label, icon: def.icon, color: def.color, entityId: def.entityId })
+  if (result === 'awarded') await notify([target.user.id], { type: 'badge_awarded', actorId: viewerOf(res).id, payload: { label: def.label } })
   res.status(204).end()
 }
 

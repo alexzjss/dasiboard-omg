@@ -350,3 +350,39 @@ describe('GET /api/feed', () => {
     expect((await api.get(`/api/feed?cursor=${encodeFeedCursor({ at: 'nope', id: 'x' })}`)).status).toBe(400)
   })
 })
+
+describe('notificações', () => {
+  const of = (userId: string) => store.notifications.filter((n) => n.userId === userId)
+
+  it('pedir conexão notifica só o alvo', async () => {
+    await (await as(alex)).post('/api/connections/bia')
+    expect(of(bia.id)).toMatchObject([{ type: 'connection_request', actorId: alex.id }])
+    expect(of(alex.id)).toHaveLength(0)
+  })
+
+  it('aceitar notifica quem pediu, uma única vez, nos dois caminhos', async () => {
+    await (await as(alex)).post('/api/connections/bia')
+    const api = await as(bia)
+    expect((await api.post('/api/connections/alex/accept')).status).toBe(200)
+    expect((await api.post('/api/connections/alex/accept')).status).toBe(200)
+    expect((await api.post('/api/connections/alex')).status).toBe(200)
+    expect(store.notifications.filter((n) => n.type === 'connection_accepted')).toMatchObject([{ userId: alex.id, actorId: bia.id }])
+    expect(of(bia.id).filter((n) => n.type === 'connection_accepted')).toHaveLength(0)
+  })
+
+  it('pedido reverso aceita e notifica quem pediu primeiro', async () => {
+    await (await as(alex)).post('/api/connections/bia')
+    expect((await (await as(bia)).post('/api/connections/alex')).body).toEqual({ status: 'accepted' })
+    expect(store.notifications.filter((n) => n.type === 'connection_accepted')).toMatchObject([{ userId: alex.id, actorId: bia.id }])
+  })
+
+  it('completar o perfil notifica a badge; trocar a turma não notifica', async () => {
+    const api = await as(alex)
+    await api.patch('/api/me/profile').send({ entryYear: 2023 })
+    expect(of(alex.id)).toHaveLength(0)
+    await api.patch('/api/me/profile').send({ bio: 'Oi', links: { github: 'https://github.com/alex' } })
+    expect(of(alex.id)).toMatchObject([{ type: 'badge_awarded', payload: { label: 'Perfil completo' } }])
+    await api.patch('/api/me/profile').send({ entryYear: 2022 })
+    expect(of(alex.id)).toHaveLength(1)
+  })
+})

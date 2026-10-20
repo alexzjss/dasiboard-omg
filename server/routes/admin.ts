@@ -4,7 +4,8 @@ import { isAllowedOrigin } from '../lib/middleware.js'
 import { requireSession } from '../lib/session.js'
 import { getEntity, getMembership, getPersonByHandle, isActiveMember, setMemberRole } from '../social/db.js'
 import { isValidHandle } from '../social/handles.js'
-import { loadViewer, requireSuperadmin } from '../social/guards.js'
+import { loadViewer, requireSuperadmin, viewerOf } from '../social/guards.js'
+import { notify } from '../social/notify.js'
 import { ENTITY_ID_PATTERN } from '../social/validation.js'
 
 const router = Router()
@@ -20,7 +21,10 @@ router.put('/api/admin/entities/:id/admins/:handle', isAllowedOrigin, requireSes
   if (!target) return res.status(404).json({ error: 'Aluno não encontrado' })
   const membership = await getMembership(entityId, target.user.id)
   if (!isActiveMember(membership)) return res.status(409).json({ error: 'O aluno precisa ser membro ativo da entidade' })
-  await setMemberRole(entityId, target.user.id, admin ? 'admin' : 'member')
+  const role = admin ? 'admin' : 'member'
+  const changed = membership.role !== role
+  await setMemberRole(entityId, target.user.id, role)
+  if (changed) await notify([target.user.id], { type: 'entity_role_changed', actorId: viewerOf(res).id, entityId, payload: { role } })
   res.json({ entityId, handle, role: admin ? 'admin' : 'member' })
 }))
 

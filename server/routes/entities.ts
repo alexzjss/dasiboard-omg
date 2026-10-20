@@ -10,6 +10,7 @@ import {
 import { isValidHandle } from '../social/handles.js'
 import { loadViewer, requireEntityAdmin, viewerOf } from '../social/guards.js'
 import { generateInviteCode, hashInviteCode, normalizeInviteCode } from '../social/inviteCode.js'
+import { notify } from '../social/notify.js'
 import { personMini } from '../social/presenters.js'
 import { ENTITY_ID_PATTERN, MAX_TITLE_LENGTH } from '../social/validation.js'
 
@@ -27,7 +28,11 @@ router.post('/api/entities/join', ...authedWrite, rateLimit('join', 5, 10 * 60_0
   if (!code) return res.status(404).json(INVALID_CODE)
   const entity = await findEntityByCodeHash(hashInviteCode(code))
   if (!entity) return res.status(404).json(INVALID_CODE)
-  if (!isActiveMember(await getMembership(entity.id, viewer.id))) await joinEntity(entity, viewer.id)
+  if (!isActiveMember(await getMembership(entity.id, viewer.id))) {
+    await joinEntity(entity, viewer.id)
+    const admins = (await listMembers(entity.id)).filter((m) => m.role === 'admin').map((m) => m.person.user.id)
+    await notify(admins, { type: 'entity_joined', actorId: viewer.id, entityId: entity.id }, { excludeId: viewer.id })
+  }
   res.json({ entity: { id: entity.id, name: entity.name } })
 }))
 
@@ -63,10 +68,13 @@ router.put('/api/entities/:id/members/:handle/title', ...authedWrite, requireEnt
   if (raw !== null && typeof raw !== 'string') return res.status(400).json({ error: 'Cargo inválido' })
   const title = raw === null ? null : raw.trim() || null
   if (title && title.length > MAX_TITLE_LENGTH) return res.status(400).json({ error: `O cargo deve ter no máximo ${MAX_TITLE_LENGTH} caracteres` })
+  const viewer = viewerOf(res)
   const handle = String(req.params.handle ?? '')
   const target = isValidHandle(handle) ? await getPersonByHandle(handle) : null
   if (!target || !isActiveMember(await getMembership(entity.id, target.user.id))) return res.status(404).json({ error: 'Membro não encontrado' })
+  const previous = (await listMembers(entity.id)).find((m) => m.person.user.id === target.user.id)?.title ?? null
   await setMemberTitle(entity.id, target.user.id, title)
+  if (title && title !== previous) await notify([target.user.id], { type: 'entity_role_changed', actorId: viewer.id, entityId: entity.id, payload: { title } })
   res.json({ handle: target.profile.handle, title })
 }))
 
@@ -81,6 +89,7 @@ router.delete('/api/entities/:id/members/:handle', ...authedWrite, requireEntity
   // Only a superadmin may remove another admin.
   if (membership.role === 'admin' && !viewer.isSuperadmin) return res.status(403).json({ error: 'Acesso negado' })
   await leaveEntity(entity.id, target.user.id)
+  await notify([target.user.id], { type: 'entity_removed', actorId: viewer.id, entityId: entity.id })
   res.status(204).end()
 }))
 

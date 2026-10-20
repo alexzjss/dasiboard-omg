@@ -1,4 +1,5 @@
 import { awardBadge, getAchievementStats, getBadges, revokeBadge, type AchievementStats } from './db.js'
+import { notify } from './notify.js'
 import type { BadgeColor, BadgeIcon } from './badgeCatalog.js'
 
 // Automatic badges: achievements (never taken back) and cohorts (year/course, follow the profile).
@@ -40,4 +41,14 @@ export async function syncAutoBadges(userId: string): Promise<{ awarded: string[
     if (badge.kind === 'cohort' && !keep.has(`cohort:${badge.sourceId}`)) await revokeBadge(userId, 'cohort', badge.sourceId)
   }
   return { awarded }
+}
+
+// Same as syncAutoBadges, but tells the user about each new achievement. Cohort badges follow the profile and stay silent.
+export async function syncAutoBadgesAndNotify(userId: string): Promise<{ awarded: string[] }> {
+  const result = await syncAutoBadges(userId)
+  for (const sourceId of result.awarded) {
+    const achievement = ACHIEVEMENTS.find((a) => a.id === sourceId)
+    if (achievement) await notify([userId], { type: 'badge_awarded', payload: { label: achievement.label } })
+  }
+  return result
 }

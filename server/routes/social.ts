@@ -9,8 +9,9 @@ import {
   listMembershipsOf, listPendingReceived, findUserIdsByCourses, searchPeople, updateProfile,
   type FeedCandidate, type FeedCursor, type PersonRecord,
 } from '../social/db.js'
-import { syncAutoBadges } from '../social/achievements.js'
+import { syncAutoBadgesAndNotify } from '../social/achievements.js'
 import { loadViewer, NOT_FOUND_PROFILE, viewerOf, type Viewer } from '../social/guards.js'
+import { notify } from '../social/notify.js'
 import { personCard, personMini } from '../social/presenters.js'
 import { canSee, connectionState, relationBetween, type ConnectionRow, type ProfileItem } from '../social/privacy.js'
 import { COURSE_CODE_PATTERN, ENTITY_ID_PATTERN, validateProfilePatch } from '../social/validation.js'
@@ -39,7 +40,7 @@ const queryString = (req: Request, key: string) => (typeof req.query[key] === 's
 // Automatic badges must never break the request that triggered them.
 async function syncBadgesSafely(...userIds: string[]) {
   for (const userId of userIds) {
-    try { await syncAutoBadges(userId) }
+    try { await syncAutoBadgesAndNotify(userId) }
     catch (error) { logError('Syncing automatic badges failed', error) }
   }
 }
@@ -197,11 +198,14 @@ router.post('/api/connections/:handle', ...authedWrite, connectLimit, route('Con
     if (existing?.status === 'accepted') return res.json({ status: 'accepted' })
     if (existing?.requester_id === viewer.id) return res.json({ status: 'pending' }) // idempotent
     if (existing) { // the other person already asked: accept
-      await acceptConnection(targetId, viewer.id)
+      if (await acceptConnection(targetId, viewer.id)) await notify([targetId], { type: 'connection_accepted', actorId: viewer.id })
       await syncBadgesSafely(viewer.id, targetId)
       return res.json({ status: 'accepted' })
     }
-    if ((await createConnection(viewer.id, targetId)) === 'created') return res.status(201).json({ status: 'pending' })
+    if ((await createConnection(viewer.id, targetId)) === 'created') {
+      await notify([targetId], { type: 'connection_request', actorId: viewer.id })
+      return res.status(201).json({ status: 'pending' })
+    }
     // 'exists': lost a race with the reverse request; loop to re-read and accept it
   }
   res.status(409).json({ error: 'Tente novamente' })
@@ -217,6 +221,7 @@ router.post('/api/connections/:handle/accept', ...authedWrite, route('Accepting 
   if (!existing || existing.addressee_id !== viewer.id || !(await acceptConnection(target.user.id, viewer.id))) {
     return res.status(404).json({ error: 'Pedido não encontrado' })
   }
+  await notify([target.user.id], { type: 'connection_accepted', actorId: viewer.id })
   await syncBadgesSafely(viewer.id, target.user.id)
   res.json({ status: 'accepted' })
 }))
