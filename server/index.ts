@@ -4,6 +4,7 @@ import cors from 'cors'
 import express from 'express'
 import webpush from 'web-push'
 import { allowedOrigins, port, vapid } from './lib/config.js'
+import { logError } from './lib/errors.js'
 import { securityHeaders } from './lib/middleware.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
@@ -19,12 +20,17 @@ import { setPushDeliverer } from './social/notify.js'
 import { createPushDeliverer, type PushSender } from './social/push.js'
 
 if (vapid) {
-  webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey)
-  const webPushSender: PushSender = async (sub, payload) => {
-    const { statusCode } = await webpush.sendNotification(sub, payload, { TTL: 86400 })
-    return { statusCode }
+  // Malformed VAPID keys must only disable push, never take the whole API down at boot.
+  try {
+    webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey)
+    const webPushSender: PushSender = async (sub, payload) => {
+      const { statusCode } = await webpush.sendNotification(sub, payload, { TTL: 86400 })
+      return { statusCode }
+    }
+    setPushDeliverer(createPushDeliverer(webPushSender))
+  } catch (error) {
+    logError('Invalid VAPID configuration; push disabled', error)
   }
-  setPushDeliverer(createPushDeliverer(webPushSender))
 }
 
 const app = express()

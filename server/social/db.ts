@@ -537,12 +537,15 @@ export async function deletePushSubscription(userId: string, endpoint: string): 
   if (error) throw new Error(`Could not delete push subscription: ${error.message}`)
 }
 
+const IN_FILTER_BATCH = 150
+
 export async function listPushSubscriptions(userIds: string[]): Promise<PushSubscriptionRow[]> {
   const unique = [...new Set(userIds.filter((id) => UUID.test(id)))]
   const result: PushSubscriptionRow[] = []
-  for (let i = 0; i < unique.length; i += NOTIFICATION_BATCH) {
+  // ids go in the URL of a GET; small chunks keep it far from proxy URL-length limits.
+  for (let i = 0; i < unique.length; i += IN_FILTER_BATCH) {
     const rows = check('Could not load push subscriptions', await getClient().from('push_subscriptions').select('id, user_id, endpoint, keys')
-      .eq('kind', 'web').in('user_id', unique.slice(i, i + NOTIFICATION_BATCH)).returns<{ id: string; user_id: string; endpoint: string; keys: PushKeys }[]>()) ?? []
+      .eq('kind', 'web').in('user_id', unique.slice(i, i + IN_FILTER_BATCH)).returns<{ id: string; user_id: string; endpoint: string; keys: PushKeys }[]>()) ?? []
     result.push(...rows.map((row) => ({ id: row.id, userId: row.user_id, endpoint: row.endpoint, keys: row.keys })))
   }
   return result
