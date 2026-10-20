@@ -1,1 +1,58 @@
 /* Perfil de outro aluno (T8) */
+.pessoa-shell { background: transparent; --area: var(--area-comunidade-ink); }
+.pessoa-content { width: min(100%, 1100px); margin: 0 auto; padding: clamp(16px,4vw,48px) clamp(16px,4vw,32px) 120px; position: relative; z-index: var(--z-content); }
+.pessoa-back { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 44px; margin-bottom: var(--s-4); padding: 0 var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; }
+.pessoa-back:hover { background: var(--surface-2); color: var(--area); }
+.pessoa-back:focus-visible, .pessoa-state-link:focus-visible, .pessoa-links a:focus-visible, .pessoa-mini:focus-visible, .pessoa-badge:focus-visible, .pessoa-course:focus-visible { outline: 2px solid var(--area); outline-offset: 2px; }
+.pessoa-layout { display: grid; gap: var(--s-6); }
+.pessoa-header { display: grid; grid-template-columns: auto 1fr; gap: var(--s-4); align-items: start; padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); }
+.pessoa-header-text { display: grid; gap: var(--s-2); min-width: 0; }
+.pessoa-header-text h1 { font-size: clamp(22px,5vw,32px); color: var(--text); letter-spacing: -0.8px; overflow-wrap: anywhere; }
+.pessoa-handle { color: var(--text-muted); font-size: 13px; }
+.pessoa-meta { color: var(--text-2); font-size: 14px; }
+.pessoa-bio { color: var(--text-2); font-size: 14px; line-height: 1.5; max-width: 60ch; overflow-wrap: anywhere; white-space: pre-line; }
+.pessoa-links { display: flex; flex-wrap: wrap; gap: var(--s-2); list-style: none; padding: 0; margin: 0; }
+.pessoa-links a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); color: var(--area); font-size: 13px; font-weight: 600; text-decoration: none; }
+.pessoa-links a:hover { background: var(--hover); }
+.pessoa-header-action { grid-column: 1 / -1; }
+.pessoa-header-action .connect-button button { min-height: 48px; padding: 0 var(--s-6); font-size: 15px; }
+.pessoa-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; object-fit: cover; background: var(--accent-soft); color: var(--accent); font-weight: 700; border: 1px solid var(--accent-line); }
+.pessoa-avatar.is-lg { width: 72px; height: 72px; font-size: 24px; }
+.pessoa-avatar.is-md { width: 48px; height: 48px; font-size: 16px; }
+.pessoa-avatar.is-sm { width: 40px; height: 40px; font-size: 14px; }
+.pessoa-sections { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+.pessoa-section { display: grid; gap: var(--s-3); min-width: 0; padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); }
+.pessoa-section h2 { font-size: 15px; color: var(--text); }
+.pessoa-count { color: var(--text-muted); font-weight: 500; }
+.pessoa-private, .pessoa-empty { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+.pessoa-private { padding: var(--s-3); border: 1px dashed var(--line-strong); border-radius: var(--r-md); }
+.pessoa-badges, .pessoa-courses, .pessoa-mini-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.pessoa-courses, .pessoa-mini-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+.pessoa-badge { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 40px; padding: 0 var(--s-3) 0 var(--s-2); border: 1px solid color-mix(in srgb, var(--ent-accent, var(--accent)) 45%, var(--line)); border-radius: var(--r-pill); background: color-mix(in srgb, var(--ent-accent, var(--accent)) 12%, var(--surface-inset)); color: var(--text); font-size: 13px; font-weight: 700; text-decoration: none; }
+.pessoa-badge img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.pessoa-course { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); min-height: 44px; padding: var(--s-2) var(--s-3); border: 1px solid var(--line-soft); border-radius: var(--r-md); color: var(--text-2); font-size: 13px; text-decoration: none; }
+.pessoa-course .mono { color: var(--text); font-weight: 700; }
+.pessoa-course:hover { background: var(--hover); }
+.pessoa-course.is-common { border-color: var(--accent-line); background: var(--accent-soft); }
+.pessoa-common-tag { margin-left: auto; padding: 2px var(--s-2); border-radius: var(--r-pill); background: var(--accent-fill); color: var(--on-accent); font-size: 11px; font-weight: 700; }
+.pessoa-mini { display: flex; align-items: center; gap: var(--s-3); min-height: 48px; padding: var(--s-2) var(--s-3); border: 1px solid var(--line-soft); border-radius: var(--r-md); color: var(--text); text-decoration: none; }
+.pessoa-mini:hover { background: var(--hover); }
+.pessoa-mini-text { display: grid; min-width: 0; }
+.pessoa-mini-name { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.pessoa-mini-handle { color: var(--text-muted); font-size: 12px; }
+.pessoa-state { display: grid; justify-items: start; gap: var(--s-3); padding: var(--s-6); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); }
+.pessoa-state h1 { font-size: 22px; color: var(--text); }
+.pessoa-state p { color: var(--text-muted); font-size: 14px; }
+.pessoa-state-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface-2); color: var(--text); font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.pessoa-skel { display: block; background: var(--surface-2); animation: pessoa-pulse 1.2s ease-in-out infinite; }
+.pessoa-skel-line { height: 14px; width: 40%; border-radius: var(--r-sm); }
+.pessoa-skel-line.is-title { height: 24px; width: 60%; }
+.pessoa-skel-line.is-wide { width: 80%; }
+.pessoa-skel-block { height: 80px; border-radius: var(--r-md); }
+@keyframes pessoa-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pessoa-skel { animation: none; } }
+@media (min-width: 1024px) {
+  .pessoa-layout { grid-template-columns: 340px minmax(0, 1fr); align-items: start; }
+  .pessoa-header { grid-template-columns: 1fr; position: sticky; top: var(--s-6); }
+  .pessoa-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
