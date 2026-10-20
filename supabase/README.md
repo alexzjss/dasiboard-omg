@@ -39,3 +39,7 @@ Rodar `schema.sql` de novo no SQL Editor aplica a Fase 1: as colunas novas usam 
 ## Fase 2 (notificações, avisos e push)
 
 Rodar `schema.sql` de novo no SQL Editor aplica a Fase 2: as tabelas `notifications`, `announcements` e `push_subscriptions` são criadas com `create table if not exists`, com RLS habilitado e sem políticas. Para o push no navegador (Tarefa 6) é preciso configurar as variáveis VAPID no servidor.
+
+## Fase 3 (carta e coleção)
+
+Rodar `schema.sql` de novo no SQL Editor aplica a Fase 3: as colunas `card` e `card_public` em `student_profiles` usam `add column if not exists`, e a tabela `card_collection` é criada com `create table if not exists`, com RLS habilitado e sem políticas. As variáveis `VITE_PUBLIC_APP_URL` (front) e `PUBLIC_APP_URL` (servidor) são opcionais: definem o domínio usado no QR e nos links da carta; sem elas, vale a origem atual (`window.location.origin` no front e `frontendUrl` no servidor).

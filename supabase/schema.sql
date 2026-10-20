@@ -249,3 +249,19 @@ create index if not exists push_subscriptions_user_idx on public.push_subscripti
 alter table public.notifications enable row level security;
 alter table public.announcements enable row level security;
 alter table public.push_subscriptions enable row level security;
+
+-- Fase 3: carta e coleção
+alter table public.student_profiles add column if not exists card jsonb not null default '{}'::jsonb;
+alter table public.student_profiles add column if not exists card_public boolean not null default false;
+
+create table if not exists public.card_collection (
+  collector_id uuid not null references public.users(id) on delete cascade,
+  collected_id uuid not null references public.users(id) on delete cascade,
+  collected_at timestamptz not null default now(),
+  primary key (collector_id, collected_id),
+  check (collector_id <> collected_id)
+);
+
+create index if not exists card_collection_collector_idx on public.card_collection(collector_id, collected_at desc);
+
+alter table public.card_collection enable row level security;
