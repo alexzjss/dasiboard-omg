@@ -90,4 +90,18 @@ ALLOWED_ORIGINS=https://app.exemplo.com,https://www.exemplo.com
 Esses valores são normalizados para a origem (protocolo + host + porta), então
 uma barra final em `FRONTEND_URL` não causa diferença.
 
+Para o banco funcionar no deploy, configure no projeto da Vercel (em **Settings
+→ Environment Variables**, para **Production** e **Preview**, se ambos forem
+usados):
+
+```text
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key-do-Supabase>
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` é uma variável somente de servidor: não use o
+prefixo `VITE_` e não a exponha no frontend. Depois de salvar as variáveis, faça
+um novo deploy. O esquema em [supabase/schema.sql](./supabase/schema.sql) também
+precisa ter sido executado no projeto Supabase.
+
 ## 📜 Licença
