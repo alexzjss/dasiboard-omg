@@ -169,3 +169,37 @@ insert into public.entities (id, name) values
   ('conway', 'Conway USP'),
   ('cossi', 'COSSI')
 on conflict (id) do update set name = excluded.name;
+
+-- Fase 1: foto, tecnologias, cargos e badges
+alter table public.student_profiles add column if not exists avatar_path text;
+alter table public.student_profiles add column if not exists technologies text[] not null default '{}';
+
+alter table public.entity_members add column if not exists title text;
+alter table public.entity_members drop constraint if exists entity_members_title_length_check;
+alter table public.entity_members add constraint entity_members_title_length_check check (char_length(title) <= 40);
+
+alter table public.user_badges add column if not exists icon text;
+alter table public.user_badges add column if not exists color text;
+alter table public.user_badges add column if not exists entity_id text references public.entities(id) on delete cascade;
+
+create table if not exists public.badge_definitions (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('admin_award', 'entity_award')),
+  entity_id text references public.entities(id) on delete cascade,
+  label text not null check (char_length(label) between 1 and 40),
+  description text check (char_length(description) <= 140),
+  icon text not null,
+  color text not null,
+  created_by uuid references public.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  archived_at timestamptz,
+  constraint badge_definitions_entity_required_check check (kind <> 'entity_award' or entity_id is not null)
+);
+
+create index if not exists badge_definitions_entity_idx on public.badge_definitions(entity_id);
+
+alter table public.badge_definitions enable row level security;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 2097152, array['image/webp', 'image/png', 'image/jpeg'])
+on conflict (id) do nothing;

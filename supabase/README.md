@@ -31,3 +31,7 @@ select count(*) from public.student_profiles where handle is null;     -- 0
 ```
 
 Invite codes (`entities.invite_code_hash`) start empty; an entity admin or superadmin generates the first code through the app.
+
+## Fase 1 (foto, tecnologias, cargos e badges)
+
+Rodar `schema.sql` de novo no SQL Editor aplica a Fase 1: as colunas novas usam `add column if not exists`, a tabela `badge_definitions` é criada e o bucket `avatars` (público, até 2 MB, webp/png/jpeg) é criado pelo próprio SQL.
