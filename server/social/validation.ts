@@ -1,18 +1,22 @@
 import type { Links } from './db.js'
 import type { Visibility } from './privacy.js'
+import { TECH_IDS } from './technologies.js'
 
 export const VISIBILITY_VALUES: readonly Visibility[] = ['all', 'connections', 'none']
 export const ENTITY_ID_PATTERN = /^[a-z0-9-]{1,40}$/
+export const MAX_TECHNOLOGIES = 12
+export const MAX_TITLE_LENGTH = 40
 export const COURSE_CODE_PATTERN = /^[A-Z0-9]{3,12}$/
 
 const LINK_HOSTS = { github: 'github.com', linkedin: 'linkedin.com', instagram: 'instagram.com' } as const
-const PATCH_KEYS = new Set(['bio', 'course', 'entryYear', 'links', 'showCourses', 'showConnections'])
+const PATCH_KEYS = new Set(['bio', 'course', 'entryYear', 'links', 'technologies', 'showCourses', 'showConnections'])
 
 export type ProfileInput = {
   bio?: string | null
   course?: string
   entry_year?: number | null
   links?: Links
+  technologies?: string[]
   show_courses?: Visibility
   show_connections?: Visibility
 }
@@ -70,6 +74,12 @@ export function validateProfilePatch(body: unknown, now = new Date()): Validated
       if (result.value) next[network as keyof Links] = result.value
     }
     out.links = next
+  }
+  if ('technologies' in input) {
+    const list = input.technologies
+    const valid = Array.isArray(list) && list.length <= MAX_TECHNOLOGIES && list.every((id) => typeof id === 'string' && TECH_IDS.has(id)) && new Set(list).size === list.length
+    if (!valid) return { ok: false, error: 'Tecnologias inválidas' }
+    out.technologies = list as string[]
   }
   for (const [key, column] of [['showCourses', 'show_courses'], ['showConnections', 'show_connections']] as const) {
     if (key in input) {

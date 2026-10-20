@@ -248,6 +248,16 @@ describe('profile', () => {
     expect(body.isSuperadmin).toBe(false)
   })
 
+  it('salva as tecnologias na ordem enviada e as devolve no perfil próprio e no de outros', async () => {
+    const api = await as(alex)
+    const saved = await api.patch('/api/me/profile').send({ technologies: ['typescript', 'react'] })
+    expect(saved.status).toBe(200)
+    expect(saved.body.profile.technologies).toEqual(['typescript', 'react'])
+    expect((await (await as(bia)).get('/api/people/alex')).body.profile.technologies).toEqual(['typescript', 'react'])
+    expect((await api.patch('/api/me/profile').send({ technologies: ['react', 'react'] })).status).toBe(400)
+    expect((await api.get('/api/me/profile')).body.profile.technologies).toEqual(['typescript', 'react'])
+  })
+
   it('devolve no perfil próprio todas as badges ativas, não só as de entidade', async () => {
     addEntity('dasi', 'DASI')
     addMember('dasi', alex.id)

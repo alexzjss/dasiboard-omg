@@ -1,7 +1,7 @@
 import { ApiError, type Links, type MyProfile, type PersonProfile, type ProfilePatch } from '../../lib/socialApi'
 import { LINK_KEYS, type LinkKey } from './validation'
 
-export type Draft = { bio: string; course: string; entryYear: string; links: Record<LinkKey, string> }
+export type Draft = { bio: string; course: string; entryYear: string; links: Record<LinkKey, string>; technologies: string[] }
 
 /** Monta o PATCH só com o que mudou; null quando nada mudou. */
 export function buildPatch(saved: MyProfile['profile'], draft: Draft): ProfilePatch | null {
@@ -18,6 +18,7 @@ export function buildPatch(saved: MyProfile['profile'], draft: Draft): ProfilePa
     if (value !== (saved.links[key] ?? '')) linksChanged = true
   }
   if (linksChanged) patch.links = links
+  if (draft.technologies.length !== saved.technologies.length || draft.technologies.some((id, i) => id !== saved.technologies[i])) patch.technologies = draft.technologies
   return Object.keys(patch).length ? patch : null
 }
 
@@ -27,12 +28,13 @@ export function visitorView(me: MyProfile, accepted: { handle: string; name: str
   return {
     profile: {
       handle: profile.handle, name: profile.name, picture: profile.picture, course: profile.course,
-      entryYear: profile.entryYear, bio: profile.bio, links: profile.links,
+      entryYear: profile.entryYear, bio: profile.bio, links: profile.links, technologies: profile.technologies,
       self: true,
     },
     // 'self' faz o ConnectButton não renderizar: a prévia nunca dispara pedidos reais.
     connection: 'self',
     badges: me.badges,
+    entities: me.entities.map(({ entityId, name, title }) => ({ entityId, name, title })),
     courses: profile.showCourses === 'all' ? me.courses.map((c) => ({ ...c, common: false })) : null,
     commonCourses: null,
     classmatesInCommon: null,

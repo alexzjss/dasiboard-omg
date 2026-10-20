@@ -77,3 +77,20 @@ describe('validateProfilePatch', () => {
     expect(validateProfilePatch({ bio: '   ', entryYear: null }, now)).toEqual({ ok: true, value: { bio: null, entry_year: null } })
   })
 })
+
+describe('validateProfilePatch technologies', () => {
+  it('accepts a list of known ids', () => {
+    expect(validateProfilePatch({ technologies: ['react', 'typescript'] })).toEqual({ ok: true, value: { technologies: ['react', 'typescript'] } })
+    expect(validateProfilePatch({ technologies: [] })).toEqual({ ok: true, value: { technologies: [] } })
+  })
+
+  it.each([
+    [['react', 'react'], 'duplicate'],
+    [['nao-existe'], 'unknown'],
+    [['react', 'vue', 'angular', 'svelte', 'python', 'java', 'go', 'rust', 'kotlin', 'swift', 'dart', 'php', 'ruby'], 'too many'],
+    ['react', 'not an array'],
+    [[1], 'not strings'],
+  ] as [unknown, string][])('rejects %j (%s)', (technologies, _label) => {
+    expect(validateProfilePatch({ technologies })).toEqual({ ok: false, error: 'Tecnologias inválidas' })
+  })
+})

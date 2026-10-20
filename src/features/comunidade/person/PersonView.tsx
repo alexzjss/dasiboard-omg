@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { ConnectionState, PersonMini, PersonProfile } from '../../../lib/socialApi'
 import { entidadeSlug, entidadesData } from '../../entidades/data'
 import { BadgeChip } from '../../../components/BadgeChip'
+import { TechChip } from '../../../components/TechChip'
 import { ConnectButton } from '../components/ConnectButton'
 import { initials, safeLinks, safePicture, SOCIAL_LABEL } from './safeLinks'
 
@@ -38,6 +39,7 @@ function MiniCards({ people }: { people: PersonMini[] }) {
 export function PersonView({ data, onConnection }: { data: PersonProfile; onConnection: (next: ConnectionState) => void }) {
   const { profile, courses, commonCourses, classmatesInCommon, connections } = data
   const entities = (data.badges ?? []).filter((b) => b.kind === 'entity_member')
+  const titles = new Map((data.entities ?? []).map((entity) => [entity.entityId, entity.title]))
   const otherBadges = (data.badges ?? []).filter((b) => b.kind !== 'entity_member')
   const first = profile.name.split(/\s+/)[0] || profile.name
   const links = safeLinks(profile.links)
@@ -72,12 +74,14 @@ export function PersonView({ data, onConnection }: { data: PersonProfile; onConn
             <ul className="pessoa-badges">
               {entities.map((b) => {
                 const ent = entidadesData.find((e) => e.id === b.entityId)
-                if (!ent) return <li key={b.sourceId}><span className="pessoa-badge">{b.label}</span></li>
+                const title = titles.get(b.sourceId)
+                if (!ent) return <li key={b.sourceId}><span className="pessoa-badge">{b.label}{title && <span className="pessoa-badge-title"> · {title}</span>}</span></li>
                 return (
                   <li key={b.sourceId}>
                     <Link className="pessoa-badge" to={`/entidades/${entidadeSlug(ent)}`} style={{ '--ent-accent': ent.accentColor } as CSSProperties}>
                       <img src={ent.logo} alt="" />
                       {b.label || ent.name}
+                      {title && <span className="pessoa-badge-title"> · {title}</span>}
                     </Link>
                   </li>
                 )
@@ -85,6 +89,15 @@ export function PersonView({ data, onConnection }: { data: PersonProfile; onConn
             </ul>
           )}
         </section>
+
+        {(profile.technologies ?? []).length > 0 && (
+          <section className="pessoa-section" aria-labelledby="pessoa-tecnologias">
+            <h2 id="pessoa-tecnologias">Tecnologias</h2>
+            <ul className="pessoa-techs">
+              {profile.technologies.map((id) => <li key={id}><TechChip id={id} /></li>)}
+            </ul>
+          </section>
+        )}
 
         {otherBadges.length > 0 && (
           <section className="pessoa-section" aria-labelledby="pessoa-badges">

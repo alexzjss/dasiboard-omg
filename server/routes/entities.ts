@@ -4,14 +4,14 @@ import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
 import { requireSession } from '../lib/session.js'
 import {
-  findEntityByCodeHash, getEntity, getMembership, getPersonByHandle, isActiveMember, joinEntity, leaveEntity, listMembers, setEntityCodeHash,
+  findEntityByCodeHash, getEntity, getMembership, getPersonByHandle, isActiveMember, joinEntity, leaveEntity, listMembers, setEntityCodeHash, setMemberTitle,
   type EntityRow,
 } from '../social/db.js'
 import { isValidHandle } from '../social/handles.js'
 import { loadViewer, requireEntityAdmin, viewerOf } from '../social/guards.js'
 import { generateInviteCode, hashInviteCode, normalizeInviteCode } from '../social/inviteCode.js'
 import { personMini } from '../social/presenters.js'
-import { ENTITY_ID_PATTERN } from '../social/validation.js'
+import { ENTITY_ID_PATTERN, MAX_TITLE_LENGTH } from '../social/validation.js'
 
 const router = Router()
 const authed = [requireSession, loadViewer]
@@ -44,7 +44,7 @@ router.get('/api/entities/:id/members', ...authed, route('Listing members failed
   const entityId = String(req.params.id ?? '')
   if (!ENTITY_ID_PATTERN.test(entityId) || !(await getEntity(entityId))) return res.status(404).json(ENTITY_NOT_FOUND)
   const members = await listMembers(entityId)
-  res.json({ members: members.map(({ person, role, joinedAt }) => ({ ...personMini(person), role, joinedAt })) })
+  res.json({ members: members.map(({ person, role, joinedAt, title }) => ({ ...personMini(person), role, joinedAt, title })) })
 }))
 
 router.post('/api/entities/:id/invite-code', ...authedWrite, requireEntityAdmin, rateLimit('invite-code', 10, 10 * 60_000), route('Generating invite code failed', async (_req, res) => {
@@ -55,6 +55,19 @@ router.post('/api/entities/:id/invite-code', ...authedWrite, requireEntityAdmin,
   await setEntityCodeHash(entity.id, hashInviteCode(code))
   res.setHeader('Cache-Control', 'no-store')
   res.json({ code }) // the only time the plain code is ever returned
+}))
+
+router.put('/api/entities/:id/members/:handle/title', ...authedWrite, requireEntityAdmin, route('Setting title failed', async (req, res) => {
+  const entity = res.locals.entity as EntityRow
+  const raw = req.body?.title
+  if (raw !== null && typeof raw !== 'string') return res.status(400).json({ error: 'Cargo inválido' })
+  const title = raw === null ? null : raw.trim() || null
+  if (title && title.length > MAX_TITLE_LENGTH) return res.status(400).json({ error: `O cargo deve ter no máximo ${MAX_TITLE_LENGTH} caracteres` })
+  const handle = String(req.params.handle ?? '')
+  const target = isValidHandle(handle) ? await getPersonByHandle(handle) : null
+  if (!target || !isActiveMember(await getMembership(entity.id, target.user.id))) return res.status(404).json({ error: 'Membro não encontrado' })
+  await setMemberTitle(entity.id, target.user.id, title)
+  res.json({ handle: target.profile.handle, title })
 }))
 
 router.delete('/api/entities/:id/members/:handle', ...authedWrite, requireEntityAdmin, route('Removing member failed', async (req, res) => {

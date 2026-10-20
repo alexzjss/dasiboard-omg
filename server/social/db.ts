@@ -16,11 +16,12 @@ export type ProfileRow = {
   course: string
   entry_year: number | null
   links: Links
+  technologies: string[]
   show_courses: Visibility
   show_connections: Visibility
 }
 export type PersonRecord = { user: UserRow; profile: ProfileRow }
-export type ProfilePatch = Partial<Pick<ProfileRow, 'bio' | 'course' | 'entry_year' | 'links' | 'show_courses' | 'show_connections'>>
+export type ProfilePatch = Partial<Pick<ProfileRow, 'bio' | 'course' | 'entry_year' | 'links' | 'technologies' | 'show_courses' | 'show_connections'>>
 export type CourseRow = { code: string; title: string }
 export type BadgeKind = 'entity_member' | 'achievement' | 'admin_award' | 'entity_award' | 'cohort'
 export type BadgeRow = { kind: BadgeKind; sourceId: string; label: string; icon: string | null; color: string | null; entityId: string | null }
@@ -38,13 +39,13 @@ function check<T>(label: string, result: { data: T | null; error: { message: str
 }
 
 type RawPerson = Omit<ProfileRow, 'handle'> & { handle: string | null; users: UserRow | UserRow[] | null }
-const PERSON_SELECT = 'user_id, handle, bio, course, entry_year, links, show_courses, show_connections, users!inner(id, email, name, picture)'
+const PERSON_SELECT = 'user_id, handle, bio, course, entry_year, links, technologies, show_courses, show_connections, users!inner(id, email, name, picture)'
 
 function toPerson(raw: RawPerson): PersonRecord | null {
   const user = Array.isArray(raw.users) ? raw.users[0] : raw.users
   if (!user || !raw.handle) return null
   const { users: _users, ...profile } = raw
-  return { user, profile: { ...profile, handle: raw.handle, links: raw.links ?? {} } }
+  return { user, profile: { ...profile, handle: raw.handle, links: raw.links ?? {}, technologies: raw.technologies ?? [] } }
 }
 
 const toPeople = (rows: RawPerson[] | null) => (rows ?? []).map(toPerson).filter((person): person is PersonRecord => person !== null)
@@ -249,19 +250,25 @@ export async function setMemberRole(entityId: string, userId: string, role: Role
   if (error) throw new Error(`Could not change role: ${error.message}`)
 }
 
-export async function listMembers(entityId: string, limit = 200): Promise<{ person: PersonRecord; role: Role; joinedAt: string }[]> {
-  const rows = check('Could not load members', await getClient().from('entity_members').select('user_id, role, joined_at')
-    .eq('entity_id', entityId).is('left_at', null).order('joined_at', { ascending: true }).limit(limit).returns<{ user_id: string; role: Role; joined_at: string }[]>()) ?? []
+// The title (cargo) is free text set by an entity admin; null when none.
+export async function setMemberTitle(entityId: string, userId: string, title: string | null) {
+  const { error } = await getClient().from('entity_members').update({ title }).eq('entity_id', entityId).eq('user_id', userId).is('left_at', null)
+  if (error) throw new Error(`Could not set title: ${error.message}`)
+}
+
+export async function listMembers(entityId: string, limit = 200): Promise<{ person: PersonRecord; role: Role; joinedAt: string; title: string | null }[]> {
+  const rows = check('Could not load members', await getClient().from('entity_members').select('user_id, role, joined_at, title')
+    .eq('entity_id', entityId).is('left_at', null).order('joined_at', { ascending: true }).limit(limit).returns<{ user_id: string; role: Role; joined_at: string; title: string | null }[]>()) ?? []
   const people = new Map((await getPeopleByIds(rows.map((row) => row.user_id))).map((person) => [person.user.id, person]))
-  return rows.flatMap((row) => { const person = people.get(row.user_id); return person ? [{ person, role: row.role, joinedAt: row.joined_at }] : [] })
+  return rows.flatMap((row) => { const person = people.get(row.user_id); return person ? [{ person, role: row.role, joinedAt: row.joined_at, title: row.title }] : [] })
 }
 
 type RawNamedEntity = { name: string } | { name: string }[] | null
 
-export async function listMembershipsOf(userId: string): Promise<{ entityId: string; name: string; role: Role; joinedAt: string }[]> {
-  const rows = check('Could not load memberships', await getClient().from('entity_members').select('entity_id, role, joined_at, entities(name)')
-    .eq('user_id', userId).is('left_at', null).returns<{ entity_id: string; role: Role; joined_at: string; entities: RawNamedEntity }[]>()) ?? []
-  return rows.map((row) => ({ entityId: row.entity_id, name: oneOf(row.entities)?.name ?? row.entity_id, role: row.role, joinedAt: row.joined_at }))
+export async function listMembershipsOf(userId: string): Promise<{ entityId: string; name: string; role: Role; joinedAt: string; title: string | null }[]> {
+  const rows = check('Could not load memberships', await getClient().from('entity_members').select('entity_id, role, joined_at, title, entities(name)')
+    .eq('user_id', userId).is('left_at', null).returns<{ entity_id: string; role: Role; joined_at: string; title: string | null; entities: RawNamedEntity }[]>()) ?? []
+  return rows.map((row) => ({ entityId: row.entity_id, name: oneOf(row.entities)?.name ?? row.entity_id, role: row.role, joinedAt: row.joined_at, title: row.title }))
 }
 
 type RawBadge = { user_id: string; kind: BadgeKind; source_id: string; label: string; icon: string | null; color: string | null; entity_id: string | null }

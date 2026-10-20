@@ -89,6 +89,7 @@ export function MyEntities({ me, onChanged }: { me: MyProfile; onChanged: () => 
   const [result, setResult] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
   const [leaveError, setLeaveError] = useState('')
   const memberOf = new Set(me.entities.map((e) => e.entityId))
+  const titleOf = new Map(me.entities.map((e) => [e.entityId, e.title]))
 
   async function join(e: FormEvent) {
     e.preventDefault()
@@ -127,7 +128,7 @@ export function MyEntities({ me, onChanged }: { me: MyProfile; onChanged: () => 
               <Link className="pf-entity-link" to={`/entidades/${entidadeSlug(ent)}`}>
                 <img src={ent.logo} alt="" />
                 <span className="pf-entity-name">{ent.name}</span>
-                <span className="pf-entity-state">{member ? 'Membro' : 'Não participa'}</span>
+                <span className="pf-entity-state">{member ? `Membro${titleOf.get(ent.id) ? ` · ${titleOf.get(ent.id)}` : ''}` : 'Não participa'}</span>
               </Link>
               {member && (
                 <button type="button" className="pf-btn is-quiet" onClick={() => void leave(ent.id, ent.name)} aria-label={`Sair de ${ent.name}`}>Sair</button>

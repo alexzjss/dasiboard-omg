@@ -50,7 +50,7 @@ async function ownProfile(viewer: Viewer) {
   return {
     profile: {
       handle: profile.handle, name: viewer.name, email: viewer.email, picture: viewer.picture, bio: profile.bio, course: profile.course,
-      entryYear: profile.entry_year, links: profile.links, showCourses: profile.show_courses, showConnections: profile.show_connections,
+      entryYear: profile.entry_year, links: profile.links, technologies: profile.technologies, showCourses: profile.show_courses, showConnections: profile.show_connections,
     },
     entities: memberships,
     badges: badges.get(viewer.id) ?? [],
@@ -128,7 +128,7 @@ router.get('/api/people/:handle', ...authed, route('Loading person failed', asyn
   const connections = connection ? [connection] : []
   if (!visible(viewer, person, 'profile', connections)) return res.status(404).json(NOT_FOUND_PROFILE)
 
-  const [badges, myCourses] = await Promise.all([getBadges([ownerId]), getCourses(viewer.id)])
+  const [badges, myCourses, memberships] = await Promise.all([getBadges([ownerId]), getCourses(viewer.id), listMembershipsOf(ownerId)])
   const showCourses = visible(viewer, person, 'courses', connections)
   const showConnections = visible(viewer, person, 'connections', connections)
   const mine = new Set(myCourses.map((course) => course.code))
@@ -150,9 +150,10 @@ router.get('/api/people/:handle', ...authed, route('Loading person failed', asyn
   }
 
   res.json({
-    profile: { ...personMini(person), course: person.profile.course, entryYear: person.profile.entry_year, bio: person.profile.bio, links: person.profile.links, self: viewer.id === ownerId },
+    profile: { ...personMini(person), course: person.profile.course, entryYear: person.profile.entry_year, bio: person.profile.bio, links: person.profile.links, technologies: person.profile.technologies, self: viewer.id === ownerId },
     connection: connectionState(viewer.id, ownerId, connection),
     badges: badges.get(ownerId) ?? [],
+    entities: memberships.map(({ entityId, name, title }) => ({ entityId, name, title })),
     courses,
     commonCourses: courses ? courses.filter((course) => course.common).length : null,
     classmatesInCommon: classmates,

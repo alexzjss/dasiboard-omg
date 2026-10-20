@@ -58,3 +58,9 @@
 }
 .badge-chip { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 32px; padding: 0 var(--s-3); border: 1px solid var(--badge-color, var(--line-strong)); border-radius: var(--r-pill); background: color-mix(in srgb, var(--badge-color, var(--surface-2)) 18%, transparent); color: var(--text); font-size: 13px; font-weight: 700; }
 .badge-chip-icon { width: 16px; height: 16px; fill: none; stroke: var(--badge-color, currentColor); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Tecnologias do perfil ── */
+.tech-chip { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 32px; padding: 0 var(--s-3); border: 1px solid color-mix(in srgb, var(--tech-color, var(--line-strong)) 55%, var(--line)); border-radius: var(--r-pill); background: color-mix(in srgb, var(--tech-color, var(--surface-2)) 16%, transparent); color: var(--text); font-size: 13px; font-weight: 700; }
+.tech-chip-icon { width: 16px; height: 16px; flex-shrink: 0; fill: var(--tech-color, currentColor); }
+.pessoa-techs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.pessoa-badge-title { color: var(--text-muted); font-weight: 600; }

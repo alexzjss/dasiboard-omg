@@ -18,9 +18,10 @@ beforeEach(() => getPerson.mockReset())
 
 function base(over: Partial<PersonProfile> = {}): PersonProfile {
   return {
-    profile: { handle: 'ana.silva', name: 'Ana Silva', picture: null, course: 'Sistemas de Informação', entryYear: 2023, bio: 'Gosto de dados.', links: { github: 'https://github.com/ana' }, self: false },
+    profile: { handle: 'ana.silva', name: 'Ana Silva', picture: null, course: 'Sistemas de Informação', entryYear: 2023, bio: 'Gosto de dados.', links: { github: 'https://github.com/ana' }, technologies: [], self: false },
     connection: 'none',
     badges: [{ kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' }],
+    entities: [{ entityId: 'dasi', name: 'DASI', title: null }],
     courses: [{ code: 'ACH2023', title: 'Algoritmos I', common: true }, { code: 'ACH2012', title: 'Cálculo II', common: false }],
     commonCourses: 1,
     classmatesInCommon: [{ handle: 'bia', name: 'Bia Souza', picture: null }],
@@ -60,6 +61,19 @@ describe('PersonPage', () => {
     expect(screen.getByText('Bia Souza')).toBeTruthy()
     expect(screen.getByRole('button', { name: /Conectar/ })).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Ana Silva · daSIboard'))
+  })
+
+  it('mostra as tecnologias e o cargo ao lado da entidade', async () => {
+    const data = base()
+    getPerson.mockResolvedValue(base({
+      profile: { ...data.profile, technologies: ['react', 'typescript'] },
+      entities: [{ entityId: 'dasi', name: 'DASI', title: 'Diretora de Marketing' }],
+    }))
+    renderAt()
+    expect(await screen.findByRole('heading', { name: 'Tecnologias' })).toBeTruthy()
+    expect(screen.getByText('React')).toBeTruthy()
+    expect(screen.getByText('TypeScript')).toBeTruthy()
+    expect(screen.getByRole('link', { name: /DASI.*Diretora de Marketing/ })).toBeTruthy()
   })
 
   it('mostra badges que não são de entidade em seção própria', async () => {

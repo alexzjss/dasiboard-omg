@@ -16,7 +16,7 @@ export type BadgeKind = 'entity_member' | 'achievement' | 'admin_award' | 'entit
 
 export type Badge = { kind: BadgeKind; sourceId: string; label: string; icon: string | null; color: string | null; entityId: string | null }
 
-export type EntityMembership = { entityId: string; name: string; role: EntityRole; joinedAt: string }
+export type EntityMembership = { entityId: string; name: string; role: EntityRole; joinedAt: string; title: string | null }
 
 export type CourseItem = { code: string; title: string }
 
@@ -31,6 +31,7 @@ export type MyProfile = {
     course: string
     entryYear: number | null
     links: Links
+    technologies: string[]
     showCourses: Visibility
     showConnections: Visibility
   }
@@ -44,7 +45,7 @@ export type MyProfile = {
 }
 
 /** Campos editáveis do perfil (corpo do PATCH). Chaves em camelCase, como o validador espera. */
-export type ProfilePatch = Partial<Pick<MyProfile['profile'], 'bio' | 'course' | 'entryYear' | 'links' | 'showCourses' | 'showConnections'>>
+export type ProfilePatch = Partial<Pick<MyProfile['profile'], 'bio' | 'course' | 'entryYear' | 'links' | 'technologies' | 'showCourses' | 'showConnections'>>
 
 /** Item da lista de alunos (GET /api/people). */
 export type PersonCard = PersonMini & {
@@ -73,10 +74,13 @@ export type PersonProfile = {
     entryYear: number | null
     bio: string | null
     links: Links
+    technologies: string[]
     self: boolean
   }
   connection: ConnectionState
   badges: Badge[]
+  /** Entidades ativas com o cargo de cada uma (null quando não há). */
+  entities: { entityId: string; name: string; title: string | null }[]
   courses: (CourseItem & { common: boolean })[] | null
   commonCourses: number | null
   classmatesInCommon: PersonMini[] | null
@@ -97,7 +101,7 @@ export type FeedItem =
 
 export type FeedPage = { items: FeedItem[]; nextCursor: string | null }
 
-export type EntityMember = PersonMini & { role: EntityRole; joinedAt: string }
+export type EntityMember = PersonMini & { role: EntityRole; joinedAt: string; title: string | null }
 
 export class ApiError extends Error {
   readonly status: number
@@ -208,6 +212,10 @@ export async function listEntityMembers(id: string, signal?: AbortSignal): Promi
   const body = await request<{ members: EntityMember[] }>(`/api/entities/${enc(id)}/members`, { signal })
   return body.members
 }
+
+/** Define (ou limpa, com null) o cargo de um membro. Só admin da entidade. */
+export const setMemberTitle = (id: string, handle: string, title: string | null) =>
+  request<{ handle: string; title: string | null }>(`/api/entities/${enc(id)}/members/${enc(handle)}/title`, { method: 'PUT', json: { title } })
 
 /** Gera um novo código de convite. O código em texto só volta nesta resposta. */
 export const rotateInviteCode = (id: string) => request<{ code: string }>(`/api/entities/${enc(id)}/invite-code`, { method: 'POST' })

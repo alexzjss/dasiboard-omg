@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { listEntityMembers, type EntityMember } from '../../lib/socialApi'
+import { getMyProfile, listEntityMembers, setMemberTitle, type EntityMember, type MyProfile } from '../../lib/socialApi'
 import { EntidadeMembers } from './EntidadeMembers'
 
-vi.mock('../../lib/socialApi', () => ({ listEntityMembers: vi.fn() }))
+vi.mock('../../lib/socialApi', () => ({ listEntityMembers: vi.fn(), getMyProfile: vi.fn(), setMemberTitle: vi.fn() }))
+
+const viewer = (adminOf: string[], isSuperadmin = false) => ({ adminOf, isSuperadmin }) as MyProfile
 
 const member = (handle: string, name: string, role: 'member' | 'admin' = 'member', picture: string | null = null): EntityMember => ({
   handle,
@@ -12,6 +14,7 @@ const member = (handle: string, name: string, role: 'member' | 'admin' = 'member
   picture,
   role,
   joinedAt: '2026-01-01T00:00:00Z',
+  title: null,
 })
 
 function renderSection(id = 'dasi') {
@@ -24,6 +27,8 @@ function renderSection(id = 'dasi') {
 
 beforeEach(() => {
   vi.mocked(listEntityMembers).mockReset()
+  vi.mocked(getMyProfile).mockReset().mockResolvedValue(viewer([]))
+  vi.mocked(setMemberTitle).mockReset()
 })
 
 afterEach(() => {
@@ -68,6 +73,29 @@ describe('EntidadeMembers', () => {
     expect(await screen.findByText(/Ninguém daqui entrou ainda\. Tem o código\?/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Use no seu perfil.' }).getAttribute('href')).toBe('/perfil')
     expect(screen.queryByRole('link', { name: /Ana/ })).toBeNull()
+  })
+
+  it('mostra o cargo abaixo do nome', async () => {
+    vi.mocked(listEntityMembers).mockResolvedValue([{ ...member('ana.silva', 'Ana Silva'), title: 'Diretora de Marketing' }])
+    renderSection()
+    expect(await screen.findByText('Diretora de Marketing')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Definir cargo/ })).toBeNull()
+  })
+
+  it('admin define o cargo com Enter, Esc cancela', async () => {
+    vi.mocked(getMyProfile).mockResolvedValue(viewer(['dasi']))
+    vi.mocked(listEntityMembers).mockResolvedValue([member('ana.silva', 'Ana Silva')])
+    vi.mocked(setMemberTitle).mockResolvedValue({ handle: 'ana.silva', title: 'Tesoureira' })
+    renderSection()
+    fireEvent.click(await screen.findByRole('button', { name: 'Definir cargo de Ana Silva' }))
+    fireEvent.keyDown(screen.getByLabelText('Cargo de ana.silva'), { key: 'Escape' })
+    expect(screen.queryByLabelText('Cargo de ana.silva')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Definir cargo de Ana Silva' }))
+    const input = screen.getByLabelText('Cargo de ana.silva')
+    fireEvent.change(input, { target: { value: ' Tesoureira ' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(await screen.findByText('Tesoureira')).toBeTruthy()
+    expect(setMemberTitle).toHaveBeenCalledWith('dasi', 'ana.silva', 'Tesoureira')
   })
 
   it('carregando mostra o estado de espera', () => {

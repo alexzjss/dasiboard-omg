@@ -31,13 +31,14 @@ import { PerfilPage } from './PerfilPage'
 const me = (over: Partial<MyProfile> = {}): MyProfile => ({
   profile: {
     handle: 'alex', name: 'Alex Santana', email: 'alex@usp.br', picture: null, bio: null, course: 'Sistemas de Informação',
-    entryYear: 2024, links: {}, showCourses: 'all', showConnections: 'all',
+    entryYear: 2024, links: {}, technologies: [], showCourses: 'all', showConnections: 'all',
   },
   entities: [], badges: [], adminOf: [], isSuperadmin: false, courses: [{ code: 'ACH2023', title: 'Algoritmos I' }],
   pendingCount: 0, pendingRequests: [], ...over,
 })
 
 const refreshNotifications = vi.fn()
+const getMyProfileWith = (technologies: string[]) => vi.mocked(api.getMyProfile).mockResolvedValue(me({ profile: { ...me().profile, technologies } }))
 
 function renderPage() {
   const auth = { status: 'authenticated' as const, user: { name: 'Alex Santana', email: 'alex@usp.br' }, login: vi.fn(), logout: vi.fn() }
@@ -72,6 +73,28 @@ describe('PerfilPage', () => {
     expect(await screen.findByText('Perfil salvo.')).toBeTruthy()
   })
 
+  it('adiciona tecnologia e salva no perfil', async () => {
+    vi.mocked(api.updateMyProfile).mockResolvedValue(me({ profile: { ...me().profile, technologies: ['react'] } }))
+    renderPage()
+    fireEvent.change(await screen.findByPlaceholderText('Buscar tecnologia (ex.: React)'), { target: { value: 'React' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar React' }))
+    expect(screen.getByText('1/12')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar perfil' }))
+    await waitFor(() => expect(api.updateMyProfile).toHaveBeenCalledTimes(1))
+    expect(api.updateMyProfile).toHaveBeenCalledWith({ technologies: ['react'] })
+    expect(await screen.findByText('Perfil salvo.')).toBeTruthy()
+  })
+
+  it('reordena e remove tecnologias pelos botões', async () => {
+    getMyProfileWith(['react', 'vue'])
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Mover Vue.js para cima' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remover React' }))
+    vi.mocked(api.updateMyProfile).mockResolvedValue(me())
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar perfil' }))
+    await waitFor(() => expect(api.updateMyProfile).toHaveBeenCalledWith({ technologies: ['vue'] }))
+  })
+
   it('link inválido bloqueia o salvamento e mostra o erro no campo', async () => {
     renderPage()
     fireEvent.change(await screen.findByLabelText('LinkedIn'), { target: { value: 'http://linkedin.com/in/alex' } })
@@ -103,7 +126,7 @@ describe('PerfilPage', () => {
     vi.mocked(api.joinEntity).mockResolvedValue({ entity: { id: 'dasi', name: 'DASI' } })
     vi.mocked(api.getMyProfile)
       .mockResolvedValueOnce(me())
-      .mockResolvedValue(me({ entities: [{ entityId: 'dasi', name: 'DASI', role: 'member', joinedAt: '2026-10-20T00:00:00Z' }] }))
+      .mockResolvedValue(me({ entities: [{ entityId: 'dasi', name: 'DASI', role: 'member', joinedAt: '2026-10-20T00:00:00Z', title: null }] }))
     const { container } = renderPage()
     fireEvent.change(await screen.findByLabelText('Tenho um código'), { target: { value: ' dasi 7kq2 abcd ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }))
@@ -123,7 +146,7 @@ describe('PerfilPage', () => {
 
   it('sair da entidade pede confirmação', async () => {
     vi.mocked(api.leaveEntity).mockResolvedValue(undefined)
-    vi.mocked(api.getMyProfile).mockResolvedValue(me({ entities: [{ entityId: 'dasi', name: 'DASI', role: 'member', joinedAt: '2026-10-20T00:00:00Z' }] }))
+    vi.mocked(api.getMyProfile).mockResolvedValue(me({ entities: [{ entityId: 'dasi', name: 'DASI', role: 'member', joinedAt: '2026-10-20T00:00:00Z', title: null }] }))
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Sair de DASI' }))
     expect(window.confirm).toHaveBeenCalled()
@@ -176,9 +199,9 @@ describe('PerfilPage', () => {
   it('admin não remove admin; superadmin remove e promove; 403 vira mensagem clara', async () => {
     vi.mocked(api.getMyProfile).mockResolvedValue(me({ adminOf: ['dasi'] }))
     vi.mocked(api.listEntityMembers).mockResolvedValue([
-      { handle: 'alex', name: 'Alex Santana', picture: null, role: 'admin', joinedAt: '' },
-      { handle: 'bia', name: 'Bia Souza', picture: null, role: 'admin', joinedAt: '' },
-      { handle: 'caio', name: 'Caio Lima', picture: null, role: 'member', joinedAt: '' },
+      { handle: 'alex', name: 'Alex Santana', picture: null, role: 'admin', joinedAt: '', title: null },
+      { handle: 'bia', name: 'Bia Souza', picture: null, role: 'admin', joinedAt: '', title: null },
+      { handle: 'caio', name: 'Caio Lima', picture: null, role: 'member', joinedAt: '', title: null },
     ])
     vi.mocked(api.removeEntityMember).mockRejectedValue(new api.ApiError(403, 'Acesso negado'))
     renderPage()
@@ -193,7 +216,7 @@ describe('PerfilPage', () => {
 
   it('superadmin promove e rebaixa', async () => {
     vi.mocked(api.getMyProfile).mockResolvedValue(me({ isSuperadmin: true }))
-    vi.mocked(api.listEntityMembers).mockResolvedValue([{ handle: 'caio', name: 'Caio Lima', picture: null, role: 'member', joinedAt: '' }])
+    vi.mocked(api.listEntityMembers).mockResolvedValue([{ handle: 'caio', name: 'Caio Lima', picture: null, role: 'member', joinedAt: '', title: null }])
     vi.mocked(api.setEntityAdmin).mockResolvedValue({ entityId: 'dasi', handle: 'caio', role: 'admin' })
     renderPage()
     fireEvent.click((await screen.findAllByRole('button', { name: 'Ver membros' }))[0])

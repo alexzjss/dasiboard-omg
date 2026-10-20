@@ -14,7 +14,7 @@ export const store = {
   people: new Map<string, Row>(),
   connections: [] as ConnectionRow[],
   entities: new Map<string, { id: string; name: string; hash: string | null }>(),
-  members: [] as Real.MembershipRow[],
+  members: [] as (Real.MembershipRow & { title?: string | null })[],
   badges: [] as Badge[],
   courses: new Map<string, Real.CourseRow[]>(),
   feed: [] as Real.FeedCandidate[],
@@ -30,7 +30,7 @@ export function addPerson(opts: { name: string; email?: string; handle: string; 
   const email = opts.email ?? `${opts.handle}@usp.br`
   const user = { id, email, name: opts.name, picture: null }
   const profile: Real.ProfileRow = {
-    user_id: id, handle: opts.handle, bio: null, course: opts.course ?? 'Sistemas de Informação', entry_year: 2024, links: {},
+    user_id: id, handle: opts.handle, bio: null, course: opts.course ?? 'Sistemas de Informação', entry_year: 2024, links: {}, technologies: [],
     show_courses: opts.showCourses ?? 'all', show_connections: opts.showConnections ?? 'all',
   }
   store.people.set(id, { user, sub: `sub-${opts.handle}`, profile })
@@ -120,11 +120,15 @@ export async function setMemberRole(entityId: string, userId: string, role: Real
   const m = store.members.find((x) => x.entity_id === entityId && x.user_id === userId && x.left_at === null)
   if (m) m.role = role
 }
+export async function setMemberTitle(entityId: string, userId: string, title: string | null) {
+  const m = store.members.find((x) => x.entity_id === entityId && x.user_id === userId && x.left_at === null)
+  if (m) m.title = title
+}
 export async function listMembers(entityId: string) {
-  return store.members.filter((m) => m.entity_id === entityId && m.left_at === null).map((m) => ({ person: toRecord(store.people.get(m.user_id)!), role: m.role, joinedAt: m.joined_at }))
+  return store.members.filter((m) => m.entity_id === entityId && m.left_at === null).map((m) => ({ person: toRecord(store.people.get(m.user_id)!), role: m.role, joinedAt: m.joined_at, title: m.title ?? null }))
 }
 export async function listMembershipsOf(userId: string) {
-  return store.members.filter((m) => m.user_id === userId && m.left_at === null).map((m) => ({ entityId: m.entity_id, name: store.entities.get(m.entity_id)!.name, role: m.role, joinedAt: m.joined_at }))
+  return store.members.filter((m) => m.user_id === userId && m.left_at === null).map((m) => ({ entityId: m.entity_id, name: store.entities.get(m.entity_id)!.name, role: m.role, joinedAt: m.joined_at, title: m.title ?? null }))
 }
 export async function getBadges(ids: string[]) {
   const result = new Map<string, Real.BadgeRow[]>()

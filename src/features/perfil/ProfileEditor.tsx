@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { ApiError, type MyProfile, type ProfilePatch } from '../../lib/socialApi'
+import { TechPicker } from './TechPicker'
 import { buildPatch, type Draft } from './logic'
 import { BIO_MAX, LINK_DOMAIN, LINK_KEYS, LINK_LABEL, bioError, courseError, entryYearOptions, fieldOfServerError, linkError, type LinkKey } from './validation'
 
@@ -9,6 +10,7 @@ function toDraft(p: MyProfile['profile']): Draft {
     course: p.course,
     entryYear: p.entryYear === null ? '' : String(p.entryYear),
     links: { github: p.links.github ?? '', linkedin: p.links.linkedin ?? '', instagram: p.links.instagram ?? '' },
+    technologies: p.technologies,
   }
 }
 
@@ -98,6 +100,11 @@ export function ProfileEditor({ profile, onSave }: { profile: MyProfile['profile
           {errors[key] && <span className="pf-error" role="alert">{errors[key]}</span>}
         </div>
       ))}
+
+      <div className="pf-field">
+        <span id={`${uid}-tech`} className="pf-subtitle">Tecnologias</span>
+        <TechPicker value={draft.technologies} onChange={(technologies) => change({ technologies })} labelledBy={`${uid}-tech`} />
+      </div>
 
       <div className="pf-actions">
         <button type="submit" className="pf-btn is-primary" disabled={saving || !patch}>{saving ? 'Salvando…' : 'Salvar perfil'}</button>

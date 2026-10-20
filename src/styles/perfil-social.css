@@ -108,3 +108,14 @@
   .pf-section { padding: var(--s-4); }
   .pf-code-row { flex-direction: column; }
 }
+
+/* ── Seletor de tecnologias ── */
+.tech-picker { display: grid; gap: var(--s-3); }
+.tech-picker-head { display: flex; align-items: center; gap: var(--s-3); }
+.tech-picker-head .com-input { flex: 1; min-width: 0; }
+.tech-picker-results, .tech-picker-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.tech-picker-list { flex-direction: column; flex-wrap: nowrap; }
+.tech-picker-item { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-3); border: 1px solid var(--line-soft); border-radius: var(--r-md); background: var(--surface-inset); cursor: grab; }
+.tech-picker-item.is-dragging { opacity: 0.5; }
+.tech-picker-actions { display: flex; gap: var(--s-1); }
+.tech-picker-actions .pf-btn { min-width: 44px; padding: 0; }
