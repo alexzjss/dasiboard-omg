@@ -129,10 +129,12 @@ SUPERADMIN_EMAILS=voce@usp.br,outra.pessoa@usp.br
     lança erro no boot se esta variável estiver ativa com `NODE_ENV=production` ou
     na Vercel. Nunca a configure na Vercel.
 
-Roteamento na Vercel: todas as rotas novas caem no catch-all `api/[...path].ts`
-(que importa `server/index.ts`); apenas `/api/auth/*`, `/api/schedule` e
-`/api/schedule/jupiter` têm arquivos próprios. Subcaminhos como
-`/api/people/:handle` ou `/api/entities/:id/members` são atendidos pelo Express.
+Roteamento na Vercel: `vercel.json` reescreve toda rota `/api/*` sem arquivo
+próprio para a função `api/index.ts` (que importa `server/index.ts`), e o Express
+roteia pelo caminho original. Só `/api/auth/*`, `/api/schedule` e
+`/api/schedule/jupiter` têm arquivos próprios. Não use `api/[...path].ts`: na
+Vercel, fora do Next.js, ele só atende caminhos de um nível (`/api/people`, mas
+não `/api/people/:handle`).
 Antes do deploy, aplique `supabase/migrations/2026-10-20-social.sql` (veja
 `supabase/README.md`).
 
