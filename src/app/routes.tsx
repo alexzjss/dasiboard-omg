@@ -6,6 +6,7 @@ import { ComunidadePage } from '../features/comunidade/ComunidadePage'
 import { PersonPage } from '../features/comunidade/PersonPage'
 import { EntidadesPage } from '../features/entidades/EntidadesPage'
 import { HomePage } from '../features/home/HomePage'
+import { NotificacoesPage } from '../features/notificacoes/NotificacoesPage'
 import { PerfilPage } from '../features/perfil/PerfilPage'
 import { AppLayout } from './AppLayout'
 
@@ -29,6 +30,7 @@ export function AppRoutes() {
         <Route path="docentes" element={<Navigate to="/comunidade?aba=docentes" replace />} />
         <Route path="entidades" element={<EntidadesPage />} />
         <Route path="entidades/:slug" element={<EntidadesPage />} />
+        <Route path="notificacoes" element={<NotificacoesPage />} />
         <Route path="perfil" element={<PerfilPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

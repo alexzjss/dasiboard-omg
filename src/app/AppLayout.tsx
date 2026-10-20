@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useOutlet } from 'react-router-dom'
 import { useAuth } from '../auth/authContext'
 import { BottomNav } from '../components/BottomNav'
+import { NotificationBell } from '../components/NotificationBell'
 import { OnboardingFlow } from '../components/Onboarding'
 import { Sidebar } from '../components/Sidebar'
 import { PageTransition } from '../components/PageTransition'
@@ -24,7 +25,7 @@ export function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone())
 
   const section = sectionFromPath(location.pathname)
-  const { pendingRequests, refresh: refreshNotifications } = useNotificationCount()
+  const { unread, pendingRequests, refresh: refreshNotifications } = useNotificationCount()
   const badges = useMemo(() => ({ Comunidade: pendingRequests }), [pendingRequests])
   const entidade = section === 'entidades' ? findEntidadeBySlug(location.pathname.split('/')[2]) : undefined
 
@@ -51,6 +52,7 @@ export function AppLayout() {
           activeTab={SECTION_LABEL[section]}
           items={NAV_ITEMS.map((i) => [i.label, i.icon])}
           badges={badges}
+          unread={unread}
           collapsed={collapsed}
           menuOpen={userMenuOpen}
           style={accentStyle}
@@ -60,6 +62,7 @@ export function AppLayout() {
         />
       )}
       <div className="app-main">
+        {section !== 'notificacoes' && <NotificationBell count={unread} className="notif-bell-floating" />}
         <LayoutContext value={layoutValue}>
           <PageTransition pageKey={section}>{outlet}</PageTransition>
         </LayoutContext>

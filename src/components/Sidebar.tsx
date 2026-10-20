@@ -5,6 +5,7 @@ import { getInitials } from '../lib/user'
 import { CountBadge } from './CountBadge'
 import { pendingRequestsSuffix } from './badgeText'
 import { Icon, type IconName } from './Icon'
+import { NotificationBell } from './NotificationBell'
 import { NavOrbit } from './NavOrbit'
 import { ThemeSelector } from './ThemeSelector'
 
@@ -16,6 +17,8 @@ type Props = {
   items: [string, IconName][]
   /** Contador por rótulo do item (ex.: { Comunidade: 3 }). */
   badges?: Record<string, number>
+  /** Notificações não lidas (sino). */
+  unread?: number
   collapsed: boolean
   menuOpen: boolean
   style?: CSSProperties
@@ -25,7 +28,7 @@ type Props = {
 }
 
 /** Sidebar do desktop (>= 1024px): 240px, ou 72px só com ícones. */
-export function Sidebar({ user, activeTab, items, badges = {}, collapsed, menuOpen, style, onToggle, onSelectTab, onOpenUserMenu }: Props) {
+export function Sidebar({ user, activeTab, items, badges = {}, unread = 0, collapsed, menuOpen, style, onToggle, onSelectTab, onOpenUserMenu }: Props) {
   const pref = useThemePref()
   const nextTheme = THEME_OPTIONS[(THEME_OPTIONS.findIndex((o) => o.value === pref) + 1) % THEME_OPTIONS.length]
   const currentLabel = THEME_OPTIONS.find((o) => o.value === pref)?.label ?? 'Sistema'
@@ -76,6 +79,8 @@ export function Sidebar({ user, activeTab, items, badges = {}, collapsed, menuOp
         ) : (
           <ThemeSelector ariaLabel="Tema" />
         )}
+
+        <NotificationBell count={unread} className="sidebar-bell" />
 
         <button
           type="button"
