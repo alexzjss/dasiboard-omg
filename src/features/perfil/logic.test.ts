@@ -4,7 +4,7 @@ import { visitorView } from './logic'
 
 const me: MyProfile = {
   profile: {
-    handle: 'alex', name: 'Alex', email: 'alex@usp.br', picture: null, bio: null, course: 'Sistemas de Informação',
+    handle: 'alex', name: 'Alex', email: 'alex@usp.br', picture: null, hasCustomAvatar: false, bio: null, course: 'Sistemas de Informação',
     entryYear: 2024, links: {}, technologies: [], showCourses: 'all', showConnections: 'all',
   },
   entities: [{ entityId: 'dasi', name: 'DASI', role: 'member', joinedAt: '2026-10-20T00:00:00Z', title: 'Tesoureira' }],

@@ -27,6 +27,8 @@ export type MyProfile = {
     name: string
     email: string
     picture: string | null
+    /** true quando a foto vem do upload próprio (não do Google). */
+    hasCustomAvatar: boolean
     bio: string | null
     course: string
     entryYear: number | null

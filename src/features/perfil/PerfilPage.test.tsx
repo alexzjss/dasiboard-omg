@@ -30,7 +30,7 @@ import { PerfilPage } from './PerfilPage'
 
 const me = (over: Partial<MyProfile> = {}): MyProfile => ({
   profile: {
-    handle: 'alex', name: 'Alex Santana', email: 'alex@usp.br', picture: null, bio: null, course: 'Sistemas de Informação',
+    handle: 'alex', name: 'Alex Santana', email: 'alex@usp.br', picture: null, hasCustomAvatar: false, bio: null, course: 'Sistemas de Informação',
     entryYear: 2024, links: {}, technologies: [], showCourses: 'all', showConnections: 'all',
   },
   entities: [], badges: [], adminOf: [], isSuperadmin: false, courses: [{ code: 'ACH2023', title: 'Algoritmos I' }],

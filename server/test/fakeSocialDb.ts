@@ -19,10 +19,11 @@ export const store = {
   courses: new Map<string, Real.CourseRow[]>(),
   feed: [] as Real.FeedCandidate[],
   schedules: new Set<string>(),
+  avatarObjects: new Set<string>(),
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -31,7 +32,7 @@ export function addPerson(opts: { name: string; email?: string; handle: string; 
   const user = { id, email, name: opts.name, picture: null }
   const profile: Real.ProfileRow = {
     user_id: id, handle: opts.handle, bio: null, course: opts.course ?? 'Sistemas de Informação', entry_year: 2024, links: {}, technologies: [],
-    show_courses: opts.showCourses ?? 'all', show_connections: opts.showConnections ?? 'all',
+    show_courses: opts.showCourses ?? 'all', show_connections: opts.showConnections ?? 'all', avatar_path: null,
   }
   store.people.set(id, { user, sub: `sub-${opts.handle}`, profile })
   if (opts.courses) store.courses.set(id, opts.courses.map((code) => ({ code, title: `Matéria ${code}` })))
@@ -46,10 +47,21 @@ export function addMember(entityId: string, userId: string, role: Real.Role = 'm
   store.badges.push({ user_id: userId, kind: 'entity_member', source_id: entityId, label: entity.name, entity_id: entityId, revoked_at: null })
 }
 
-const toRecord = (row: Row): Real.PersonRecord => ({ user: row.user, profile: row.profile })
+export const avatarPublicUrl = (path: string) => `https://fake.storage/avatars/${path}`
+export const addAvatarObject = (path: string) => store.avatarObjects.add(path)
+const toRecord = (row: Row): Real.PersonRecord => ({
+  user: row.profile.avatar_path ? { ...row.user, picture: avatarPublicUrl(row.profile.avatar_path) } : row.user,
+  profile: row.profile,
+})
 const sameSide = (c: ConnectionRow, a: string, b: string) => (c.requester_id === a && c.addressee_id === b) || (c.requester_id === b && c.addressee_id === a)
 
 export async function getUserBySub(sub: string) { return [...store.people.values()].find((row) => row.sub === sub)?.user ?? null }
+export async function setAvatarPath(userId: string, path: string | null) { store.people.get(userId)!.profile.avatar_path = path }
+export async function createAvatarUploadUrl(path: string) { return { signedUrl: `https://fake.storage/upload/${path}`, token: 'fake-token' } }
+export async function avatarObjectExists(path: string) { return store.avatarObjects.has(path) }
+export async function removeAvatarObjects(userId: string, keep: string | null) {
+  for (const path of [...store.avatarObjects]) if (path.startsWith(`${userId}/`) && path !== keep) store.avatarObjects.delete(path)
+}
 export async function getPersonById(userId: string) { const row = store.people.get(userId); return row ? toRecord(row) : null }
 export async function getPersonByHandle(handle: string) { const row = [...store.people.values()].find((r) => r.profile.handle === handle); return row ? toRecord(row) : null }
 export async function getPeopleByIds(ids: string[]) { return ids.flatMap((id) => { const row = store.people.get(id); return row ? [toRecord(row)] : [] }) }

@@ -6,6 +6,7 @@ import { allowedOrigins, port } from './lib/config.js'
 import { securityHeaders } from './lib/middleware.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
+import avatarRouter from './routes/avatar.js'
 import badgesRouter from './routes/badges.js'
 import entitiesRouter from './routes/entities.js'
 import scheduleRouter from './routes/schedule.js'
@@ -26,6 +27,7 @@ app.use(socialRouter)
 app.use(entitiesRouter)
 app.use(adminRouter)
 app.use(badgesRouter)
+app.use(avatarRouter)
 
 export default app
 

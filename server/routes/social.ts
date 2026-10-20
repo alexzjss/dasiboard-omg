@@ -50,7 +50,7 @@ async function ownProfile(viewer: Viewer) {
   return {
     profile: {
       handle: profile.handle, name: viewer.name, email: viewer.email, picture: viewer.picture, bio: profile.bio, course: profile.course,
-      entryYear: profile.entry_year, links: profile.links, technologies: profile.technologies, showCourses: profile.show_courses, showConnections: profile.show_connections,
+      entryYear: profile.entry_year, links: profile.links, technologies: profile.technologies, hasCustomAvatar: profile.avatar_path !== null, showCourses: profile.show_courses, showConnections: profile.show_connections,
     },
     entities: memberships,
     badges: badges.get(viewer.id) ?? [],

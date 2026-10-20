@@ -19,6 +19,7 @@ export type ProfileRow = {
   technologies: string[]
   show_courses: Visibility
   show_connections: Visibility
+  avatar_path: string | null
 }
 export type PersonRecord = { user: UserRow; profile: ProfileRow }
 export type ProfilePatch = Partial<Pick<ProfileRow, 'bio' | 'course' | 'entry_year' | 'links' | 'technologies' | 'show_courses' | 'show_connections'>>
@@ -39,11 +40,15 @@ function check<T>(label: string, result: { data: T | null; error: { message: str
 }
 
 type RawPerson = Omit<ProfileRow, 'handle'> & { handle: string | null; users: UserRow | UserRow[] | null }
-const PERSON_SELECT = 'user_id, handle, bio, course, entry_year, links, technologies, show_courses, show_connections, users!inner(id, email, name, picture)'
+const PERSON_SELECT = 'user_id, handle, bio, course, entry_year, links, technologies, show_courses, show_connections, avatar_path, users!inner(id, email, name, picture)'
 
+export const avatarPublicUrl = (path: string): string => getClient().storage.from('avatars').getPublicUrl(path).data.publicUrl
+
+// A custom avatar wins over the Google picture, so every presenter inherits the rule.
 function toPerson(raw: RawPerson): PersonRecord | null {
-  const user = Array.isArray(raw.users) ? raw.users[0] : raw.users
-  if (!user || !raw.handle) return null
+  const googleUser = Array.isArray(raw.users) ? raw.users[0] : raw.users
+  if (!googleUser || !raw.handle) return null
+  const user = raw.avatar_path ? { ...googleUser, picture: avatarPublicUrl(raw.avatar_path) } : googleUser
   const { users: _users, ...profile } = raw
   return { user, profile: { ...profile, handle: raw.handle, links: raw.links ?? {}, technologies: raw.technologies ?? [] } }
 }
@@ -55,6 +60,36 @@ const oneOf = <T>(value: T | T[] | null): T | null => (Array.isArray(value) ? (v
 
 export async function getUserBySub(sub: string): Promise<UserRow | null> {
   return check('Could not load user', await getClient().from('users').select('id, email, name, picture').eq('google_sub', sub).maybeSingle<UserRow>())
+}
+
+export async function setAvatarPath(userId: string, path: string | null): Promise<void> {
+  const { error } = await getClient().from('student_profiles').update({ avatar_path: path, updated_at: new Date().toISOString() }).eq('user_id', userId)
+  if (error) throw new Error(`Could not update avatar: ${error.message}`)
+}
+
+export async function createAvatarUploadUrl(path: string): Promise<{ signedUrl: string; token: string }> {
+  const { data, error } = await getClient().storage.from('avatars').createSignedUploadUrl(path)
+  if (error || !data) throw new Error(`Could not create upload url: ${error?.message}`)
+  return { signedUrl: data.signedUrl, token: data.token }
+}
+
+export async function avatarObjectExists(path: string): Promise<boolean> {
+  const slash = path.lastIndexOf('/')
+  const name = path.slice(slash + 1)
+  const { data, error } = await getClient().storage.from('avatars').list(path.slice(0, slash), { search: name })
+  if (error) throw new Error(`Could not check avatar: ${error.message}`)
+  return (data ?? []).some((file) => file.name === name)
+}
+
+// Deletes every file under `{userId}/` except `keep` (all of them when keep is null).
+export async function removeAvatarObjects(userId: string, keep: string | null): Promise<void> {
+  const bucket = getClient().storage.from('avatars')
+  const { data, error } = await bucket.list(userId)
+  if (error) throw new Error(`Could not list avatars: ${error.message}`)
+  const stale = (data ?? []).map((file) => `${userId}/${file.name}`).filter((path) => path !== keep)
+  if (stale.length === 0) return
+  const removed = await bucket.remove(stale)
+  if (removed.error) throw new Error(`Could not remove avatars: ${removed.error.message}`)
 }
 
 export async function getPersonById(userId: string): Promise<PersonRecord | null> {
