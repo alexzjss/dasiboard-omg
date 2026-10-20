@@ -181,21 +181,11 @@ export const TECHNOLOGIES: Tech[] = [
 const BY_ID = new Map(TECHNOLOGIES.map((tech) => [tech.id, tech]))
 export const techById = (id: string): Tech | undefined => BY_ID.get(id)
 
-const iconCache = new Map<string, Promise<string | null>>()
-let library: Promise<Record<string, unknown>> | null = null
+let icons: Promise<Record<string, string>> | null = null
 
-/** Path SVG (viewBox 24) do ícone da tecnologia, ou null quando não há ícone. O simple-icons só é baixado na primeira chamada. */
+/** Path SVG (viewBox 24) do ícone da tecnologia, ou null quando não há ícone. Os paths vêm de techIcons.generated.ts, baixado só na primeira chamada. */
 export function loadTechIcon(id: string): Promise<string | null> {
-  const tech = BY_ID.get(id)
-  if (!tech?.icon) return Promise.resolve(null)
-  let cached = iconCache.get(id)
-  if (!cached) {
-    library ??= import('simple-icons') as Promise<Record<string, unknown>>
-    cached = library.then((icons) => {
-      const entry = icons[tech.icon] as { path?: string } | undefined
-      return entry?.path ?? null
-    }).catch(() => null)
-    iconCache.set(id, cached)
-  }
-  return cached
+  if (!BY_ID.get(id)?.icon) return Promise.resolve(null)
+  icons ??= import('./techIcons.generated').then((module) => module.TECH_ICONS)
+  return icons.then((all) => all[id] ?? null).catch(() => null)
 }
