@@ -12,6 +12,7 @@
     "start:server": "node dist-server/index.js",
     "preview": "vite preview",
     "seed:dev": "tsx server/scripts/seedDev.ts",
+    "backfill:badges": "tsx server/scripts/backfillBadges.ts",
     "test": "vitest run"
   },
   "dependencies": {

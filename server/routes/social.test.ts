@@ -248,6 +248,38 @@ describe('profile', () => {
     expect(body.isSuperadmin).toBe(false)
   })
 
+  it('devolve no perfil próprio todas as badges ativas, não só as de entidade', async () => {
+    addEntity('dasi', 'DASI')
+    addMember('dasi', alex.id)
+    store.badges.push({ user_id: alex.id, kind: 'admin_award', source_id: 'monitor', label: 'Monitor', revoked_at: null })
+    store.badges.push({ user_id: alex.id, kind: 'achievement', source_id: 'old', label: 'Antiga', revoked_at: '2026-01-01T00:00:00Z' })
+    const { body } = await (await as(alex)).get('/api/me/profile')
+    expect(body.badges.map((b: { kind: string; label: string }) => `${b.kind}:${b.label}`)).toEqual(['entity_member:DASI', 'admin_award:Monitor'])
+  })
+
+  it('trocar o ano de ingresso troca a badge de turma', async () => {
+    const api = await as(alex)
+    await api.patch('/api/me/profile').send({ entryYear: 2023 })
+    const second = await api.patch('/api/me/profile').send({ entryYear: 2024 })
+    const active = store.badges.filter((b) => b.user_id === alex.id && !b.revoked_at).map((b) => b.source_id)
+    expect(active).toContain('year-2024')
+    expect(active).not.toContain('year-2023')
+    expect(store.badges.filter((b) => b.user_id === alex.id && b.source_id === 'year-2024')).toHaveLength(1)
+    expect(second.body.badges.map((b: { sourceId: string }) => b.sourceId)).toContain('year-2024')
+  })
+
+  it('aceitar uma conexão atualiza as conquistas dos dois lados', async () => {
+    for (let i = 0; i < 9; i++) {
+      const other = addPerson({ name: `P${i}`, handle: `p${i}` })
+      addConnection(alex.id, other.id, 'accepted')
+    }
+    addConnection(bia.id, alex.id, 'pending')
+    await (await as(alex)).post('/api/connections/bia/accept')
+    const has = (id: string) => store.badges.some((b) => b.user_id === id && b.source_id === 'connections-10' && !b.revoked_at)
+    expect(has(alex.id)).toBe(true)
+    expect(has(bia.id)).toBe(false)
+  })
+
   it('flags superadmins from SUPERADMIN_EMAILS (case-insensitive)', async () => {
     const root = addPerson({ name: 'Root', handle: 'root', email: 'root@usp.br' })
     expect((await (await as(root)).get('/api/me/profile')).body.isSuperadmin).toBe(true)

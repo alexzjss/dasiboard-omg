@@ -31,7 +31,7 @@ const me = (over: Partial<MyProfile> = {}): MyProfile => ({
     handle: 'alex', name: 'Alex Santana', email: 'alex@usp.br', picture: null, bio: null, course: 'Sistemas de Informação',
     entryYear: 2024, links: {}, showCourses: 'all', showConnections: 'all',
   },
-  entities: [], adminOf: [], isSuperadmin: false, courses: [{ code: 'ACH2023', title: 'Algoritmos I' }],
+  entities: [], badges: [], adminOf: [], isSuperadmin: false, courses: [{ code: 'ACH2023', title: 'Algoritmos I' }],
   pendingCount: 0, pendingRequests: [], ...over,
 })
 

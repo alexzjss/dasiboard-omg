@@ -299,6 +299,31 @@ export async function revokeBadge(userId: string, kind: BadgeKind, sourceId: str
   return rows.length > 0
 }
 
+export type AchievementStats = {
+  profileComplete: boolean; connections: number; scheduleImported: boolean; collected: number; entryYear: number | null; course: string
+}
+
+export async function getAchievementStats(userId: string): Promise<AchievementStats> {
+  const client = getClient()
+  const [person, connections, schedule] = await Promise.all([
+    getPersonById(userId),
+    client.from('connections').select('requester_id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+    client.from('schedule_imports').select('user_id', { count: 'exact', head: true }).eq('user_id', userId),
+  ])
+  if (connections.error) throw new Error(`Could not count connections: ${connections.error.message}`)
+  if (schedule.error) throw new Error(`Could not check schedule: ${schedule.error.message}`)
+  const profile = person?.profile
+  const hasLink = Object.values(profile?.links ?? {}).some((value) => typeof value === 'string' && value.trim() !== '')
+  return {
+    profileComplete: !!profile?.bio?.trim() && profile.entry_year !== null && hasLink,
+    connections: connections.count ?? 0,
+    scheduleImported: (schedule.count ?? 0) > 0,
+    collected: 0, // fixed until Phase 3 (card collection)
+    entryYear: profile?.entry_year ?? null,
+    course: profile?.course ?? '',
+  }
+}
+
 export async function findUserIdsByEntity(entityId: string): Promise<string[]> {
   const rows = check('Could not search entity', await getClient().from('entity_members').select('user_id')
     .eq('entity_id', entityId).is('left_at', null).limit(ID_LIST_CAP).returns<{ user_id: string }[]>()) ?? []

@@ -35,6 +35,7 @@ export type MyProfile = {
     showConnections: Visibility
   }
   entities: EntityMembership[]
+  badges: Badge[]
   adminOf: string[]
   isSuperadmin: boolean
   courses: CourseItem[]

@@ -18,10 +18,11 @@ export const store = {
   badges: [] as Badge[],
   courses: new Map<string, Real.CourseRow[]>(),
   feed: [] as Real.FeedCandidate[],
+  schedules: new Set<string>(),
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -141,6 +142,18 @@ export async function revokeBadge(userId: string, kind: Real.BadgeKind, sourceId
   const found = store.badges.find((b) => b.user_id === userId && b.kind === kind && b.source_id === sourceId && !b.revoked_at)
   if (found) found.revoked_at = new Date().toISOString()
   return !!found
+}
+export async function getAchievementStats(userId: string): Promise<Real.AchievementStats> {
+  const profile = store.people.get(userId)?.profile
+  const hasLink = Object.values(profile?.links ?? {}).some((value) => typeof value === 'string' && value.trim() !== '')
+  return {
+    profileComplete: !!profile?.bio?.trim() && profile.entry_year !== null && hasLink,
+    connections: store.connections.filter((c) => c.status === 'accepted' && (c.requester_id === userId || c.addressee_id === userId)).length,
+    scheduleImported: store.schedules.has(userId),
+    collected: 0,
+    entryYear: profile?.entry_year ?? null,
+    course: profile?.course ?? '',
+  }
 }
 export async function findUserIdsByEntity(entityId: string) { return store.members.filter((m) => m.entity_id === entityId && m.left_at === null).map((m) => m.user_id) }
 export async function listFeedCandidates() { return store.feed }

@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express'
-import { route } from '../lib/errors.js'
+import { logError, route } from '../lib/errors.js'
 import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
 import { requireSession } from '../lib/session.js'
@@ -9,6 +9,7 @@ import {
   listMembershipsOf, listPendingReceived, findUserIdsByCourses, searchPeople, updateProfile,
   type FeedCandidate, type FeedCursor, type PersonRecord,
 } from '../social/db.js'
+import { syncAutoBadges } from '../social/achievements.js'
 import { loadViewer, NOT_FOUND_PROFILE, viewerOf, type Viewer } from '../social/guards.js'
 import { personCard, personMini } from '../social/presenters.js'
 import { canSee, connectionState, relationBetween, type ConnectionRow, type ProfileItem } from '../social/privacy.js'
@@ -35,8 +36,16 @@ const queryString = (req: Request, key: string) => (typeof req.query[key] === 's
 
 // ---------- own profile ----------
 
+// Automatic badges must never break the request that triggered them.
+async function syncBadgesSafely(...userIds: string[]) {
+  for (const userId of userIds) {
+    try { await syncAutoBadges(userId) }
+    catch (error) { logError('Syncing automatic badges failed', error) }
+  }
+}
+
 async function ownProfile(viewer: Viewer) {
-  const [memberships, pending, courses] = await Promise.all([listMembershipsOf(viewer.id), listPendingReceived(viewer.id), getCourses(viewer.id)])
+  const [memberships, pending, courses, badges] = await Promise.all([listMembershipsOf(viewer.id), listPendingReceived(viewer.id), getCourses(viewer.id), getBadges([viewer.id])])
   const { profile } = viewer.person
   return {
     profile: {
@@ -44,6 +53,7 @@ async function ownProfile(viewer: Viewer) {
       entryYear: profile.entry_year, links: profile.links, showCourses: profile.show_courses, showConnections: profile.show_connections,
     },
     entities: memberships,
+    badges: badges.get(viewer.id) ?? [],
     adminOf: memberships.filter((m) => m.role === 'admin').map((m) => m.entityId),
     isSuperadmin: viewer.isSuperadmin,
     courses,
@@ -62,6 +72,7 @@ router.patch('/api/me/profile', ...authedWrite, route('Updating profile failed',
   const viewer = viewerOf(res)
   await updateProfile(viewer.id, result.value)
   viewer.person = { ...viewer.person, profile: { ...viewer.person.profile, ...result.value } }
+  await syncBadgesSafely(viewer.id)
   res.json(await ownProfile(viewer))
 }))
 
@@ -186,6 +197,7 @@ router.post('/api/connections/:handle', ...authedWrite, connectLimit, route('Con
     if (existing?.requester_id === viewer.id) return res.json({ status: 'pending' }) // idempotent
     if (existing) { // the other person already asked: accept
       await acceptConnection(targetId, viewer.id)
+      await syncBadgesSafely(viewer.id, targetId)
       return res.json({ status: 'accepted' })
     }
     if ((await createConnection(viewer.id, targetId)) === 'created') return res.status(201).json({ status: 'pending' })
@@ -204,6 +216,7 @@ router.post('/api/connections/:handle/accept', ...authedWrite, route('Accepting 
   if (!existing || existing.addressee_id !== viewer.id || !(await acceptConnection(target.user.id, viewer.id))) {
     return res.status(404).json({ error: 'Pedido não encontrado' })
   }
+  await syncBadgesSafely(viewer.id, target.user.id)
   res.json({ status: 'accepted' })
 }))
 
