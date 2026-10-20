@@ -156,6 +156,18 @@ O script recusa rodar se `SUPABASE_URL` não parecer de desenvolvimento (aceita
 de desenvolvimento. Ao final, imprime um código de convite de demonstração da
 entidade Síntese Jr.
 
+### Push no navegador
+
+O push é opcional e fica desligado sem as chaves VAPID. Para ligar:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Cadastre `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` (e, se quiser, `VAPID_SUBJECT`, por
+padrão `mailto:` + o primeiro e-mail de `SUPERADMIN_EMAILS`) no `.env` e na Vercel. O
+service worker (`public/sw.js`) só é registrado em produção ou com `VITE_ENABLE_SW=1`.
+
 ### Testes
 
 `npm test` (ou `npx vitest run`) roda os testes do front-end (jsdom) e do servidor

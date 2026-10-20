@@ -68,3 +68,13 @@ const configuredOrigins = [
   .map(toOrigin)
   .filter((origin): origin is string => origin !== null)
 export const allowedOrigins = new Set([...configuredOrigins, ...(isProduction ? [] : ['http://localhost:5173', 'http://127.0.0.1:5173'])])
+
+// Web push (VAPID). Sem as três chaves o push fica desligado, sem erro.
+function resolveVapid() {
+  const publicKey = (process.env.VAPID_PUBLIC_KEY || '').trim()
+  const privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim()
+  const subject = (process.env.VAPID_SUBJECT || '').trim() || (superadminEmails.size > 0 ? `mailto:${[...superadminEmails][0]}` : '')
+  if (!publicKey || !privateKey || !subject) return null
+  return { publicKey, privateKey, subject }
+}
+export const vapid: { publicKey: string; privateKey: string; subject: string } | null = resolveVapid()

@@ -28,3 +28,8 @@ createRoot(document.getElementById('root')!).render(
     </GoogleOAuthProvider>
   </StrictMode>,
 )
+
+// O service worker só serve para push: registra em produção ou com VITE_ENABLE_SW=1.
+if ('serviceWorker' in navigator && (import.meta.env.PROD || import.meta.env.VITE_ENABLE_SW === '1')) {
+  window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(() => undefined) })
+}

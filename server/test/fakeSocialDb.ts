@@ -21,11 +21,12 @@ export const store = {
   schedules: new Set<string>(),
   avatarObjects: new Set<string>(),
   notifications: [] as Real.NotificationRow[],
+  pushSubs: [] as Real.PushSubscriptionRow[],
   announcements: [] as (Parameters<typeof Real.createAnnouncement>[0] & { id: string; createdAt: string })[],
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.announcements = []; definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -219,6 +220,14 @@ export async function markAllRead(userId: string) {
   for (const n of store.notifications) if (n.userId === userId && n.readAt === null) n.readAt = new Date().toISOString()
 }
 export async function getEntitiesByIds(ids: string[]) { return ids.flatMap((id) => { const e = store.entities.get(id); return e ? [{ id: e.id, name: e.name }] : [] }) }
+
+export async function savePushSubscription(userId: string, sub: Real.PushSubscriptionInput) {
+  const existing = store.pushSubs.find((s) => s.endpoint === sub.endpoint)
+  if (existing) { existing.userId = userId; existing.keys = sub.keys } else store.pushSubs.push({ id: randomUUID(), userId, endpoint: sub.endpoint, keys: sub.keys })
+}
+export async function deletePushSubscription(userId: string, endpoint: string) { store.pushSubs = store.pushSubs.filter((s) => !(s.userId === userId && s.endpoint === endpoint)) }
+export async function listPushSubscriptions(userIds: string[]) { return store.pushSubs.filter((s) => userIds.includes(s.userId)) }
+export async function deletePushSubscriptionById(id: string) { store.pushSubs = store.pushSubs.filter((s) => s.id !== id) }
 
 export async function resolveAudience(audience: Real.Audience, value: string | null) {
   if (audience === 'entity') return findUserIdsByEntity(value ?? '')

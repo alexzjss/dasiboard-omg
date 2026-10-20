@@ -518,6 +518,41 @@ export async function getEntitiesByIds(ids: string[]): Promise<EntityRow[]> {
   return check('Could not load entities', await getClient().from('entities').select('id, name').in('id', safe).returns<EntityRow[]>()) ?? []
 }
 
+// ---------- push subscriptions ----------
+
+export type PushKeys = { p256dh: string; auth: string }
+export type PushSubscriptionInput = { endpoint: string; keys: PushKeys }
+export type PushSubscriptionRow = { id: string; userId: string; endpoint: string; keys: PushKeys }
+
+export async function savePushSubscription(userId: string, sub: PushSubscriptionInput): Promise<void> {
+  const { error } = await getClient().from('push_subscriptions').upsert(
+    { user_id: userId, kind: 'web', endpoint: sub.endpoint, keys: sub.keys, last_seen_at: new Date().toISOString() },
+    { onConflict: 'endpoint' },
+  )
+  if (error) throw new Error(`Could not save push subscription: ${error.message}`)
+}
+
+export async function deletePushSubscription(userId: string, endpoint: string): Promise<void> {
+  const { error } = await getClient().from('push_subscriptions').delete().eq('user_id', userId).eq('endpoint', endpoint)
+  if (error) throw new Error(`Could not delete push subscription: ${error.message}`)
+}
+
+export async function listPushSubscriptions(userIds: string[]): Promise<PushSubscriptionRow[]> {
+  const unique = [...new Set(userIds.filter((id) => UUID.test(id)))]
+  const result: PushSubscriptionRow[] = []
+  for (let i = 0; i < unique.length; i += NOTIFICATION_BATCH) {
+    const rows = check('Could not load push subscriptions', await getClient().from('push_subscriptions').select('id, user_id, endpoint, keys')
+      .eq('kind', 'web').in('user_id', unique.slice(i, i + NOTIFICATION_BATCH)).returns<{ id: string; user_id: string; endpoint: string; keys: PushKeys }[]>()) ?? []
+    result.push(...rows.map((row) => ({ id: row.id, userId: row.user_id, endpoint: row.endpoint, keys: row.keys })))
+  }
+  return result
+}
+
+export async function deletePushSubscriptionById(id: string): Promise<void> {
+  const { error } = await getClient().from('push_subscriptions').delete().eq('id', id)
+  if (error) throw new Error(`Could not delete push subscription: ${error.message}`)
+}
+
 // ---------- announcements ----------
 
 export type Audience = 'all' | 'course' | 'cohort' | 'entity'
