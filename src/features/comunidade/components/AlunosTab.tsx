@@ -26,6 +26,8 @@ function AlunosInner({ onRetry }: { onRetry: () => void }) {
   // Campos de texto têm rascunho local e só chegam à URL depois de 300ms parados.
   const [draft, setDraft] = useState({ q: params.get('q') ?? '', curso: params.get('curso') ?? '', materia: params.get('materia') ?? '' })
   const [overrides, setOverrides] = useState<Record<string, ConnectionState>>({})
+  // No celular os filtros extras ficam recolhidos; abrem sozinhos se a URL já trouxer algum (ex.: ?materia=).
+  const [showExtra, setShowExtra] = useState(() => ['curso', 'ano', 'entidade', 'materia'].some((key) => params.get(key)))
   const filtersKey = JSON.stringify(filters)
   const lastKey = useRef(filtersKey)
   useEffect(() => {
@@ -68,32 +70,37 @@ function AlunosInner({ onRetry }: { onRetry: () => void }) {
   const errorMessage = error instanceof ApiError ? error.message : 'Não deu pra carregar a lista de alunos.'
   const retry = onRetry
 
+  const extraCount = ['curso', 'ano', 'entidade', 'materia'].filter((key) => params.get(key)).length
+
   return (
     <div>
-      <form className="com-filters" role="search" onSubmit={(e) => e.preventDefault()}>
+      <form className={`com-filters${showExtra ? ' is-open' : ''}`} role="search" onSubmit={(e) => e.preventDefault()}>
         <label className="com-field com-field-wide">
           <span className="com-label">Buscar por nome</span>
           <input type="search" className="com-input" placeholder="Nome do colega" value={draft.q} maxLength={60}
             onChange={(e) => setDraft((d) => ({ ...d, q: e.target.value }))} />
         </label>
-        <label className="com-field">
+        <button type="button" className="com-filters-toggle" aria-expanded={showExtra} aria-controls="com-extra-filters" onClick={() => setShowExtra((v) => !v)}>
+          {showExtra ? 'Esconder filtros' : extraCount > 0 ? `Filtros (${extraCount})` : 'Filtros'}
+        </button>
+        <label className="com-field com-field-extra" id="com-extra-filters">
           <span className="com-label">Curso</span>
           <input type="text" className="com-input" placeholder="Ex.: Sistemas de Informação" value={draft.curso} maxLength={80}
             onChange={(e) => setDraft((d) => ({ ...d, curso: e.target.value }))} />
         </label>
-        <label className="com-field com-field-narrow">
+        <label className="com-field com-field-narrow com-field-extra">
           <span className="com-label">Ingresso</span>
           <input type="number" inputMode="numeric" className="com-input mono" placeholder="2024" min={1934} max={CURRENT_YEAR}
             value={params.get('ano') ?? ''} onChange={(e) => setParam('ano', e.target.value)} />
         </label>
-        <label className="com-field">
+        <label className="com-field com-field-extra">
           <span className="com-label">Entidade</span>
           <select className="com-input" value={params.get('entidade') ?? ''} onChange={(e) => setParam('entidade', e.target.value)}>
             <option value="">Todas</option>
             {entidadesData.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
         </label>
-        <label className="com-field com-field-narrow">
+        <label className="com-field com-field-narrow com-field-extra">
           <span className="com-label">Matéria</span>
           <input type="text" className="com-input mono" placeholder="ACH2023" value={draft.materia} maxLength={12}
             onChange={(e) => setDraft((d) => ({ ...d, materia: e.target.value.toUpperCase() }))} />

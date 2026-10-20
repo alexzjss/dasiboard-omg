@@ -6,7 +6,7 @@ const ONBOARDING_STEPS: { icon: IconName; title: string; body: string; cta: stri
   {
     icon: 'home',
     title: 'Bem-vindo ao daSIboard',
-    body: 'Feito por e pra quem estuda SI na EACH. Aqui ficam sua grade, as disciplinas, os docentes e as entidades.',
+    body: 'Feito por e pra quem estuda SI na EACH. Aqui ficam sua grade, as disciplinas, a comunidade de colegas e docentes e as entidades.',
     cta: 'Próximo',
   },
   {

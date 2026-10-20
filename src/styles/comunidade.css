@@ -44,6 +44,14 @@
 .com-input::placeholder { color: var(--text-faint); }
 .com-input:focus { border-color: var(--area); box-shadow: 0 0 0 3px var(--focus-ring); }
 .com-clear { justify-self: start; }
+.com-filters-toggle { justify-self: start; min-height: 44px; padding: 0 var(--s-4); border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font-weight: 600; }
+.com-filters-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+@media (max-width: 639px) {
+  .com-filters:not(.is-open) .com-field-extra { display: none; }
+}
+@media (min-width: 640px) {
+  .com-filters-toggle { display: none; }
+}
 
 .com-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: var(--s-3); }
 .com-card { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); background: var(--surface-1); border: 1px solid var(--line); border-radius: var(--r-md); min-width: 0; }

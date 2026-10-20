@@ -131,8 +131,11 @@ router.get('/api/people/:handle', ...authed, route('Loading person failed', asyn
   }
   let connectionList: { count: number; people: ReturnType<typeof personMini>[] } | null = null
   if (showConnections) {
+    // Each listed connection also exposes the other person's connections, so they must allow it too (same rule as the feed).
     const list = await listConnectionsOf(ownerId)
-    connectionList = { count: list.length, people: list.map(personMini) }
+    const listConnections = await getConnectionsWith(viewer.id, list.map((p) => p.user.id))
+    const shown = viewer.id === ownerId ? list : list.filter((p) => p.user.id === viewer.id || visible(viewer, p, 'connections', listConnections))
+    connectionList = { count: shown.length, people: shown.map(personMini) }
   }
 
   res.json({

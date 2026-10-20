@@ -99,6 +99,13 @@ describe('GET /api/people/:handle', () => {
     expect((await api.get('/api/people/bia')).body.connections).toEqual({ count: 1, people: [{ handle: 'caio', name: 'Caio', picture: null }] })
   })
 
+  it('omits listed connections who hide their own connections', async () => {
+    addConnection(bia.id, caio.id, 'accepted')
+    store.people.get(caio.id)!.profile.show_connections = 'none'
+    const api = await as(alex)
+    expect((await api.get('/api/people/bia')).body.connections).toEqual({ count: 0, people: [] })
+  })
+
   it('lists classmates in common only when their own course lists are visible to the viewer', async () => {
     // caio shares ACH2001 with both alex and bia
     const api = await as(alex)
