@@ -167,3 +167,13 @@
 @media (min-width: 1024px) {
   .disc-content { width: min(100%, 1200px); padding-bottom: var(--s-8); }
 }
+
+/* ── Colegas na mesma matéria ────────────────────────────────────────────────── */
+.disc-colegas { padding: 0 var(--s-4) var(--s-3); }
+.disc-colegas-toggle {
+  min-height: 44px; padding: 0; border: 0; background: none;
+  color: var(--text-muted); font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+.disc-colegas-toggle:hover { color: var(--area); }
+.disc-colegas-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--area); font-size: 13px; font-weight: 700; }
+.const-colegas { margin-top: var(--s-2); }

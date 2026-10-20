@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { DRIVE_URLS, obrigatoriasData, optativasData } from './data'
+import { ColegasDisclosure } from './ColegasLink'
 import { DisciplinasGraph } from './DisciplinasGraph'
+
+// Cliques e teclas dentro do bloco de colegas não devem abrir o card (que pode ser um link para o Drive).
+const stopEvent = (e: { stopPropagation: () => void }) => e.stopPropagation()
 
 export function DisciplinasPage() {
   const [section, setSection] = useState<'obrigatorias' | 'optativas'>('obrigatorias')
@@ -81,6 +85,9 @@ export function DisciplinasPage() {
                           ))}
                         </div>
                       )}
+                      <div className="disc-colegas" onClick={stopEvent} onKeyDown={stopEvent}>
+                        <ColegasDisclosure code={disc.code} />
+                      </div>
                     </article>
                     )
                   })}

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Icon } from '../../components/Icon'
 import { useDialogFocus } from '../../lib/useDialogFocus'
 import { entidadeSlug, type Entidade } from './data'
+import { EntidadeMembers } from './EntidadeMembers'
 import { InstagramEmbed } from './InstagramEmbed'
 
 /** Detalhe da entidade: sheet no celular/tablet, painel lateral no desktop (posição decidida pelo CSS). */
@@ -42,6 +43,7 @@ export function EntidadeDetail({ entidade, onClose }: { entidade: Entidade; onCl
           <h2 className="section-label">No Instagram</h2>
           <InstagramEmbed url={entidade.instagram} name={entidade.name} />
         </div>
+        <EntidadeMembers entidadeId={entidade.id} />
       </aside>
     </>,
     document.body,

@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { ColegasLink } from './ColegasLink'
 import { DRIVE_URLS, type Discipline, type Period } from './data'
 import { CHAIN_NEUTRAL, GRAPH_CHAINS, computeNodeColors } from './graphColors'
 
@@ -112,6 +113,7 @@ export function DisciplinasGraph({ periods }: { periods: Period[] }) {
                   : 'Nenhuma disciplina depende dela.'}
               </dd>
             </dl>
+            <div className="const-colegas"><ColegasLink code={chosen.code} /></div>
             {chosenDrive && <a className="const-drive-link" href={chosenDrive} target="_blank" rel="noopener noreferrer">Abrir no DriveEACH ↗</a>}
           </>
         ) : (
