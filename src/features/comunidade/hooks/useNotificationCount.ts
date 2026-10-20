@@ -1,28 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getNotificationCount } from '../../../lib/socialApi'
+import { getNotificationCount, type NotificationCount } from '../../../lib/socialApi'
 
 export const NOTIFICATION_POLL_MS = 60_000
+const EMPTY: NotificationCount = { unread: 0, pendingRequests: 0 }
 
 /**
- * Número de pedidos de conexão pendentes. Busca ao montar, revalida quando a aba volta
+ * Contagens da central: notificações não lidas e pedidos de conexão pendentes. Busca ao montar, revalida quando a aba volta
  * a ficar visível e a cada 60s enquanto a aba estiver visível. Falhas valem 0 (silenciosas),
  * o que também cobre o /dev/home sem servidor.
  */
 export function useNotificationCount() {
-  const [count, setCount] = useState(0)
+  const [counts, setCounts] = useState<NotificationCount>(EMPTY)
   const mountedRef = useRef(false)
   const seqRef = useRef(0)
 
   const refresh = useCallback(async () => {
     const seq = ++seqRef.current
-    let next = 0
+    let next = EMPTY
     try {
       next = await getNotificationCount()
     } catch {
-      next = 0
+      next = EMPTY
     }
     // Só a resposta mais recente conta, e nada é aplicado depois do unmount.
-    if (mountedRef.current && seq === seqRef.current) setCount(next)
+    if (mountedRef.current && seq === seqRef.current) setCounts(next)
   }, [])
 
   useEffect(() => {
@@ -44,5 +45,5 @@ export function useNotificationCount() {
     }
   }, [refresh])
 
-  return { count, refresh }
+  return { unread: counts.unread, pendingRequests: counts.pendingRequests, refresh }
 }

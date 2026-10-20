@@ -9,6 +9,7 @@ import adminRouter from './routes/admin.js'
 import avatarRouter from './routes/avatar.js'
 import badgesRouter from './routes/badges.js'
 import entitiesRouter from './routes/entities.js'
+import notificationsRouter from './routes/notifications.js'
 import scheduleRouter from './routes/schedule.js'
 import socialRouter from './routes/social.js'
 
@@ -24,6 +25,7 @@ app.use(securityHeaders)
 app.use(authRouter)
 app.use(scheduleRouter)
 app.use(socialRouter)
+app.use(notificationsRouter)
 app.use(entitiesRouter)
 app.use(adminRouter)
 app.use(badgesRouter)

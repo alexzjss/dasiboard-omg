@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  ApiError, getNotificationCount, getPerson, joinEntity, listConnections, listPeople, removeConnection, requestConnection, updateMyProfile,
+  ApiError, getNotificationCount, getPerson, joinEntity, listConnections, listNotifications, markAllNotificationsRead, markNotificationRead, listPeople, removeConnection, requestConnection, updateMyProfile,
 } from './socialApi'
 
 function jsonResponse(body: unknown, status = 200) {
@@ -76,9 +76,21 @@ describe('socialApi: conexões', () => {
     expect(list).toHaveLength(1)
   })
 
-  it('lê a contagem de pedidos', async () => {
-    mockFetch(jsonResponse({ pendingRequests: 12 }))
-    await expect(getNotificationCount()).resolves.toBe(12)
+  it('lê a contagem de notificações e de pedidos', async () => {
+    mockFetch(jsonResponse({ unread: 3, pendingRequests: 12 }))
+    await expect(getNotificationCount()).resolves.toEqual({ unread: 3, pendingRequests: 12 })
+  })
+
+  it('lista notificações com cursor e marca como lidas', async () => {
+    const spy = mockFetch(jsonResponse({ items: [], nextCursor: null }))
+    await listNotifications('abc')
+    expect(lastCall(spy).url).toBe('/api/notifications?cursor=abc')
+    mockFetch(new Response(null, { status: 204 }))
+    await markNotificationRead('n 1')
+    const spy2 = mockFetch(new Response(null, { status: 204 }))
+    await markAllNotificationsRead()
+    expect(lastCall(spy2).url).toBe('/api/notifications/read-all')
+    expect(lastCall(spy2).init.method).toBe('POST')
   })
 })
 

@@ -451,3 +451,69 @@ export async function ensureViewerProfile(userId: string, email: string): Promis
   await ensureProfileWithHandle(supabaseHandleStore(getClient()), userId, email)
   return getPersonById(userId)
 }
+
+
+// ---------- notifications ----------
+
+export type NotificationType = 'connection_request' | 'connection_accepted' | 'entity_joined' | 'entity_role_changed' | 'entity_removed' | 'badge_awarded' | 'announcement'
+export type NotificationInput = { type: NotificationType; actorId?: string | null; entityId?: string | null; payload?: Record<string, unknown> }
+export type NotificationRow = {
+  id: string; userId: string; type: NotificationType; actorId: string | null; entityId: string | null
+  payload: Record<string, unknown>; createdAt: string; readAt: string | null
+}
+type RawNotification = {
+  id: string; user_id: string; type: NotificationType; actor_id: string | null; entity_id: string | null
+  payload: Record<string, unknown>; created_at: string; read_at: string | null
+}
+const NOTIFICATION_COLUMNS = 'id, user_id, type, actor_id, entity_id, payload, created_at, read_at'
+const NOTIFICATION_BATCH = 500
+const toNotification = (raw: RawNotification): NotificationRow => ({
+  id: raw.id, userId: raw.user_id, type: raw.type, actorId: raw.actor_id, entityId: raw.entity_id, payload: raw.payload ?? {}, createdAt: raw.created_at, readAt: raw.read_at,
+})
+
+export async function insertNotifications(userIds: string[], input: NotificationInput): Promise<NotificationRow[]> {
+  const unique = [...new Set(userIds.filter((id) => UUID.test(id)))]
+  const result: NotificationRow[] = []
+  for (let i = 0; i < unique.length; i += NOTIFICATION_BATCH) {
+    const rows = unique.slice(i, i + NOTIFICATION_BATCH).map((userId) => ({
+      user_id: userId, type: input.type, actor_id: input.actorId ?? null, entity_id: input.entityId ?? null, payload: input.payload ?? {},
+    }))
+    const saved = check('Could not save notifications', await getClient().from('notifications').insert(rows).select(NOTIFICATION_COLUMNS).returns<RawNotification[]>()) ?? []
+    result.push(...saved.map(toNotification))
+  }
+  return result
+}
+
+export async function listNotifications(userId: string, before: { at: string; id: string } | null, limit: number): Promise<NotificationRow[]> {
+  let query = getClient().from('notifications').select(NOTIFICATION_COLUMNS).eq('user_id', userId)
+  if (before) query = query.or(`created_at.lt."${before.at}",and(created_at.eq."${before.at}",id.lt.${before.id})`)
+  const rows = check('Could not load notifications', await query.order('created_at', { ascending: false }).order('id', { ascending: false }).limit(limit).returns<RawNotification[]>()) ?? []
+  return rows.map(toNotification)
+}
+
+export async function countUnread(userId: string): Promise<number> {
+  const { count, error } = await getClient().from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('read_at', null)
+  if (error) throw new Error(`Could not count notifications: ${error.message}`)
+  return count ?? 0
+}
+
+export async function markRead(userId: string, id: string): Promise<boolean> {
+  if (!UUID.test(id)) return false
+  const client = getClient()
+  const updated = check('Could not mark notification', await client.from('notifications').update({ read_at: new Date().toISOString() })
+    .eq('id', id).eq('user_id', userId).is('read_at', null).select('id').returns<{ id: string }[]>()) ?? []
+  if (updated.length > 0) return true
+  // Already read still counts as found; only a missing or foreign id is a 404.
+  return check('Could not mark notification', await client.from('notifications').select('id').eq('id', id).eq('user_id', userId).maybeSingle<{ id: string }>()) !== null
+}
+
+export async function markAllRead(userId: string): Promise<void> {
+  const { error } = await getClient().from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', userId).is('read_at', null)
+  if (error) throw new Error(`Could not mark notifications: ${error.message}`)
+}
+
+export async function getEntitiesByIds(ids: string[]): Promise<EntityRow[]> {
+  const safe = [...new Set(ids)].slice(0, ID_LIST_CAP)
+  if (safe.length === 0) return []
+  return check('Could not load entities', await getClient().from('entities').select('id, name').in('id', safe).returns<EntityRow[]>()) ?? []
+}

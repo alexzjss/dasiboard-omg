@@ -24,7 +24,7 @@ export function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone())
 
   const section = sectionFromPath(location.pathname)
-  const { count: pendingRequests, refresh: refreshNotifications } = useNotificationCount()
+  const { pendingRequests, refresh: refreshNotifications } = useNotificationCount()
   const badges = useMemo(() => ({ Comunidade: pendingRequests }), [pendingRequests])
   const entidade = section === 'entidades' ? findEntidadeBySlug(location.pathname.split('/')[2]) : undefined
 

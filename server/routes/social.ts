@@ -4,7 +4,7 @@ import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
 import { requireSession } from '../lib/session.js'
 import {
-  acceptConnection, countPendingReceived, createConnection, deleteConnection, findUserIdsByCourse, findUserIdsByEntity, getBadges, getConnection,
+  acceptConnection, createConnection, deleteConnection, findUserIdsByCourse, findUserIdsByEntity, getBadges, getConnection,
   getConnectionsWith, getCourses, getCoursesByUsers, getPeopleByIds, getPersonByHandle, listConnectionsOf, listFeedCandidates,
   listMembershipsOf, listPendingReceived, findUserIdsByCourses, searchPeople, updateProfile,
   type FeedCandidate, type FeedCursor, type PersonRecord,
@@ -239,10 +239,6 @@ router.get('/api/connections', ...authed, route('Listing connections failed', as
   }
   const people = await listConnectionsOf(viewer.id)
   res.json({ connections: people.map((person) => ({ ...personMini(person), course: person.profile.course })) })
-}))
-
-router.get('/api/notifications/count', ...authed, route('Counting notifications failed', async (_req, res) => {
-  res.json({ pendingRequests: await countPendingReceived(viewerOf(res).id) })
 }))
 
 // ---------- feed ----------

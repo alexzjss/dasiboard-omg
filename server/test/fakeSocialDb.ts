@@ -20,10 +20,11 @@ export const store = {
   feed: [] as Real.FeedCandidate[],
   schedules: new Set<string>(),
   avatarObjects: new Set<string>(),
+  notifications: [] as Real.NotificationRow[],
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -191,6 +192,32 @@ export async function getAchievementStats(userId: string): Promise<Real.Achievem
 }
 export async function findUserIdsByEntity(entityId: string) { return store.members.filter((m) => m.entity_id === entityId && m.left_at === null).map((m) => m.user_id) }
 export async function listFeedCandidates() { return store.feed }
+
+let notificationSeq = 0
+export async function insertNotifications(userIds: string[], input: Real.NotificationInput) {
+  const rows = [...new Set(userIds)].map((userId): Real.NotificationRow => ({
+    id: randomUUID(), userId, type: input.type, actorId: input.actorId ?? null, entityId: input.entityId ?? null, payload: input.payload ?? {},
+    createdAt: new Date(Date.UTC(2026, 9, 20) + ++notificationSeq * 1000).toISOString(), readAt: null,
+  }))
+  store.notifications.push(...rows)
+  return rows
+}
+export async function listNotifications(userId: string, before: { at: string; id: string } | null, limit: number) {
+  return store.notifications
+    .filter((n) => n.userId === userId && (!before || n.createdAt < before.at || (n.createdAt === before.at && n.id < before.id)))
+    .sort((a, b) => (a.createdAt === b.createdAt ? (a.id < b.id ? 1 : -1) : a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, limit)
+}
+export async function countUnread(userId: string) { return store.notifications.filter((n) => n.userId === userId && n.readAt === null).length }
+export async function markRead(userId: string, id: string) {
+  const found = store.notifications.find((n) => n.id === id && n.userId === userId)
+  if (found && found.readAt === null) found.readAt = new Date().toISOString()
+  return !!found
+}
+export async function markAllRead(userId: string) {
+  for (const n of store.notifications) if (n.userId === userId && n.readAt === null) n.readAt = new Date().toISOString()
+}
+export async function getEntitiesByIds(ids: string[]) { return ids.flatMap((id) => { const e = store.entities.get(id); return e ? [{ id: e.id, name: e.name }] : [] }) }
 
 // Compile-time check that the fake keeps the same exports/signatures as the real data layer.
 export const __contract: typeof Real = {} as typeof Self

@@ -228,7 +228,7 @@ describe('connections', () => {
     addConnection(bia.id, alex.id, 'pending')
     addConnection(alex.id, caio.id, 'accepted')
     const api = await as(alex)
-    expect((await api.get('/api/notifications/count')).body).toEqual({ pendingRequests: 1 })
+    expect((await api.get('/api/notifications/count')).body).toEqual({ unread: 0, pendingRequests: 1 })
     expect((await api.get('/api/connections?status=pending')).body.connections.map((c: { handle: string }) => c.handle)).toEqual(['bia'])
     expect((await api.get('/api/connections?status=accepted')).body.connections.map((c: { handle: string }) => c.handle)).toEqual(['caio'])
     expect((await api.get('/api/connections?status=sent')).status).toBe(400)

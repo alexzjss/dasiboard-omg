@@ -193,10 +193,32 @@ export async function listConnections(status: ConnectionStatus): Promise<Pending
   return body.connections
 }
 
-export async function getNotificationCount(signal?: AbortSignal): Promise<number> {
-  const body = await request<{ pendingRequests: number }>('/api/notifications/count', { signal })
-  return body.pendingRequests
+export type NotificationCount = { unread: number; pendingRequests: number }
+
+export const getNotificationCount = (signal?: AbortSignal) => request<NotificationCount>('/api/notifications/count', { signal })
+
+export type NotificationType =
+  | 'connection_request' | 'connection_accepted' | 'entity_joined' | 'entity_role_changed' | 'entity_removed' | 'badge_awarded' | 'announcement'
+
+export type NotificationItem = {
+  id: string
+  type: NotificationType
+  title: string
+  body: string
+  url: string
+  createdAt: string
+  read: boolean
+  actor: PersonMini | null
 }
+
+export type NotificationPage = { items: NotificationItem[]; nextCursor: string | null }
+
+export const listNotifications = (cursor?: string | null, signal?: AbortSignal) =>
+  request<NotificationPage>(`/api/notifications${cursor ? `?cursor=${enc(cursor)}` : ''}`, { signal })
+
+export const markNotificationRead = (id: string) => request<void>(`/api/notifications/${enc(id)}/read`, { method: 'POST' })
+
+export const markAllNotificationsRead = () => request<void>('/api/notifications/read-all', { method: 'POST' })
 
 // ---------- feed ----------
 
