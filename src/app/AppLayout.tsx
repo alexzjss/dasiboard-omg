@@ -7,6 +7,7 @@ import { Sidebar } from '../components/Sidebar'
 import { PageTransition } from '../components/PageTransition'
 import { SpaceCanvas } from '../components/SpaceCanvas'
 import { UserMenu } from '../components/UserMenu'
+import { useNotificationCount } from '../features/comunidade/hooks/useNotificationCount'
 import { findEntidadeBySlug } from '../features/entidades/data'
 import { isOnboardingDone, loadSidebarCollapsed, saveSidebarCollapsed } from '../lib/storage'
 import { LayoutContext } from './layoutContext'
@@ -23,6 +24,8 @@ export function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone())
 
   const section = sectionFromPath(location.pathname)
+  const { count: pendingRequests } = useNotificationCount()
+  const badges = useMemo(() => ({ Comunidade: pendingRequests }), [pendingRequests])
   const entidade = section === 'entidades' ? findEntidadeBySlug(location.pathname.split('/')[2]) : undefined
 
   const openUserMenu = useCallback((trigger?: HTMLElement | null) => { setMenuAnchor(trigger ?? null); setUserMenuOpen(true) }, [])
@@ -47,6 +50,7 @@ export function AppLayout() {
           user={user}
           activeTab={SECTION_LABEL[section]}
           items={NAV_ITEMS.map((i) => [i.label, i.icon])}
+          badges={badges}
           collapsed={collapsed}
           menuOpen={userMenuOpen}
           style={accentStyle}
@@ -66,6 +70,8 @@ export function AppLayout() {
             activeTab={SECTION_LABEL[section]}
             onSelectTab={selectTab}
             items={NAV_ITEMS.map((i) => [i.label, i.icon])}
+            badges={badges}
+            profileBadge={pendingRequests}
             className={section === 'entidades' ? 'ent-nav' : ''}
             profileAction={openUserMenu}
             profileAvatar={user?.picture}

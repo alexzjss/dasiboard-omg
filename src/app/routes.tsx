@@ -23,7 +23,9 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         {import.meta.env.DEV && <Route path="dev/home" element={<HomePage />} />}
         <Route path="disciplinas" element={<DisciplinasPage />} />
-        <Route path="docentes" element={<DocentesPage />} />
+        {/* Placeholder até a página /comunidade (T7): por enquanto mostra a aba Docentes atual. */}
+        <Route path="comunidade" element={<DocentesPage />} />
+        <Route path="docentes" element={<Navigate to="/comunidade?aba=docentes" replace />} />
         <Route path="entidades" element={<EntidadesPage />} />
         <Route path="entidades/:slug" element={<EntidadesPage />} />
         <Route path="perfil" element={<PerfilPage />} />
