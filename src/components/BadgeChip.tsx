@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { Badge } from '../lib/socialApi'
 
-const PATHS: Record<string, string> = {
+export const BADGE_PATHS: Record<string, string> = {
   star: 'm12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8L12 3Z',
   trophy: 'M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8',
   bolt: 'M13 2 4 14h7l-1 8 9-12h-7l1-8Z',
@@ -17,7 +17,7 @@ const PATHS: Record<string, string> = {
 }
 
 export function BadgeChip({ badge }: { badge: Badge }) {
-  const path = badge.icon ? PATHS[badge.icon] : undefined
+  const path = badge.icon ? BADGE_PATHS[badge.icon] : undefined
   const style = badge.color ? ({ '--badge-color': badge.color } as CSSProperties) : undefined
   return (
     <span className="badge-chip" style={style}>

@@ -19,6 +19,7 @@ import './styles/perfil-social.css'
 import './styles/comunidade.css'
 import './styles/pessoa.css'
 import './styles/notificacoes.css'
+import './styles/card.css'
 import App from './app/App.tsx'
 
 createRoot(document.getElementById('root')!).render(

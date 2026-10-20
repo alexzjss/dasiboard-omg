@@ -25,6 +25,7 @@
     "express": "^5.2.1",
     "google-auth-library": "^11.1.0",
     "jose": "^6.2.12",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",

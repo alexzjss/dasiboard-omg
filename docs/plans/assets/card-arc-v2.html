@@ -1,0 +1,198 @@
+<h2>Card de perfil v2 — base Arc</h2>
+<p class="subtitle">Três variações sobre o card do Arc. Use o painel para testar a personalização (vale para os três ao mesmo tempo). Clique no card para virar; passe o mouse para o tilt. Marque "Escolher" no(s) que gostar.</p>
+
+<style>
+  .panel{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:center;margin:14px auto 6px;padding:12px 16px;border-radius:16px;border:1px solid rgba(128,128,128,.25);max-width:900px;font-size:13px}
+  .panel .g{display:flex;align-items:center;gap:6px}
+  .panel b{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-right:4px}
+  .sw{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .sw.on{border-color:currentColor}
+  .seg{padding:5px 10px;border-radius:999px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;cursor:pointer;font-size:12px}
+  .seg.on{background:currentColor}
+  .seg.on span{filter:invert(1)}
+  .stage{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;margin:22px 0}
+  .slot{display:flex;flex-direction:column;align-items:center;gap:10px;width:300px}
+  .bg{padding:22px;border-radius:30px;background:var(--c);transition:background .3s}
+  .pc{width:256px;height:360px;perspective:1100px;cursor:pointer}
+  .inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+  .pc.flipped .inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;border-radius:14px;overflow:hidden;backface-visibility:hidden;background:var(--paper);color:var(--c);box-shadow:0 18px 40px -18px rgba(0,0,0,.45);font-family:'Manrope','DM Sans',system-ui,sans-serif;padding:18px;box-sizing:border-box;display:flex;flex-direction:column}
+  .back{transform:rotateY(180deg)}
+  .grain::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+  .shine{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;mix-blend-mode:soft-light;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.9),transparent 50%)}
+  .pc:hover .shine{opacity:1}
+  .foil{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.55;background:linear-gradient(115deg,transparent 25%,#ff9be0 38%,#b9a2ff 45%,#9fdcff 52%,#a6ffd8 58%,transparent 70%);background-size:240% 240%;background-position:var(--fx,50%) 50%}
+  .shape{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--c2),var(--c));transition:border-radius .35s}
+  .shape img{width:100%;height:100%;object-fit:cover;display:block}
+  .shape.framed{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--c)}
+  .s-leaf{border-radius:100% 6px 100% 6px}
+  .s-arch{border-radius:999px 999px 10px 10px}
+  .s-circle{border-radius:50%}
+  .s-squircle{border-radius:28%}
+  .name{font-weight:800;font-size:25px;letter-spacing:-.02em;line-height:1.05;margin:14px 0 4px;color:var(--c)}
+  .sub{font-size:12.5px;font-weight:600;letter-spacing:.02em;opacity:.9}
+  .tags{display:inline-flex;border:1.5px solid var(--c);border-radius:6px;font-size:11px;font-weight:700;overflow:hidden}
+  .tags span{padding:3px 7px}
+  .tags .hatch{width:14px;padding:0;background:repeating-linear-gradient(45deg,var(--c) 0 1.5px,transparent 1.5px 4px);border-left:1.5px solid var(--c);border-right:1.5px solid var(--c)}
+  .ico{width:22px;height:22px;border:1.5px solid var(--c);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+  .lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;opacity:.65}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);border:1.5px solid var(--c);border-radius:10px;overflow:hidden;margin-top:12px}
+  .stats div{padding:7px 0;text-align:center;font-size:10px;font-weight:600}
+  .stats div+div{border-left:1.5px solid var(--c)}
+  .stats strong{display:block;font-size:16px;font-weight:800}
+  .qr{width:110px;height:110px;border:1.5px solid var(--c);border-radius:12px;padding:8px;box-sizing:border-box;display:grid;grid-template-columns:repeat(11,1fr);gap:1px}
+  .qr i{background:var(--c);border-radius:1px}
+  .qr i.o{background:transparent}
+  .pick{padding:8px 16px;border-radius:999px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit;cursor:pointer;font-weight:700}
+  .slot.selected .pick{background:#ef6351;color:#fff;border-color:#ef6351}
+  .chiprow{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 12%,transparent)}
+  .ring{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(var(--c) 0 68%,color-mix(in srgb,var(--c) 18%,transparent) 0);-webkit-mask:radial-gradient(circle,transparent 62%,#000 63%);mask:radial-gradient(circle,transparent 62%,#000 63%)}
+</style>
+
+<div class="panel" id="panel">
+  <div class="g"><b>Cor</b>
+    <span class="sw on" data-c="#e24a2b" data-c2="#f29a4a" style="background:#e24a2b"></span>
+    <span class="sw" data-c="#2f5bd8" data-c2="#7fb5ff" style="background:#2f5bd8"></span>
+    <span class="sw" data-c="#1f7a52" data-c2="#9ad18b" style="background:#1f7a52"></span>
+    <span class="sw" data-c="#6b3fd4" data-c2="#e48bd8" style="background:#6b3fd4"></span>
+    <span class="sw" data-c="#1d1d1f" data-c2="#8a8a8f" style="background:#1d1d1f"></span>
+  </div>
+  <div class="g"><b>Papel</b>
+    <button class="seg on" data-p="#fdf9e8"><span>Creme</span></button>
+    <button class="seg" data-p="#ffffff"><span>Branco</span></button>
+    <button class="seg" data-p="#16161a"><span>Escuro</span></button>
+  </div>
+  <div class="g"><b>Foto</b>
+    <button class="seg on" data-s="s-leaf"><span>Folha</span></button>
+    <button class="seg" data-s="s-arch"><span>Arco</span></button>
+    <button class="seg" data-s="s-circle"><span>Círculo</span></button>
+    <button class="seg" data-s="s-squircle"><span>Squircle</span></button>
+  </div>
+  <div class="g"><b>Extras</b>
+    <button class="seg" id="tFrame"><span>Moldura</span></button>
+    <button class="seg on" id="tGrain"><span>Grão</span></button>
+    <button class="seg" id="tPhoto"><span>Com foto</span></button>
+  </div>
+</div>
+
+<div class="stage">
+  <!-- A: Arc fiel -->
+  <div class="slot" data-choice="a">
+    <div class="bg"><div class="pc"><div class="inner">
+      <div class="face front grain">
+        <div class="shape s-leaf" style="height:178px"></div>
+        <div class="name">Alex Benedito</div>
+        <div class="sub">Diretor de Marketing · DASI</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="tags"><span>React</span><span class="hatch"></span><span>Python</span></span>
+          <span style="display:flex;gap:5px"><span class="ico">D</span><span class="ico">P</span><span class="ico">★</span></span>
+        </div>
+        <div class="shine"></div>
+      </div>
+      <div class="face back grain">
+        <span class="lbl">@alex · SI · Turma 2024</span>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center"><div class="qr"></div></div>
+        <div class="chiprow"><span class="chip">in /alexbenedito</span><span class="chip">gh /alexb</span><span class="chip">ig @alex</span></div>
+      </div>
+    </div></div></div>
+    <strong>A · Arc fiel</strong>
+    <span style="font-size:13px;opacity:.75;text-align:center">Foto na forma de folha, nome grande, techs como etiquetas e ícones das entidades/badges no canto. Verso: QR + redes.</span>
+    <button class="pick">Escolher</button>
+  </div>
+
+  <!-- B: Arc + perfil (stats) -->
+  <div class="slot" data-choice="b">
+    <div class="bg"><div class="pc"><div class="inner">
+      <div class="face front grain">
+        <div style="display:flex;gap:14px;align-items:center">
+          <div style="position:relative;width:76px;height:76px;flex-shrink:0"><div class="ring"></div><div class="shape s-circle" style="width:76px;height:76px"></div></div>
+          <div><div class="lbl">nível 7 · 68%</div><div class="name" style="font-size:21px;margin:4px 0 2px">Alex Benedito</div><div class="sub" style="font-size:11.5px">@alex · 5º sem</div></div>
+        </div>
+        <p style="font-size:12px;line-height:1.45;margin:14px 0 0;opacity:.9">Curto front-end, design de interfaces e café de máquina do bloco A.</p>
+        <div class="stats"><div><strong>48</strong>conexões</div><div><strong>3</strong>entidades</div><div><strong>9</strong>badges</div></div>
+        <div style="flex:1"></div>
+        <div class="chiprow" style="margin-bottom:10px"><span class="chip">● DASI · Diretor</span><span class="chip">● PETSI</span><span class="chip">🏆 Hackathon</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="tags"><span>React</span><span class="hatch"></span><span>TS</span><span class="hatch"></span><span>Go</span></span>
+          <span style="display:flex;gap:5px"><span class="ico">in</span><span class="ico">gh</span></span>
+        </div>
+        <div class="shine"></div>
+      </div>
+      <div class="face back grain">
+        <span class="lbl">Escaneie para colecionar</span>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center"><div class="qr" style="width:130px;height:130px"></div></div>
+        <div class="sub" style="text-align:center">dasiboard.app/c/alex</div>
+      </div>
+    </div></div></div>
+    <strong>B · Arc + perfil</strong>
+    <span style="font-size:13px;opacity:.75;text-align:center">Mistura com o 2º exemplo: anel de "nível" em volta da foto, bio e linha de números (conexões, entidades, badges).</span>
+    <button class="pick">Escolher</button>
+  </div>
+
+  <!-- C: Arc colecionável -->
+  <div class="slot" data-choice="c">
+    <div class="bg"><div class="pc"><div class="inner">
+      <div class="face front grain">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="lbl">Nº 0042</span><span class="lbl">★ Rara</span></div>
+        <div class="shape s-leaf" style="height:150px"></div>
+        <div class="name" style="font-size:23px">Alex Benedito</div>
+        <div class="sub">Diretor de Marketing · DASI</div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:11px;font-weight:600">
+          <span class="lbl" style="font-size:9px">Entidades</span><span>DASI · PETSI · HypeUSP</span>
+          <span class="lbl" style="font-size:9px">Stack</span><span>React · TS · Python · Go</span>
+          <span class="lbl" style="font-size:9px">Turma</span><span>SI 2024 · 5º semestre</span>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="display:flex;gap:5px"><span class="ico">🏆</span><span class="ico">⭐</span><span class="ico">⚡</span><span class="ico">+6</span></span>
+          <span class="lbl">DASIboard</span>
+        </div>
+        <div class="foil"></div>
+        <div class="shine"></div>
+      </div>
+      <div class="face back grain" style="background:var(--c);color:var(--paper)">
+        <span class="lbl">Nº 0042 · coleção 2026</span>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center"><div class="qr" style="background:var(--paper);--c:var(--c)"></div></div>
+        <div class="chiprow"><span class="chip" style="background:rgba(255,255,255,.18)">in /alexbenedito</span><span class="chip" style="background:rgba(255,255,255,.18)">gh /alexb</span></div>
+      </div>
+    </div></div></div>
+    <strong>C · Arc colecionável</strong>
+    <span style="font-size:13px;opacity:.75;text-align:center">Arc + carta de coleção: número, raridade com brilho foil, "ficha técnica" e badges no rodapé. Verso colorido.</span>
+    <button class="pick">Escolher</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const root=document.querySelector('.stage');
+  const st={c:'#e24a2b',c2:'#f29a4a',p:'#fdf9e8',s:'s-leaf',frame:false,grain:true,photo:false};
+  // fake QR
+  document.querySelectorAll('.qr').forEach(q=>{let h='';for(let i=0;i<121;i++){const r=Math.floor(i/11),c=i%11;const finder=(r<3&&c<3)||(r<3&&c>7)||(r>7&&c<3);const on=finder?!(r==1&&c==1||r==1&&c==9||r==9&&c==1):((i*37+r*7)%5<2);h+=`<i class="${on?'':'o'}"></i>`}q.innerHTML=h});
+  function apply(){
+    root.querySelectorAll('.bg').forEach(b=>{b.style.setProperty('--c',st.c);b.style.setProperty('--c2',st.c2);b.style.setProperty('--paper',st.p)});
+    root.querySelectorAll('.shape').forEach(s=>{
+      if(!s.classList.contains('s-circle')||s.closest('.slot').dataset.choice!=='b'){s.classList.remove('s-leaf','s-arch','s-circle','s-squircle');s.classList.add(st.s)}
+      s.classList.toggle('framed',st.frame);
+      s.innerHTML=st.photo?'<img src="https://i.pravatar.cc/400?img=12" alt="">':'';
+    });
+    root.querySelectorAll('.face').forEach(f=>f.classList.toggle('grain',st.grain));
+  }
+  const panel=document.getElementById('panel');
+  panel.querySelectorAll('.sw').forEach(e=>e.onclick=()=>{panel.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));e.classList.add('on');st.c=e.dataset.c;st.c2=e.dataset.c2;apply()});
+  panel.querySelectorAll('[data-p]').forEach(e=>e.onclick=()=>{panel.querySelectorAll('[data-p]').forEach(x=>x.classList.remove('on'));e.classList.add('on');st.p=e.dataset.p;apply()});
+  panel.querySelectorAll('[data-s]').forEach(e=>e.onclick=()=>{panel.querySelectorAll('[data-s]').forEach(x=>x.classList.remove('on'));e.classList.add('on');st.s=e.dataset.s;apply()});
+  [['tFrame','frame'],['tGrain','grain'],['tPhoto','photo']].forEach(([id,k])=>{const e=document.getElementById(id);e.onclick=()=>{st[k]=!st[k];e.classList.toggle('on',st[k]);apply()}});
+  root.querySelectorAll('.pc').forEach(c=>{
+    const inner=c.querySelector('.inner');
+    c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height,f=c.classList.contains('flipped')?180:0;
+      inner.style.transform=`rotateY(${f+(x-.5)*16}deg) rotateX(${(.5-y)*12}deg)`;
+      c.querySelectorAll('.shine,.foil').forEach(s=>{s.style.setProperty('--mx',x*100+'%');s.style.setProperty('--my',y*100+'%');s.style.setProperty('--fx',x*100+'%')})});
+    c.addEventListener('mouseleave',()=>inner.style.transform='');
+    c.addEventListener('click',()=>{c.classList.toggle('flipped');inner.style.transform=''});
+  });
+  root.querySelectorAll('.pick').forEach(b=>b.onclick=()=>{const s=b.closest('.slot');s.classList.toggle('selected');if(window.toggleSelect)toggleSelect(s)});
+  apply();
+})();
+</script>
