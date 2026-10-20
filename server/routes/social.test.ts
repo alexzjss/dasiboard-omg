@@ -35,6 +35,17 @@ describe('authentication', () => {
 })
 
 describe('GET /api/people/:handle', () => {
+  it('perfil de outro aluno separa entidades das demais badges', async () => {
+    addEntity('dasi', 'DASI'); addEntity('petsi', 'PETSI')
+    addMember('dasi', bia.id); addMember('petsi', bia.id)
+    store.badges.find((b) => b.source_id === 'petsi')!.revoked_at = new Date().toISOString()
+    store.badges.push({ user_id: bia.id, kind: 'achievement', source_id: 'profile-complete', label: 'Perfil completo', revoked_at: null })
+    const { body } = await (await as(alex)).get('/api/people/bia')
+    expect(body.badges).toHaveLength(2)
+    expect(body.badges.map((b: { kind: string }) => b.kind)).toEqual(['entity_member', 'achievement'])
+    expect(body.badges[0].entityId).toBe('dasi')
+  })
+
   it('answers 404 with the same body for unknown, malformed and nonexistent handles', async () => {
     const api = await as(alex)
     const responses = await Promise.all(['nobody', 'Bad Handle', 'a%2Fb', 'x'.repeat(80), '..'].map((handle) => api.get(`/api/people/${handle}`)))

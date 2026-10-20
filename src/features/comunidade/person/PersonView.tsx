@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { ConnectionState, PersonMini, PersonProfile } from '../../../lib/socialApi'
 import { entidadeSlug, entidadesData } from '../../entidades/data'
+import { BadgeChip } from '../../../components/BadgeChip'
 import { ConnectButton } from '../components/ConnectButton'
 import { initials, safeLinks, safePicture, SOCIAL_LABEL } from './safeLinks'
 
@@ -36,7 +37,8 @@ function MiniCards({ people }: { people: PersonMini[] }) {
 
 export function PersonView({ data, onConnection }: { data: PersonProfile; onConnection: (next: ConnectionState) => void }) {
   const { profile, courses, commonCourses, classmatesInCommon, connections } = data
-  const badges = data.badges ?? []
+  const entities = (data.badges ?? []).filter((b) => b.kind === 'entity_member')
+  const otherBadges = (data.badges ?? []).filter((b) => b.kind !== 'entity_member')
   const first = profile.name.split(/\s+/)[0] || profile.name
   const links = safeLinks(profile.links)
   const meta = [profile.course, profile.entryYear ? `ingresso em ${profile.entryYear}` : ''].filter(Boolean).join(' · ')
@@ -66,13 +68,13 @@ export function PersonView({ data, onConnection }: { data: PersonProfile; onConn
       <div className="pessoa-sections">
         <section className="pessoa-section" aria-labelledby="pessoa-entidades">
           <h2 id="pessoa-entidades">Entidades</h2>
-          {badges.length === 0 ? <p className="pessoa-empty">{first} ainda não participa de entidades.</p> : (
+          {entities.length === 0 ? <p className="pessoa-empty">{first} ainda não participa de entidades.</p> : (
             <ul className="pessoa-badges">
-              {badges.map((b) => {
+              {entities.map((b) => {
                 const ent = entidadesData.find((e) => e.id === b.entityId)
-                if (!ent) return <li key={b.entityId}><span className="pessoa-badge">{b.label}</span></li>
+                if (!ent) return <li key={b.sourceId}><span className="pessoa-badge">{b.label}</span></li>
                 return (
-                  <li key={b.entityId}>
+                  <li key={b.sourceId}>
                     <Link className="pessoa-badge" to={`/entidades/${entidadeSlug(ent)}`} style={{ '--ent-accent': ent.accentColor } as CSSProperties}>
                       <img src={ent.logo} alt="" />
                       {b.label || ent.name}
@@ -83,6 +85,15 @@ export function PersonView({ data, onConnection }: { data: PersonProfile; onConn
             </ul>
           )}
         </section>
+
+        {otherBadges.length > 0 && (
+          <section className="pessoa-section" aria-labelledby="pessoa-badges">
+            <h2 id="pessoa-badges">Badges</h2>
+            <ul className="pessoa-badges">
+              {otherBadges.map((b) => <li key={`${b.kind}:${b.sourceId}`}><BadgeChip badge={b} /></li>)}
+            </ul>
+          </section>
+        )}
 
         <section className="pessoa-section" aria-labelledby="pessoa-materias">
           <h2 id="pessoa-materias">Matérias{commonCourses ? <span className="pessoa-count"> · {commonCourses} em comum</span> : null}</h2>

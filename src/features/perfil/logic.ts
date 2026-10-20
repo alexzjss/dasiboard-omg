@@ -32,7 +32,7 @@ export function visitorView(me: MyProfile, accepted: { handle: string; name: str
     },
     // 'self' faz o ConnectButton não renderizar: a prévia nunca dispara pedidos reais.
     connection: 'self',
-    badges: me.entities.map((e) => ({ entityId: e.entityId, label: e.name })),
+    badges: me.entities.map((e) => ({ kind: 'entity_member' as const, sourceId: e.entityId, label: e.name, icon: null, color: null, entityId: e.entityId })),
     courses: profile.showCourses === 'all' ? me.courses.map((c) => ({ ...c, common: false })) : null,
     commonCourses: null,
     classmatesInCommon: null,

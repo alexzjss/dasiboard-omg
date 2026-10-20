@@ -20,7 +20,7 @@ function base(over: Partial<PersonProfile> = {}): PersonProfile {
   return {
     profile: { handle: 'ana.silva', name: 'Ana Silva', picture: null, course: 'Sistemas de Informação', entryYear: 2023, bio: 'Gosto de dados.', links: { github: 'https://github.com/ana' }, self: false },
     connection: 'none',
-    badges: [{ entityId: 'dasi', label: 'DASI' }],
+    badges: [{ kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' }],
     courses: [{ code: 'ACH2023', title: 'Algoritmos I', common: true }, { code: 'ACH2012', title: 'Cálculo II', common: false }],
     commonCourses: 1,
     classmatesInCommon: [{ handle: 'bia', name: 'Bia Souza', picture: null }],
@@ -60,6 +60,16 @@ describe('PersonPage', () => {
     expect(screen.getByText('Bia Souza')).toBeTruthy()
     expect(screen.getByRole('button', { name: /Conectar/ })).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Ana Silva · daSIboard'))
+  })
+
+  it('mostra badges que não são de entidade em seção própria', async () => {
+    getPerson.mockResolvedValue(base({ badges: [
+      { kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' },
+      { kind: 'admin_award', sourceId: 'x1', label: 'Monitor', icon: 'star', color: '#e24a2b', entityId: null },
+    ] }))
+    renderAt()
+    expect(await screen.findByRole('heading', { name: 'Badges' })).toBeTruthy()
+    expect(screen.getByText('Monitor')).toBeTruthy()
   })
 
   it('campos privados mostram aviso', async () => {

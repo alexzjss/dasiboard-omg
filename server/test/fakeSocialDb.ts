@@ -5,7 +5,10 @@ import type * as Self from './fakeSocialDb.js'
 import type { ConnectionRow, Visibility } from '../social/privacy.js'
 
 type Row = { user: Real.UserRow; sub: string; profile: Real.ProfileRow }
-type Badge = { user_id: string; source_id: string; label: string; revoked_at: string | null }
+type Badge = {
+  user_id: string; kind: Real.BadgeKind; source_id: string; label: string; revoked_at: string | null
+  icon?: string | null; color?: string | null; entity_id?: string | null
+}
 
 export const store = {
   people: new Map<string, Row>(),
@@ -39,7 +42,7 @@ export const addConnection = (requester: string, addressee: string, status: 'pen
 export function addMember(entityId: string, userId: string, role: Real.Role = 'member') {
   store.members.push({ entity_id: entityId, user_id: userId, role, joined_at: new Date().toISOString(), left_at: null })
   const entity = store.entities.get(entityId)!
-  store.badges.push({ user_id: userId, source_id: entityId, label: entity.name, revoked_at: null })
+  store.badges.push({ user_id: userId, kind: 'entity_member', source_id: entityId, label: entity.name, entity_id: entityId, revoked_at: null })
 }
 
 const toRecord = (row: Row): Real.PersonRecord => ({ user: row.user, profile: row.profile })
@@ -104,13 +107,13 @@ export const isActiveMember = (m: Real.MembershipRow | null): m is Real.Membersh
 export async function joinEntity(entity: Real.EntityRow, userId: string) {
   store.members = store.members.filter((m) => !(m.entity_id === entity.id && m.user_id === userId))
   store.members.push({ entity_id: entity.id, user_id: userId, role: 'member', joined_at: new Date().toISOString(), left_at: null })
-  store.badges = store.badges.filter((b) => !(b.user_id === userId && b.source_id === entity.id))
-  store.badges.push({ user_id: userId, source_id: entity.id, label: entity.name, revoked_at: null })
+  store.badges = store.badges.filter((b) => !(b.user_id === userId && b.kind === 'entity_member' && b.source_id === entity.id))
+  store.badges.push({ user_id: userId, kind: 'entity_member', source_id: entity.id, label: entity.name, entity_id: entity.id, revoked_at: null })
 }
 export async function leaveEntity(entityId: string, userId: string) {
   const m = store.members.find((x) => x.entity_id === entityId && x.user_id === userId)
   if (m) { m.left_at = new Date().toISOString(); m.role = 'member' }
-  for (const b of store.badges) if (b.user_id === userId && b.source_id === entityId) b.revoked_at = new Date().toISOString()
+  for (const b of store.badges) if (b.user_id === userId && b.kind === 'entity_member' && b.source_id === entityId) b.revoked_at = new Date().toISOString()
 }
 export async function setMemberRole(entityId: string, userId: string, role: Real.Role) {
   const m = store.members.find((x) => x.entity_id === entityId && x.user_id === userId && x.left_at === null)
@@ -124,8 +127,20 @@ export async function listMembershipsOf(userId: string) {
 }
 export async function getBadges(ids: string[]) {
   const result = new Map<string, Real.BadgeRow[]>()
-  for (const b of store.badges) if (ids.includes(b.user_id) && !b.revoked_at) result.set(b.user_id, [...(result.get(b.user_id) ?? []), { entityId: b.source_id, label: b.label }])
+  for (const b of store.badges) if (ids.includes(b.user_id) && !b.revoked_at) result.set(b.user_id, [...(result.get(b.user_id) ?? []), { kind: b.kind, sourceId: b.source_id, label: b.label, icon: b.icon ?? null, color: b.color ?? null, entityId: b.kind === 'entity_member' ? b.source_id : (b.entity_id ?? null) }])
   return result
+}
+export async function awardBadge(userId: string, badge: Real.BadgeInput) {
+  const found = store.badges.find((b) => b.user_id === userId && b.kind === badge.kind && b.source_id === badge.sourceId)
+  if (found && !found.revoked_at) return 'exists' as const
+  if (found) store.badges.splice(store.badges.indexOf(found), 1)
+  store.badges.push({ user_id: userId, kind: badge.kind, source_id: badge.sourceId, label: badge.label, icon: badge.icon ?? null, color: badge.color ?? null, entity_id: badge.entityId ?? null, revoked_at: null })
+  return 'awarded' as const
+}
+export async function revokeBadge(userId: string, kind: Real.BadgeKind, sourceId: string) {
+  const found = store.badges.find((b) => b.user_id === userId && b.kind === kind && b.source_id === sourceId && !b.revoked_at)
+  if (found) found.revoked_at = new Date().toISOString()
+  return !!found
 }
 export async function findUserIdsByEntity(entityId: string) { return store.members.filter((m) => m.entity_id === entityId && m.left_at === null).map((m) => m.user_id) }
 export async function listFeedCandidates() { return store.feed }

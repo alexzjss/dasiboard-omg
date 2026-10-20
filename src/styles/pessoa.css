@@ -56,3 +56,5 @@
   .pessoa-header { grid-template-columns: 1fr; position: sticky; top: var(--s-6); }
   .pessoa-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.badge-chip { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 32px; padding: 0 var(--s-3); border: 1px solid var(--badge-color, var(--line-strong)); border-radius: var(--r-pill); background: color-mix(in srgb, var(--badge-color, var(--surface-2)) 18%, transparent); color: var(--text); font-size: 13px; font-weight: 700; }
+.badge-chip-icon { width: 16px; height: 16px; fill: none; stroke: var(--badge-color, currentColor); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

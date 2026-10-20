@@ -21,7 +21,9 @@ export type ProfileRow = {
 export type PersonRecord = { user: UserRow; profile: ProfileRow }
 export type ProfilePatch = Partial<Pick<ProfileRow, 'bio' | 'course' | 'entry_year' | 'links' | 'show_courses' | 'show_connections'>>
 export type CourseRow = { code: string; title: string }
-export type BadgeRow = { entityId: string; label: string }
+export type BadgeKind = 'entity_member' | 'achievement' | 'admin_award' | 'entity_award' | 'cohort'
+export type BadgeRow = { kind: BadgeKind; sourceId: string; label: string; icon: string | null; color: string | null; entityId: string | null }
+export type BadgeInput = { kind: BadgeKind; sourceId: string; label: string; icon?: string | null; color?: string | null; entityId?: string | null }
 export type EntityRow = { id: string; name: string }
 export type Role = 'member' | 'admin'
 export type MembershipRow = { entity_id: string; user_id: string; role: Role; joined_at: string; left_at: string | null }
@@ -224,7 +226,7 @@ export async function joinEntity(entity: EntityRow, userId: string) {
   )
   if (error) throw new Error(`Could not join entity: ${error.message}`)
   const { error: badgeError } = await client.from('user_badges').upsert(
-    { user_id: userId, kind: 'entity_member', source_id: entity.id, label: entity.name, awarded_at: now, revoked_at: null },
+    { user_id: userId, kind: 'entity_member', source_id: entity.id, label: entity.name, entity_id: entity.id, awarded_at: now, revoked_at: null },
     { onConflict: 'user_id,kind,source_id' },
   )
   if (badgeError) throw new Error(`Could not save badge: ${badgeError.message}`)
@@ -261,18 +263,40 @@ export async function listMembershipsOf(userId: string): Promise<{ entityId: str
   return rows.map((row) => ({ entityId: row.entity_id, name: oneOf(row.entities)?.name ?? row.entity_id, role: row.role, joinedAt: row.joined_at }))
 }
 
+type RawBadge = { user_id: string; kind: BadgeKind; source_id: string; label: string; icon: string | null; color: string | null; entity_id: string | null }
+
 export async function getBadges(userIds: string[]): Promise<Map<string, BadgeRow[]>> {
   const result = new Map<string, BadgeRow[]>()
   const safe = userIds.filter((id) => UUID.test(id)).slice(0, ID_LIST_CAP)
   if (safe.length === 0) return result
-  const rows = check('Could not load badges', await getClient().from('user_badges').select('user_id, source_id, label')
-    .eq('kind', 'entity_member').is('revoked_at', null).in('user_id', safe).returns<{ user_id: string; source_id: string; label: string }[]>()) ?? []
+  const rows = check('Could not load badges', await getClient().from('user_badges').select('user_id, kind, source_id, label, icon, color, entity_id')
+    .is('revoked_at', null).in('user_id', safe).order('awarded_at', { ascending: true }).returns<RawBadge[]>()) ?? []
   for (const row of rows) {
     const list = result.get(row.user_id) ?? []
-    list.push({ entityId: row.source_id, label: row.label })
+    list.push({ kind: row.kind, sourceId: row.source_id, label: row.label, icon: row.icon, color: row.color, entityId: row.kind === 'entity_member' ? row.source_id : row.entity_id })
     result.set(row.user_id, list)
   }
   return result
+}
+
+// Grants a badge (or reactivates a revoked one). 'exists' means it was already active.
+export async function awardBadge(userId: string, badge: BadgeInput): Promise<'awarded' | 'exists'> {
+  const client = getClient()
+  const current = check('Could not load badge', await client.from('user_badges').select('revoked_at')
+    .eq('user_id', userId).eq('kind', badge.kind).eq('source_id', badge.sourceId).maybeSingle<{ revoked_at: string | null }>())
+  if (current && current.revoked_at === null) return 'exists'
+  const { error } = await client.from('user_badges').upsert(
+    { user_id: userId, kind: badge.kind, source_id: badge.sourceId, label: badge.label, icon: badge.icon ?? null, color: badge.color ?? null, entity_id: badge.entityId ?? null, awarded_at: new Date().toISOString(), revoked_at: null },
+    { onConflict: 'user_id,kind,source_id' },
+  )
+  if (error) throw new Error(`Could not award badge: ${error.message}`)
+  return 'awarded'
+}
+
+export async function revokeBadge(userId: string, kind: BadgeKind, sourceId: string): Promise<boolean> {
+  const rows = check('Could not revoke badge', await getClient().from('user_badges').update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', userId).eq('kind', kind).eq('source_id', sourceId).is('revoked_at', null).select('id').returns<{ id: string }[]>()) ?? []
+  return rows.length > 0
 }
 
 export async function findUserIdsByEntity(entityId: string): Promise<string[]> {

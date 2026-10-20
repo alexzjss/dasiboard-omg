@@ -137,7 +137,7 @@ async function main() {
     must('members', await client.from('entity_members').insert(handles.map((h, i) => ({
       entity_id: entityId, user_id: idOf(h), role: entityId === 'dasi' && h === DASI_ADMIN ? 'admin' : 'member', joined_at: new Date(now - (i + 1) * 43_200_000).toISOString(),
     }))).select('user_id'))
-    must('badges', await client.from('user_badges').insert(handles.map((h) => ({ user_id: idOf(h), kind: 'entity_member', source_id: entityId, label: ENTITY_NAMES[entityId] }))).select('id'))
+    must('badges', await client.from('user_badges').insert(handles.map((h) => ({ user_id: idOf(h), kind: 'entity_member', source_id: entityId, label: ENTITY_NAMES[entityId], entity_id: entityId }))).select('id'))
   }
   const code = generateInviteCode()
   must('invite code', await client.from('entities').update({ invite_code_hash: hashInviteCode(code), invite_code_rotated_at: new Date().toISOString() }).eq('id', 'sintese').select('id'))

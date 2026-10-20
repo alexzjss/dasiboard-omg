@@ -12,7 +12,9 @@ export type Links = { github?: string; linkedin?: string; instagram?: string }
 /** Cartão mínimo de um aluno: o que sempre é visível para quem está logado. */
 export type PersonMini = { handle: string; name: string; picture: string | null }
 
-export type Badge = { entityId: string; label: string }
+export type BadgeKind = 'entity_member' | 'achievement' | 'admin_award' | 'entity_award' | 'cohort'
+
+export type Badge = { kind: BadgeKind; sourceId: string; label: string; icon: string | null; color: string | null; entityId: string | null }
 
 export type EntityMembership = { entityId: string; name: string; role: EntityRole; joinedAt: string }
 

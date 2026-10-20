@@ -14,7 +14,7 @@ import { ComunidadePage } from './ComunidadePage'
 
 const person = (over: Partial<PersonCard> = {}): PersonCard => ({
   handle: 'ana.silva', name: 'Ana Silva', picture: null, course: 'Sistemas de Informação', entryYear: 2023,
-  badges: [{ entityId: 'dasi', label: 'DASI' }], connection: 'none', commonCourses: 3, ...over,
+  badges: [{ kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' }], connection: 'none', commonCourses: 3, ...over,
 })
 
 function Loc() { const l = useLocation(); return <output data-testid="loc">{l.search}</output> }
