@@ -2,6 +2,8 @@
 import { randomUUID } from 'node:crypto'
 import type * as Real from '../social/db.js'
 import type * as Self from './fakeSocialDb.js'
+import { mergeCard, type CardSettings } from '../social/cardOptions.js'
+import type { UnlockStats } from '../social/cardUnlocks.js'
 import type { ConnectionRow, Visibility } from '../social/privacy.js'
 
 type Row = { user: Real.UserRow; sub: string; profile: Real.ProfileRow }
@@ -23,10 +25,12 @@ export const store = {
   notifications: [] as Real.NotificationRow[],
   pushSubs: [] as Real.PushSubscriptionRow[],
   announcements: [] as (Parameters<typeof Real.createAnnouncement>[0] & { id: string; createdAt: string })[],
+  cards: new Map<string, { card: unknown; isPublic: boolean }>(),
+  collection: [] as { collectorId: string; collectedId: string }[],
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
@@ -190,6 +194,30 @@ export async function getAchievementStats(userId: string): Promise<Real.Achievem
     collected: 0,
     entryYear: profile?.entry_year ?? null,
     course: profile?.course ?? '',
+  }
+}
+export async function getCardSettings(userId: string) {
+  const row = store.cards.get(userId)
+  return { settings: mergeCard(row?.card), isPublic: row?.isPublic === true }
+}
+export async function updateCard(userId: string, patch: { settings?: CardSettings; public?: boolean }) {
+  const row = store.cards.get(userId) ?? { card: {}, isPublic: false }
+  if (patch.settings) row.card = patch.settings
+  if (patch.public !== undefined) row.isPublic = patch.public
+  store.cards.set(userId, row)
+}
+export async function countCollected(userId: string) { return store.collection.filter((c) => c.collectorId === userId).length }
+export async function isCollected(collectorId: string, collectedId: string) { return store.collection.some((c) => c.collectorId === collectorId && c.collectedId === collectedId) }
+export async function getUnlockStats(userId: string): Promise<UnlockStats> {
+  const own = (await getBadges([userId])).get(userId) ?? []
+  const memberships = await listMembershipsOf(userId)
+  return {
+    badgeCount: own.filter((badge) => badge.kind !== 'entity_member').length,
+    hasTitle: memberships.some((membership) => !!membership.title),
+    connections: (await getAchievementStats(userId)).connections,
+    hasAdminAward: own.some((badge) => badge.kind === 'admin_award'),
+    collected: await countCollected(userId),
+    entityIds: memberships.map((membership) => membership.entityId),
   }
 }
 export async function findUserIdsByEntity(entityId: string) { return store.members.filter((m) => m.entity_id === entityId && m.left_at === null).map((m) => m.user_id) }

@@ -1,5 +1,7 @@
 import type { Links } from './db.js'
 import type { Visibility } from './privacy.js'
+import { isCardFinish, isCardPalette, isCardPaper, isCardShape, MAX_CARD_ITEMS, type CardSettings } from './cardOptions.js'
+import type { CardUnlocks } from './cardUnlocks.js'
 import { TECH_IDS } from './technologies.js'
 
 export const VISIBILITY_VALUES: readonly Visibility[] = ['all', 'connections', 'none']
@@ -136,4 +138,39 @@ export function validateAnnouncement(body: unknown, scope: 'admin' | 'entity', n
     return { ok: false, error: 'Entidade inválida' }
   }
   return { ok: true, value: { audience, audienceValue: value, title, body: text, link } }
+}
+
+// ---------- card ----------
+
+const CARD_SETTINGS_KEYS = ['palette', 'paper', 'shape', 'frame', 'grain', 'finish', 'entities', 'badges', 'techOrder']
+const isPlainObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+const isUniqueStrings = (value: unknown, max: number): value is string[] =>
+  Array.isArray(value) && value.length <= max && value.every((item) => typeof item === 'string' && item.length > 0 && item.length <= 100) && new Set(value).size === value.length
+
+export type CardPatchContext = { unlocks: CardUnlocks; entityIds: string[]; badgeKeys: string[] }
+export type CardPatch = { settings?: CardSettings; public?: boolean }
+
+// `settings` é um objeto completo e fechado; opções bloqueadas e seleções que a pessoa não tem são recusadas.
+export function validateCardPatch(body: unknown, ctx: CardPatchContext): Validated<CardPatch> {
+  const invalid = { ok: false, error: 'Dados inválidos' } as const
+  if (!isPlainObject(body) || Object.keys(body).some((key) => key !== 'settings' && key !== 'public')) return invalid
+  const value: CardPatch = {}
+  if ('public' in body) {
+    if (typeof body.public !== 'boolean') return invalid
+    value.public = body.public
+  }
+  if ('settings' in body) {
+    const s = body.settings
+    if (!isPlainObject(s)) return invalid
+    const keys = Object.keys(s)
+    if (keys.length !== CARD_SETTINGS_KEYS.length || keys.some((key) => !CARD_SETTINGS_KEYS.includes(key))) return invalid
+    if (!isCardPalette(s.palette) || !isCardPaper(s.paper) || !isCardShape(s.shape) || !isCardFinish(s.finish)) return invalid
+    if (typeof s.frame !== 'boolean' || typeof s.grain !== 'boolean' || s.techOrder !== 'profile') return invalid
+    if (!isUniqueStrings(s.entities, MAX_CARD_ITEMS) || !isUniqueStrings(s.badges, MAX_CARD_ITEMS)) return invalid
+    if (!ctx.unlocks.palettes.includes(s.palette) || !ctx.unlocks.finishes.includes(s.finish)) return { ok: false, error: 'Opção bloqueada' }
+    if (s.entities.some((id) => !ctx.entityIds.includes(id)) || s.badges.some((key) => !ctx.badgeKeys.includes(key))) return { ok: false, error: 'Seleção inválida' }
+    value.settings = { palette: s.palette, paper: s.paper, shape: s.shape, frame: s.frame, grain: s.grain, finish: s.finish, entities: s.entities, badges: s.badges, techOrder: 'profile' }
+  }
+  if (Object.keys(value).length === 0) return invalid
+  return { ok: true, value }
 }

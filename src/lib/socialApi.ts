@@ -1,6 +1,8 @@
 // Cliente tipado da API social (server/routes/social.ts, entities.ts, admin.ts).
 // Os tipos espelham os presenters do servidor: só os campos que o servidor de fato devolve.
 import { apiFetch } from './api'
+import type { CardFinish, CardPaletteId, CardSettings } from './cardOptions'
+export type { CardSettings } from './cardOptions'
 
 export type Visibility = 'all' | 'connections' | 'none'
 export type EntityRole = 'member' | 'admin'
@@ -313,3 +315,31 @@ export const sendAdminAnnouncement = (input: AdminAnnouncement) =>
 
 export const sendEntityAnnouncement = (entityId: string, input: NewAnnouncement) =>
   request<{ id: string; recipients: number }>(`/api/entities/${enc(entityId)}/announcements`, { method: 'POST', json: input })
+
+// ---------- carta de perfil ----------
+
+/** Carta como o servidor entrega (whitelist: sem e-mail, matérias, horários, conexões ou ids internos). */
+export type CardData = {
+  handle: string
+  name: string
+  picture: string | null
+  subtitle: string
+  course: string
+  entryYear: number | null
+  technologies: string[]
+  links: Links
+  entities: { entityId: string; name: string; title: string | null }[]
+  badges: Badge[]
+  settings: CardSettings
+  viewer: { collected: boolean; connection: ConnectionState } | null
+}
+
+export type CardUnlocks = { finishes: CardFinish[]; palettes: CardPaletteId[]; requirements: Record<string, string> }
+export type MyCard = { settings: CardSettings; public: boolean; unlocks: CardUnlocks; card: CardData }
+export type CardPatch = { settings?: CardSettings; public?: boolean }
+
+export const getMyCard = (signal?: AbortSignal) => request<MyCard>('/api/me/card', { signal })
+
+export const updateMyCard = (patch: CardPatch) => request<MyCard>('/api/me/card', { method: 'PATCH', json: patch })
+
+export const getCard = (handle: string, signal?: AbortSignal) => request<CardData>(`/api/cards/${enc(handle)}`, { signal })

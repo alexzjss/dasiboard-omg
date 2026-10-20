@@ -1,4 +1,6 @@
 import { getClient } from '../lib/supabase.js'
+import { mergeCard, type CardSettings } from './cardOptions.js'
+import type { UnlockStats } from './cardUnlocks.js'
 import type { BadgeColor, BadgeIcon } from './badgeCatalog.js'
 import { ensureProfileWithHandle, supabaseHandleStore } from './handles.js'
 import type { ConnectionRow, Visibility } from './privacy.js'
@@ -403,6 +405,46 @@ export async function findUserIdsByEntity(entityId: string): Promise<string[]> {
   const rows = check('Could not search entity', await getClient().from('entity_members').select('user_id')
     .eq('entity_id', entityId).is('left_at', null).limit(ID_LIST_CAP).returns<{ user_id: string }[]>()) ?? []
   return rows.map((row) => row.user_id)
+}
+
+// ---------- card ----------
+
+export type CardState = { settings: CardSettings; isPublic: boolean }
+
+export async function getCardSettings(userId: string): Promise<CardState> {
+  const row = check('Could not load card', await getClient().from('student_profiles').select('card, card_public').eq('user_id', userId).maybeSingle<{ card: unknown; card_public: boolean | null }>())
+  return { settings: mergeCard(row?.card), isPublic: row?.card_public === true }
+}
+
+export async function updateCard(userId: string, patch: { settings?: CardSettings; public?: boolean }): Promise<void> {
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (patch.settings) update.card = patch.settings
+  if (patch.public !== undefined) update.card_public = patch.public
+  const { error } = await getClient().from('student_profiles').update(update).eq('user_id', userId)
+  if (error) throw new Error(`Could not update card: ${error.message}`)
+}
+
+export async function countCollected(userId: string): Promise<number> {
+  const { count, error } = await getClient().from('card_collection').select('collected_id', { count: 'exact', head: true }).eq('collector_id', userId)
+  if (error) throw new Error(`Could not count collection: ${error.message}`)
+  return count ?? 0
+}
+
+export async function isCollected(collectorId: string, collectedId: string): Promise<boolean> {
+  return check('Could not check collection', await getClient().from('card_collection').select('collected_id').eq('collector_id', collectorId).eq('collected_id', collectedId).maybeSingle<{ collected_id: string }>()) !== null
+}
+
+export async function getUnlockStats(userId: string): Promise<UnlockStats> {
+  const [stats, memberships, badges, collected] = await Promise.all([getAchievementStats(userId), listMembershipsOf(userId), getBadges([userId]), countCollected(userId)])
+  const own = badges.get(userId) ?? []
+  return {
+    badgeCount: own.filter((badge) => badge.kind !== 'entity_member').length,
+    hasTitle: memberships.some((membership) => !!membership.title),
+    connections: stats.connections,
+    hasAdminAward: own.some((badge) => badge.kind === 'admin_award'),
+    collected,
+    entityIds: memberships.map((membership) => membership.entityId),
+  }
 }
 
 // ---------- feed candidates (raw events; the route applies privacy) ----------

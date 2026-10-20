@@ -50,3 +50,6 @@ export const requireEntityAdmin = route('Entity admin check failed', async (req:
   res.locals.entity = entity
   next()
 })
+
+// For public routes: resolves the viewer only when a session exists; anonymous requests continue without one.
+export const loadViewerIfAny = (req: Request, res: Response, next: NextFunction) => (req.user ? loadViewer(req, res, next) : next())

@@ -57,3 +57,14 @@ export async function requireSession(req: Request, res: Response, next: NextFunc
     next()
   } catch { res.status(401).json({ error: 'Invalid or expired session' }) }
 }
+
+// Like requireSession, but visitors without a valid session simply continue without req.user.
+export async function optionalSession(req: Request, _res: Response, next: NextFunction) {
+  const token = req.cookies[sessionCookie]
+  if (!token) return next()
+  try {
+    const { payload } = await jwtVerify(token, sessionKey, { algorithms: ['HS256'] })
+    req.user = { sub: String(payload.sub), name: String(payload.name), email: String(payload.email), picture: payload.picture ? String(payload.picture) : undefined }
+  } catch { /* invalid or expired cookie: treated as anonymous */ }
+  next()
+}
