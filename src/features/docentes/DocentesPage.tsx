@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { BP_DESKTOP, useMediaQuery } from '../../lib/useMediaQuery'
 import { ALL_COURSES, DOC_PAGE_SIZE, docentesData, type Docente } from './data'
 
-export function DocentesPage() {
+/** embedded: renderizada dentro da aba Docentes da Comunidade (sem <main> nem h1 próprios). */
+export function DocentesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [query, setQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
@@ -24,10 +25,11 @@ export function DocentesPage() {
   }
 
 
-  return <main className="app-shell doc-shell">
+  const Shell = embedded ? 'div' : 'main'
+  return <Shell className={embedded ? 'doc-shell is-embedded' : 'app-shell doc-shell'}>
     <div className="doc-content">
       <section className="doc-heading">
-        <h1>Docentes</h1>
+        {embedded ? <h2>Docentes</h2> : <h1>Docentes</h1>}
         <p className="doc-caption">Docentes da EACH em ordem alfabética. Toca num nome pra ver contato, sala e linha de pesquisa.</p>
       </section>
 
@@ -117,7 +119,7 @@ export function DocentesPage() {
         </button>
       )}
     </div>
-  </main>
+  </Shell>
 }
 
 

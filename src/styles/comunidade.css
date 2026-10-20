@@ -8,3 +8,69 @@
 .connect-button button:disabled { opacity: 0.6; cursor: progress; }
 .connect-button button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .connect-button-error { flex-basis: 100%; color: var(--danger); font-size: 12px; }
+
+/* ── Página /comunidade ──────────────────────────────────────────────────────── */
+.com-content { width: min(100%, 1040px); margin: 0 auto; padding: clamp(24px,4vw,56px) var(--s-4) 120px; position: relative; z-index: var(--z-content); }
+.com-heading { margin-bottom: var(--s-6); }
+.com-section-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 0 0 var(--s-2); }
+.com-muted { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+.com-linkbtn { background: none; border: 0; padding: var(--s-2) 0; min-height: 44px; color: var(--area); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.com-linkbtn:disabled { opacity: 0.6; cursor: progress; }
+.com-linkbtn:focus-visible, .com-btn:focus-visible, .com-tab:focus-visible, .com-input:focus-visible, .com-card-main:focus-visible, .com-feed-link:focus-visible { outline: 2px solid var(--area); outline-offset: 2px; }
+.com-btn { min-height: 44px; padding: 0 var(--s-5); border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font-weight: 600; cursor: pointer; }
+.com-btn:disabled { opacity: 0.6; cursor: progress; }
+
+.com-feed { background: var(--surface-1); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); margin-bottom: var(--s-6); }
+.com-feed-list { list-style: none; margin: 0; padding: 0; }
+.com-feed-item { display: flex; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) 0; border-top: 1px solid var(--line-soft); font-size: 14px; color: var(--text-2); }
+.com-feed-item:first-child { border-top: 0; }
+.com-feed-link { color: var(--text); font-weight: 600; text-decoration: none; }
+.com-feed-link:hover { color: var(--area); text-decoration: underline; }
+.com-feed-time { flex-shrink: 0; font-size: 12px; color: var(--text-muted); }
+.com-skeleton-line, .com-skeleton { background: linear-gradient(90deg, var(--surface-2), var(--surface-1), var(--surface-2)); background-size: 200% 100%; animation: com-shimmer 1.4s linear infinite; }
+.com-skeleton-line { height: 18px; border-radius: var(--r-sm); }
+.com-skeleton { min-height: 132px; border-color: var(--line-soft); }
+@keyframes com-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .com-skeleton-line, .com-skeleton { animation: none; } }
+
+.com-tabs { display: flex; gap: var(--s-2); border-bottom: 1px solid var(--line); margin-bottom: var(--s-5); }
+.com-tab { min-height: 44px; padding: 0 var(--s-4); background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--text-muted); font-weight: 600; font-size: 15px; cursor: pointer; }
+.com-tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--area); }
+
+.com-filters { display: grid; grid-template-columns: 1fr; gap: var(--s-3); margin-bottom: var(--s-5); align-items: end; }
+.com-field { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.com-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.com-input { min-height: 44px; width: 100%; padding: 0 var(--s-3); border-radius: var(--r-md); border: 1px solid var(--line-strong); background: var(--surface-inset); color: var(--text); font-size: 15px; }
+.com-input::placeholder { color: var(--text-faint); }
+.com-input:focus { border-color: var(--area); box-shadow: 0 0 0 3px var(--focus-ring); }
+.com-clear { justify-self: start; }
+
+.com-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: var(--s-3); }
+.com-card { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); background: var(--surface-1); border: 1px solid var(--line); border-radius: var(--r-md); min-width: 0; }
+.com-card-main { display: flex; gap: var(--s-3); align-items: center; text-decoration: none; color: inherit; border-radius: var(--r-sm); }
+.com-card-text { display: flex; flex-direction: column; min-width: 0; }
+.com-card-name { font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.com-card-main:hover .com-card-name { color: var(--area); }
+.com-card-meta { font-size: 13px; color: var(--text-muted); }
+.com-badges { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.com-badge { padding: 2px var(--s-2); border-radius: var(--r-pill); font-size: 11px; font-weight: 600; color: var(--text); border: 1px solid var(--badge-color, var(--line-strong)); background: color-mix(in srgb, var(--badge-color, var(--surface-2)) 22%, transparent); }
+.com-card-foot { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); margin-top: auto; flex-wrap: wrap; }
+.com-common { font-size: 12px; color: var(--text-muted); }
+.com-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: var(--r-pill); overflow: hidden; background: var(--accent-soft); color: var(--area); font-weight: 700; border: 1px solid var(--accent-line-soft); }
+.com-avatar.is-md { width: 44px; height: 44px; font-size: 15px; }
+.com-avatar.is-sm { width: 28px; height: 28px; font-size: 11px; }
+.com-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.com-empty { text-align: center; padding: var(--s-8) var(--s-4); border: 1px dashed var(--line-strong); border-radius: var(--r-md); color: var(--text-2); display: flex; flex-direction: column; align-items: center; gap: var(--s-2); }
+.com-more { display: flex; justify-content: center; margin-top: var(--s-5); }
+
+@media (min-width: 640px) {
+  .com-filters { grid-template-columns: repeat(2, 1fr); }
+  .com-field-wide { grid-column: 1 / -1; }
+  .com-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .com-filters { grid-template-columns: 2fr 2fr 1fr 1.2fr 1.2fr; }
+  .com-field-wide { grid-column: auto; }
+  .com-clear { grid-column: 1 / -1; }
+  .com-grid { grid-template-columns: repeat(3, 1fr); }
+}

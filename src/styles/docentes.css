@@ -136,3 +136,6 @@
 .doc-detail-inline p { color: var(--text-2); font-size: 13px; }
 .doc-detail-key { margin-right: var(--s-2); color: var(--text-muted); font-weight: 600; }
 .doc-detail-inline .doc-badge-link { justify-self: start; }
+
+/* Dentro da aba Docentes da Comunidade: sem o padding da página inteira */
+.doc-shell.is-embedded .doc-content { padding: 0; }
