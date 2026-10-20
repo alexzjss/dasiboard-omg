@@ -24,7 +24,7 @@ export function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingDone())
 
   const section = sectionFromPath(location.pathname)
-  const { count: pendingRequests } = useNotificationCount()
+  const { count: pendingRequests, refresh: refreshNotifications } = useNotificationCount()
   const badges = useMemo(() => ({ Comunidade: pendingRequests }), [pendingRequests])
   const entidade = section === 'entidades' ? findEntidadeBySlug(location.pathname.split('/')[2]) : undefined
 
@@ -32,7 +32,7 @@ export function AppLayout() {
   const toggleSidebar = useCallback(() => setCollapsed((c) => !c), [])
   useEffect(() => { saveSidebarCollapsed(collapsed) }, [collapsed])
   const closeUserMenu = useCallback(() => setUserMenuOpen(false), [])
-  const layoutValue = useMemo(() => ({ openUserMenu }), [openUserMenu])
+  const layoutValue = useMemo(() => ({ openUserMenu, refreshNotifications: () => void refreshNotifications() }), [openUserMenu, refreshNotifications])
 
   function selectTab(label: string) {
     const item = NAV_ITEMS.find((i) => i.label === label)
