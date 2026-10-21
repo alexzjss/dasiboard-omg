@@ -264,7 +264,7 @@ describe('review queue', () => {
     expect((await api.get('/api/events/review')).status).toBe(403)
     const count = await api.get('/api/events/review/count')
     expect(count.status).toBe(200)
-    expect(count.body).toEqual({ count: 0 })
+    expect(count.body).toEqual({ count: 0, moderates: false })
   })
 
   it('shows each moderator only what they moderate, with the review kind', async () => {
@@ -281,7 +281,7 @@ describe('review queue', () => {
     const rootQueue = (await (await as(root)).get('/api/events/review')).body.events as { title: string; reviewKind: string }[]
     expect(rootQueue).toHaveLength(4)
     expect(rootQueue.find((e) => e.title === 'C')!.reviewKind).toBe('reported')
-    expect((await (await as(ada)).get('/api/events/review/count')).body.count).toBe(2)
+    expect((await (await as(ada)).get('/api/events/review/count')).body).toEqual({ count: 2, moderates: true })
   })
 })
 

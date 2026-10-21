@@ -158,3 +158,8 @@
 .ent-member-set-title:focus-visible { outline: 2px solid var(--ent-accent, var(--accent)); outline-offset: 2px; }
 .ent-member-title-edit { display: grid; gap: 4px; margin-top: 4px; }
 .ent-members li { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+
+.ent-calendar-links { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-4); }
+.ent-calendar-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--text); text-decoration: none; font-size: 14px; font-weight: 600; }
+.ent-calendar-link:hover { background: var(--hover); }
+.ent-calendar-link:focus-visible { outline: 2px solid var(--area); outline-offset: 2px; }

@@ -127,9 +127,10 @@ export async function fetchReviewQueue(signal?: AbortSignal): Promise<ReviewEven
   return body.events
 }
 
-export async function fetchReviewCount(signal?: AbortSignal): Promise<number> {
-  const body = await request<{ count: number }>('/api/events/review/count', { signal })
-  return body.count
+/** `moderates`: o usuário modera algo (superadmin ou admin de entidade), mesmo com a fila vazia. */
+export async function fetchReviewCount(signal?: AbortSignal): Promise<{ count: number; moderates: boolean }> {
+  const body = await request<{ count: number; moderates: boolean }>('/api/events/review/count', { signal })
+  return { count: body.count, moderates: body.moderates }
 }
 
 export async function createEvent(input: EventInput): Promise<EventDto> {

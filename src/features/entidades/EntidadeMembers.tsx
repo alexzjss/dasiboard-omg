@@ -1,7 +1,8 @@
-import { useEffect, useState, type KeyboardEvent } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { getMyProfile, setMemberTitle } from '../../lib/socialApi'
+import { setMemberTitle } from '../../lib/socialApi'
 import { useEntityMembers } from './useEntityMembers'
+import { useMyEntityRole } from './useMyEntityRole'
 
 const MAX_SHOWN = 12
 const TITLE_MAX = 40
@@ -14,19 +15,6 @@ function initialsOf(name: string) {
     .map((part) => part[0])
     .join('')
     .toUpperCase()
-}
-
-/** Admin da entidade (ou superadmin) pode definir cargos. Falha ao carregar o perfil só esconde o botão. */
-function useCanManage(entidadeId: string) {
-  const [allowed, setAllowed] = useState<{ id: string; ok: boolean } | null>(null)
-  useEffect(() => {
-    let live = true
-    getMyProfile()
-      .then((me) => { if (live) setAllowed({ id: entidadeId, ok: me.isSuperadmin || me.adminOf.includes(entidadeId) }) })
-      .catch(() => undefined)
-    return () => { live = false }
-  }, [entidadeId])
-  return allowed?.id === entidadeId && allowed.ok
 }
 
 function TitleEditor({ entidadeId, handle, initial, onSaved, onCancel }: {
@@ -64,7 +52,8 @@ function TitleEditor({ entidadeId, handle, initial, onSaved, onCancel }: {
 /** "Quem está no daSIboard": até 12 avatares linkando para o perfil. Erro esconde a seção inteira. */
 export function EntidadeMembers({ entidadeId }: { entidadeId: string }) {
   const state = useEntityMembers(entidadeId)
-  const canManage = useCanManage(entidadeId)
+  // Admin da entidade (ou superadmin) pode definir cargos.
+  const canManage = useMyEntityRole(entidadeId).admin
   const [titles, setTitles] = useState<Record<string, string | null>>({})
   const [editing, setEditing] = useState<string | null>(null)
 

@@ -1,7 +1,7 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ApiError } from '../../lib/socialApi'
-import { createEvent, KIND_LABEL, updateEvent, type EventDto, type EventKind, type EventScopeOption } from '../../lib/eventsApi'
+import { createEvent, KIND_LABEL, updateEvent, type EventDto, type EventKind, type EventPatch, type EventScopeOption } from '../../lib/eventsApi'
 import { useDialogFocus } from '../../lib/useDialogFocus'
 import { buildCreateInput, buildPatch, emptyValues, scopeKey, validateValues, valuesFromEvent, withAllDay, type FormValues } from './eventFormModel'
 import { useEventScopes } from './hooks/useEventScopes'
@@ -12,6 +12,13 @@ type Props = {
   onClose: () => void
   /** Depois de salvar: mensagem curta para mostrar na página ("Enviado para aprovação", "Publicado", "Salvo"). */
   onSaved: (message: string) => void
+  /**
+   * Modo de revisão (moderador ajustando antes de aprovar): exige `event`. Ao enviar, chama `onSubmit` com só os campos
+   * alterados (pode ser vazio) em vez de salvar o evento; `onSaved` não é usado.
+   */
+  review?: { onSubmit: (patch: EventPatch) => Promise<void> }
+  /** Escopo já selecionado ao propor um evento novo (ex.: ?propor=<entidade>). */
+  initialScope?: Pick<EventScopeOption, 'scope' | 'scopeValue'>
 }
 
 const KINDS = Object.keys(KIND_LABEL) as EventKind[]
@@ -29,7 +36,7 @@ function errorText(error: unknown): string {
   return error instanceof ApiError ? error.message : 'Não foi possível salvar o evento'
 }
 
-export function EventForm({ event, onClose, onSaved }: Props) {
+export function EventForm({ event, onClose, onSaved, review, initialScope }: Props) {
   const ref = useRef<HTMLElement>(null)
   useDialogFocus(ref, onClose)
   const uid = useId()
@@ -37,7 +44,7 @@ export function EventForm({ event, onClose, onSaved }: Props) {
   const { scopes, loading: scopesLoading, error: scopesError, reload } = useEventScopes()
   const initial = useMemo(() => (event ? valuesFromEvent(event) : emptyValues()), [event])
   const [values, setValues] = useState<FormValues>(initial)
-  const [chosenScope, setChosenScope] = useState('')
+  const [chosenScope, setChosenScope] = useState(() => (initialScope ? scopeKey(initialScope) : ''))
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -48,7 +55,8 @@ export function EventForm({ event, onClose, onSaved }: Props) {
 
   const scopeScope = event ? event.scope : scope?.scope
   const set = (patch: Partial<FormValues>) => setValues((v) => ({ ...v, ...patch }))
-  const gatedEdit = editing && event.status === 'approved' && event.scope !== 'class' && !event.permissions.moderate
+  const reviewing = review !== undefined && editing
+  const gatedEdit = !reviewing && editing && event.status === 'approved' && event.scope !== 'class' && !event.permissions.moderate
   const dateType = values.allDay ? 'date' : 'datetime-local'
 
   async function submit(e: React.FormEvent) {
@@ -60,6 +68,10 @@ export function EventForm({ event, onClose, onSaved }: Props) {
     setSaving(true)
     setError(null)
     try {
+      if (reviewing) {
+        await review.onSubmit(buildPatch(initial, values, event.scope))
+        return
+      }
       if (editing) {
         const patch = buildPatch(initial, values, event.scope)
         if (Object.keys(patch).length === 0) { setError('Nada foi alterado'); setSaving(false); return }
@@ -76,7 +88,7 @@ export function EventForm({ event, onClose, onSaved }: Props) {
     }
   }
 
-  const heading = editing ? 'Editar evento' : 'Propor evento'
+  const heading = reviewing ? 'Ajustar e aprovar' : editing ? 'Editar evento' : 'Propor evento'
   const reviewNotice = gatedEdit ? 'Mudar isso manda a edição para aprovação; até lá vale a versão atual' : null
 
   return createPortal(
@@ -169,7 +181,7 @@ export function EventForm({ event, onClose, onSaved }: Props) {
 
           <div className="cal-actions">
             <button type="button" className="com-btn" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="com-btn cal-primary" disabled={saving || (!editing && !scope)}>{saving ? 'Enviando…' : editing ? 'Salvar' : 'Enviar'}</button>
+            <button type="submit" className="com-btn cal-primary" disabled={saving || (!editing && !scope)}>{saving ? 'Enviando…' : reviewing ? 'Aprovar com ajustes' : editing ? 'Salvar' : 'Enviar'}</button>
           </div>
         </form>
       </aside>

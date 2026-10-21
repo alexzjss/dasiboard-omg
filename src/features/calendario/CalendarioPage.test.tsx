@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventDto } from '../../lib/eventsApi'
 import type { ScheduleEntry } from '../home/types'
@@ -36,7 +36,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'], now: NOW })
   localStorage.clear()
   scheduleMock.entries = []
-  vi.mocked(fetchReviewCount).mockResolvedValue(0)
+  vi.mocked(fetchReviewCount).mockResolvedValue({ count: 0, moderates: false })
   vi.mocked(fetchEvents).mockResolvedValue([])
 })
 afterEach(() => { cleanup(); vi.clearAllMocks(); vi.useRealTimers() })
@@ -79,10 +79,29 @@ describe('CalendarioPage', () => {
     expect(screen.getByRole('tab', { name: 'Minhas submissões' })).toBeTruthy()
     cleanup()
 
-    vi.mocked(fetchReviewCount).mockResolvedValue(3)
+    vi.mocked(fetchReviewCount).mockResolvedValue({ count: 3, moderates: true })
     renderPage()
     const tab = await screen.findByRole('tab', { name: 'Para revisar, 3 para revisar' })
     expect(tab.querySelector('.count-badge')?.textContent).toBe('3')
+  })
+
+  it('a aba revisar depende de moderates, mesmo com a fila vazia', async () => {
+    vi.mocked(fetchReviewCount).mockResolvedValue({ count: 0, moderates: true })
+    renderPage()
+    expect(await screen.findByRole('tab', { name: 'Para revisar' })).toBeTruthy()
+  })
+
+  it('?propor=<entidade> abre o formulário com o escopo da entidade e limpa a URL', async () => {
+    vi.mocked(fetchEventScopes).mockResolvedValue([
+      { scope: 'usp', scopeValue: null, label: 'USP', moderated: true },
+      { scope: 'entity', scopeValue: 'dasi', label: 'DASI', moderated: false },
+    ])
+    const seen: string[] = []
+    function Probe() { seen.push(useLocation().search); return null }
+    render(<MemoryRouter initialEntries={['/calendario?propor=dasi']}><CalendarioPage /><Probe /></MemoryRouter>)
+    const dialog = await screen.findByRole('dialog', { name: 'Propor evento' })
+    await waitFor(() => expect((within(dialog).getByLabelText('Onde') as HTMLSelectElement).value).toBe('entity:dasi'))
+    expect(seen.at(-1)).toBe('')
   })
 
   it('aula do Júpiter aparece só no dia da semana certo', async () => {

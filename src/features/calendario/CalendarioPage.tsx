@@ -20,7 +20,7 @@ import { useReviewCount } from './hooks/useReviewCount'
 import { groupClassesByWeekday } from './calendarGrouping'
 import { MonthGrid } from './MonthGrid'
 import { MyEvents } from './MyEvents'
-import { ReviewQueuePlaceholder } from './TabPlaceholders'
+import { ReviewQueue } from './ReviewQueue'
 
 type PageTab = 'calendario' | 'minhas' | 'revisar'
 type View = 'month' | 'agenda'
@@ -38,7 +38,7 @@ export function CalendarioPage() {
 function CalendarioContent({ user }: { user: User }) {
   const [params, setParams] = useSearchParams()
   const { schedule } = useSchedule(user)
-  const { count: reviewCount, reload: reloadReviewCount } = useReviewCount()
+  const { count: reviewCount, moderates, reload: reloadReviewCount } = useReviewCount()
 
   const [view, setView] = useState<View>('month')
   const [month, setMonth] = useState<MonthRef>(() => monthOfKey(todayKey()))
@@ -56,10 +56,10 @@ function CalendarioContent({ user }: { user: User }) {
   // Evento aberto por ?evento=<id> fora do período carregado: vem de GET /api/events/:id.
   const [fetched, setFetched] = useState<EventDto | null>(null)
   const [proposing, setProposing] = useState(false)
+  const [proposeScope, setProposeScope] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [mineVersion, setMineVersion] = useState(0)
   const selectedEvent = eventId ? events.find((e) => e.id === eventId) ?? (fetched?.id === eventId ? fetched : null) : null
-  const moderates = reviewCount > 0 || events.some((e) => e.permissions.moderate)
 
   const tabs: { id: PageTab; label: string; badge?: number }[] = [
     { id: 'calendario', label: 'Calendário' },
@@ -102,6 +102,15 @@ function CalendarioContent({ user }: { user: User }) {
       return params
     })
   }
+
+  // ?propor=<entidade> (atalho na página da entidade): abre o formulário com o escopo escolhido e tira o parâmetro da URL.
+  const proposeParam = params.get('propor')
+  useEffect(() => {
+    if (!proposeParam) return
+    setProposeScope(proposeParam)
+    setProposing(true)
+    setParams((prev) => { const next = new URLSearchParams(prev); next.delete('propor'); return next }, { replace: true })
+  }, [proposeParam, setParams])
 
   const changed = useCallback((message?: string) => {
     reload()
@@ -198,7 +207,7 @@ function CalendarioContent({ user }: { user: User }) {
 
       <div role="tabpanel" id={`cal-panel-${tab}`} aria-labelledby={`cal-tab-${tab}`}>
         {tab === 'minhas' && <MyEvents onSelectEvent={selectEvent} onPropose={() => setProposing(true)} version={mineVersion} />}
-        {tab === 'revisar' && <ReviewQueuePlaceholder onChanged={reloadReviewCount} />}
+        {tab === 'revisar' && <ReviewQueue onChanged={reloadReviewCount} entityId={params.get('entidade')} />}
         {tab === 'calendario' && (
           <>
             <div className="cal-toolbar">
@@ -255,7 +264,11 @@ function CalendarioContent({ user }: { user: User }) {
       </div>
 
       {selectedEvent && <EventDetail key={selectedEvent.id} event={selectedEvent} onClose={closeEvent} onChanged={changed} />}
-      {proposing && <EventForm onClose={() => setProposing(false)} onSaved={(message) => { setProposing(false); changed(message) }} />}
+      {proposing && <EventForm
+        initialScope={proposeScope ? { scope: 'entity', scopeValue: proposeScope } : undefined}
+        onClose={() => { setProposing(false); setProposeScope(null) }}
+        onSaved={(message) => { setProposing(false); setProposeScope(null); changed(message) }}
+      />}
     </main>
   )
 }

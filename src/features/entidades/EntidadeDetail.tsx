@@ -1,17 +1,20 @@
 import { useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import { Icon } from '../../components/Icon'
 import { useDialogFocus } from '../../lib/useDialogFocus'
 import { entidadeSlug, type Entidade } from './data'
 import { EntidadeCardSection } from './EntidadeCardSection'
 import { EntidadeMembers } from './EntidadeMembers'
 import { InstagramEmbed } from './InstagramEmbed'
+import { useMyEntityRole } from './useMyEntityRole'
 
 /** Detalhe da entidade: sheet no celular/tablet, painel lateral no desktop (posição decidida pelo CSS). */
 export function EntidadeDetail({ entidade, onClose }: { entidade: Entidade; onClose: () => void }) {
   const ref = useRef<HTMLElement>(null)
   const card = typeof document === 'undefined' ? null : document.getElementById(`ent-card-${entidadeSlug(entidade)}`)
   useDialogFocus(ref, onClose, card)
+  const role = useMyEntityRole(entidade.id)
 
   // Portal no body: o stacking context da página (z-index 1) ficaria abaixo da nav.
   return createPortal(
@@ -44,6 +47,12 @@ export function EntidadeDetail({ entidade, onClose }: { entidade: Entidade; onCl
           <h2 className="section-label">No Instagram</h2>
           <InstagramEmbed url={entidade.instagram} name={entidade.name} />
         </div>
+        {role.member && (
+          <nav className="ent-calendar-links" aria-label="Calendário da entidade">
+            <Link className="ent-calendar-link" to={`/calendario?propor=${encodeURIComponent(entidade.id)}`}>Propor evento</Link>
+            {role.admin && <Link className="ent-calendar-link" to={`/calendario?aba=revisar&entidade=${encodeURIComponent(entidade.id)}`}>Eventos para revisar</Link>}
+          </nav>
+        )}
         <EntidadeCardSection entidade={entidade} />
         <EntidadeMembers entidadeId={entidade.id} />
       </aside>

@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchReviewCount } from '../../../lib/eventsApi'
 
-/** Quantos itens esperam moderação. Falha vale 0, em silêncio (o contador é só um aviso). */
+/** Quantos itens esperam moderação e se o usuário modera algo. Falha vale 0 / false, em silêncio (o contador é só um aviso). */
 export function useReviewCount() {
-  const [count, setCount] = useState(0)
+  const [state, setState] = useState({ count: 0, moderates: false })
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
     fetchReviewCount(controller.signal).then(
       (next) => {
-        if (!controller.signal.aborted) setCount(next)
+        if (!controller.signal.aborted) setState(next)
       },
       () => {
-        if (!controller.signal.aborted) setCount(0)
+        if (!controller.signal.aborted) setState({ count: 0, moderates: false })
       },
     )
     return () => controller.abort()
@@ -21,5 +21,5 @@ export function useReviewCount() {
 
   const reload = useCallback(() => setTick((t) => t + 1), [])
 
-  return { count, reload }
+  return { count: state.count, moderates: state.moderates, reload }
 }

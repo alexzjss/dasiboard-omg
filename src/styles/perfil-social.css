@@ -152,3 +152,4 @@
   .cartaed-layout { grid-template-columns: auto minmax(0, 1fr); }
   .cartaed-preview { position: sticky; top: var(--s-6); }
 }
+a.pf-btn { display: inline-flex; align-items: center; width: fit-content; text-decoration: none; }

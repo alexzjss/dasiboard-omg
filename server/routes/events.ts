@@ -91,7 +91,8 @@ router.get('/api/events/review', ...authed, route('Listing review queue failed',
 
 router.get('/api/events/review/count', ...authed, route('Counting review queue failed', async (_req, res) => {
   const actor = await actorOf(res)
-  res.json({ count: moderatesSomething(actor) ? (await reviewQueue(actor)).length : 0 })
+  const moderates = moderatesSomething(actor)
+  res.json({ count: moderates ? (await reviewQueue(actor)).length : 0, moderates })
 }))
 
 router.get('/api/events/:id', ...authed, route('Loading event failed', async (req, res) => {

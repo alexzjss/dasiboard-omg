@@ -1,10 +1,12 @@
 import { useState, type CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
 import {
   listEntityMembers, removeEntityMember, rotateInviteCode, setEntityAdmin,
   type EntityMember,
 } from '../../lib/socialApi'
 import { Avatar } from '../comunidade/components/Avatar'
 import { entidadesData, type Entidade } from '../entidades/data'
+import { useReviewCount } from '../calendario/hooks/useReviewCount'
 import { AnnouncementForm } from './AnnouncementForm'
 import { BadgesAdmin } from './BadgesAdmin'
 import { adminErrorMessage } from './logic'
@@ -143,6 +145,17 @@ function Members({ entity, selfHandle, isSuperadmin }: { entity: Entidade; selfH
   )
 }
 
+function CalendarBlock() {
+  const { count } = useReviewCount()
+  return (
+    <div className="pf-admin-block">
+      <h4 className="pf-subtitle">Calendário</h4>
+      <p className="pf-hint" role="status">{count === 0 ? 'Nada pendente de revisão.' : `${count} ${count === 1 ? 'evento pendente' : 'eventos pendentes'} de revisão.`}</p>
+      <Link className="pf-btn" to="/calendario?aba=revisar">Revisar eventos</Link>
+    </div>
+  )
+}
+
 /** Só renderizada para admin de alguma entidade ou superadmin (a página decide). */
 export function AdminSection({ adminOf, isSuperadmin, selfHandle }: { adminOf: string[]; isSuperadmin: boolean; selfHandle: string }) {
   const entities = entidadesData.filter((e) => isSuperadmin || adminOf.includes(e.id))
@@ -151,6 +164,7 @@ export function AdminSection({ adminOf, isSuperadmin, selfHandle }: { adminOf: s
       {isSuperadmin && (
         <article className="pf-admin-card" style={{ '--ent-accent': 'var(--area)' } as CSSProperties} aria-labelledby="pf-admin-badges">
           <h3 id="pf-admin-badges" className="pf-admin-title">Administração</h3>
+          <CalendarBlock />
           <BadgesAdmin title="Badges da administração" />
           <AnnouncementForm scope="admin" />
         </article>
