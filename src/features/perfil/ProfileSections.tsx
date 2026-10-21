@@ -62,7 +62,7 @@ export function PendingRequests() {
 
 export function MyCourses({ courses }: { courses: MyProfile['courses'] }) {
   if (courses.length === 0) {
-    return <p className="pf-empty">Nenhuma matéria importada. <Link to="/">Importe sua grade do Jupiter</Link> para ver as matérias aqui.</p>
+    return <p className="pf-empty">Nenhuma matéria importada. <Link to="/">Monte sua grade</Link> para ver as matérias aqui.</p>
   }
   return (
     <ul className="pf-courses">

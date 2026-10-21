@@ -125,8 +125,20 @@
 @container (max-height: 30px) { .week-event-room { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 
 /* ── Importar do JupiterWeb ──────────────────────────────────────────────────── */
-.jupiter-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
+.jupiter-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
 .jupiter-form input, .import-button { min-height: 46px; }
+.discipline-search { position: relative; min-width: 0; }
+.discipline-options {
+  position: absolute; z-index: 20; top: calc(100% + var(--s-1)); left: 0; right: 0;
+  max-height: 320px; margin: 0; padding: var(--s-1); overflow-y: auto; list-style: none;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.discipline-options[hidden] { display: none; }
+.discipline-options li { padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); color: var(--text); font-size: 14px; line-height: 1.35; cursor: pointer; }
+.discipline-options li .mono { color: var(--area); font-weight: 700; }
+.discipline-options li.is-active, .discipline-options li:hover { background: var(--surface-inset); }
+.discipline-options li.discipline-empty { color: var(--text-2); cursor: default; }
 .jupiter-form input {
   width: 100%; min-width: 0;
   padding: 11px 13px;
@@ -147,6 +159,29 @@
 .import-button:hover { background: var(--accent-fill-2); }
 .import-button:disabled { opacity: 0.6; cursor: wait; }
 .jupiter-form .import-button { grid-column: 1 / -1; }
+.builder-list { display: grid; gap: var(--s-3); margin: var(--s-4) 0 0; padding: 0; list-style: none; max-width: 640px; }
+.builder-discipline { padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-inset); }
+.builder-discipline-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.builder-discipline-head p { margin: 0; font-weight: 700; font-size: 14px; }
+.builder-sections { display: grid; gap: var(--s-2); margin: var(--s-2) 0 0; padding: 0; border: 0; }
+.builder-sections legend { margin-bottom: var(--s-2); color: var(--text-muted); font-size: 12px; }
+.builder-section { display: flex; align-items: flex-start; gap: var(--s-2); font-size: 13px; line-height: 1.4; cursor: pointer; }
+.builder-section input { margin-top: 3px; accent-color: var(--area); }
+.builder-section-meta { display: block; color: var(--text-2); font-size: 12px; }
+.builder-manual { display: grid; grid-template-columns: 76px repeat(2, minmax(0, 96px)) minmax(0, 1fr) auto; gap: var(--s-2); align-items: center; margin-top: var(--s-3); }
+.builder-manual select, .builder-manual input {
+  min-width: 0; min-height: 36px; padding: 6px 8px;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  color: var(--text); background: var(--surface-2); font: inherit; font-size: 13px;
+}
+.builder-manual-list { display: grid; gap: var(--s-1); margin: var(--s-3) 0 0; padding: 0; list-style: none; font-size: 13px; }
+.builder-manual-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.builder-link-button { min-height: 36px; padding: 0 var(--s-2); border: 0; background: transparent; color: var(--area); font-size: 13px; font-weight: 700; cursor: pointer; }
+.builder-link-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.builder-actions { display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-4); max-width: 640px; }
+.builder-save { flex: 1; min-width: 0; }
+.builder-cancel { min-height: 46px; padding: 0 var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--text-2); background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; }
+.builder-cancel:hover { border-color: var(--area); color: var(--area); }
 .schedule-error { margin-top: var(--s-3); color: var(--danger); font-size: 13px; line-height: 1.4; }
 
 .clear-schedule-button {
@@ -156,12 +191,15 @@
   font-size: 13px; font-weight: 600;
   transition: border-color 0.15s, color 0.15s;
 }
+.week-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .clear-schedule-button .icon { width: 15px; height: 15px; }
 .clear-schedule-button:hover { border-color: var(--area); color: var(--area); }
 
 /* ── Celular e tablet: a órbita fica vertical ───────────────────────────────── */
 @media (max-width: 1023px) {
   .jupiter-form { grid-template-columns: minmax(0, 1fr); }
+  .builder-manual { grid-template-columns: 76px repeat(2, minmax(0, 1fr)); }
+  .builder-manual input[type="text"] { grid-column: 1 / 3; }
   .week { --hour-h: 44px; }
   .week-map { grid-template-columns: 26px repeat(5, minmax(0, 1fr)); column-gap: 3px; }
   .week-day-head { flex-direction: column; align-items: center; gap: 0; font-size: 11px; }

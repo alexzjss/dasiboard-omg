@@ -4,14 +4,11 @@ import { apiFetch } from '../../lib/api'
 import { clearStoredSchedule, loadStoredSchedule, saveStoredSchedule } from '../../lib/storage'
 import type { ScheduleEntry } from './types'
 
-export type JupiterData = { codpes: string; password: string; codpgm: string }
-
 export function useSchedule(user: User) {
   const [schedule, setSchedule] = useState<ScheduleEntry[]>(() => loadStoredSchedule(user.email) ?? [])
   const [hasStoredSchedule, setHasStoredSchedule] = useState(() => loadStoredSchedule(user.email) !== null)
   const [importError, setImportError] = useState('')
-  const [jupiterData, setJupiterData] = useState<JupiterData>({ codpes: '', password: '', codpgm: '1' })
-  const [isConsultingJupiter, setIsConsultingJupiter] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     apiFetch('/api/schedule').then(async (response) => {
@@ -25,18 +22,21 @@ export function useSchedule(user: User) {
     }).catch(() => { /* server unavailable, use cached data */ })
   }, [user.email])
 
-  async function consultJupiter(event: React.FormEvent) {
-    event.preventDefault(); setImportError(''); setIsConsultingJupiter(true)
+  async function saveSchedule(entries: ScheduleEntry[]): Promise<boolean> {
+    setImportError(''); setIsSaving(true)
     try {
-      const response = await apiFetch('/api/schedule/jupiter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jupiterData) })
-      const data = await response.json() as { entries?: ScheduleEntry[]; error?: string }
-      if (!response.ok || !data.entries) throw new Error(data.error || 'Não foi possível consultar o JupiterWeb.')
+      const response = await apiFetch('/api/schedule', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries }) })
+      const data = await response.json().catch(() => null) as { entries?: ScheduleEntry[]; error?: string } | null
+      if (!response.ok || !data?.entries) throw new Error(data?.error || 'Não foi possível salvar a grade horária.')
       setSchedule(data.entries)
       saveStoredSchedule(user.email, data.entries)
       setHasStoredSchedule(true)
-      setJupiterData((current) => ({ ...current, password: '' }))
-    } catch (error) { setImportError(error instanceof Error ? error.message : 'Não foi possível consultar o JupiterWeb.') }
-    finally { setIsConsultingJupiter(false) }
+      return true
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Não foi possível salvar a grade horária.')
+      return false
+    }
+    finally { setIsSaving(false) }
   }
 
   async function clearSchedule() {
@@ -55,5 +55,5 @@ export function useSchedule(user: User) {
     }
   }
 
-  return { schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, consultJupiter, clearSchedule }
+  return { schedule, hasStoredSchedule, importError, isSaving, saveSchedule, clearSchedule }
 }

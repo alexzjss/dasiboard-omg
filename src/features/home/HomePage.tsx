@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuth } from '../../auth/authContext'
 import type { User } from '../../auth/types'
 import { Icon } from '../../components/Icon'
@@ -5,7 +6,8 @@ import { useLayout } from '../../app/layoutContext'
 import { getGreeting } from '../../lib/date'
 import { AppTopbar } from './AppTopbar'
 import { DayOrbit } from './DayOrbit'
-import { JupiterImportForm } from './JupiterImportForm'
+import { ScheduleBuilder } from './ScheduleBuilder'
+import type { ScheduleEntry } from './types'
 import { UpcomingEvents } from './UpcomingEvents'
 import { useNow } from './useNow'
 import { useSchedule } from './useSchedule'
@@ -19,10 +21,19 @@ export function HomePage() {
 }
 
 function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: (trigger?: HTMLElement | null) => void }) {
-  const { schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, consultJupiter, clearSchedule } = useSchedule(user)
+  const { schedule, hasStoredSchedule, importError, isSaving, saveSchedule, clearSchedule } = useSchedule(user)
+  const [isEditing, setIsEditing] = useState(false)
   const now = useNow()
   const dateLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now)
   const greeting = getGreeting(now)
+
+  function confirmClear() {
+    if (window.confirm('Apagar a grade inteira?')) void clearSchedule()
+  }
+
+  async function saveEdited(entries: ScheduleEntry[]) {
+    if (await saveSchedule(entries)) setIsEditing(false)
+  }
 
   return <main className="app-shell home-shell">
     <AppTopbar user={user} onOpenUserMenu={onOpenUserMenu} />
@@ -35,16 +46,26 @@ function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: (tr
       <div className="home-grid">
       <DayOrbit schedule={schedule} now={now} hasSchedule={hasStoredSchedule} />
 
-      {hasStoredSchedule
+      {hasStoredSchedule && !isEditing
         ? <WeekMap schedule={schedule} now={now} action={
-            <button type="button" className="clear-schedule-button" onClick={clearSchedule}><Icon name="trash" /><span>Importar de novo</span></button>
+            <div className="week-actions">
+              <button type="button" className="clear-schedule-button" onClick={() => setIsEditing(true)}><Icon name="book" /><span>Editar grade</span></button>
+              <button type="button" className="clear-schedule-button" onClick={confirmClear}><Icon name="trash" /><span>Apagar grade</span></button>
+            </div>
           } />
-        : <section className="section-block import-block" id="importar" aria-labelledby="import-title">
-            <h2 id="import-title">Cadê sua grade?</h2>
-            <p className="section-hint">Puxa direto do JupiterWeb: número USP, senha e o código do programa. As aulas caem na órbita de hoje e no mapa da semana. A senha não fica salva no navegador.</p>
-            <JupiterImportForm jupiterData={jupiterData} setJupiterData={setJupiterData} isConsulting={isConsultingJupiter} onSubmit={consultJupiter} />
-            {importError && <p className="schedule-error" role="alert">{importError}</p>}
-          </section>}
+        : hasStoredSchedule
+          ? <section className="section-block import-block" id="editar-grade" aria-labelledby="edit-title">
+              <h2 id="edit-title">Editar grade</h2>
+              <p className="section-hint">Ajuste disciplinas e horários. Salvar substitui a grade anterior.</p>
+              <ScheduleBuilder isSaving={isSaving} initialEntries={schedule} onSave={(entries) => void saveEdited(entries)} onCancel={() => setIsEditing(false)} />
+              {importError && <p className="schedule-error" role="alert">{importError}</p>}
+            </section>
+          : <section className="section-block import-block" id="importar" aria-labelledby="import-title">
+              <h2 id="import-title">Cadê sua grade?</h2>
+              <p className="section-hint">Adiciona o código de cada disciplina e marca a sua turma. Os horários vêm da consulta pública do JupiterWeb, sem senha. As aulas caem na órbita de hoje e no mapa da semana.</p>
+              <ScheduleBuilder isSaving={isSaving} onSave={(entries) => void saveSchedule(entries)} />
+              {importError && <p className="schedule-error" role="alert">{importError}</p>}
+            </section>}
 
       <UpcomingEvents />
       </div>
