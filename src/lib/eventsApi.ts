@@ -163,3 +163,14 @@ export async function setEventRsvp(id: string, status: RsvpStatus | null): Promi
   const body = await request<{ rsvp: EventRsvp }>(`/api/events/${enc(id)}/rsvp`, { method: 'PUT', json: { status } })
   return body.rsvp
 }
+
+/** Feed .ics pessoal para assinar no Google Calendar. A URL só vem na criação: o servidor guarda apenas o hash. */
+export async function fetchFeedStatus(signal?: AbortSignal): Promise<{ enabled: boolean }> {
+  return request<{ enabled: boolean }>('/api/calendar-feed/status', { signal })
+}
+
+export async function createFeedToken(): Promise<{ url: string }> {
+  return request<{ url: string }>('/api/calendar-feed/token', { method: 'POST' })
+}
+
+export const disableFeed = () => request<void>('/api/calendar-feed/token', { method: 'DELETE' })

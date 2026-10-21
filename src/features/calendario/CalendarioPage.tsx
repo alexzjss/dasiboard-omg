@@ -14,6 +14,7 @@ import { agendaRange, eventDays, monthGridRange, saoPauloDateKey } from './dateR
 import { DayList } from './DayList'
 import { EventDetail } from './EventDetail'
 import { EventForm } from './EventForm'
+import { FeedLink } from './FeedLink'
 import { eventPassesFilters, initialFilters, type CalendarFilters as Filters } from './filters'
 import { useEvents } from './hooks/useEvents'
 import { useReviewCount } from './hooks/useReviewCount'
@@ -56,6 +57,7 @@ function CalendarioContent({ user }: { user: User }) {
   // Evento aberto por ?evento=<id> fora do período carregado: vem de GET /api/events/:id.
   const [fetched, setFetched] = useState<EventDto | null>(null)
   const [proposing, setProposing] = useState(false)
+  const [feedOpen, setFeedOpen] = useState(false)
   const [proposeScope, setProposeScope] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [mineVersion, setMineVersion] = useState(0)
@@ -181,7 +183,10 @@ function CalendarioContent({ user }: { user: User }) {
     <main className="com-content cal-page">
       <header className="com-heading cal-head">
         <h1>Calendário</h1>
-        <button type="button" className="com-btn cal-primary" onClick={() => setProposing(true)}>Propor evento</button>
+        <div className="cal-head-actions">
+          <button type="button" className="com-btn" onClick={() => setFeedOpen(true)}>Assinar no Google Calendar</button>
+          <button type="button" className="com-btn cal-primary" onClick={() => setProposing(true)}>Propor evento</button>
+        </div>
       </header>
       {notice && <p className="cal-toast" role="status">{notice}</p>}
 
@@ -263,6 +268,7 @@ function CalendarioContent({ user }: { user: User }) {
         )}
       </div>
 
+      {feedOpen && <FeedLink onClose={() => setFeedOpen(false)} />}
       {selectedEvent && <EventDetail key={selectedEvent.id} event={selectedEvent} onClose={closeEvent} onChanged={changed} />}
       {proposing && <EventForm
         initialScope={proposeScope ? { scope: 'entity', scopeValue: proposeScope } : undefined}

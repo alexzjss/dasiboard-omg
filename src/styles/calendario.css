@@ -69,6 +69,11 @@ button.cal-row:hover { background: var(--hover); }
 
 /* Cabeçalho, aviso curto e botões */
 .cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.cal-head-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.cal-feed-box { margin-top: var(--s-4); }
+.cal-feed-row { display: flex; gap: var(--s-2); }
+.cal-feed-row .com-input { flex: 1; min-width: 0; }
+.cal-feed-steps { margin: var(--s-2) 0 0; padding-left: var(--s-5); }
 .cal-primary { border-color: var(--accent-line-strong); background: var(--accent-soft); }
 .cal-danger { border-color: var(--danger-line); background: var(--danger-soft); color: var(--danger); }
 .cal-toast { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); border: 1px solid var(--accent-line); border-radius: var(--r-md); background: var(--accent-soft); color: var(--text); font-weight: 600; }

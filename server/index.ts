@@ -11,6 +11,7 @@ import adminRouter from './routes/admin.js'
 import announcementsRouter from './routes/announcements.js'
 import avatarRouter from './routes/avatar.js'
 import badgesRouter from './routes/badges.js'
+import calendarFeedRouter from './routes/calendarFeed.js'
 import cardsRouter from './routes/cards.js'
 import entitiesRouter from './routes/entities.js'
 import eventsRouter from './routes/events.js'
@@ -53,6 +54,7 @@ app.use(entitiesRouter)
 app.use(adminRouter)
 app.use(announcementsRouter)
 app.use(eventsRouter)
+app.use(calendarFeedRouter)
 app.use(badgesRouter)
 app.use(cardsRouter)
 app.use(avatarRouter)

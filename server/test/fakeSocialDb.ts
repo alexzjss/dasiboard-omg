@@ -33,10 +33,12 @@ export const store = {
   events: [] as (EventRecord & { entityId: string | null })[],
   eventReports: [] as { eventId: string; userId: string; reason: string | null }[],
   eventRsvps: [] as { eventId: string; userId: string; status: 'going' | 'interested' }[],
+  feedHashes: new Map<string, string>(),
+  scheduleEntries: new Map<string, Real.FeedClassEntry[]>(),
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; store.campus.clear(); store.events = []; store.eventReports = []; store.eventRsvps = []; definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; store.campus.clear(); store.events = []; store.eventReports = []; store.eventRsvps = []; store.feedHashes.clear(); store.scheduleEntries.clear(); definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[]; campus?: string }) {
@@ -318,6 +320,14 @@ export async function getEventActor(userId: string, isSuperadmin: boolean) {
     memberships: new Map(store.members.filter((m) => m.user_id === userId && m.left_at === null).map((m) => [m.entity_id, m.role] as const)) as ReadonlyMap<string, 'member' | 'admin'>,
   }
 }
+
+export async function setCalendarFeedTokenHash(userId: string, hash: string | null) {
+  if (hash === null) store.feedHashes.delete(userId)
+  else store.feedHashes.set(userId, hash)
+}
+export async function findUserIdByFeedTokenHash(hash: string) { return [...store.feedHashes].find(([, h]) => h === hash)?.[0] ?? null }
+export async function hasCalendarFeedToken(userId: string) { return store.feedHashes.has(userId) }
+export async function getScheduleEntries(userId: string) { return (store.scheduleEntries.get(userId) ?? []).map((e) => ({ ...e })) }
 
 export async function createEvent(input: Parameters<typeof Real.createEvent>[0]): Promise<EventRecord> {
   const now = new Date().toISOString()

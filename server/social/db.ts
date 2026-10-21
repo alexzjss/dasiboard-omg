@@ -736,6 +736,31 @@ export async function getEventActor(userId: string, isSuperadmin: boolean): Prom
   }
 }
 
+// ---------- calendar feed (.ics) ----------
+
+export async function setCalendarFeedTokenHash(userId: string, hash: string | null): Promise<void> {
+  const { error } = await getClient().from('student_profiles').update({ calendar_feed_token_hash: hash, updated_at: new Date().toISOString() }).eq('user_id', userId)
+  if (error) throw new Error(`Could not update calendar feed token: ${error.message}`)
+}
+
+export async function findUserIdByFeedTokenHash(hash: string): Promise<string | null> {
+  const row = check('Could not look up calendar feed', await getClient().from('student_profiles').select('user_id').eq('calendar_feed_token_hash', hash).maybeSingle<{ user_id: string }>())
+  return row?.user_id ?? null
+}
+
+export async function hasCalendarFeedToken(userId: string): Promise<boolean> {
+  const row = check('Could not load calendar feed status', await getClient().from('student_profiles').select('calendar_feed_token_hash').eq('user_id', userId).maybeSingle<{ calendar_feed_token_hash: string | null }>())
+  return !!row?.calendar_feed_token_hash
+}
+
+export type FeedClassEntry = { weekday: number; startsAt: string; endsAt: string; title: string; code: string; room: string; building: string }
+
+// Aulas importadas do Júpiter (schedule_imports.entries); a leitura por google_sub fica em server/db.ts.
+export async function getScheduleEntries(userId: string): Promise<FeedClassEntry[]> {
+  const row = check('Could not load schedule', await getClient().from('schedule_imports').select('entries').eq('user_id', userId).maybeSingle<{ entries: FeedClassEntry[] | null }>())
+  return Array.isArray(row?.entries) ? row.entries : []
+}
+
 export async function createEvent(input: ScopeRef & EventFields & {
   status: 'pending' | 'approved'; createdBy: string | null; source?: 'user' | 'usp_import'; externalId?: string | null; reviewedBy?: string | null
 }): Promise<EventRecord> {
