@@ -192,3 +192,23 @@
   .orbit-now, .orbit-seg { transition: none; }
   .orbit-now::before { animation: none; }
 }
+
+/* ── Próximos eventos (card da Home) ─────────────────────────────────────────── */
+.upcoming-list { display: grid; gap: var(--s-2); margin: var(--s-4) 0 0; padding: 0; list-style: none; }
+.upcoming-item {
+  display: flex; align-items: flex-start; gap: var(--s-3);
+  min-height: 44px; padding: var(--s-3); border: 1px solid var(--line-soft); border-left: 4px solid var(--ev-color);
+  border-radius: var(--r-sm); background: var(--surface-1); color: var(--text); text-decoration: none;
+  transition: border-color 0.15s;
+}
+.upcoming-item:hover { border-color: var(--ev-color); }
+.upcoming-dot { flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: var(--r-pill); background: var(--ev-color); }
+.upcoming-when { display: flex; flex-direction: column; flex: none; min-width: 84px; color: var(--text-2); font-size: 12px; line-height: 1.35; }
+.upcoming-main { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.upcoming-title { color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.upcoming-scope { color: var(--text-muted); font-size: 12px; }
+.upcoming-empty { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); margin-top: var(--s-4); color: var(--text-2); font-size: 14px; }
+.upcoming-status { margin-top: var(--s-4); color: var(--text-muted); font-size: 14px; }
+.upcoming-foot { margin-top: var(--s-4); }
+.upcoming-link { color: var(--accent); font-size: 14px; font-weight: 600; text-decoration: none; }
+.upcoming-link:hover { text-decoration: underline; }

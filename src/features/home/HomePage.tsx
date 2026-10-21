@@ -6,6 +6,7 @@ import { getGreeting } from '../../lib/date'
 import { AppTopbar } from './AppTopbar'
 import { DayOrbit } from './DayOrbit'
 import { JupiterImportForm } from './JupiterImportForm'
+import { UpcomingEvents } from './UpcomingEvents'
 import { useNow } from './useNow'
 import { useSchedule } from './useSchedule'
 import { WeekMap } from './WeekMap'
@@ -44,6 +45,8 @@ function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: (tr
             <JupiterImportForm jupiterData={jupiterData} setJupiterData={setJupiterData} isConsulting={isConsultingJupiter} onSubmit={consultJupiter} />
             {importError && <p className="schedule-error" role="alert">{importError}</p>}
           </section>}
+
+      <UpcomingEvents />
       </div>
     </div>
   </main>
