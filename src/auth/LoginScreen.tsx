@@ -1,12 +1,18 @@
 import { useState } from 'react'
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { SpaceCanvas } from '../components/SpaceCanvas'
 import { useAuth } from './authContext'
 import { useResolvedTheme } from '../lib/theme'
 
 const appLogo = '/logo.png'
+
+/** Destino pós-login vindo de ?volta=. Só caminhos internos; qualquer outra coisa vira a home. */
+export function safeReturnPath(raw: string | null): string {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || [...raw].some((char) => char === String.fromCharCode(92) || char.charCodeAt(0) < 32)) return '/'
+  return raw
+}
 
 /** Planeta com anel e uma lua em órbita, desenhado só com tokens de cor. */
 function LoginPlanet() {
@@ -39,6 +45,8 @@ export function LoginScreen() {
   const resolvedTheme = useResolvedTheme()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [error, setError] = useState('')
+  const [params] = useSearchParams()
+  const returnTo = safeReturnPath(params.get('volta'))
   const currentOrigin = window.location.origin
 
   async function handleSuccess(response: CredentialResponse) {
@@ -47,7 +55,7 @@ export function LoginScreen() {
   }
 
   if (status === 'loading') return <main className="auth-loading" aria-label="Carregando autenticação"></main>
-  if (status === 'authenticated') return <Navigate to="/" replace />
+  if (status === 'authenticated') return <Navigate to={returnTo} replace />
 
   return <main className="login-shell">
     <SpaceCanvas theme="login" />

@@ -9,6 +9,8 @@ import { HomePage } from '../features/home/HomePage'
 import { NotificacoesPage } from '../features/notificacoes/NotificacoesPage'
 import { PerfilPage } from '../features/perfil/PerfilPage'
 import { CartaEditorPage } from '../features/perfil/carta/CartaEditorPage'
+import { CartaPublicaPage } from '../features/carta/CartaPublicaPage'
+import { ColecaoPage } from '../features/perfil/colecao/ColecaoPage'
 import { AppLayout } from './AppLayout'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -22,6 +24,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/entrar" element={<LoginScreen />} />
+      <Route path="/c/:handle" element={<CartaPublicaPage />} />
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route index element={<HomePage />} />
         {import.meta.env.DEV && <Route path="dev/home" element={<HomePage />} />}
@@ -34,6 +37,7 @@ export function AppRoutes() {
         <Route path="notificacoes" element={<NotificacoesPage />} />
         <Route path="perfil" element={<PerfilPage />} />
         <Route path="perfil/carta" element={<CartaEditorPage />} />
+        <Route path="perfil/colecao" element={<ColecaoPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

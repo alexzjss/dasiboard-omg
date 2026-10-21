@@ -396,10 +396,11 @@ export type AchievementStats = {
 
 export async function getAchievementStats(userId: string): Promise<AchievementStats> {
   const client = getClient()
-  const [person, connections, schedule] = await Promise.all([
+  const [person, connections, schedule, collected] = await Promise.all([
     getPersonById(userId),
     client.from('connections').select('requester_id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
     client.from('schedule_imports').select('user_id', { count: 'exact', head: true }).eq('user_id', userId),
+    countCollected(userId),
   ])
   if (connections.error) throw new Error(`Could not count connections: ${connections.error.message}`)
   if (schedule.error) throw new Error(`Could not check schedule: ${schedule.error.message}`)
@@ -409,7 +410,7 @@ export async function getAchievementStats(userId: string): Promise<AchievementSt
     profileComplete: !!profile?.bio?.trim() && profile.entry_year !== null && hasLink,
     connections: connections.count ?? 0,
     scheduleImported: (schedule.count ?? 0) > 0,
-    collected: 0, // fixed until Phase 3 (card collection)
+    collected,
     entryYear: profile?.entry_year ?? null,
     course: profile?.course ?? '',
   }
@@ -458,6 +459,26 @@ export async function countCollected(userId: string): Promise<number> {
 
 export async function isCollected(collectorId: string, collectedId: string): Promise<boolean> {
   return check('Could not check collection', await getClient().from('card_collection').select('collected_id').eq('collector_id', collectorId).eq('collected_id', collectedId).maybeSingle<{ collected_id: string }>()) !== null
+}
+
+/** Idempotent: a second collect of the same card reports 'exists' and writes nothing. */
+export async function collectCard(collectorId: string, collectedId: string): Promise<'collected' | 'exists'> {
+  const { data, error } = await getClient().from('card_collection').upsert({ collector_id: collectorId, collected_id: collectedId }, { onConflict: 'collector_id,collected_id', ignoreDuplicates: true }).select('collected_id').returns<{ collected_id: string }[]>()
+  if (error) throw new Error(`Could not collect card: ${error.message}`)
+  return (data ?? []).length > 0 ? 'collected' : 'exists'
+}
+
+export async function uncollectCard(collectorId: string, collectedId: string): Promise<void> {
+  const { error } = await getClient().from('card_collection').delete().eq('collector_id', collectorId).eq('collected_id', collectedId)
+  if (error) throw new Error(`Could not remove card from collection: ${error.message}`)
+}
+
+export async function listCollection(collectorId: string, before: { at: string; id: string } | null, limit: number): Promise<{ person: PersonRecord; collectedAt: string }[]> {
+  let query = getClient().from('card_collection').select('collected_id, collected_at').eq('collector_id', collectorId)
+  if (before) query = query.or(`collected_at.lt."${before.at}",and(collected_at.eq."${before.at}",collected_id.lt.${before.id})`)
+  const rows = check('Could not load collection', await query.order('collected_at', { ascending: false }).order('collected_id', { ascending: false }).limit(limit).returns<{ collected_id: string; collected_at: string }[]>()) ?? []
+  const people = new Map((await getPeopleByIds(rows.map((row) => row.collected_id))).map((person) => [person.user.id, person]))
+  return rows.flatMap((row) => { const person = people.get(row.collected_id); return person ? [{ person, collectedAt: row.collected_at }] : [] })
 }
 
 export async function getUnlockStats(userId: string): Promise<UnlockStats> {

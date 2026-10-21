@@ -26,7 +26,7 @@ export const store = {
   pushSubs: [] as Real.PushSubscriptionRow[],
   announcements: [] as (Parameters<typeof Real.createAnnouncement>[0] & { id: string; createdAt: string })[],
   cards: new Map<string, { card: unknown; isPublic: boolean }>(),
-  collection: [] as { collectorId: string; collectedId: string }[],
+  collection: [] as { collectorId: string; collectedId: string; collectedAt?: string }[],
 }
 
 export function resetStore() {
@@ -196,7 +196,7 @@ export async function getAchievementStats(userId: string): Promise<Real.Achievem
     profileComplete: !!profile?.bio?.trim() && profile.entry_year !== null && hasLink,
     connections: store.connections.filter((c) => c.status === 'accepted' && (c.requester_id === userId || c.addressee_id === userId)).length,
     scheduleImported: store.schedules.has(userId),
-    collected: 0,
+    collected: await countCollected(userId),
     entryYear: profile?.entry_year ?? null,
     course: profile?.course ?? '',
   }
@@ -216,6 +216,22 @@ export async function updateCard(userId: string, patch: { settings?: CardSetting
 }
 export async function countCollected(userId: string) { return store.collection.filter((c) => c.collectorId === userId).length }
 export async function isCollected(collectorId: string, collectedId: string) { return store.collection.some((c) => c.collectorId === collectorId && c.collectedId === collectedId) }
+export async function collectCard(collectorId: string, collectedId: string): Promise<'collected' | 'exists'> {
+  if (await isCollected(collectorId, collectedId)) return 'exists'
+  store.collection.push({ collectorId, collectedId, collectedAt: new Date().toISOString() })
+  return 'collected'
+}
+export async function uncollectCard(collectorId: string, collectedId: string) {
+  store.collection = store.collection.filter((c) => !(c.collectorId === collectorId && c.collectedId === collectedId))
+}
+export async function listCollection(collectorId: string, before: { at: string; id: string } | null, limit: number) {
+  const at = (c: { collectedAt?: string }) => c.collectedAt ?? '1970-01-01T00:00:00.000Z'
+  return store.collection
+    .filter((c) => c.collectorId === collectorId && (!before || at(c) < before.at || (at(c) === before.at && c.collectedId < before.id)))
+    .sort((a, b) => (at(a) === at(b) ? (a.collectedId < b.collectedId ? 1 : -1) : at(a) < at(b) ? 1 : -1))
+    .slice(0, limit)
+    .flatMap((c) => { const row = store.people.get(c.collectedId); return row ? [{ person: toRecord(row), collectedAt: at(c) }] : [] })
+}
 export async function getUnlockStats(userId: string): Promise<UnlockStats> {
   const own = (await getBadges([userId])).get(userId) ?? []
   const memberships = await listMembershipsOf(userId)

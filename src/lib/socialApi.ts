@@ -345,3 +345,14 @@ export const getMyCard = (signal?: AbortSignal) => request<MyCard>('/api/me/card
 export const updateMyCard = (patch: CardPatch) => request<MyCard>('/api/me/card', { method: 'PATCH', json: patch })
 
 export const getCard = (handle: string, signal?: AbortSignal) => request<CardData>(`/api/cards/${enc(handle)}`, { signal })
+
+// ---------- coleção de cartas ----------
+
+export type CollectionPage = { items: CardData[]; nextCursor: string | null }
+
+export const collectCard = (handle: string) => request<{ status: 'collected' | 'exists' }>(`/api/cards/${enc(handle)}/collect`, { method: 'POST' })
+
+export const uncollectCard = (handle: string) => request<void>(`/api/cards/${enc(handle)}/collect`, { method: 'DELETE' })
+
+export const getCollection = (cursor?: string | null, signal?: AbortSignal) =>
+  request<CollectionPage>(`/api/me/collection${cursor ? `?cursor=${enc(cursor)}` : ''}`, { signal })

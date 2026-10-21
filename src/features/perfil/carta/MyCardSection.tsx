@@ -18,6 +18,7 @@ export function MyCardSection() {
     <div className="pf-card-block">
       <ProfileCard data={card} />
       <Link className="pf-btn is-primary" to="/perfil/carta">Personalizar carta</Link>
+      <Link className="pf-btn" to="/perfil/colecao">Minha coleção</Link>
     </div>
   )
 }

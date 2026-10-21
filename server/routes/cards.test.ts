@@ -145,3 +145,67 @@ describe('/api/me/card', () => {
     expect(res.body.card).not.toHaveProperty('email')
   })
 })
+
+describe('collecting cards', () => {
+  it('refuses to collect your own card', async () => {
+    const ana = student('Ana')
+    const res = await (await as(ana)).post(`/api/cards/${ana.handle}/collect`)
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Essa carta já é sua')
+  })
+
+  it('collects once and is idempotent on the second time', async () => {
+    const ana = student('Ana')
+    const bia = student('Bia')
+    const api = await as(bia)
+    expect((await api.post(`/api/cards/${ana.handle}/collect`)).body).toEqual({ status: 'collected' })
+    const again = await api.post(`/api/cards/${ana.handle}/collect`)
+    expect(again.status).toBe(200)
+    expect(again.body).toEqual({ status: 'exists' })
+    expect(store.collection.filter((c) => c.collectorId === bia.id)).toHaveLength(1)
+    expect((await api.get(`/api/cards/${ana.handle}`)).body.viewer.collected).toBe(true)
+    expect((await api.get(`/api/people/${ana.handle}`)).body.card.viewer.collected).toBe(true)
+  })
+
+  it('does not notify the owner, and 404s for an unknown handle', async () => {
+    const ana = student('Ana')
+    const bia = student('Bia')
+    const api = await as(bia)
+    await api.post(`/api/cards/${ana.handle}/collect`)
+    expect(store.notifications.filter((n) => n.userId === ana.id)).toHaveLength(0)
+    expect((await api.post('/api/cards/nao-existe/collect')).status).toBe(404)
+  })
+
+  it('removes a card from the collection', async () => {
+    const ana = student('Ana')
+    const bia = student('Bia')
+    const api = await as(bia)
+    await api.post(`/api/cards/${ana.handle}/collect`)
+    expect((await api.delete(`/api/cards/${ana.handle}/collect`)).status).toBe(204)
+    expect(store.collection).toHaveLength(0)
+  })
+
+  it('awards collector-10 with one notification after the 10th card', async () => {
+    const bia = student('Bia')
+    const api = await as(bia)
+    for (let i = 0; i < 10; i++) await api.post(`/api/cards/${student('P').handle}/collect`)
+    expect(store.badges.some((b) => b.user_id === bia.id && b.source_id === 'collector-10')).toBe(true)
+    expect(store.notifications.filter((n) => n.userId === bia.id && n.type === 'badge_awarded')).toHaveLength(1)
+  })
+
+  it('lists the collection newest first, paginating by 24', async () => {
+    const bia = student('Bia')
+    const api = await as(bia)
+    const others = Array.from({ length: 26 }, () => student('P'))
+    others.forEach((o, i) => store.collection.push({ collectorId: bia.id, collectedId: o.id, collectedAt: new Date(2026, 0, 1, 0, 0, i).toISOString() }))
+    const first = (await api.get('/api/me/collection')).body
+    expect(first.items).toHaveLength(24)
+    expect(first.items[0].handle).toBe(others[25].handle)
+    expect(first.items[0].viewer.collected).toBe(true)
+    expect(first.nextCursor).toBeTruthy()
+    const second = (await api.get(`/api/me/collection?cursor=${first.nextCursor}`)).body
+    expect(second.items.map((c: { handle: string }) => c.handle)).toEqual([others[1].handle, others[0].handle])
+    expect(second.nextCursor).toBeNull()
+    expect((await api.get('/api/me/collection?cursor=nope')).status).toBe(400)
+  })
+})
