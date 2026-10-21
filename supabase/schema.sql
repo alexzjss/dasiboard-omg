@@ -265,3 +265,79 @@ create table if not exists public.card_collection (
 create index if not exists card_collection_collector_idx on public.card_collection(collector_id, collected_at desc);
 
 alter table public.card_collection enable row level security;
+
+-- Calendário: eventos, denúncias, RSVP e feed
+create table if not exists public.events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (char_length(title) between 1 and 80),
+  description text check (char_length(description) <= 1000),
+  kind text not null check (kind in ('event','meeting','exam','assignment','deadline','holiday')),
+  scope text not null check (scope in ('usp','campus','course','cohort','class','entity')),
+  scope_value text,
+  entity_id text references public.entities(id) on delete cascade,
+  visibility text not null default 'public' check (visibility in ('public','members')),
+  starts_at timestamptz not null,
+  ends_at timestamptz,
+  all_day boolean not null default false,
+  location text check (char_length(location) <= 120),
+  link text,
+  status text not null default 'pending' check (status in ('pending','approved','rejected','cancelled','hidden')),
+  pending_changes jsonb,
+  source text not null default 'user' check (source in ('user','usp_import')),
+  external_id text,
+  created_by uuid references public.users(id) on delete set null,
+  reviewed_by uuid references public.users(id) on delete set null,
+  reviewed_at timestamptz,
+  review_note text check (char_length(review_note) <= 280),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (ends_at is null or ends_at >= starts_at),
+  check (scope = 'usp' or scope_value is not null),
+  check (visibility = 'public' or scope = 'entity')
+);
+
+create unique index if not exists events_external_id_key on public.events(source, external_id) where external_id is not null;
+create index if not exists events_status_starts_idx on public.events(status, starts_at);
+create index if not exists events_scope_idx on public.events(scope, scope_value, starts_at);
+create index if not exists events_created_by_idx on public.events(created_by, created_at desc);
+create index if not exists events_entity_idx on public.events(entity_id) where entity_id is not null;
+
+create table if not exists public.event_reports (
+  event_id uuid not null references public.events(id) on delete cascade,
+  user_id uuid not null references public.users(id) on delete cascade,
+  reason text check (char_length(reason) <= 200),
+  created_at timestamptz not null default now(),
+  primary key (event_id, user_id)
+);
+
+create index if not exists event_reports_event_idx on public.event_reports(event_id);
+
+create table if not exists public.event_rsvps (
+  event_id uuid not null references public.events(id) on delete cascade,
+  user_id uuid not null references public.users(id) on delete cascade,
+  status text not null check (status in ('going','interested')),
+  remind boolean not null default false,
+  reminded_at timestamptz,
+  created_at timestamptz not null default now(),
+  primary key (event_id, user_id)
+);
+
+create index if not exists event_rsvps_remind_idx on public.event_rsvps(event_id) where remind and reminded_at is null;
+
+alter table public.student_profiles add column if not exists calendar_feed_token_hash text;
+create unique index if not exists student_profiles_feed_token_key on public.student_profiles(calendar_feed_token_hash) where calendar_feed_token_hash is not null;
+
+drop trigger if exists events_set_updated_at on public.events;
+create trigger events_set_updated_at
+before update on public.events
+for each row execute function public.set_updated_at();
+
+alter table public.events enable row level security;
+alter table public.event_reports enable row level security;
+alter table public.event_rsvps enable row level security;
+
+alter table public.notifications drop constraint if exists notifications_type_check;
+alter table public.notifications add constraint notifications_type_check check (type in (
+  'connection_request','connection_accepted','entity_joined','entity_role_changed','entity_removed','badge_awarded','announcement',
+  'event_submitted','event_approved','event_rejected','event_hidden','event_reminder'
+));
