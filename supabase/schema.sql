@@ -293,7 +293,8 @@ create table if not exists public.events (
   updated_at timestamptz not null default now(),
   check (ends_at is null or ends_at >= starts_at),
   check (scope = 'usp' or scope_value is not null),
-  check (visibility = 'public' or scope = 'entity')
+  check (visibility = 'public' or scope = 'entity'),
+  check ((scope = 'entity') = (entity_id is not null) and (entity_id is null or entity_id = scope_value))
 );
 
 create unique index if not exists events_external_id_key on public.events(source, external_id) where external_id is not null;
