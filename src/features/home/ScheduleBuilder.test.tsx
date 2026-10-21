@@ -8,7 +8,7 @@ vi.mock('../../lib/api', () => ({ apiFetch: vi.fn() }))
 const respond = (status: number, body: unknown) => vi.mocked(apiFetch).mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 
 async function addCode(code: string) {
-  fireEvent.change(screen.getByLabelText('Código da disciplina'), { target: { value: code } })
+  fireEvent.change(screen.getByLabelText('Buscar disciplina'), { target: { value: code } })
   fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
 }
 

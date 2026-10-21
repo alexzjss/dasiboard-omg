@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '../../components/Icon'
 import { apiFetch } from '../../lib/api'
+import { DisciplineSearch } from './DisciplineSearch'
 import type { Discipline, ScheduleEntry, Section, SectionSlot } from './types'
 
 const dayLabels = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom']
@@ -32,9 +33,8 @@ export function ScheduleBuilder({ isSaving, onSave }: { isSaving: boolean; onSav
   const [searchError, setSearchError] = useState('')
   const [picked, setPicked] = useState<Picked[]>([])
 
-  async function addDiscipline(event: React.FormEvent) {
-    event.preventDefault()
-    const code = query.trim().toUpperCase()
+  async function addDiscipline(rawCode: string) {
+    const code = rawCode.trim().toUpperCase()
     setSearchError('')
     if (!/^[A-Z]{3}\d{4}$/.test(code)) return setSearchError('Use o código da disciplina, por exemplo ACH2001.')
     if (picked.some((item) => item.discipline.code === code)) return setSearchError(`${code} já está na lista.`)
@@ -66,8 +66,8 @@ export function ScheduleBuilder({ isSaving, onSave }: { isSaving: boolean; onSav
 
   return (
     <div className="schedule-builder">
-      <form className="jupiter-form" onSubmit={addDiscipline}>
-        <input autoComplete="off" aria-label="Código da disciplina" placeholder="Código da disciplina (ex.: ACH2001)" type="text" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <form className="jupiter-form" onSubmit={(event) => { event.preventDefault(); void addDiscipline(query) }}>
+        <DisciplineSearch value={query} onChange={setQuery} onPick={(code) => void addDiscipline(code)} />
         <button className="import-button" type="submit" disabled={isSearching}>{isSearching ? 'Buscando…' : 'Adicionar'}</button>
       </form>
       {searchError && <p className="schedule-error" role="alert">{searchError}</p>}

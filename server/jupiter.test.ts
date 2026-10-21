@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { parseDisciplinePage } from './jupiter.js'
+import { parseCatalogPage, parseDisciplinePage, searchCatalog } from './jupiter.js'
 
 const info = (rows: Array<[string, string]>) => `<table>${rows.map(([label, value]) => `<tr><td><b>${label}</b></td><td>${value}</td></tr>`).join('')}</table>`
 const timetable = (rows: string[][]) => `<table><tr><td>Horário</td><td></td><td></td><td>Prof(a)</td></tr>${rows.map((cells) => `<tr>${cells.map((c) => `<td><span>${c}</span></td>`).join('')}</tr>`).join('')}</table>`
@@ -75,5 +75,42 @@ describe('parseDisciplinePage with sloppy markup', () => {
 
   it('recognizes class rows by shape even after noise', () => {
     expect(discipline.sections[1].slots).toEqual([{ weekday: 1, startsAt: '08:00', endsAt: '09:45' }])
+  })
+})
+
+describe('parseCatalogPage', () => {
+  const html = `<table><tr bgcolor="#658CCF"><td>Código</td><td>Nome</td>
+    <tr><td><span>ACH2001</span><td><span>Introdução à Programação</span>
+    <tr><td><span>ach2011</span><td>Cálculo &amp; Limites
+    <tr><td><span>&nbsp;</span><td>Sem código
+    <tr><td><span>ACH2001</span><td>Duplicada
+    <tr><td><span>ACH2002</span><td></table>`
+
+  it('reads code and name from sloppy HTML, skipping header, invalid and empty rows', () => {
+    expect(parseCatalogPage(html)).toEqual([{ code: 'ACH2001', title: 'Introdução à Programação' }, { code: 'ACH2011', title: 'Cálculo & Limites' }])
+  })
+})
+
+describe('searchCatalog', () => {
+  const catalog = [
+    { code: 'ACH2011', title: 'Cálculo I' },
+    { code: 'ACH2001', title: 'Introdução à Programação' },
+    { code: 'MAT0111', title: 'Introdução ao Cálculo Diferencial' },
+    { code: 'ACH2012', title: 'Cálculo II' },
+  ]
+
+  it('ignores case and accents', () => {
+    expect(searchCatalog('CALCULO', catalog).map((e) => e.code)).toEqual(['ACH2011', 'ACH2012', 'MAT0111'])
+  })
+
+  it('ranks code prefixes first, then word starts, then substrings', () => {
+    expect(searchCatalog('ach20', catalog).map((e) => e.code)).toEqual(['ACH2001', 'ACH2011', 'ACH2012'])
+    expect(searchCatalog('gramação', [...catalog, { code: 'XXX0001', title: 'Gramação' }]).map((e) => e.code)).toEqual(['XXX0001', 'ACH2001'])
+  })
+
+  it('requires every token and caps the results', () => {
+    expect(searchCatalog('calc ii', catalog).map((e) => e.code)).toEqual(['ACH2012'])
+    const many = Array.from({ length: 30 }, (_, i) => ({ code: `ACH${2000 + i}`, title: 'X' }))
+    expect(searchCatalog('ach', many)).toHaveLength(12)
   })
 })

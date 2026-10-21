@@ -47,7 +47,7 @@ function normalizeTime(value: string) {
 }
 
 function weekdayOf(value: string) {
-  const key = value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().slice(0, 3)
+  const key = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().slice(0, 3)
   return Object.hasOwn(weekdays, key) && /^[a-z]/i.test(value) ? weekdays[key] : -1
 }
 
@@ -130,4 +130,53 @@ export async function fetchDiscipline(code: string): Promise<Discipline> {
   if (cache.size > 2_000) cache.clear()
   cache.set(code, { value, expiresAt: Date.now() + cacheTtlMs })
   return value
+}
+
+export type CatalogEntry = { code: string; title: string }
+
+const catalogUrl = (unit: string) => `https://uspdigital.usp.br/jupiterweb/jupDisciplinaLista?codcg=${encodeURIComponent(unit)}&letra=0-Z&tipo=D`
+
+// Rows are |CODE|Name|...; the header row and anything without a valid code are skipped.
+export function parseCatalogPage(html: string): CatalogEntry[] {
+  const seen = new Set<string>()
+  const entries: CatalogEntry[] = []
+  for (const [first = '', second = ''] of tableRows(html)) {
+    const code = first.toUpperCase()
+    if (!disciplineCodePattern.test(code) || !second || seen.has(code)) continue
+    seen.add(code)
+    entries.push({ code, title: second })
+  }
+  return entries
+}
+
+const catalogCache = new Map<string, { value: CatalogEntry[]; expiresAt: number }>()
+const catalogTtlMs = 24 * 60 * 60_000
+
+export async function fetchCatalog(unit = '86'): Promise<CatalogEntry[]> {
+  const cached = catalogCache.get(unit)
+  if (cached && cached.expiresAt > Date.now()) return cached.value
+  const response = await getPage(catalogUrl(unit))
+  if (response.status >= 400) throw new Error('O JupiterWeb não respondeu')
+  const value = parseCatalogPage(response.body)
+  if (!value.length) throw new Error('Catálogo do JupiterWeb vazio')
+  catalogCache.set(unit, { value, expiresAt: Date.now() + catalogTtlMs })
+  return value
+}
+
+const fold = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+export function searchCatalog(query: string, catalog: CatalogEntry[], limit = 12): CatalogEntry[] {
+  const tokens = fold(query).split(/\s+/).filter(Boolean)
+  if (!tokens.length) return []
+  const [first] = tokens
+  const ranked: { entry: CatalogEntry; rank: number }[] = []
+  for (const entry of catalog) {
+    const code = fold(entry.code)
+    const title = fold(entry.title)
+    const haystack = `${code} ${title}`
+    if (!tokens.every((token) => haystack.includes(token))) continue
+    const rank = code.startsWith(first) ? 0 : title.split(/\s+/).some((word) => word.startsWith(first)) ? 1 : 2
+    ranked.push({ entry, rank })
+  }
+  return ranked.sort((a, b) => a.rank - b.rank || a.entry.code.localeCompare(b.entry.code)).slice(0, limit).map(({ entry }) => entry)
 }

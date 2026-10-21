@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { deleteSchedule, getSchedule, saveSchedule, type ScheduleEntry } from '../db.js'
-import { disciplineCodePattern, fetchDiscipline } from '../jupiter.js'
+import { disciplineCodePattern, fetchCatalog, fetchDiscipline, searchCatalog } from '../jupiter.js'
 import { logError } from '../lib/errors.js'
 import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
@@ -45,6 +45,17 @@ router.delete('/api/schedule', isAllowedOrigin, requireSession, async (req, res)
   } catch (error) {
     logError('Deleting schedule failed', error)
     res.status(503).json({ error: 'Não foi possível remover a grade horária' })
+  }
+})
+
+// Searches the unit's public catalog by code or name. On 503 the client searches its local course data.
+router.get('/api/schedule/disciplines', requireSession, rateLimit('discipline-search', 60, 60_000), async (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : ''
+  if (q.length < 2 || q.length > 60) return res.status(400).json({ error: 'Digite de 2 a 60 caracteres para buscar.' })
+  try { res.json({ results: searchCatalog(q, await fetchCatalog()) }) }
+  catch (error) {
+    logError('Loading JupiterWeb catalog failed', error)
+    res.status(503).json({ error: 'Não foi possível consultar o catálogo do JupiterWeb agora.' })
   }
 })
 

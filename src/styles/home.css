@@ -125,8 +125,20 @@
 @container (max-height: 30px) { .week-event-room { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 
 /* ── Importar do JupiterWeb ──────────────────────────────────────────────────── */
-.jupiter-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
+.jupiter-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); margin-top: var(--s-5); max-width: 640px; }
 .jupiter-form input, .import-button { min-height: 46px; }
+.discipline-search { position: relative; min-width: 0; }
+.discipline-options {
+  position: absolute; z-index: 20; top: calc(100% + var(--s-1)); left: 0; right: 0;
+  max-height: 320px; margin: 0; padding: var(--s-1); overflow-y: auto; list-style: none;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.discipline-options[hidden] { display: none; }
+.discipline-options li { padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); color: var(--text); font-size: 14px; line-height: 1.35; cursor: pointer; }
+.discipline-options li .mono { color: var(--area); font-weight: 700; }
+.discipline-options li.is-active, .discipline-options li:hover { background: var(--surface-inset); }
+.discipline-options li.discipline-empty { color: var(--text-2); cursor: default; }
 .jupiter-form input {
   width: 100%; min-width: 0;
   padding: 11px 13px;
