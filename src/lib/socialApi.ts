@@ -122,7 +122,7 @@ const DEFAULT_MESSAGE = 'Não foi possível concluir a operação'
 
 type RequestInitJson = RequestInit & { json?: unknown }
 
-async function request<T>(path: string, init: RequestInitJson = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInitJson = {}): Promise<T> {
   const { json, headers, ...rest } = init
   const finalInit: RequestInit = {
     ...rest,
