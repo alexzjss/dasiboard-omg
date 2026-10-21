@@ -22,7 +22,7 @@ export function useSchedule(user: User) {
     }).catch(() => { /* server unavailable, use cached data */ })
   }, [user.email])
 
-  async function saveSchedule(entries: ScheduleEntry[]) {
+  async function saveSchedule(entries: ScheduleEntry[]): Promise<boolean> {
     setImportError(''); setIsSaving(true)
     try {
       const response = await apiFetch('/api/schedule', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries }) })
@@ -31,7 +31,11 @@ export function useSchedule(user: User) {
       setSchedule(data.entries)
       saveStoredSchedule(user.email, data.entries)
       setHasStoredSchedule(true)
-    } catch (error) { setImportError(error instanceof Error ? error.message : 'Não foi possível salvar a grade horária.') }
+      return true
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Não foi possível salvar a grade horária.')
+      return false
+    }
     finally { setIsSaving(false) }
   }
 

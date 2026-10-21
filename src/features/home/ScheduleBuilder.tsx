@@ -6,7 +6,7 @@ import type { Discipline, ScheduleEntry, Section, SectionSlot } from './types'
 
 const dayLabels = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom']
 
-type ManualSlot = SectionSlot & { room: string }
+type ManualSlot = SectionSlot & { room: string; sectionCode?: string }
 type Picked = { discipline: Discipline; selected: string[]; manual: ManualSlot[] }
 
 const slotLabel = (slot: SectionSlot) => `${dayLabels[slot.weekday]} ${slot.startsAt}–${slot.endsAt}`
@@ -22,16 +22,32 @@ function toScheduleEntries(picked: Picked[]): ScheduleEntry[] {
     const fromSections = discipline.sections
       .filter((section) => selected.includes(section.code))
       .flatMap((section) => section.slots.map((slot) => ({ ...base, ...slot, sectionCode: section.code, room: section.room })))
-    return [...fromSections, ...manual.map((slot) => ({ ...base, ...slot, sectionCode: selected[0] || '' }))]
+    return [...fromSections, ...manual.map((slot) => ({ ...base, ...slot, sectionCode: slot.sectionCode ?? selected[0] ?? '' }))]
   })
 }
 
+/** Agrupa a grade salva por disciplina; cada horário vira um slot manual para poder ser removido. */
+function pickedFromEntries(entries: ScheduleEntry[]): Picked[] {
+  const groups = new Map<string, ScheduleEntry[]>()
+  for (const entry of entries) groups.set(entry.code, [...(groups.get(entry.code) ?? []), entry])
+  return [...groups.values()].map((group) => ({
+    discipline: { code: group[0].code, title: group[0].title, sections: [] },
+    selected: [],
+    manual: group.map(({ weekday, startsAt, endsAt, room, sectionCode }) => ({ weekday, startsAt, endsAt, room, sectionCode })),
+  }))
+}
+
 /** Monta a grade a partir das turmas públicas do JupiterWeb: só códigos, nenhuma senha. */
-export function ScheduleBuilder({ isSaving, onSave }: { isSaving: boolean; onSave: (entries: ScheduleEntry[]) => void }) {
+export function ScheduleBuilder({ isSaving, initialEntries, onSave, onCancel }: {
+  isSaving: boolean
+  initialEntries?: ScheduleEntry[]
+  onSave: (entries: ScheduleEntry[]) => void
+  onCancel?: () => void
+}) {
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [searchError, setSearchError] = useState('')
-  const [picked, setPicked] = useState<Picked[]>([])
+  const [picked, setPicked] = useState<Picked[]>(() => pickedFromEntries(initialEntries ?? []))
 
   async function addDiscipline(rawCode: string) {
     const code = rawCode.trim().toUpperCase()
@@ -105,9 +121,13 @@ export function ScheduleBuilder({ isSaving, onSave }: { isSaving: boolean; onSav
         ))}
       </ul>}
 
-      {picked.length > 0 && <button className="import-button builder-save" type="button" disabled={isSaving || entries.length === 0} onClick={() => onSave(entries)}>
-        {isSaving ? 'Salvando…' : 'Salvar grade'}
-      </button>}
+      {(picked.length > 0 || onCancel) && <div className="builder-actions">
+        {onCancel && <button type="button" className="builder-cancel" onClick={onCancel}>Cancelar</button>}
+        {picked.length > 0 && <button className="import-button builder-save" type="button" disabled={isSaving || entries.length === 0} onClick={() => onSave(entries)}>
+          {isSaving ? 'Salvando…' : 'Salvar grade'}
+        </button>}
+      </div>}
+      {initialEntries && entries.length === 0 && <p className="section-hint">Para apagar a grade inteira, use Apagar grade.</p>}
     </div>
   )
 }

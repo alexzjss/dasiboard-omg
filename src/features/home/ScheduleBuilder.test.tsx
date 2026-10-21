@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { apiFetch } from '../../lib/api'
 import { ScheduleBuilder } from './ScheduleBuilder'
+import type { ScheduleEntry } from './types'
 
 vi.mock('../../lib/api', () => ({ apiFetch: vi.fn() }))
 
@@ -42,5 +43,51 @@ describe('ScheduleBuilder', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Horário' }))
     fireEvent.click(screen.getByRole('button', { name: 'Salvar grade' }))
     expect(onSave).toHaveBeenCalledWith([{ title: 'ACH2011', code: 'ACH2011', building: '', weekday: 3, startsAt: '10:15', endsAt: '12:00', room: 'A2', sectionCode: '' }])
+  })
+})
+
+const saved: ScheduleEntry[] = [
+  { weekday: 1, startsAt: '08:00', endsAt: '10:00', title: 'Cálculo I', code: 'ACH2011', sectionCode: '2026203', room: 'A1', building: '' },
+  { weekday: 3, startsAt: '14:00', endsAt: '16:00', title: 'Cálculo I', code: 'ACH2011', sectionCode: '2026203', room: 'A1', building: '' },
+  { weekday: 2, startsAt: '10:00', endsAt: '12:00', title: 'Cálculo II', code: 'ACH2012', sectionCode: '2026101', room: 'B2', building: '' },
+]
+
+describe('ScheduleBuilder editing', () => {
+  it('lists the saved disciplines and removes one slot before saving', () => {
+    const onSave = vi.fn()
+    render(<ScheduleBuilder isSaving={false} initialEntries={saved} onSave={onSave} />)
+    expect(screen.getByText('ACH2011')).toBeTruthy()
+    expect(screen.getByText('ACH2012')).toBeTruthy()
+    expect(screen.getByText(/ter 08:00–10:00/)).toBeTruthy()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remover' })[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar grade' }))
+    expect(onSave).toHaveBeenCalledWith([saved[1], saved[2]])
+  })
+
+  it('adds a new discipline to the saved ones', async () => {
+    const onSave = vi.fn()
+    respond(200, { code: 'ACH2013', title: 'Álgebra Linear', sections: [
+      { code: '2026301', type: 'Teórica', room: 'Sala 3', startDate: '', endDate: '', slots: [{ weekday: 4, startsAt: '08:00', endsAt: '09:45' }], teachers: [] },
+    ] })
+    render(<ScheduleBuilder isSaving={false} initialEntries={saved} onSave={onSave} />)
+    await addCode('ACH2013')
+    expect(await screen.findByRole('button', { name: 'Remover ACH2013' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar grade' }))
+    expect(onSave).toHaveBeenCalledWith([...saved, { title: 'Álgebra Linear', code: 'ACH2013', building: '', weekday: 4, startsAt: '08:00', endsAt: '09:45', sectionCode: '2026301', room: 'Sala 3' }])
+  })
+
+  it('refuses a discipline that is already in the list', () => {
+    render(<ScheduleBuilder isSaving={false} initialEntries={saved} onSave={() => {}} />)
+    fireEvent.change(screen.getByLabelText('Buscar disciplina'), { target: { value: 'ach2011' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
+    expect(screen.getByRole('alert').textContent).toBe('ACH2011 já está na lista.')
+    expect(apiFetch).not.toHaveBeenCalled()
+  })
+
+  it('calls onCancel from the cancel button', () => {
+    const onCancel = vi.fn()
+    render(<ScheduleBuilder isSaving={false} initialEntries={saved} onSave={() => {}} onCancel={onCancel} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(onCancel).toHaveBeenCalledTimes(1)
   })
 })

@@ -178,7 +178,10 @@
 .builder-manual-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
 .builder-link-button { min-height: 36px; padding: 0 var(--s-2); border: 0; background: transparent; color: var(--area); font-size: 13px; font-weight: 700; cursor: pointer; }
 .builder-link-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.builder-save { margin-top: var(--s-4); width: 100%; max-width: 640px; }
+.builder-actions { display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-4); max-width: 640px; }
+.builder-save { flex: 1; min-width: 0; }
+.builder-cancel { min-height: 46px; padding: 0 var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--text-2); background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; }
+.builder-cancel:hover { border-color: var(--area); color: var(--area); }
 .schedule-error { margin-top: var(--s-3); color: var(--danger); font-size: 13px; line-height: 1.4; }
 
 .clear-schedule-button {
@@ -188,6 +191,7 @@
   font-size: 13px; font-weight: 600;
   transition: border-color 0.15s, color 0.15s;
 }
+.week-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .clear-schedule-button .icon { width: 15px; height: 15px; }
 .clear-schedule-button:hover { border-color: var(--area); color: var(--area); }
 
