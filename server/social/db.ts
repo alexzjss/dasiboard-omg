@@ -547,6 +547,7 @@ export async function ensureViewerProfile(userId: string, email: string): Promis
 // ---------- notifications ----------
 
 export type NotificationType = 'connection_request' | 'connection_accepted' | 'entity_joined' | 'entity_role_changed' | 'entity_removed' | 'badge_awarded' | 'announcement'
+  | 'event_submitted' | 'event_approved' | 'event_rejected' | 'event_hidden' | 'event_reminder'
 export type NotificationInput = { type: NotificationType; actorId?: string | null; entityId?: string | null; payload?: Record<string, unknown> }
 export type NotificationRow = {
   id: string; userId: string; type: NotificationType; actorId: string | null; entityId: string | null
