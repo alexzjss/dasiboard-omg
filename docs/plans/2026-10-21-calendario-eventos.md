@@ -1,6 +1,6 @@
 # Calendário com eventos submetidos — Planejamento
 
-> **Status:** todas as decisões tomadas (ver **Decisões** e **Decisões finais**). Pronto para executar.
+> **Status (2026-10-21):** Etapa A concluída; B1 (só "Vou"/"Tenho interesse", sem "Lembrar") e B3 (feed `.ics`) concluídas. **Pendentes para depois:** botão "Lembrar" + cron de lembretes (B2), importação do calendário USP (B4) e a revisão final (C1).
 >
 > **Modelos:** planejamento e revisão final com **Opus**; tarefas marcadas com **Sonnet** (lógica, rotas, telas) ou **Haiku** (schema, textos, ligações simples).
 
