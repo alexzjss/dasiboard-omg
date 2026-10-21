@@ -4,7 +4,7 @@ import { fetchMyEvents, type EventDto } from '../../../lib/eventsApi'
 type State = { events: EventDto[]; loading: boolean; error: unknown }
 
 /** Eventos que o próprio usuário propôs (qualquer status). */
-export function useMyEvents() {
+export function useMyEvents(version = 0) {
   const [state, setState] = useState<State>({ events: [], loading: true, error: null })
   const [tick, setTick] = useState(0)
 
@@ -20,7 +20,7 @@ export function useMyEvents() {
       },
     )
     return () => controller.abort()
-  }, [tick])
+  }, [tick, version])
 
   const reload = useCallback(() => setTick((t) => t + 1), [])
 

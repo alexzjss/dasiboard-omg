@@ -40,9 +40,9 @@ function checkEffective(event: EventRecord, fields: Partial<EventFields>): strin
 }
 
 // Loads the event for an actor; null means "answer 404" (missing or not visible: never leak existence).
-async function loadVisible(id: string, actor: EventActor): Promise<EventRecord | null> {
+async function loadVisible(id: string, actor: EventActor, otherClasses = false): Promise<EventRecord | null> {
   const event = await getEvent(id)
-  return event && canView(actor, event, { otherClasses: false }) ? event : null
+  return event && canView(actor, event, { otherClasses }) ? event : null
 }
 
 router.get('/api/events', ...authed, route('Listing events failed', async (req, res) => {
@@ -92,6 +92,13 @@ router.get('/api/events/review', ...authed, route('Listing review queue failed',
 router.get('/api/events/review/count', ...authed, route('Counting review queue failed', async (_req, res) => {
   const actor = await actorOf(res)
   res.json({ count: moderatesSomething(actor) ? (await reviewQueue(actor)).length : 0 })
+}))
+
+router.get('/api/events/:id', ...authed, route('Loading event failed', async (req, res) => {
+  const actor = await actorOf(res)
+  const event = await loadVisible(String(req.params.id ?? ''), actor, req.query.otherClasses === '1')
+  if (!event) return res.status(404).json(NOT_FOUND)
+  res.json({ event: (await presentEvents([event], actor))[0] })
 }))
 
 router.post('/api/events', ...authedWrite, route('Creating event failed', async (req, res) => {

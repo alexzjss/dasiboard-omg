@@ -139,6 +139,40 @@ describe('GET /api/events', () => {
   })
 })
 
+describe('GET /api/events/:id', () => {
+  it('returns a visible event and keeps the fixed routes ahead of :id', async () => {
+    const ana = student('Ana')
+    const event = await seed({ title: 'Palestra' })
+    const api = await as(ana)
+    const res = await api.get(`/api/events/${event.id}`)
+    expect(res.status).toBe(200)
+    expect(res.body.event).toMatchObject({ id: event.id, title: 'Palestra' })
+    expect((await api.get('/api/events/scopes')).body.scopes).toBeDefined()
+    expect((await api.get('/api/events/mine')).body.events).toBeDefined()
+  })
+
+  it('answers 404 to missing, hidden and malformed ids', async () => {
+    const ana = student('Ana')
+    const api = await as(ana)
+    const pending = await seed({ status: 'pending', createdBy: null })
+    expect((await api.get(`/api/events/${pending.id}`)).status).toBe(404)
+    expect((await api.get('/api/events/nao-e-uuid')).status).toBe(404)
+  })
+
+  it('shows another class only with otherClasses=1', async () => {
+    const ana = student('Ana', { courses: ['ACH2001'] })
+    const event = await seed({ scope: 'class', scopeValue: 'ACH9999' })
+    const api = await as(ana)
+    expect((await api.get(`/api/events/${event.id}`)).status).toBe(404)
+    expect((await api.get(`/api/events/${event.id}?otherClasses=1`)).status).toBe(200)
+  })
+
+  it('hides members-only events from non-members', async () => {
+    const event = await seed({ scope: 'entity', scopeValue: 'dasi', visibility: 'members' })
+    expect((await (await as(student('Zeca'))).get(`/api/events/${event.id}`)).status).toBe(404)
+  })
+})
+
 describe('GET /api/events/scopes', () => {
   it('lists where the student can propose and which need approval', async () => {
     const ana = student('Ana', { courses: ['ACH2001'], campus: 'EACH' })

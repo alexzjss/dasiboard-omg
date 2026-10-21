@@ -1,10 +1,4 @@
-// Marcadores das abas que A8 e A9 preenchem. Cada um recebe só o que o componente real vai precisar.
-import type { EventDto } from '../../lib/eventsApi'
-
-/** A8 substitui por <MyEvents onSelectEvent={...} />. */
-export function MyEventsPlaceholder(_props: { onSelectEvent: (event: EventDto) => void }) {
-  return <p className="com-muted">Suas submissões aparecem aqui em breve.</p>
-}
+// Marcadores das abas que a A9 preenche. Cada um recebe só o que o componente real vai precisar.
 
 /** A9 substitui por <ReviewQueue onChanged={reloadReviewCount} />. */
 export function ReviewQueuePlaceholder(_props: { onChanged: () => void }) {

@@ -6,7 +6,7 @@ import type { ScheduleEntry } from '../home/types'
 
 vi.mock('../../lib/eventsApi', async (orig) => {
   const actual = await orig<typeof import('../../lib/eventsApi')>()
-  return { ...actual, fetchEvents: vi.fn(), fetchReviewCount: vi.fn(), fetchMyEvents: vi.fn(), fetchReviewQueue: vi.fn(), fetchEventScopes: vi.fn() }
+  return { ...actual, fetchEvents: vi.fn(), fetchEvent: vi.fn(), fetchReviewCount: vi.fn(), fetchMyEvents: vi.fn(), fetchReviewQueue: vi.fn(), fetchEventScopes: vi.fn() }
 })
 vi.mock('../../auth/authContext', () => ({
   useAuth: () => ({ status: 'authenticated', user: { name: 'Ana', email: 'ana@usp.br', picture: null }, login: vi.fn(), logout: vi.fn() }),
@@ -14,7 +14,7 @@ vi.mock('../../auth/authContext', () => ({
 const scheduleMock = vi.hoisted(() => ({ entries: [] as ScheduleEntry[] }))
 vi.mock('../home/useSchedule', () => ({ useSchedule: () => ({ schedule: scheduleMock.entries }) }))
 
-import { fetchEvents, fetchReviewCount } from '../../lib/eventsApi'
+import { fetchEvent, fetchEvents, fetchEventScopes, fetchMyEvents, fetchReviewCount } from '../../lib/eventsApi'
 import { CalendarioPage } from './CalendarioPage'
 
 // Quarta, 21 out 2026 (America/Sao_Paulo).
@@ -107,9 +107,44 @@ describe('CalendarioPage', () => {
   it('?evento abre o painel do evento e a agenda agrupa por dia', async () => {
     vi.mocked(fetchEvents).mockResolvedValue([event({ id: 'e9', title: 'Palestra', startsAt: '2026-10-21T10:00:00-03:00', endsAt: null })])
     renderPage('/calendario?evento=e9')
-    const panel = await screen.findByRole('complementary', { name: 'Detalhe do evento' })
+    const panel = await screen.findByRole('dialog', { name: 'Palestra' })
     expect(within(panel).getByText('Palestra')).toBeTruthy()
     fireEvent.click(screen.getByRole('radio', { name: 'Agenda' }))
     expect(await screen.findByRole('heading', { name: 'Qua, 21 out' })).toBeTruthy()
+  })
+
+  it('?evento fora do mês carregado busca por id, vai para o mês do evento e abre o detalhe', async () => {
+    vi.mocked(fetchEvent).mockResolvedValue(event({ id: 'far', title: 'Formatura', startsAt: '2026-12-10T19:00:00-03:00', endsAt: null }))
+    renderPage('/calendario?evento=far')
+    expect(await screen.findByRole('dialog', { name: 'Formatura' })).toBeTruthy()
+    expect(vi.mocked(fetchEvent).mock.calls[0].slice(0, 2)).toEqual(['far', { otherClasses: false }])
+    expect(await screen.findByRole('heading', { name: 'Dezembro de 2026' })).toBeTruthy()
+  })
+
+  it('?evento inexistente tira o detalhe sem erro', async () => {
+    vi.mocked(fetchEvent).mockRejectedValue(new Error('404'))
+    renderPage('/calendario?evento=nada')
+    await waitFor(() => expect(fetchEvent).toHaveBeenCalled())
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('"Propor evento" fica no cabeçalho e abre o formulário', async () => {
+    vi.mocked(fetchEventScopes).mockResolvedValue([{ scope: 'usp', scopeValue: null, label: 'USP', moderated: true }])
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: 'Propor evento' }))
+    expect(await screen.findByRole('dialog', { name: 'Propor evento' })).toBeTruthy()
+  })
+
+  it('aba Minhas submissões lista e mostra o vazio com botão de propor', async () => {
+    vi.mocked(fetchMyEvents).mockResolvedValue([])
+    renderPage('/calendario?aba=minhas')
+    expect(await screen.findByText('Você ainda não propôs nenhum evento')).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'Propor evento' })).toHaveLength(2)
+    cleanup()
+    vi.mocked(fetchMyEvents).mockResolvedValue([event({ id: 'm1', title: 'Hackathon', status: 'rejected', reviewNote: 'Fora do escopo' })])
+    renderPage('/calendario?aba=minhas')
+    expect(await screen.findByText('Hackathon')).toBeTruthy()
+    expect(screen.getByText('Recusado')).toBeTruthy()
+    expect(screen.getByText('Motivo da recusa: Fora do escopo')).toBeTruthy()
   })
 })

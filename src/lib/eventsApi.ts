@@ -107,6 +107,11 @@ export async function fetchEvents(range: EventRange, { otherClasses }: { otherCl
   return body.events
 }
 
+export async function fetchEvent(id: string, { otherClasses }: { otherClasses: boolean }, signal?: AbortSignal): Promise<EventDto> {
+  const body = await request<{ event: EventDto }>(`/api/events/${enc(id)}${otherClasses ? '?otherClasses=1' : ''}`, { signal })
+  return body.event
+}
+
 export async function fetchEventScopes(signal?: AbortSignal): Promise<EventScopeOption[]> {
   const body = await request<{ scopes: EventScopeOption[] }>('/api/events/scopes', { signal })
   return body.scopes

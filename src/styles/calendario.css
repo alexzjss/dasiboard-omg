@@ -61,10 +61,57 @@ button.cal-row:hover { background: var(--hover); }
 .cal-row-meta { color: var(--text-muted); font-size: 13px; }
 .cal-status { flex: 0 0 auto; align-self: center; padding: 2px var(--s-2); border: 1px solid var(--accent-line); border-radius: var(--r-pill); background: var(--accent-soft); color: var(--text-2); font-size: 12px; font-weight: 600; }
 
-.cal-panel { margin-top: var(--s-5); padding: var(--s-4); border: 1px solid var(--accent-line); border-radius: var(--r-md); background: var(--surface-1); }
+/* Cabeçalho, aviso curto e botões */
+.cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.cal-primary { border-color: var(--accent-line-strong); background: var(--accent-soft); }
+.cal-danger { border-color: var(--danger-line); background: var(--danger-soft); color: var(--danger); }
+.cal-toast { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); border: 1px solid var(--accent-line); border-radius: var(--r-md); background: var(--accent-soft); color: var(--text); font-weight: 600; }
+.cal-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-4); }
+
+/* Detalhe e formulário: folha embaixo no celular, painel lateral no PC (como o detalhe das entidades) */
+.cal-backdrop { position: fixed; inset: 0; z-index: var(--z-menu); background: var(--overlay); backdrop-filter: blur(var(--blur-overlay)); -webkit-backdrop-filter: blur(var(--blur-overlay)); }
+.cal-sheet {
+  position: fixed; z-index: var(--z-modal); left: 0; right: 0; bottom: 0; margin: 0 auto;
+  width: min(640px, 100%); max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 var(--s-4) max(var(--s-6), env(safe-area-inset-bottom, 0px));
+  border: 1px solid var(--line); border-bottom: 0; border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--surface-1); box-shadow: var(--shadow-2); color: var(--text);
+  animation: cal-sheet-up 0.2s ease-out;
+}
+.cal-sheet-handle { width: 40px; height: 4px; margin: var(--s-3) auto var(--s-4); border-radius: var(--r-sm); background: var(--line-strong); }
+@keyframes cal-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 .cal-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); }
 .cal-panel-head h2 { margin: 0; font: 700 18px 'Manrope', sans-serif; overflow-wrap: anywhere; }
-.cal-panel p { margin: var(--s-2) 0 0; }
+.cal-sheet p { margin: var(--s-2) 0 0; }
+.cal-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--s-1) var(--s-4); margin: var(--s-4) 0 0; }
+.cal-facts dt { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.cal-facts dd { margin: 0; overflow-wrap: anywhere; }
+.cal-facts a, .cal-sheet a { color: var(--area); }
+.cal-description { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.cal-notice { padding: var(--s-2) var(--s-3); border: 1px solid var(--accent-line); border-radius: var(--r-md); background: var(--accent-soft); color: var(--text-2); font-size: 14px; }
+.cal-notice ul { margin: var(--s-1) 0 0; padding-left: var(--s-5); }
+.cal-confirm { margin-top: var(--s-4); padding: var(--s-3); border: 1px solid var(--danger-line); border-radius: var(--r-md); background: var(--danger-soft); }
+.cal-form-error { padding: var(--s-2) var(--s-3); border: 1px solid var(--danger-line); border-radius: var(--r-md); background: var(--danger-soft); color: var(--danger); font-size: 14px; }
+
+.cal-form { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
+.cal-form-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
+.cal-textarea { min-height: 88px; padding: var(--s-2) var(--s-3); font-family: inherit; line-height: 1.4; resize: vertical; }
+.cal-hint { color: var(--text-muted); font-size: 12px; }
+.cal-check { display: flex; align-items: center; gap: var(--s-2); min-height: 44px; font-size: 15px; }
+.cal-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.cal-empty .com-btn { margin-top: var(--s-3); }
+.cal-sheet .com-btn:focus-visible, .cal-sheet a:focus-visible { outline: 2px solid var(--area); outline-offset: 2px; }
+
+@media (min-width: 480px) {
+  .cal-form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .cal-backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .cal-sheet { top: 0; left: auto; right: 0; margin: 0; width: 440px; max-height: none; padding: var(--s-6); border: 0; border-left: 1px solid var(--line); border-radius: 0; animation: cal-sheet-in 0.2s ease-out; }
+  .cal-sheet-handle { display: none; }
+}
+@keyframes cal-sheet-in { from { transform: translateX(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cal-sheet { animation: none; } }
 
 /* Celular: sem rolagem horizontal; chips viram pontos */
 @media (max-width: 640px) {

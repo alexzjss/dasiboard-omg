@@ -95,3 +95,12 @@ export function compareEvents(a: EventDto, b: EventDto): number {
   if (a.allDay !== b.allDay) return a.allDay ? -1 : 1
   return a.startsAt.localeCompare(b.startsAt) || a.title.localeCompare(b.title, 'pt-BR')
 }
+
+/** "Qua, 21 out · 14:00–16:00", "Qua, 21 out → Sex, 23 out · Dia todo". */
+export function describeWhen(event: Pick<EventDto, 'startsAt' | 'endsAt' | 'allDay'>): string {
+  const startDay = saoPauloDateKey(event.startsAt)
+  const endDay = event.endsAt ? saoPauloDateKey(event.endsAt) : startDay
+  if (endDay === startDay) return `${dayLabel(startDay)} · ${formatEventTime(event)}`
+  if (event.allDay) return `${dayLabel(startDay)} → ${dayLabel(endDay)} · Dia todo`
+  return `${dayLabel(startDay)} ${formatTime(event.startsAt)} → ${dayLabel(endDay)} ${formatTime(event.endsAt!)}`
+}

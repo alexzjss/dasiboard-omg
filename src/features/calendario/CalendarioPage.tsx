@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/authContext'
 import type { User } from '../../auth/types'
 import { CountBadge } from '../../components/CountBadge'
-import type { EventDto } from '../../lib/eventsApi'
+import { fetchEvent, type EventDto } from '../../lib/eventsApi'
 import { saveCalendarFilters } from '../../lib/storage'
 import { SegmentedControl } from '../perfil/SegmentedControl'
 import { useSchedule } from '../home/useSchedule'
@@ -12,13 +12,15 @@ import { CalendarFilters } from './CalendarFilters'
 import { addDays, compareEvents, jupiterWeekdayOfKey, monthKey, monthOfKey, monthTitle, shiftMonth, todayKey, type MonthRef } from './calendarFormat'
 import { agendaRange, eventDays, monthGridRange, saoPauloDateKey } from './dateRange'
 import { DayList } from './DayList'
-import { EventDetailPanel } from './EventDetailPanel'
+import { EventDetail } from './EventDetail'
+import { EventForm } from './EventForm'
 import { eventPassesFilters, initialFilters, type CalendarFilters as Filters } from './filters'
 import { useEvents } from './hooks/useEvents'
 import { useReviewCount } from './hooks/useReviewCount'
 import { groupClassesByWeekday } from './calendarGrouping'
 import { MonthGrid } from './MonthGrid'
-import { MyEventsPlaceholder, ReviewQueuePlaceholder } from './TabPlaceholders'
+import { MyEvents } from './MyEvents'
+import { ReviewQueuePlaceholder } from './TabPlaceholders'
 
 type PageTab = 'calendario' | 'minhas' | 'revisar'
 type View = 'month' | 'agenda'
@@ -51,7 +53,12 @@ function CalendarioContent({ user }: { user: User }) {
   const { events, loading, error, reload } = useEvents(range, { otherClasses: filters.others })
 
   const eventId = params.get('evento')
-  const selectedEvent = eventId ? events.find((e) => e.id === eventId) ?? null : null
+  // Evento aberto por ?evento=<id> fora do período carregado: vem de GET /api/events/:id.
+  const [fetched, setFetched] = useState<EventDto | null>(null)
+  const [proposing, setProposing] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [mineVersion, setMineVersion] = useState(0)
+  const selectedEvent = eventId ? events.find((e) => e.id === eventId) ?? (fetched?.id === eventId ? fetched : null) : null
   const moderates = reviewCount > 0 || events.some((e) => e.permissions.moderate)
 
   const tabs: { id: PageTab; label: string; badge?: number }[] = [
@@ -96,6 +103,18 @@ function CalendarioContent({ user }: { user: User }) {
     })
   }
 
+  const changed = useCallback((message?: string) => {
+    reload()
+    setMineVersion((v) => v + 1)
+    reloadReviewCount()
+    if (message) setNotice(message)
+  }, [reload, reloadReviewCount])
+  useEffect(() => {
+    if (!notice) return
+    const timer = setTimeout(() => setNotice(null), 6000)
+    return () => clearTimeout(timer)
+  }, [notice])
+
   function changeFilters(next: Filters) {
     setFilters(next)
     saveCalendarFilters(next)
@@ -113,16 +132,32 @@ function CalendarioContent({ user }: { user: User }) {
     if (ref.year !== month.year || ref.month !== month.month) setMonth(ref)
   }
 
-  // ?evento=<id> aberto direto (notificação): ainda não há rota para buscar um evento por id, então, se ele não está
-  // no período carregado, voltamos ao mês de hoje uma única vez. Achado, seleciona o dia dele na grade.
-  const fallbackFor = useRef<string | null>(null)
+  // ?evento=<id> aberto direto (notificação): se não está no período carregado, busca por id, vai para o mês
+  // dele e abre o detalhe. Se não existe ou não é visível, tira o parâmetro da URL.
+  const fetchedFor = useRef<string | null>(null)
+  useEffect(() => { if (!eventId) setFetched(null) }, [eventId])
   useEffect(() => {
-    if (!eventId || loading || error || selectedEvent || fallbackFor.current === eventId) return
-    fallbackFor.current = eventId
-    setView('month')
-    setMonth(monthOfKey(todayKey()))
-    setSelectedDay(todayKey())
-  }, [eventId, loading, error, selectedEvent])
+    if (!eventId || loading || error || selectedEvent || fetchedFor.current === eventId) return
+    fetchedFor.current = eventId
+    const controller = new AbortController()
+    fetchEvent(eventId, { otherClasses: filters.others }, controller.signal).then(
+      (found) => {
+        if (controller.signal.aborted) return
+        setFetched(found)
+        if (params.get('aba')) return
+        const day = saoPauloDateKey(found.startsAt)
+        setView('month')
+        setMonth(monthOfKey(day))
+        setSelectedDay(day)
+      },
+      (err: unknown) => {
+        if (controller.signal.aborted) return
+        fetchedFor.current = null
+        if (!(err instanceof DOMException)) closeEvent()
+      },
+    )
+    return () => { controller.abort(); if (fetchedFor.current === eventId) fetchedFor.current = null }
+  }, [eventId, loading, error, selectedEvent, filters.others, closeEvent, params])
   const selectedEventId = selectedEvent?.id
   const selectedEventStart = selectedEvent?.startsAt
   useEffect(() => {
@@ -137,7 +172,9 @@ function CalendarioContent({ user }: { user: User }) {
     <main className="com-content cal-page">
       <header className="com-heading cal-head">
         <h1>Calendário</h1>
+        <button type="button" className="com-btn cal-primary" onClick={() => setProposing(true)}>Propor evento</button>
       </header>
+      {notice && <p className="cal-toast" role="status">{notice}</p>}
 
       <div className="com-tabs" role="tablist" aria-label="Seções do calendário">
         {tabs.map((t) => (
@@ -160,7 +197,7 @@ function CalendarioContent({ user }: { user: User }) {
       </div>
 
       <div role="tabpanel" id={`cal-panel-${tab}`} aria-labelledby={`cal-tab-${tab}`}>
-        {tab === 'minhas' && <MyEventsPlaceholder onSelectEvent={selectEvent} />}
+        {tab === 'minhas' && <MyEvents onSelectEvent={selectEvent} onPropose={() => setProposing(true)} version={mineVersion} />}
         {tab === 'revisar' && <ReviewQueuePlaceholder onChanged={reloadReviewCount} />}
         {tab === 'calendario' && (
           <>
@@ -213,10 +250,12 @@ function CalendarioContent({ user }: { user: User }) {
               </div>
             )}
 
-            {selectedEvent && <EventDetailPanel event={selectedEvent} onClose={closeEvent} />}
           </>
         )}
       </div>
+
+      {selectedEvent && <EventDetail key={selectedEvent.id} event={selectedEvent} onClose={closeEvent} onChanged={changed} />}
+      {proposing && <EventForm onClose={() => setProposing(false)} onSaved={(message) => { setProposing(false); changed(message) }} />}
     </main>
   )
 }
