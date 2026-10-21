@@ -234,3 +234,11 @@ export function validateReport(body: unknown): Validated<{ reason: string | null
   if (!reason.ok) return reason
   return { ok: true, value: { reason: reason.value } }
 }
+
+export function validateRsvp(body: unknown): Validated<{ status: 'going' | 'interested' | null }> {
+  if (!isObject(body)) return fail('Dados inválidos')
+  if (Object.keys(body).some((key) => key !== 'status')) return fail('Campo desconhecido')
+  const { status } = body
+  if (status !== null && status !== 'going' && status !== 'interested') return fail('Status inválido')
+  return { ok: true, value: { status } }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { cancelEvent, KIND_LABEL, reportEvent, type EventDto } from '../../lib/eventsApi'
+import { cancelEvent, KIND_LABEL, reportEvent, setEventRsvp, type EventDto, type EventRsvp, type RsvpStatus } from '../../lib/eventsApi'
 import { ApiError } from '../../lib/socialApi'
 import { useDialogFocus } from '../../lib/useDialogFocus'
 import { describeWhen, statusBadge } from './calendarFormat'
@@ -39,6 +39,9 @@ export function EventDetail({ event, onClose, onChanged }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reported, setReported] = useState(event.reportedByMe)
+  const [rsvp, setRsvp] = useState<EventRsvp>(event.rsvp)
+  const [rsvpBusy, setRsvpBusy] = useState(false)
+  const [openedAt] = useState(() => Date.now())
 
   useEffect(() => { confirmRef.current?.querySelector<HTMLElement>('button, textarea')?.focus() }, [confirm])
 
@@ -68,6 +71,30 @@ export function EventDetail({ event, onClose, onChanged }: Props) {
     setReported(true)
     return res.hidden ? 'Denunciado; o evento foi escondido até um admin revisar' : 'Denunciado'
   }, false)
+
+  const canRsvp = event.status === 'approved' && !(Date.parse(event.endsAt ?? event.startsAt) < openedAt)
+
+  // Optimistic: show the new state at once and go back to the previous one if the server refuses.
+  async function toggleRsvp(target: RsvpStatus) {
+    if (rsvpBusy) return
+    const previous = rsvp
+    const next: RsvpStatus | null = previous.mine === target ? null : target
+    const counts = { going: previous.going, interested: previous.interested }
+    if (previous.mine) counts[previous.mine] -= 1
+    if (next) counts[next] += 1
+    setRsvp({ ...counts, mine: next })
+    setRsvpBusy(true)
+    setError(null)
+    try {
+      setRsvp(await setEventRsvp(event.id, next))
+      onChanged()
+    } catch (err) {
+      setRsvp(previous)
+      setError(err instanceof ApiError ? err.message : 'Não foi possível salvar sua resposta')
+    } finally {
+      setRsvpBusy(false)
+    }
+  }
 
   return createPortal(
     <>
@@ -100,6 +127,16 @@ export function EventDetail({ event, onClose, onChanged }: Props) {
           <div className="cal-notice" role="note">
             <strong>Edição aguardando aprovação</strong>
             <ul>{pending.map((line) => <li key={line}>{line}</li>)}</ul>
+          </div>
+        )}
+
+        {canRsvp && (
+          <div className="cal-rsvp" role="group" aria-label="Sua presença">
+            <div className="cal-rsvp-buttons">
+              <button type="button" className="com-btn" aria-pressed={rsvp.mine === 'going'} disabled={rsvpBusy} onClick={() => toggleRsvp('going')}>Vou</button>
+              <button type="button" className="com-btn" aria-pressed={rsvp.mine === 'interested'} disabled={rsvpBusy} onClick={() => toggleRsvp('interested')}>Tenho interesse</button>
+            </div>
+            <p className="cal-rsvp-count">{rsvp.going} {rsvp.going === 1 ? 'vai' : 'vão'} · {rsvp.interested} com interesse</p>
           </div>
         )}
 

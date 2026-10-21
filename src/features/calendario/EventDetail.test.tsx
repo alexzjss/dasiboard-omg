@@ -5,10 +5,10 @@ import type { EventDto } from '../../lib/eventsApi'
 
 vi.mock('../../lib/eventsApi', async (orig) => {
   const actual = await orig<typeof import('../../lib/eventsApi')>()
-  return { ...actual, cancelEvent: vi.fn(), reportEvent: vi.fn(), updateEvent: vi.fn(), createEvent: vi.fn(), fetchEventScopes: vi.fn() }
+  return { ...actual, cancelEvent: vi.fn(), reportEvent: vi.fn(), setEventRsvp: vi.fn(), updateEvent: vi.fn(), createEvent: vi.fn(), fetchEventScopes: vi.fn() }
 })
 
-import { cancelEvent, fetchEventScopes, reportEvent } from '../../lib/eventsApi'
+import { cancelEvent, fetchEventScopes, reportEvent, setEventRsvp } from '../../lib/eventsApi'
 import { ApiError } from '../../lib/socialApi'
 import { EventDetail } from './EventDetail'
 
@@ -17,7 +17,7 @@ const event = (over: Partial<EventDto> = {}): EventDto => ({
   visibility: 'public', startsAt: '2026-10-25T14:00:00-03:00', endsAt: '2026-10-25T16:00:00-03:00', allDay: false,
   location: 'Sala 3', link: 'https://exemplo.com/a', status: 'approved', source: 'user', createdAt: '2026-10-01T10:00:00-03:00',
   author: { name: 'Ana', handle: 'ana1' }, pendingChanges: null, reviewNote: null,
-  permissions: { edit: false, cancel: false, report: false, moderate: false }, reportedByMe: false,
+  permissions: { edit: false, cancel: false, report: false, moderate: false }, reportedByMe: false, rsvp: { going: 0, interested: 0, mine: null },
   ...over,
 })
 const perms = (over: Partial<EventDto['permissions']>) => ({ edit: false, cancel: false, report: false, moderate: false, ...over })
@@ -118,5 +118,54 @@ describe('EventDetail', () => {
     cleanup()
     renderDetail(event({ status: 'rejected', reviewNote: 'Data errada' }))
     expect(screen.getByText('Motivo da recusa: Data errada')).toBeTruthy()
+  })
+
+  describe('Vou / Tenho interesse', () => {
+    const soon = () => ({ startsAt: new Date(Date.now() + 86_400_000).toISOString(), endsAt: null })
+    const rsvp = (mine: 'going' | 'interested' | null, going = 12, interested = 5) => ({ going, interested, mine })
+
+    it('alterna "Vou" com atualização otimista e mostra as contagens', async () => {
+      let resolve!: (v: ReturnType<typeof rsvp>) => void
+      vi.mocked(setEventRsvp).mockReturnValue(new Promise((r) => { resolve = r }))
+      renderDetail(event({ ...soon(), rsvp: rsvp(null) }))
+      expect(screen.getByText('12 vão · 5 com interesse')).toBeTruthy()
+      const going = screen.getByRole('button', { name: 'Vou' })
+      expect(going.getAttribute('aria-pressed')).toBe('false')
+      fireEvent.click(going)
+      expect(setEventRsvp).toHaveBeenCalledWith('e1', 'going')
+      expect(screen.getByText('13 vão · 5 com interesse')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Vou' }).getAttribute('aria-pressed')).toBe('true')
+      resolve(rsvp('going', 13, 5))
+      await waitFor(() => expect((screen.getByRole('button', { name: 'Vou' }) as HTMLButtonElement).disabled).toBe(false))
+      fireEvent.click(screen.getByRole('button', { name: 'Tenho interesse' }))
+      expect(setEventRsvp).toHaveBeenLastCalledWith('e1', 'interested')
+      expect(screen.getByText('12 vão · 6 com interesse')).toBeTruthy()
+    })
+
+    it('clicar de novo no botão marcado remove a resposta', async () => {
+      vi.mocked(setEventRsvp).mockResolvedValue(rsvp(null, 11, 5))
+      renderDetail(event({ ...soon(), rsvp: rsvp('going') }))
+      fireEvent.click(screen.getByRole('button', { name: 'Vou' }))
+      expect(setEventRsvp).toHaveBeenCalledWith('e1', null)
+      expect(await screen.findByText('11 vão · 5 com interesse')).toBeTruthy()
+    })
+
+    it('reverte e mostra o erro quando o servidor recusa', async () => {
+      vi.mocked(setEventRsvp).mockRejectedValue(new ApiError(409, 'Esse evento já passou'))
+      renderDetail(event({ ...soon(), rsvp: rsvp(null) }))
+      fireEvent.click(screen.getByRole('button', { name: 'Vou' }))
+      expect((await screen.findByRole('alert')).textContent).toBe('Esse evento já passou')
+      expect(screen.getByText('12 vão · 5 com interesse')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Vou' }).getAttribute('aria-pressed')).toBe('false')
+    })
+
+    it('esconde os botões em evento pendente e em evento que já passou', () => {
+      renderDetail(event({ ...soon(), status: 'pending' }))
+      expect(screen.queryByRole('button', { name: 'Vou' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Tenho interesse' })).toBeNull()
+      cleanup()
+      renderDetail(event({ startsAt: '2020-01-01T10:00:00-03:00', endsAt: null }))
+      expect(screen.queryByRole('button', { name: 'Vou' })).toBeNull()
+    })
   })
 })

@@ -22,7 +22,7 @@ const event = (over: Partial<EventDto> = {}): EventDto => ({
   id: 'e1', title: 'Reunião', description: null, kind: 'meeting', scope: 'entity', scopeValue: 'dasi', scopeLabel: 'DASI',
   visibility: 'public', startsAt: '2026-10-25T14:00:00-03:00', endsAt: '2026-10-25T16:00:00-03:00', allDay: false,
   location: null, link: null, status: 'approved', source: 'user', createdAt: '2026-10-01T10:00:00-03:00', author: { name: 'Ana', handle: 'ana1' },
-  pendingChanges: null, reviewNote: null, permissions: { edit: true, cancel: true, report: false, moderate: false }, reportedByMe: false,
+  pendingChanges: null, reviewNote: null, permissions: { edit: true, cancel: true, report: false, moderate: false }, reportedByMe: false, rsvp: { going: 0, interested: 0, mine: null },
   ...over,
 })
 

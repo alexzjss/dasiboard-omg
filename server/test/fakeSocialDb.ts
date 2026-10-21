@@ -32,10 +32,11 @@ export const store = {
   campus: new Map<string, string>(),
   events: [] as (EventRecord & { entityId: string | null })[],
   eventReports: [] as { eventId: string; userId: string; reason: string | null }[],
+  eventRsvps: [] as { eventId: string; userId: string; status: 'going' | 'interested' }[],
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; store.campus.clear(); store.events = []; store.eventReports = []; definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; store.campus.clear(); store.events = []; store.eventReports = []; store.eventRsvps = []; definitions.clear()
 }
 
 export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[]; campus?: string }) {
@@ -403,6 +404,21 @@ export async function hideEventIfApproved(eventId: string) {
 export async function clearEventReports(eventId: string) { store.eventReports = store.eventReports.filter((r) => r.eventId !== eventId) }
 export async function listMyReports(userId: string, eventIds: string[]) {
   return store.eventReports.filter((r) => r.userId === userId && eventIds.includes(r.eventId)).map((r) => r.eventId)
+}
+export async function setRsvp(eventId: string, userId: string, status: 'going' | 'interested' | null) {
+  store.eventRsvps = store.eventRsvps.filter((r) => !(r.eventId === eventId && r.userId === userId))
+  if (status !== null) store.eventRsvps.push({ eventId, userId, status })
+}
+export async function getRsvpSummary(eventIds: string[], viewerId: string) {
+  const summary = new Map<string, { going: number; interested: number; mine: 'going' | 'interested' | null }>()
+  for (const id of eventIds.slice(0, 200)) summary.set(id, { going: 0, interested: 0, mine: null })
+  for (const r of store.eventRsvps) {
+    const entry = summary.get(r.eventId)
+    if (!entry) continue
+    entry[r.status] += 1
+    if (r.userId === viewerId) entry.mine = r.status
+  }
+  return summary
 }
 export async function findEventModeratorIds(ref: Parameters<typeof Real.findEventModeratorIds>[0]) {
   const ids = new Set<string>()

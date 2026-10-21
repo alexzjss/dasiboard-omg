@@ -31,6 +31,9 @@ export type EventFields = {
   visibility: EventVisibility
 }
 
+export type RsvpStatus = 'going' | 'interested'
+export type EventRsvp = { going: number; interested: number; mine: RsvpStatus | null }
+
 export type EventDto = {
   id: string
   title: string
@@ -54,6 +57,8 @@ export type EventDto = {
   reviewNote: string | null
   permissions: { edit: boolean; cancel: boolean; report: boolean; moderate: boolean }
   reportedByMe: boolean
+  /** Só contagens; a API nunca diz quem vai. */
+  rsvp: EventRsvp
 }
 
 /** Item da fila de moderação (GET /api/events/review). */
@@ -153,3 +158,8 @@ export async function reviewEvent(id: string, body: ReviewBody): Promise<EventDt
 
 export const reportEvent = (id: string, reason?: string) =>
   request<{ reported: boolean; hidden: boolean }>(`/api/events/${enc(id)}/report`, { method: 'POST', json: reason ? { reason } : {} })
+
+export async function setEventRsvp(id: string, status: RsvpStatus | null): Promise<EventRsvp> {
+  const body = await request<{ rsvp: EventRsvp }>(`/api/events/${enc(id)}/rsvp`, { method: 'PUT', json: { status } })
+  return body.rsvp
+}

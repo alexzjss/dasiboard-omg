@@ -412,6 +412,69 @@ describe('POST /api/events/:id/report', () => {
   })
 })
 
+describe('PUT /api/events/:id/rsvp', () => {
+  const put = (api: Awaited<ReturnType<typeof as>>, id: string, payload: unknown) => api.put(`/api/events/${id}/rsvp`).send(payload as object)
+
+  it('counts going and interested, swaps without double counting and clears on null', async () => {
+    const [ana, bia, caio] = ['Ana', 'Bia', 'Caio'].map((name) => student(name))
+    const event = await seed({})
+    const a = await as(ana)
+    expect((await put(a, event.id, { status: 'going' })).body).toEqual({ rsvp: { going: 1, interested: 0, mine: 'going' } })
+    expect((await put(await as(bia), event.id, { status: 'going' })).body.rsvp).toEqual({ going: 2, interested: 0, mine: 'going' })
+    expect((await put(await as(caio), event.id, { status: 'interested' })).body.rsvp).toEqual({ going: 2, interested: 1, mine: 'interested' })
+    expect((await put(a, event.id, { status: 'interested' })).body.rsvp).toEqual({ going: 1, interested: 2, mine: 'interested' })
+    expect(store.eventRsvps.filter((r) => r.userId === ana.id)).toHaveLength(1)
+    expect((await put(a, event.id, { status: null })).body.rsvp).toEqual({ going: 1, interested: 1, mine: null })
+    const listed = (await a.get(`/api/events?${RANGE()}`)).body.events[0]
+    expect(listed.rsvp).toEqual({ going: 1, interested: 1, mine: null })
+  })
+
+  it('never returns ids or names of other people', async () => {
+    const ana = student('Ana')
+    const bia = student('Bia')
+    const event = await seed({ createdBy: ana.id })
+    await put(await as(bia), event.id, { status: 'going' })
+    const res = await put(await as(ana), event.id, { status: 'going' })
+    expect(Object.keys(res.body)).toEqual(['rsvp'])
+    expect(Object.keys(res.body.rsvp).sort()).toEqual(['going', 'interested', 'mine'])
+    const text = JSON.stringify([res.body, (await (await as(ana)).get(`/api/events/${event.id}`)).body.event.rsvp])
+    expect(text).not.toContain(bia.id)
+    expect(text).not.toContain('Bia')
+  })
+
+  it('answers 404 to someone who cannot see the event, with nothing stored', async () => {
+    const event = await seed({ scope: 'class', scopeValue: 'ACH2001' })
+    const res = await put(await as(student('Zeca')), event.id, { status: 'going' })
+    expect(res.status).toBe(404)
+    expect(store.eventRsvps).toHaveLength(0)
+    expect((await put(await as(student('Zé')), 'xyz', { status: 'going' })).status).toBe(404)
+  })
+
+  it('answers 409 for past, pending and hidden events', async () => {
+    const ana = student('Ana')
+    const api = await as(ana)
+    const past = await seed({ startsAt: future(-3), endsAt: future(-2) })
+    const res = await put(api, past.id, { status: 'going' })
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('Esse evento já passou')
+    const ongoing = await seed({ startsAt: future(-1), endsAt: future(1) })
+    expect((await put(api, ongoing.id, { status: 'going' })).status).toBe(200)
+    const pending = await seed({ status: 'pending', createdBy: ana.id })
+    expect((await put(api, pending.id, { status: 'going' })).status).toBe(409)
+    const hidden = await seed({ status: 'hidden', createdBy: ana.id })
+    expect((await put(api, hidden.id, { status: 'going' })).status).toBe(409)
+  })
+
+  it('rejects unknown keys and bad statuses with 400', async () => {
+    const api = await as(student('Ana'))
+    const event = await seed({})
+    expect((await put(api, event.id, { status: 'going', remind: true })).status).toBe(400)
+    expect((await put(api, event.id, { status: 'maybe' })).status).toBe(400)
+    expect((await put(api, event.id, {})).status).toBe(400)
+    expect(store.eventRsvps).toHaveLength(0)
+  })
+})
+
 describe('DTO', () => {
   it('has no raw user ids and exposes permissions', async () => {
     const ana = student('Ana', { courses: ['ACH2001'] })

@@ -879,6 +879,42 @@ export async function listMyReports(userId: string, eventIds: string[]): Promise
   return rows.map((row) => row.event_id)
 }
 
+export type RsvpStatus = 'going' | 'interested'
+export type RsvpSummary = { going: number; interested: number; mine: RsvpStatus | null }
+const RSVP_EVENT_CAP = 200
+const RSVP_PAGE = 1000
+
+export async function setRsvp(eventId: string, userId: string, status: RsvpStatus | null): Promise<void> {
+  if (!UUID.test(eventId)) return
+  const client = getClient()
+  if (status === null) {
+    const { error } = await client.from('event_rsvps').delete().eq('event_id', eventId).eq('user_id', userId)
+    if (error) throw new Error(`Could not clear RSVP: ${error.message}`)
+    return
+  }
+  const { error } = await client.from('event_rsvps').upsert({ event_id: eventId, user_id: userId, status }, { onConflict: 'event_id,user_id' })
+  if (error) throw new Error(`Could not save RSVP: ${error.message}`)
+}
+
+// One batched read (paged past PostgREST's row cap), counted in memory: fine for a few hundred students. Never exposes who is going.
+export async function getRsvpSummary(eventIds: string[], viewerId: string): Promise<Map<string, RsvpSummary>> {
+  const ids = eventIds.filter((id) => UUID.test(id)).slice(0, RSVP_EVENT_CAP)
+  const summary = new Map<string, RsvpSummary>(ids.map((id) => [id, { going: 0, interested: 0, mine: null }]))
+  if (ids.length === 0) return summary
+  for (let from = 0; ; from += RSVP_PAGE) {
+    const rows = check('Could not load RSVPs', await getClient().from('event_rsvps').select('event_id, user_id, status').in('event_id', ids)
+      .order('event_id').order('user_id').range(from, from + RSVP_PAGE - 1).returns<{ event_id: string; user_id: string; status: RsvpStatus }[]>()) ?? []
+    for (const row of rows) {
+      const entry = summary.get(row.event_id)
+      if (!entry) continue
+      entry[row.status] += 1
+      if (row.user_id === viewerId) entry.mine = row.status
+    }
+    if (rows.length < RSVP_PAGE) break
+  }
+  return summary
+}
+
 export async function findEventModeratorIds(ref: ScopeRef): Promise<string[]> {
   const client = getClient()
   const ids = new Set<string>()

@@ -16,7 +16,7 @@ const item = (over: Partial<ReviewEventDto> = {}): ReviewEventDto => ({
   id: 'e1', title: 'Hackathon', description: 'Maratona de código', kind: 'event', scope: 'entity', scopeValue: 'dasi', scopeLabel: 'DASI',
   visibility: 'public', startsAt: '2027-03-10T14:00:00-03:00', endsAt: null, allDay: false, location: null, link: null,
   status: 'pending', source: 'user', createdAt: '2026-10-01T10:00:00-03:00', author: { name: 'Ana', handle: 'ana' },
-  pendingChanges: null, reviewNote: null, permissions: { edit: false, cancel: false, report: false, moderate: true }, reportedByMe: false,
+  pendingChanges: null, reviewNote: null, permissions: { edit: false, cancel: false, report: false, moderate: true }, reportedByMe: false, rsvp: { going: 0, interested: 0, mine: null },
   reviewKind: 'new', ...over,
 })
 

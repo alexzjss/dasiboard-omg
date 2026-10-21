@@ -6,10 +6,10 @@ import { requireSession } from '../lib/session.js'
 import { presentEvents, reviewKindOf } from '../events/presenter.js'
 import { canCancel, canEdit, canModerate, canReport, canSubmit, canView, initialStatus, reviewTransition, splitEdit } from '../events/rules.js'
 import { DAILY_SUBMISSION_LIMIT, REPORT_THRESHOLD, type EventActor, type EventFields, type EventRecord, type ScopeRef } from '../events/types.js'
-import { validateEventInput, validateEventPatch, validateRange, validateReport, validateReview } from '../events/validation.js'
+import { validateEventInput, validateEventPatch, validateRange, validateReport, validateReview, validateRsvp } from '../events/validation.js'
 import {
   cancelEvent, clearEventReports, countEventsCreatedSince, createEvent, decideEvent, findEventModeratorIds, getEntitiesByIds, getEntity, getEvent, getEventActor,
-  hideEventIfApproved, listEventsInRange, listMyEvents, listReviewQueue, reportEvent, updateEventFields,
+  getRsvpSummary, hideEventIfApproved, listEventsInRange, listMyEvents, listReviewQueue, reportEvent, setRsvp, updateEventFields,
 } from '../social/db.js'
 import { loadViewer, viewerOf } from '../social/guards.js'
 import { notify } from '../social/notify.js'
@@ -208,6 +208,20 @@ router.post('/api/events/:id/report', ...authedWrite, route('Reporting event fai
     await notify(await findEventModeratorIds({ scope: 'usp', scopeValue: null }), { type: 'event_hidden', entityId: null, payload: { ...payload, forModerator: true } }, { excludeId: viewer.id })
   }
   res.json({ reported: true, hidden })
+}))
+
+router.put('/api/events/:id/rsvp', ...authedWrite, route('Saving RSVP failed', async (req, res) => {
+  const viewer = viewerOf(res)
+  const actor = await actorOf(res)
+  const event = await loadVisible(String(req.params.id ?? ''), actor)
+  if (!event) return res.status(404).json(NOT_FOUND)
+  const parsed = validateRsvp(req.body)
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error })
+  if (event.status !== 'approved') return res.status(409).json({ error: 'Só dá para confirmar presença em eventos aprovados' })
+  if (Date.parse(event.endsAt ?? event.startsAt) < Date.now()) return res.status(409).json({ error: 'Esse evento já passou' })
+  await setRsvp(event.id, viewer.id, parsed.value.status)
+  const summary = (await getRsvpSummary([event.id], viewer.id)).get(event.id) ?? { going: 0, interested: 0, mine: null }
+  res.json({ rsvp: summary })
 }))
 
 export default router

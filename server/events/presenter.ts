@@ -1,4 +1,4 @@
-import { getEntitiesByIds, getPeopleByIds, listMyReports } from '../social/db.js'
+import { getEntitiesByIds, getPeopleByIds, getRsvpSummary, listMyReports } from '../social/db.js'
 import { canCancel, canEdit, canModerate, canReport } from './rules.js'
 import type { EventActor, EventRecord } from './types.js'
 
@@ -6,6 +6,7 @@ export type EventExtras = {
   people: ReadonlyMap<string, { name: string; handle: string }>
   entityNames: ReadonlyMap<string, string>
   reported: ReadonlySet<string>
+  rsvps: ReadonlyMap<string, { going: number; interested: number; mine: 'going' | 'interested' | null }>
 }
 
 export type ReviewKind = 'new' | 'edit' | 'reported'
@@ -42,6 +43,7 @@ export function toEventDto(event: EventRecord, actor: EventActor, extras: EventE
     reviewNote: privileged ? event.reviewNote : null,
     permissions: { edit: canEdit(actor, event), cancel: canCancel(actor, event), report: canReport(actor, event) && !reportedByMe, moderate: moderator },
     reportedByMe,
+    rsvp: extras.rsvps.get(event.id) ?? { going: 0, interested: 0, mine: null },
   }
 }
 
@@ -58,15 +60,17 @@ export async function presentEvents(events: EventRecord[], actor: EventActor): P
   const authorIds = [...new Set(events.flatMap((e) => (e.createdBy ? [e.createdBy] : [])))]
   const entityIds = [...new Set(events.flatMap((e) => (e.scope === 'entity' && e.scopeValue ? [e.scopeValue] : [])))]
   const classEventIds = events.filter((e) => e.scope === 'class').map((e) => e.id)
-  const [people, entities, reported] = await Promise.all([
+  const [people, entities, reported, rsvps] = await Promise.all([
     authorIds.length > 0 ? getPeopleByIds(authorIds) : [],
     entityIds.length > 0 ? getEntitiesByIds(entityIds) : [],
     classEventIds.length > 0 ? listMyReports(actor.userId, classEventIds) : [],
+    getRsvpSummary(events.map((e) => e.id), actor.userId),
   ])
   const extras: EventExtras = {
     people: new Map(people.map((p) => [p.user.id, { name: p.user.name, handle: p.profile.handle }])),
     entityNames: new Map(entities.map((e) => [e.id, e.name])),
     reported: new Set(reported),
+    rsvps,
   }
   return events.map((event) => toEventDto(event, actor, extras))
 }

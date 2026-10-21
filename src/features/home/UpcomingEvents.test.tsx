@@ -16,7 +16,7 @@ const event = (over: Partial<EventDto> = {}): EventDto => ({
   id: 'e1', title: 'Semana da SI', description: null, kind: 'event', scope: 'usp', scopeValue: null, scopeLabel: 'USP',
   visibility: 'public', startsAt: '2026-10-22T14:00:00-03:00', endsAt: '2026-10-22T16:00:00-03:00', allDay: false,
   location: null, link: null, status: 'approved', source: 'user', createdAt: '2026-10-01T10:00:00-03:00', author: null,
-  pendingChanges: null, reviewNote: null, permissions: { edit: false, cancel: false, report: false, moderate: false }, reportedByMe: false,
+  pendingChanges: null, reviewNote: null, permissions: { edit: false, cancel: false, report: false, moderate: false }, reportedByMe: false, rsvp: { going: 0, interested: 0, mine: null },
   ...over,
 })
 
