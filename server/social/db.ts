@@ -872,6 +872,13 @@ export async function clearEventReports(eventId: string): Promise<void> {
   if (error) throw new Error(`Could not clear reports: ${error.message}`)
 }
 
+export async function listMyReports(userId: string, eventIds: string[]): Promise<string[]> {
+  const ids = eventIds.filter((id) => UUID.test(id)).slice(0, 1000)
+  if (ids.length === 0) return []
+  const rows = check('Could not load reports', await getClient().from('event_reports').select('event_id').eq('user_id', userId).in('event_id', ids).returns<{ event_id: string }[]>()) ?? []
+  return rows.map((row) => row.event_id)
+}
+
 export async function findEventModeratorIds(ref: ScopeRef): Promise<string[]> {
   const client = getClient()
   const ids = new Set<string>()

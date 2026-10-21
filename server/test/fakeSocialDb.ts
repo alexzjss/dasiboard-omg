@@ -401,6 +401,9 @@ export async function hideEventIfApproved(eventId: string) {
   return true
 }
 export async function clearEventReports(eventId: string) { store.eventReports = store.eventReports.filter((r) => r.eventId !== eventId) }
+export async function listMyReports(userId: string, eventIds: string[]) {
+  return store.eventReports.filter((r) => r.userId === userId && eventIds.includes(r.eventId)).map((r) => r.eventId)
+}
 export async function findEventModeratorIds(ref: Parameters<typeof Real.findEventModeratorIds>[0]) {
   const ids = new Set<string>()
   if (ref.scope === 'entity') for (const m of store.members) if (m.entity_id === ref.scopeValue && m.role === 'admin' && m.left_at === null) ids.add(m.user_id)
