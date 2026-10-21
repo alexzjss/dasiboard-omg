@@ -5,6 +5,8 @@ import type * as Self from './fakeSocialDb.js'
 import { mergeCard, type CardSettings } from '../social/cardOptions.js'
 import type { UnlockStats } from '../social/cardUnlocks.js'
 import type { ConnectionRow, Visibility } from '../social/privacy.js'
+import { superadminEmails } from '../lib/config.js'
+import type { EventFields, EventRecord, EventStatus } from '../events/types.js'
 
 type Row = { user: Real.UserRow; sub: string; profile: Real.ProfileRow }
 type Badge = {
@@ -27,13 +29,16 @@ export const store = {
   announcements: [] as (Parameters<typeof Real.createAnnouncement>[0] & { id: string; createdAt: string })[],
   cards: new Map<string, { card: unknown; isPublic: boolean }>(),
   collection: [] as { collectorId: string; collectedId: string; collectedAt?: string }[],
+  campus: new Map<string, string>(),
+  events: [] as (EventRecord & { entityId: string | null })[],
+  eventReports: [] as { eventId: string; userId: string; reason: string | null }[],
 }
 
 export function resetStore() {
-  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; definitions.clear()
+  store.people.clear(); store.connections = []; store.entities.clear(); store.members = []; store.badges = []; store.courses.clear(); store.feed = []; store.schedules.clear(); store.avatarObjects.clear(); store.notifications = []; store.pushSubs = []; store.announcements = []; store.cards.clear(); store.collection = []; store.campus.clear(); store.events = []; store.eventReports = []; definitions.clear()
 }
 
-export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[] }) {
+export function addPerson(opts: { name: string; email?: string; handle: string; showCourses?: Visibility; showConnections?: Visibility; course?: string; courses?: string[]; campus?: string }) {
   const id = randomUUID()
   const email = opts.email ?? `${opts.handle}@usp.br`
   const user = { id, email, name: opts.name, picture: null }
@@ -42,6 +47,7 @@ export function addPerson(opts: { name: string; email?: string; handle: string; 
     show_courses: opts.showCourses ?? 'all', show_connections: opts.showConnections ?? 'all', avatar_path: null,
   }
   store.people.set(id, { user, sub: `sub-${opts.handle}`, profile })
+  if (opts.campus) store.campus.set(id, opts.campus)
   if (opts.courses) store.courses.set(id, opts.courses.map((code) => ({ code, title: `Matéria ${code}` })))
   return { id, sub: `sub-${opts.handle}`, email, name: opts.name, handle: opts.handle }
 }
@@ -294,6 +300,112 @@ export async function createAnnouncement(input: Parameters<typeof Real.createAnn
 }
 export async function countEntityAnnouncementsSince(entityId: string, sinceIso: string) {
   return store.announcements.filter((a) => a.entityId === entityId && a.createdAt >= sinceIso).length
+}
+
+// ---------- calendar events ----------
+
+const byStart = (a: EventRecord, b: EventRecord) => (a.startsAt < b.startsAt ? -1 : a.startsAt > b.startsAt ? 1 : a.id < b.id ? -1 : 1)
+const clone = (event: EventRecord): EventRecord => { const { entityId: _entityId, ...rest } = event as EventRecord & { entityId?: unknown }; return { ...rest, pendingChanges: rest.pendingChanges ? { ...rest.pendingChanges } : null } }
+const findEvent = (id: string) => store.events.find((e) => e.id === id)
+
+export async function getEventActor(userId: string, isSuperadmin: boolean) {
+  const profile = store.people.get(userId)?.profile
+  return {
+    userId, isSuperadmin,
+    campus: store.campus.get(userId) ?? null, course: profile?.course ?? null, entryYear: profile?.entry_year ?? null,
+    classCodes: new Set((store.courses.get(userId) ?? []).map((c) => c.code)) as ReadonlySet<string>,
+    memberships: new Map(store.members.filter((m) => m.user_id === userId && m.left_at === null).map((m) => [m.entity_id, m.role] as const)) as ReadonlyMap<string, 'member' | 'admin'>,
+  }
+}
+
+export async function createEvent(input: Parameters<typeof Real.createEvent>[0]): Promise<EventRecord> {
+  const now = new Date().toISOString()
+  const event: EventRecord & { entityId: string | null } = {
+    id: randomUUID(), title: input.title, description: input.description, kind: input.kind, scope: input.scope, scopeValue: input.scopeValue,
+    visibility: input.visibility, startsAt: input.startsAt, endsAt: input.endsAt, allDay: input.allDay, location: input.location, link: input.link,
+    status: input.status, pendingChanges: null, source: input.source ?? 'user', createdBy: input.createdBy,
+    reviewedBy: input.reviewedBy ?? null, reviewedAt: input.reviewedBy ? now : null, reviewNote: null, createdAt: now, updatedAt: now,
+    entityId: input.scope === 'entity' ? input.scopeValue : null,
+  }
+  store.events.push(event)
+  return clone(event)
+}
+export async function getEvent(id: string) { const found = findEvent(id); return found ? clone(found) : null }
+
+export async function listEventsInRange(from: string, to: string, filter: Parameters<typeof Real.listEventsInRange>[2]) {
+  const fromMs = new Date(from).getTime()
+  const toMs = new Date(to).getTime()
+  return store.events
+    .filter((e) => {
+      const start = new Date(e.startsAt).getTime()
+      if (!(start < toMs && new Date(e.endsAt ?? e.startsAt).getTime() >= fromMs)) return false
+      if (e.status === 'cancelled') return false
+      if (e.createdBy === filter.viewerId) return true
+      if (e.status === 'approved') {
+        if (e.scope === 'class') return filter.includeOtherClasses || filter.classCodes.includes(e.scopeValue ?? '')
+        if (e.scope === 'entity' && e.visibility === 'members') return filter.entityIds.includes(e.entityId ?? '')
+        return true
+      }
+      if (e.status === 'pending' || e.status === 'hidden') return filter.moderatesAll || (e.scope === 'entity' && filter.moderatedEntityIds.includes(e.entityId ?? ''))
+      return false
+    })
+    .sort(byStart).slice(0, 1000).map(clone)
+}
+export async function listMyEvents(userId: string, limit = 100) {
+  return store.events.filter((e) => e.createdBy === userId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0)).slice(0, limit).map(clone)
+}
+export async function listReviewQueue(scope: { all: boolean; entityIds: string[] }, nowIso: string) {
+  return store.events
+    .filter((e) => {
+      if (!scope.all && !(e.scope === 'entity' && scope.entityIds.includes(e.entityId ?? ''))) return false
+      if (e.status === 'pending') return e.startsAt >= nowIso
+      if (e.status === 'approved') return e.pendingChanges !== null
+      return e.status === 'hidden' && scope.all
+    })
+    .sort(byStart).slice(0, 200).map(clone)
+}
+export async function decideEvent(id: string, expectedStatus: EventStatus, patch: Parameters<typeof Real.decideEvent>[2]) {
+  const event = findEvent(id)
+  if (!event || event.status !== expectedStatus || (expectedStatus === 'approved' && event.pendingChanges === null)) return null
+  Object.assign(event, patch.fields ?? {}, {
+    status: patch.status, reviewedBy: patch.reviewedBy, reviewedAt: new Date().toISOString(), reviewNote: patch.reviewNote, updatedAt: new Date().toISOString(),
+  })
+  if (patch.clearPendingChanges) event.pendingChanges = null
+  return clone(event)
+}
+export async function updateEventFields(id: string, fields: Partial<EventFields>, pendingChanges: EventRecord['pendingChanges'] | undefined) {
+  const event = findEvent(id)
+  if (!event) return null
+  Object.assign(event, fields, { updatedAt: new Date().toISOString() })
+  if (pendingChanges !== undefined) event.pendingChanges = { ...(event.pendingChanges ?? {}), ...pendingChanges }
+  return clone(event)
+}
+export async function cancelEvent(id: string) {
+  const event = findEvent(id)
+  if (!event || !['pending', 'approved', 'hidden'].includes(event.status)) return false
+  event.status = 'cancelled'
+  return true
+}
+export async function countEventsCreatedSince(userId: string, sinceIso: string) {
+  return store.events.filter((e) => e.createdBy === userId && e.createdAt >= sinceIso).length
+}
+export async function reportEvent(eventId: string, userId: string, reason: string | null) {
+  const inserted = !store.eventReports.some((r) => r.eventId === eventId && r.userId === userId)
+  if (inserted) store.eventReports.push({ eventId, userId, reason })
+  return { inserted, total: store.eventReports.filter((r) => r.eventId === eventId).length }
+}
+export async function hideEventIfApproved(eventId: string) {
+  const event = findEvent(eventId)
+  if (!event || event.status !== 'approved') return false
+  event.status = 'hidden'
+  return true
+}
+export async function clearEventReports(eventId: string) { store.eventReports = store.eventReports.filter((r) => r.eventId !== eventId) }
+export async function findEventModeratorIds(ref: Parameters<typeof Real.findEventModeratorIds>[0]) {
+  const ids = new Set<string>()
+  if (ref.scope === 'entity') for (const m of store.members) if (m.entity_id === ref.scopeValue && m.role === 'admin' && m.left_at === null) ids.add(m.user_id)
+  for (const row of store.people.values()) if (superadminEmails.has(row.user.email.toLowerCase())) ids.add(row.user.id)
+  return [...ids]
 }
 
 // Compile-time check that the fake keeps the same exports/signatures as the real data layer.

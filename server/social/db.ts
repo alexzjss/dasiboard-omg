@@ -4,6 +4,8 @@ import type { UnlockStats } from './cardUnlocks.js'
 import type { BadgeColor, BadgeIcon } from './badgeCatalog.js'
 import { ensureProfileWithHandle, supabaseHandleStore } from './handles.js'
 import type { ConnectionRow, Visibility } from './privacy.js'
+import { superadminEmails } from '../lib/config.js'
+import type { EventActor, EventFields, EventRecord, EventStatus, ScopeRef } from '../events/types.js'
 
 // Data layer for the social system. It only reads/writes rows: every access rule
 // (privacy, admin checks) lives in the routes and in privacy.ts. Routes never touch
@@ -682,4 +684,205 @@ export async function countEntityAnnouncementsSince(entityId: string, sinceIso: 
   const { count, error } = await getClient().from('announcements').select('id', { count: 'exact', head: true }).eq('entity_id', entityId).gte('created_at', sinceIso)
   if (error) throw new Error(`Could not count announcements: ${error.message}`)
   return count ?? 0
+}
+
+// ---------- calendar events ----------
+
+type RawEvent = {
+  id: string; title: string; description: string | null; kind: EventRecord['kind']; scope: EventRecord['scope']; scope_value: string | null
+  visibility: EventRecord['visibility']; starts_at: string; ends_at: string | null; all_day: boolean; location: string | null; link: string | null
+  status: EventStatus; pending_changes: EventRecord['pendingChanges']; source: EventRecord['source']; created_by: string | null
+  reviewed_by: string | null; reviewed_at: string | null; review_note: string | null; created_at: string; updated_at: string
+}
+const EVENT_COLUMNS = 'id, title, description, kind, scope, scope_value, visibility, starts_at, ends_at, all_day, location, link, status, pending_changes, source, created_by, reviewed_by, reviewed_at, review_note, created_at, updated_at'
+const EVENT_RANGE_CAP = 1000
+const REVIEW_QUEUE_CAP = 200
+const toEvent = (raw: RawEvent): EventRecord => ({
+  id: raw.id, title: raw.title, description: raw.description, kind: raw.kind, scope: raw.scope, scopeValue: raw.scope_value,
+  visibility: raw.visibility, startsAt: raw.starts_at, endsAt: raw.ends_at, allDay: raw.all_day, location: raw.location, link: raw.link,
+  status: raw.status, pendingChanges: raw.pending_changes ?? null, source: raw.source, createdBy: raw.created_by,
+  reviewedBy: raw.reviewed_by, reviewedAt: raw.reviewed_at, reviewNote: raw.review_note, createdAt: raw.created_at, updatedAt: raw.updated_at,
+})
+const toEvents = (rows: RawEvent[] | null) => (rows ?? []).map(toEvent)
+
+function eventFieldsToRow(fields: Partial<EventFields>): Record<string, unknown> {
+  const row: Record<string, unknown> = {}
+  if (fields.title !== undefined) row.title = fields.title
+  if (fields.description !== undefined) row.description = fields.description
+  if (fields.kind !== undefined) row.kind = fields.kind
+  if (fields.startsAt !== undefined) row.starts_at = fields.startsAt
+  if (fields.endsAt !== undefined) row.ends_at = fields.endsAt
+  if (fields.allDay !== undefined) row.all_day = fields.allDay
+  if (fields.location !== undefined) row.location = fields.location
+  if (fields.link !== undefined) row.link = fields.link
+  if (fields.visibility !== undefined) row.visibility = fields.visibility
+  return row
+}
+
+export async function getEventActor(userId: string, isSuperadmin: boolean): Promise<EventActor> {
+  const client = getClient()
+  const [profile, courses, memberships] = await Promise.all([
+    client.from('student_profiles').select('campus, course, entry_year').eq('user_id', userId).maybeSingle<{ campus: string | null; course: string | null; entry_year: number | null }>(),
+    client.from('user_courses').select('code').eq('user_id', userId).returns<{ code: string }[]>(),
+    client.from('entity_members').select('entity_id, role').eq('user_id', userId).is('left_at', null).returns<{ entity_id: string; role: Role }[]>(),
+  ])
+  const row = check('Could not load event actor', profile)
+  return {
+    userId, isSuperadmin,
+    campus: row?.campus ?? null, course: row?.course ?? null, entryYear: row?.entry_year ?? null,
+    classCodes: new Set((check('Could not load event actor', courses) ?? []).map((c) => c.code)),
+    memberships: new Map((check('Could not load event actor', memberships) ?? []).map((m) => [m.entity_id, m.role] as const)),
+  }
+}
+
+export async function createEvent(input: ScopeRef & EventFields & {
+  status: 'pending' | 'approved'; createdBy: string | null; source?: 'user' | 'usp_import'; externalId?: string | null; reviewedBy?: string | null
+}): Promise<EventRecord> {
+  const saved = check('Could not create event', await getClient().from('events').insert({
+    ...eventFieldsToRow(input),
+    scope: input.scope, scope_value: input.scopeValue, entity_id: input.scope === 'entity' ? input.scopeValue : null,
+    status: input.status, created_by: input.createdBy, source: input.source ?? 'user', external_id: input.externalId ?? null,
+    reviewed_by: input.reviewedBy ?? null, reviewed_at: input.reviewedBy ? new Date().toISOString() : null,
+  }).select(EVENT_COLUMNS).single<RawEvent>())
+  return toEvent(saved!)
+}
+
+export async function getEvent(id: string): Promise<EventRecord | null> {
+  if (!UUID.test(id)) return null
+  const raw = check('Could not load event', await getClient().from('events').select(EVENT_COLUMNS).eq('id', id).maybeSingle<RawEvent>())
+  return raw ? toEvent(raw) : null
+}
+
+export async function listEventsInRange(from: string, to: string, filter: {
+  classCodes: string[]; entityIds: string[]; includeOtherClasses: boolean; viewerId: string; moderatesAll: boolean; moderatedEntityIds: string[]
+}): Promise<EventRecord[]> {
+  // Cheap pre-filter: may return more than the viewer can see (the route applies canView), never less.
+  const fromIso = new Date(from).toISOString()
+  const toIso = new Date(to).toISOString()
+  const range = () => getClient().from('events').select(EVENT_COLUMNS).lt('starts_at', toIso)
+    .or(`ends_at.gte."${fromIso}",and(ends_at.is.null,starts_at.gte."${fromIso}")`)
+  const approved = () => range().eq('status', 'approved')
+  const run = async (query: PromiseLike<{ data: RawEvent[] | null; error: { message: string } | null }>) => toEvents(check('Could not load events', await query))
+  const cap = <T extends { order: (c: string) => { limit: (n: number) => PromiseLike<{ data: RawEvent[] | null; error: { message: string } | null }> } }>(q: T) => q.order('starts_at').limit(EVENT_RANGE_CAP)
+  const classCodes = filter.classCodes.slice(0, 100)
+  const entityIds = filter.entityIds.slice(0, 100)
+  const moderated = filter.moderatedEntityIds.slice(0, 100)
+
+  const queries: PromiseLike<EventRecord[]>[] = [
+    run(cap(approved().not('scope', 'in', '(class,entity)'))),
+    run(cap(filter.includeOtherClasses ? approved().eq('scope', 'class') : approved().eq('scope', 'class').in('scope_value', classCodes.length > 0 ? classCodes : ['']))),
+    run(cap(approved().eq('scope', 'entity').eq('visibility', 'public'))),
+    run(cap(range().eq('created_by', filter.viewerId).neq('status', 'cancelled'))),
+  ]
+  if (entityIds.length > 0) queries.push(run(cap(approved().eq('scope', 'entity').eq('visibility', 'members').in('entity_id', entityIds))))
+  if (filter.moderatesAll) queries.push(run(cap(range().in('status', ['pending', 'hidden']))))
+  else if (moderated.length > 0) queries.push(run(cap(range().in('status', ['pending', 'hidden']).eq('scope', 'entity').in('entity_id', moderated))))
+
+  const byId = new Map<string, EventRecord>()
+  for (const list of await Promise.all(queries)) for (const event of list) byId.set(event.id, event)
+  return [...byId.values()].sort((a, b) => (a.startsAt < b.startsAt ? -1 : a.startsAt > b.startsAt ? 1 : a.id < b.id ? -1 : 1)).slice(0, EVENT_RANGE_CAP)
+}
+
+export async function listMyEvents(userId: string, limit = 100): Promise<EventRecord[]> {
+  return toEvents(check('Could not load events', await getClient().from('events').select(EVENT_COLUMNS).eq('created_by', userId)
+    .order('created_at', { ascending: false }).limit(limit).returns<RawEvent[]>()))
+}
+
+export async function listReviewQueue(scope: { all: boolean; entityIds: string[] }, nowIso: string): Promise<EventRecord[]> {
+  const entityIds = scope.entityIds.slice(0, 100)
+  if (!scope.all && entityIds.length === 0) return []
+  const base = (status: EventStatus) => {
+    const query = getClient().from('events').select(EVENT_COLUMNS).eq('status', status)
+    return scope.all ? query : query.eq('scope', 'entity').in('entity_id', entityIds)
+  }
+  const queries = [
+    base('pending').gte('starts_at', nowIso).order('starts_at').limit(REVIEW_QUEUE_CAP).returns<RawEvent[]>(),
+    base('approved').not('pending_changes', 'is', null).order('starts_at').limit(REVIEW_QUEUE_CAP).returns<RawEvent[]>(),
+  ]
+  // Reports only exist for class-scoped (matéria) events, so hidden ones are for superadmins only.
+  if (scope.all) queries.push(base('hidden').order('starts_at').limit(REVIEW_QUEUE_CAP).returns<RawEvent[]>())
+  const byId = new Map<string, EventRecord>()
+  for (const result of await Promise.all(queries)) for (const event of toEvents(check('Could not load review queue', result))) byId.set(event.id, event)
+  return [...byId.values()].sort((a, b) => (a.startsAt < b.startsAt ? -1 : a.startsAt > b.startsAt ? 1 : a.id < b.id ? -1 : 1)).slice(0, REVIEW_QUEUE_CAP)
+}
+
+// Conditional update: returns null when another decision changed the status first.
+export async function decideEvent(id: string, expectedStatus: EventStatus, patch: {
+  status: EventStatus; fields?: Partial<EventFields>; clearPendingChanges?: boolean; reviewedBy: string; reviewNote: string | null
+}): Promise<EventRecord | null> {
+  if (!UUID.test(id)) return null
+  const row: Record<string, unknown> = {
+    ...eventFieldsToRow(patch.fields ?? {}), status: patch.status, reviewed_by: patch.reviewedBy, reviewed_at: new Date().toISOString(), review_note: patch.reviewNote,
+  }
+  if (patch.clearPendingChanges) row.pending_changes = null
+  let query = getClient().from('events').update(row).eq('id', id).eq('status', expectedStatus)
+  if (expectedStatus === 'approved') query = query.not('pending_changes', 'is', null)
+  const rows = check('Could not decide event', await query.select(EVENT_COLUMNS).returns<RawEvent[]>()) ?? []
+  return rows[0] ? toEvent(rows[0]) : null
+}
+
+export async function updateEventFields(id: string, fields: Partial<EventFields>, pendingChanges: EventRecord['pendingChanges'] | undefined): Promise<EventRecord | null> {
+  if (!UUID.test(id)) return null
+  const row = eventFieldsToRow(fields)
+  if (pendingChanges !== undefined) {
+    // Read-merge-write; not atomic, which is acceptable for the author's own edits.
+    const current = await getEvent(id)
+    if (!current) return null
+    row.pending_changes = { ...(current.pendingChanges ?? {}), ...pendingChanges }
+  }
+  if (Object.keys(row).length === 0) return getEvent(id)
+  const rows = check('Could not update event', await getClient().from('events').update(row).eq('id', id).select(EVENT_COLUMNS).returns<RawEvent[]>()) ?? []
+  return rows[0] ? toEvent(rows[0]) : null
+}
+
+export async function cancelEvent(id: string): Promise<boolean> {
+  if (!UUID.test(id)) return false
+  const rows = check('Could not cancel event', await getClient().from('events').update({ status: 'cancelled' })
+    .eq('id', id).in('status', ['pending', 'approved', 'hidden']).select('id').returns<{ id: string }[]>()) ?? []
+  return rows.length > 0
+}
+
+export async function countEventsCreatedSince(userId: string, sinceIso: string): Promise<number> {
+  const { count, error } = await getClient().from('events').select('id', { count: 'exact', head: true }).eq('created_by', userId).gte('created_at', sinceIso)
+  if (error) throw new Error(`Could not count events: ${error.message}`)
+  return count ?? 0
+}
+
+export async function reportEvent(eventId: string, userId: string, reason: string | null): Promise<{ inserted: boolean; total: number }> {
+  const client = getClient()
+  const rows = check('Could not report event', await client.from('event_reports').upsert(
+    { event_id: eventId, user_id: userId, reason }, { onConflict: 'event_id,user_id', ignoreDuplicates: true },
+  ).select('event_id').returns<{ event_id: string }[]>()) ?? []
+  const { count, error } = await client.from('event_reports').select('event_id', { count: 'exact', head: true }).eq('event_id', eventId)
+  if (error) throw new Error(`Could not count reports: ${error.message}`)
+  return { inserted: rows.length > 0, total: count ?? 0 }
+}
+
+// True only for the caller that actually flipped approved -> hidden.
+export async function hideEventIfApproved(eventId: string): Promise<boolean> {
+  if (!UUID.test(eventId)) return false
+  const rows = check('Could not hide event', await getClient().from('events').update({ status: 'hidden' })
+    .eq('id', eventId).eq('status', 'approved').select('id').returns<{ id: string }[]>()) ?? []
+  return rows.length > 0
+}
+
+export async function clearEventReports(eventId: string): Promise<void> {
+  const { error } = await getClient().from('event_reports').delete().eq('event_id', eventId)
+  if (error) throw new Error(`Could not clear reports: ${error.message}`)
+}
+
+export async function findEventModeratorIds(ref: ScopeRef): Promise<string[]> {
+  const client = getClient()
+  const ids = new Set<string>()
+  if (ref.scope === 'entity') {
+    const admins = check('Could not load moderators', await client.from('entity_members').select('user_id')
+      .eq('entity_id', ref.scopeValue ?? '').eq('role', 'admin').is('left_at', null).returns<{ user_id: string }[]>()) ?? []
+    for (const row of admins) ids.add(row.user_id)
+  }
+  const emails = [...superadminEmails]
+  if (emails.length > 0) {
+    const supers = check('Could not load moderators', await client.from('users').select('id').in('email', emails).returns<{ id: string }[]>()) ?? []
+    for (const row of supers) ids.add(row.id)
+  }
+  return [...ids]
 }
