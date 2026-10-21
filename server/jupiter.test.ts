@@ -48,3 +48,32 @@ describe('parseDisciplinePage', () => {
     expect(parseDisciplinePage('<html><body>Nenhuma turma</body></html>', 'ACH9999').sections).toEqual([])
   })
 })
+
+describe('parseDisciplinePage with sloppy markup', () => {
+  // Unclosed <tr>/<td>, <th> header and day/time cells wrapped in nested tables.
+  const sloppy = `<table><tr><td>Disciplina: ACH2011 - Cálculo I</td></table>
+  <div><table><tr><td>Código da Turma:<td><span>2026203</span><tr><td>Tipo da Turma:<td>Teórica<tr><td>Observações:<td>Sala 210</table>
+  <table><tr><th>Horário<th><th><th>Prof(a)
+  <tr><td>qua<td>16:15<td>18:00<td>Ana
+  <tr><td><td><td><td>Bia
+  <tr><td>Sex<td>14:00<td>15:45<td>Ana
+  </table>
+  <table><tr><td>Vagas<td>Inscritos<tr><td>Obrigatória<td>60</table></div>
+  <div><table><tr><td>Código da Turma:</td><td>2026204</td></tr></table>
+  <table><tr><td>Horário</td></tr><tr><td><table><tr><td>seg</td></tr></table></td></tr>
+  <tr><td>ter</td><td>8h00</td><td>09:45</td><td>Caio</td></tr></table></div>`
+
+  const discipline = parseDisciplinePage(sloppy, 'ACH2011')
+
+  it('reads the timetable without closing tags or header cells', () => {
+    expect(discipline.title).toBe('Cálculo I')
+    expect(discipline.sections[0]).toMatchObject({
+      code: '2026203', type: 'Teórica', room: 'Sala 210', teachers: ['Ana', 'Bia'],
+      slots: [{ weekday: 2, startsAt: '16:15', endsAt: '18:00' }, { weekday: 4, startsAt: '14:00', endsAt: '15:45' }],
+    })
+  })
+
+  it('recognizes class rows by shape even after noise', () => {
+    expect(discipline.sections[1].slots).toEqual([{ weekday: 1, startsAt: '08:00', endsAt: '09:45' }])
+  })
+})
