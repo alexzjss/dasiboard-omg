@@ -149,6 +149,11 @@ export async function listMembers(entityId: string) {
 export async function listMembershipsOf(userId: string) {
   return store.members.filter((m) => m.user_id === userId && m.left_at === null).map((m) => ({ entityId: m.entity_id, name: store.entities.get(m.entity_id)!.name, role: m.role, joinedAt: m.joined_at, title: m.title ?? null }))
 }
+export async function listMembershipsOfMany(userIds: string[]) {
+  const result = new Map<string, { entityId: string; name: string; title: string | null }[]>()
+  for (const id of userIds) result.set(id, (await listMembershipsOf(id)).map(({ entityId, name, title }) => ({ entityId, name, title })))
+  return result
+}
 export async function getBadges(ids: string[]) {
   const result = new Map<string, Real.BadgeRow[]>()
   for (const b of store.badges) if (ids.includes(b.user_id) && !b.revoked_at) result.set(b.user_id, [...(result.get(b.user_id) ?? []), { kind: b.kind, sourceId: b.source_id, label: b.label, icon: b.icon ?? null, color: b.color ?? null, entityId: b.kind === 'entity_member' ? b.source_id : (b.entity_id ?? null) }])
@@ -199,6 +204,9 @@ export async function getAchievementStats(userId: string): Promise<Real.Achievem
 export async function getCardSettings(userId: string) {
   const row = store.cards.get(userId)
   return { settings: mergeCard(row?.card), isPublic: row?.isPublic === true }
+}
+export async function getCardSettingsMany(userIds: string[]) {
+  return new Map(await Promise.all(userIds.map(async (id) => [id, await getCardSettings(id)] as const)))
 }
 export async function updateCard(userId: string, patch: { settings?: CardSettings; public?: boolean }) {
   const row = store.cards.get(userId) ?? { card: {}, isPublic: false }

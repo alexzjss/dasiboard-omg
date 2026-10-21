@@ -59,6 +59,7 @@ export type PersonCard = PersonMini & {
   connection: ConnectionState
   /** null quando a privacidade do aluno oculta as matérias para quem pede. */
   commonCourses: number | null
+  card: CardData
 }
 
 export type PeopleFilters = {
@@ -85,6 +86,7 @@ export type PersonProfile = {
   badges: Badge[]
   /** Entidades ativas com o cargo de cada uma (null quando não há). */
   entities: { entityId: string; name: string; title: string | null }[]
+  card: CardData
   courses: (CourseItem & { common: boolean })[] | null
   commonCourses: number | null
   classmatesInCommon: PersonMini[] | null

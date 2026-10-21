@@ -113,7 +113,7 @@ function AlunosInner({ onRetry }: { onRetry: () => void }) {
       </div>
 
       {loading && (
-        <ul className="com-grid" aria-busy="true" aria-label="Carregando alunos">
+        <ul className="com-grid com-grid-cards" aria-busy="true" aria-label="Carregando alunos">
           {Array.from({ length: 6 }, (_, i) => <li key={i} className="com-card com-skeleton" />)}
         </ul>
       )}
@@ -135,7 +135,7 @@ function AlunosInner({ onRetry }: { onRetry: () => void }) {
 
       {!loading && people.length > 0 && (
         <>
-          <ul className="com-grid">
+          <ul className="com-grid com-grid-cards">
             {people.map((p) => (
               <PersonCardView key={p.handle} person={{ ...p, connection: overrides[p.handle] ?? p.connection }}
                 onConnection={(handle, next) => setOverrides((o) => ({ ...o, [handle]: next }))} />

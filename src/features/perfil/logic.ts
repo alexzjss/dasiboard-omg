@@ -1,4 +1,4 @@
-import { ApiError, type Links, type MyProfile, type PersonProfile, type ProfilePatch } from '../../lib/socialApi'
+import { ApiError, type CardData, type Links, type MyProfile, type PersonProfile, type ProfilePatch } from '../../lib/socialApi'
 import { LINK_KEYS, type LinkKey } from './validation'
 
 export type Draft = { bio: string; course: string; entryYear: string; links: Record<LinkKey, string>; technologies: string[] }
@@ -23,7 +23,7 @@ export function buildPatch(saved: MyProfile['profile'], draft: Draft): ProfilePa
 }
 
 /** Monta o que um visitante não conectado vê, aplicando a privacidade do próprio aluno. */
-export function visitorView(me: MyProfile, accepted: { handle: string; name: string; picture: string | null }[]): PersonProfile {
+export function visitorView(me: MyProfile, accepted: { handle: string; name: string; picture: string | null }[], card: CardData): PersonProfile {
   const { profile } = me
   return {
     profile: {
@@ -33,6 +33,7 @@ export function visitorView(me: MyProfile, accepted: { handle: string; name: str
     },
     // 'self' faz o ConnectButton não renderizar: a prévia nunca dispara pedidos reais.
     connection: 'self',
+    card,
     badges: me.badges,
     entities: me.entities.map(({ entityId, name, title }) => ({ entityId, name, title })),
     courses: profile.showCourses === 'all' ? me.courses.map((c) => ({ ...c, common: false })) : null,

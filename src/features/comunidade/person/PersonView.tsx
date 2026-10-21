@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { ConnectionState, PersonMini, PersonProfile } from '../../../lib/socialApi'
 import { entidadeSlug, entidadesData } from '../../entidades/data'
+import { ProfileCard } from '../../../components/card/ProfileCard'
 import { BadgeChip } from '../../../components/BadgeChip'
 import { TechChip } from '../../../components/TechChip'
 import { ConnectButton } from '../components/ConnectButton'
@@ -47,10 +48,10 @@ export function PersonView({ data, onConnection }: { data: PersonProfile; onConn
 
   return (
     <article className="pessoa-layout">
-      <header className="pessoa-header">
-        <Avatar name={profile.name} picture={profile.picture} size="lg" />
+      <header className="pessoa-header pessoa-hero">
+        <div className="pessoa-hero-card"><ProfileCard data={data.card} /></div>
         <div className="pessoa-header-text">
-          <h1>{profile.name}</h1>
+          <h1 className="sr-only">{profile.name}</h1>
           <p className="pessoa-handle mono">@{profile.handle}</p>
           {meta && <p className="pessoa-meta">{meta}</p>}
           {profile.bio && <p className="pessoa-bio">{profile.bio}</p>}

@@ -308,6 +308,20 @@ export async function listMembershipsOf(userId: string): Promise<{ entityId: str
   return rows.map((row) => ({ entityId: row.entity_id, name: oneOf(row.entities)?.name ?? row.entity_id, role: row.role, joinedAt: row.joined_at, title: row.title }))
 }
 
+export async function listMembershipsOfMany(userIds: string[]): Promise<Map<string, { entityId: string; name: string; title: string | null }[]>> {
+  const result = new Map<string, { entityId: string; name: string; title: string | null }[]>()
+  const safe = userIds.filter((id) => UUID.test(id)).slice(0, ID_LIST_CAP)
+  if (safe.length === 0) return result
+  const rows = check('Could not load memberships', await getClient().from('entity_members').select('user_id, entity_id, title, entities(name)')
+    .in('user_id', safe).is('left_at', null).order('joined_at', { ascending: true }).returns<{ user_id: string; entity_id: string; title: string | null; entities: RawNamedEntity }[]>()) ?? []
+  for (const row of rows) {
+    const list = result.get(row.user_id) ?? []
+    list.push({ entityId: row.entity_id, name: oneOf(row.entities)?.name ?? row.entity_id, title: row.title })
+    result.set(row.user_id, list)
+  }
+  return result
+}
+
 type RawBadge = { user_id: string; kind: BadgeKind; source_id: string; label: string; icon: string | null; color: string | null; entity_id: string | null }
 
 export async function getBadges(userIds: string[]): Promise<Map<string, BadgeRow[]>> {
@@ -414,6 +428,18 @@ export type CardState = { settings: CardSettings; isPublic: boolean }
 export async function getCardSettings(userId: string): Promise<CardState> {
   const row = check('Could not load card', await getClient().from('student_profiles').select('card, card_public').eq('user_id', userId).maybeSingle<{ card: unknown; card_public: boolean | null }>())
   return { settings: mergeCard(row?.card), isPublic: row?.card_public === true }
+}
+
+export async function getCardSettingsMany(userIds: string[]): Promise<Map<string, CardState>> {
+  const result = new Map<string, CardState>()
+  const safe = userIds.filter((id) => UUID.test(id)).slice(0, ID_LIST_CAP)
+  if (safe.length > 0) {
+    const rows = check('Could not load cards', await getClient().from('student_profiles').select('user_id, card, card_public')
+      .in('user_id', safe).returns<{ user_id: string; card: unknown; card_public: boolean | null }[]>()) ?? []
+    for (const row of rows) result.set(row.user_id, { settings: mergeCard(row.card), isPublic: row.card_public === true })
+  }
+  for (const id of userIds) if (!result.has(id)) result.set(id, { settings: mergeCard(undefined), isPublic: false })
+  return result
 }
 
 export async function updateCard(userId: string, patch: { settings?: CardSettings; public?: boolean }): Promise<void> {

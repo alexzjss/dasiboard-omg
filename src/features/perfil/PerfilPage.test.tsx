@@ -10,6 +10,7 @@ vi.mock('../../lib/socialApi', async (orig) => {
   return {
     ...actual,
     getMyProfile: vi.fn(),
+    getMyCard: vi.fn(),
     updateMyProfile: vi.fn(),
     listConnections: vi.fn(),
     acceptConnection: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('../../lib/socialApi', async (orig) => {
 })
 
 import * as api from '../../lib/socialApi'
+import { DEFAULT_CARD } from '../../lib/cardOptions'
 import { PerfilPage } from './PerfilPage'
 
 const me = (over: Partial<MyProfile> = {}): MyProfile => ({
@@ -54,6 +56,7 @@ function renderPage() {
 beforeEach(() => {
   vi.stubGlobal('matchMedia', (q: string) => ({ matches: false, media: q, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined }))
   vi.mocked(api.getMyProfile).mockResolvedValue(me())
+  vi.mocked(api.getMyCard).mockResolvedValue({ settings: DEFAULT_CARD, public: false, unlocks: { finishes: ['common'], palettes: [], requirements: {} }, card: { handle: 'alex', name: 'Alex Santana', picture: null, subtitle: 'SI', course: 'SI', entryYear: 2024, technologies: [], links: {}, entities: [], badges: [], settings: DEFAULT_CARD, viewer: null } })
   vi.mocked(api.listConnections).mockResolvedValue([])
   vi.mocked(api.listAdminBadges).mockResolvedValue([])
   vi.mocked(api.listEntityBadges).mockResolvedValue([])

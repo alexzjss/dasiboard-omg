@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { MyProfile } from '../../lib/socialApi'
+import type { CardData, MyProfile } from '../../lib/socialApi'
+import { DEFAULT_CARD } from '../../lib/cardOptions'
 import { visitorView } from './logic'
 
 const me: MyProfile = {
@@ -15,13 +16,15 @@ const me: MyProfile = {
   adminOf: [], isSuperadmin: false, courses: [], pendingCount: 0, pendingRequests: [],
 }
 
+const card: CardData = { handle: 'alex', name: 'Alex', picture: null, subtitle: 'SI', course: 'SI', entryYear: 2024, technologies: [], links: {}, entities: [], badges: [], settings: DEFAULT_CARD, viewer: null }
+
 describe('visitorView', () => {
   it('usa todas as badges do próprio perfil, inclusive as que não são de entidade', () => {
-    expect(visitorView(me, []).badges).toEqual(me.badges)
+    expect(visitorView(me, [], card).badges).toEqual(me.badges)
   })
 
   it('mostra tecnologias e o cargo nas entidades', () => {
-    const view = visitorView({ ...me, profile: { ...me.profile, technologies: ['react'] } }, [])
+    const view = visitorView({ ...me, profile: { ...me.profile, technologies: ['react'] } }, [], card)
     expect(view.profile.technologies).toEqual(['react'])
     expect(view.entities).toEqual([{ entityId: 'dasi', name: 'DASI', title: 'Tesoureira' }])
   })

@@ -82,3 +82,12 @@
   .com-clear { grid-column: 1 / -1; }
   .com-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* Mini-cartas na aba Alunos: 2 colunas no celular, 4 no desktop. */
+.com-grid-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4) var(--s-3); }
+.com-mini { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+.com-mini-link { display: block; border-radius: 18px; text-decoration: none; color: inherit; }
+.com-mini-link:focus-visible { outline: 2px solid var(--area); outline-offset: 3px; }
+.com-grid-cards .com-skeleton { aspect-ratio: 5 / 7; border-radius: 18px; }
+@media (min-width: 640px) { .com-grid-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .com-grid-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, type PersonCard } from '../../lib/socialApi'
+import { DEFAULT_CARD } from '../../lib/cardOptions'
 
 vi.mock('../../lib/socialApi', async (orig) => {
   const actual = await orig<typeof import('../../lib/socialApi')>()
@@ -14,7 +15,9 @@ import { ComunidadePage } from './ComunidadePage'
 
 const person = (over: Partial<PersonCard> = {}): PersonCard => ({
   handle: 'ana.silva', name: 'Ana Silva', picture: null, course: 'Sistemas de Informação', entryYear: 2023,
-  badges: [{ kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' }], connection: 'none', commonCourses: 3, ...over,
+  badges: [{ kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' }], connection: 'none', commonCourses: 3,
+  card: { handle: 'ana.silva', name: 'Ana Silva', picture: null, subtitle: 'Sistemas de Informação · Turma 2023', course: 'Sistemas de Informação', entryYear: 2023, technologies: [], links: {}, entities: [{ entityId: 'dasi', name: 'DASI', title: null }], badges: [], settings: DEFAULT_CARD, viewer: null },
+  ...over,
 })
 
 function Loc() { const l = useLocation(); return <output data-testid="loc">{l.search}</output> }
@@ -29,11 +32,12 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.clearAllMocks() })
 
 describe('ComunidadePage', () => {
-  it('renderiza os cartões de alunos', async () => {
-    renderAt('/comunidade')
+  it('renderiza mini-cartas de alunos', async () => {
+    const { container } = renderAt('/comunidade')
     expect(await screen.findByText('Ana Silva')).toBeTruthy()
+    expect(container.querySelectorAll('.pcard-mini')).toHaveLength(1)
+    expect(screen.getByRole('link', { name: /Ver perfil de Ana Silva/ }).getAttribute('href')).toBe('/comunidade/ana.silva')
     expect(screen.getByText('3 matérias em comum')).toBeTruthy()
-    expect(screen.getByRole('list', { name: 'Entidades' }).textContent).toContain('DASI')
     expect(screen.getByRole('button', { name: /Conectar: Ana Silva/ })).toBeTruthy()
   })
 

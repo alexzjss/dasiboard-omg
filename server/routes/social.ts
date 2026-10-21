@@ -4,15 +4,15 @@ import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
 import { requireSession } from '../lib/session.js'
 import {
-  acceptConnection, createConnection, deleteConnection, findUserIdsByCourse, findUserIdsByEntity, getBadges, getConnection,
-  getConnectionsWith, getCourses, getCoursesByUsers, getPeopleByIds, getPersonByHandle, listConnectionsOf, listFeedCandidates,
-  listMembershipsOf, listPendingReceived, findUserIdsByCourses, searchPeople, updateProfile,
+  acceptConnection, createConnection, deleteConnection, findUserIdsByCourse, findUserIdsByEntity, getBadges, getCardSettings, getCardSettingsMany, getConnection,
+  getConnectionsWith, getCourses, isCollected, getCoursesByUsers, getPeopleByIds, getPersonByHandle, listConnectionsOf, listFeedCandidates,
+  listMembershipsOf, listMembershipsOfMany, listPendingReceived, findUserIdsByCourses, searchPeople, updateProfile,
   type FeedCandidate, type FeedCursor, type PersonRecord,
 } from '../social/db.js'
 import { syncAutoBadgesAndNotify } from '../social/achievements.js'
 import { loadViewer, NOT_FOUND_PROFILE, viewerOf, type Viewer } from '../social/guards.js'
 import { notify } from '../social/notify.js'
-import { personCard, personMini } from '../social/presenters.js'
+import { cardData, personCard, personMini } from '../social/presenters.js'
 import { canSee, connectionState, relationBetween, type ConnectionRow, type ProfileItem } from '../social/privacy.js'
 import { COURSE_CODE_PATTERN, ENTITY_ID_PATTERN, validateProfilePatch } from '../social/validation.js'
 import { isValidHandle } from '../social/handles.js'
@@ -108,11 +108,13 @@ router.get('/api/people', ...authed, route('Listing people failed', async (req, 
   const rows = await searchPeople({ q: q || undefined, curso: curso || undefined, ano, userIds, excludeUserId: viewer.id, cursor, limit: PAGE_SIZE + 1 })
   const page = rows.slice(0, PAGE_SIZE)
   const ids = page.map((person) => person.user.id)
-  const [connections, badges, courseMap, myCourses] = await Promise.all([getConnectionsWith(viewer.id, ids), getBadges(ids), getCoursesByUsers(ids), getCourses(viewer.id)])
+  const [connections, badges, courseMap, myCourses, cardSettings, memberships] = await Promise.all([getConnectionsWith(viewer.id, ids), getBadges(ids), getCoursesByUsers(ids), getCourses(viewer.id), getCardSettingsMany(ids), listMembershipsOfMany(ids)])
   const mine = new Set(myCourses.map((course) => course.code))
   const people = page.map((person) => {
     const common = visible(viewer, person, 'courses', connections) ? (courseMap.get(person.user.id) ?? []).filter((course) => mine.has(course.code)).length : null
-    return personCard(person, badges.get(person.user.id) ?? [], stateOf(viewer, person.user.id, connections), common)
+    const id = person.user.id
+    const card = cardData({ person, badges: badges.get(id) ?? [], memberships: memberships.get(id) ?? [], settings: cardSettings.get(id)!.settings, viewer: null })
+    return { ...personCard(person, badges.get(id) ?? [], stateOf(viewer, id, connections), common), card }
   })
   res.json({ people, nextCursor: rows.length > PAGE_SIZE ? page[page.length - 1].profile.handle : null })
 }))
@@ -129,7 +131,7 @@ router.get('/api/people/:handle', ...authed, route('Loading person failed', asyn
   const connections = connection ? [connection] : []
   if (!visible(viewer, person, 'profile', connections)) return res.status(404).json(NOT_FOUND_PROFILE)
 
-  const [badges, myCourses, memberships] = await Promise.all([getBadges([ownerId]), getCourses(viewer.id), listMembershipsOf(ownerId)])
+  const [badges, myCourses, memberships, { settings: cardSettings }, collected] = await Promise.all([getBadges([ownerId]), getCourses(viewer.id), listMembershipsOf(ownerId), getCardSettings(ownerId), isCollected(viewer.id, ownerId)])
   const showCourses = visible(viewer, person, 'courses', connections)
   const showConnections = visible(viewer, person, 'connections', connections)
   const mine = new Set(myCourses.map((course) => course.code))
@@ -155,6 +157,7 @@ router.get('/api/people/:handle', ...authed, route('Loading person failed', asyn
     connection: connectionState(viewer.id, ownerId, connection),
     badges: badges.get(ownerId) ?? [],
     entities: memberships.map(({ entityId, name, title }) => ({ entityId, name, title })),
+    card: cardData({ person, badges: badges.get(ownerId) ?? [], memberships, settings: cardSettings, viewer: { collected, connection: connectionState(viewer.id, ownerId, connection) } }),
     courses,
     commonCourses: courses ? courses.filter((course) => course.common).length : null,
     classmatesInCommon: classmates,

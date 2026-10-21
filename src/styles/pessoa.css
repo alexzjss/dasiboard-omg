@@ -64,3 +64,11 @@
 .tech-chip-icon { width: 16px; height: 16px; flex-shrink: 0; fill: var(--tech-color, currentColor); }
 .pessoa-techs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .pessoa-badge-title { color: var(--text-muted); font-weight: 600; }
+
+/* Cabeçalho do perfil alheio: a carta no lugar do avatar. */
+.pessoa-hero { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+.pessoa-hero-card { max-width: 100%; }
+.pessoa-hero .pessoa-header-text { justify-self: stretch; }
+@media (min-width: 640px) and (max-width: 1023px) {
+  .pessoa-hero { grid-template-columns: auto minmax(0, 1fr); justify-items: stretch; }
+}

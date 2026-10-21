@@ -78,7 +78,7 @@ export function ProfileCard({ data, variant = 'full', flippable, initialFace = '
 
   return (
     <div className={`pcard-wrap pcard-wrap-${variant}`}>
-      <div ref={exportRef} className="pcard-bg" style={vars}>
+      <div ref={exportRef} className="pcard-bg" data-palette={settings.palette} style={vars}>
         <div ref={tiltRef} className={classes}>
           <div className="pcard-tilt" style={tilt}>
             <div className="pcard-inner">

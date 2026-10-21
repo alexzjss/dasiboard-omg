@@ -135,6 +135,19 @@ describe('GET /api/people', () => {
     expect(JSON.stringify(body)).not.toContain('@usp.br')
   })
 
+  it('includes a card per person, without email or internal ids', async () => {
+    const { body } = await (await as(alex)).get('/api/people')
+    expect(body.people[0].card).toMatchObject({ handle: 'bia', viewer: null })
+    expect(body.people[0].card).not.toHaveProperty('email')
+    expect(JSON.stringify(body.people.map((p: { card: unknown }) => p.card))).not.toContain('@usp.br')
+  })
+
+  it('GET /api/people/:handle includes the card', async () => {
+    const { body } = await (await as(alex)).get('/api/people/bia')
+    expect(body.card).toMatchObject({ handle: 'bia', name: 'Bia' })
+    expect(JSON.stringify(body.card)).not.toContain('@usp.br')
+  })
+
   it('does not leak common courses of people who hide them', async () => {
     store.people.get(caio.id)!.profile.show_courses = 'none'
     const { body } = await (await as(alex)).get('/api/people')

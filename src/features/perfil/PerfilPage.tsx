@@ -8,6 +8,7 @@ import { ThemeSelector } from '../../components/ThemeSelector'
 import { useMyProfile } from '../comunidade/hooks/useMyProfile'
 import { AdminSection } from './AdminSection'
 import { AvatarEditor } from './avatar/AvatarEditor'
+import { MyCardSection } from './carta/MyCardSection'
 import { ProfileEditor } from './ProfileEditor'
 import { ProfilePreview } from './ProfilePreview'
 import { MyCourses, MyEntities, PendingRequests, PrivacyControls } from './ProfileSections'
@@ -54,6 +55,7 @@ export function PerfilPage() {
   const showAdmin = Boolean(me && (me.isSuperadmin || me.adminOf.length > 0))
   const pending = me?.pendingCount ?? 0
   const index: { id: string; label: string }[] = [
+    { id: 'perfil-carta', label: 'Minha carta' },
     { id: 'perfil-editar', label: 'Meu perfil' },
     { id: 'perfil-pedidos', label: 'Pedidos' },
     { id: 'perfil-materias', label: 'Matérias' },
@@ -117,6 +119,10 @@ export function PerfilPage() {
 
             {me && (
               <>
+                <Section id="perfil-carta" title="Minha carta">
+                  <MyCardSection />
+                </Section>
+
                 <Section id="perfil-editar" title="Meu perfil" aside={
                   <button type="button" className="pf-btn is-quiet" aria-pressed={preview} onClick={() => setPreview((p) => !p)}>
                     {preview ? 'Ocultar prévia' : 'Ver como os outros veem'}

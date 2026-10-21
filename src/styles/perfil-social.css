@@ -119,3 +119,36 @@
 .tech-picker-item.is-dragging { opacity: 0.5; }
 .tech-picker-actions { display: flex; gap: var(--s-1); }
 .tech-picker-actions .pf-btn { min-width: 44px; padding: 0; }
+
+/* Editor da carta e bloco da carta no perfil */
+.cartaed-layout { display: grid; gap: var(--s-5); grid-template-columns: minmax(0, 1fr); align-items: start; margin-top: var(--s-4); }
+.cartaed-preview { display: flex; justify-content: center; }
+.cartaed-panel { display: grid; gap: var(--s-4); min-width: 0; }
+.cartaed-group { margin: 0; padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-1); display: grid; gap: var(--s-3); min-width: 0; }
+.cartaed-group legend { padding: 0 var(--s-2); color: var(--text-2); font-size: 13px; font-weight: 700; }
+.cartaed-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.cartaed-choice { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 44px; padding: var(--s-2) var(--s-4); border: 1px solid var(--line-strong); border-radius: var(--r-md); background: transparent; color: var(--text); font-weight: 600; cursor: pointer; }
+.cartaed-choice small { display: inline-flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 11px; font-weight: 500; }
+.cartaed-choice.is-on { border-color: var(--area); background: var(--accent-soft); }
+.cartaed-choice:disabled { opacity: 0.6; cursor: not-allowed; }
+.cartaed-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: var(--s-2); }
+.cartaed-swatch { position: relative; min-height: 44px; border-radius: var(--r-md); border: 2px solid transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.cartaed-swatch.is-on { border-color: var(--text); box-shadow: 0 0 0 2px var(--surface-1) inset; }
+.cartaed-swatch:disabled { opacity: 0.55; cursor: not-allowed; }
+.cartaed-swatch:focus-visible, .cartaed-choice:focus-visible { outline: 2px solid var(--area); outline-offset: 2px; }
+.cartaed-lock { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cartaed-swatch .cartaed-lock { color: #fff; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .8)); width: 18px; height: 18px; }
+.cartaed-switch { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--s-2) var(--s-3); min-height: 44px; font-weight: 600; color: var(--text); }
+.cartaed-switch small { grid-column: 2; color: var(--text-muted); font-weight: 400; font-size: 12px; }
+.cartaed-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.cartaed-list li { display: flex; align-items: center; gap: var(--s-2); min-height: 44px; }
+.cartaed-list label { display: flex; align-items: center; gap: var(--s-2); flex: 1; min-width: 0; }
+.cartaed-tag { padding: 2px var(--s-2); border-radius: var(--r-pill); background: var(--accent-soft); color: var(--area); font-size: 11px; font-weight: 700; }
+.cartaed-move { display: inline-flex; gap: 2px; }
+.cartaed-move .pf-btn { min-width: 44px; padding: 0; }
+.cartaed-actions { position: sticky; bottom: var(--s-3); padding: var(--s-3); border-radius: var(--r-md); background: var(--surface-1); border: 1px solid var(--line); }
+.pf-card-block { display: grid; gap: var(--s-4); justify-items: center; }
+@media (min-width: 900px) {
+  .cartaed-layout { grid-template-columns: auto minmax(0, 1fr); }
+  .cartaed-preview { position: sticky; top: var(--s-6); }
+}

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { PersonProfile } from '../../../lib/socialApi'
+import { DEFAULT_CARD } from '../../../lib/cardOptions'
 
 let impl: () => Promise<unknown> = () => Promise.resolve(null)
 const getPerson = { mockReset: () => { impl = () => Promise.resolve(null) }, mockResolvedValue: (v: unknown) => { impl = () => Promise.resolve(v) }, mockRejected: (e: unknown) => { impl = () => Promise.reject(e) } }
@@ -20,6 +21,7 @@ function base(over: Partial<PersonProfile> = {}): PersonProfile {
   return {
     profile: { handle: 'ana.silva', name: 'Ana Silva', picture: null, course: 'Sistemas de Informação', entryYear: 2023, bio: 'Gosto de dados.', links: { github: 'https://github.com/ana' }, technologies: [], self: false },
     connection: 'none',
+    card: { handle: 'ana.silva', name: 'Ana Silva', picture: null, subtitle: 'Sistemas de Informação · Turma 2023', course: 'Sistemas de Informação', entryYear: 2023, technologies: [], links: {}, entities: [], badges: [], settings: DEFAULT_CARD, viewer: null },
     badges: [{ kind: 'entity_member', sourceId: 'dasi', label: 'DASI', icon: null, color: null, entityId: 'dasi' }],
     entities: [{ entityId: 'dasi', name: 'DASI', title: null }],
     courses: [{ code: 'ACH2023', title: 'Algoritmos I', common: true }, { code: 'ACH2012', title: 'Cálculo II', common: false }],
@@ -47,7 +49,8 @@ describe('PersonPage', () => {
   it('renderiza o perfil completo', async () => {
     getPerson.mockResolvedValue(base())
     renderAt()
-    expect(await screen.findByRole('heading', { name: 'Ana Silva' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Ana Silva', level: 1 })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Ana Silva', level: 3 })).toBeTruthy() // nome dentro da carta
     expect(screen.getByText('@ana.silva').className).toContain('mono')
     expect(screen.getByText('Gosto de dados.')).toBeTruthy()
     const gh = screen.getByRole('link', { name: 'GitHub' })
@@ -117,7 +120,7 @@ describe('PersonPage', () => {
       profile: { ...base().profile, links: { github: 'https://evil.com/ana', linkedin: 'http://www.linkedin.com/in/ana', instagram: 'https://instagram.com.evil.com/a' } },
     }))
     renderAt()
-    await screen.findByRole('heading', { name: 'Ana Silva' })
+    await screen.findByRole('heading', { name: 'Ana Silva', level: 1 })
     expect(screen.queryByRole('link', { name: 'GitHub' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'LinkedIn' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'Instagram' })).toBeNull()

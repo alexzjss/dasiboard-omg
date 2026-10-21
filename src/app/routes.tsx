@@ -8,6 +8,7 @@ import { EntidadesPage } from '../features/entidades/EntidadesPage'
 import { HomePage } from '../features/home/HomePage'
 import { NotificacoesPage } from '../features/notificacoes/NotificacoesPage'
 import { PerfilPage } from '../features/perfil/PerfilPage'
+import { CartaEditorPage } from '../features/perfil/carta/CartaEditorPage'
 import { AppLayout } from './AppLayout'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ export function AppRoutes() {
         <Route path="entidades/:slug" element={<EntidadesPage />} />
         <Route path="notificacoes" element={<NotificacoesPage />} />
         <Route path="perfil" element={<PerfilPage />} />
+        <Route path="perfil/carta" element={<CartaEditorPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
