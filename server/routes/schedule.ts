@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { deleteSchedule, getSchedule, saveSchedule, type ScheduleEntry } from '../db.js'
-import { fetchJupiterSchedule } from '../jupiter.js'
+import { disciplineCodePattern, fetchDiscipline } from '../jupiter.js'
 import { logError } from '../lib/errors.js'
 import { isAllowedOrigin } from '../lib/middleware.js'
 import { rateLimit } from '../lib/rateLimit.js'
@@ -48,22 +48,17 @@ router.delete('/api/schedule', isAllowedOrigin, requireSession, async (req, res)
   }
 })
 
-router.post('/api/schedule/jupiter', isAllowedOrigin, requireSession, rateLimit('jupiter', 5, 10 * 60_000), async (req, res) => {
-  const codpes = typeof req.body?.codpes === 'string' ? req.body.codpes.trim() : ''
-  const password = typeof req.body?.password === 'string' ? req.body.password : ''
-  const codpgm = typeof req.body?.codpgm === 'string' ? req.body.codpgm.trim() : ''
-  if (!/^\d{1,10}$/.test(codpes) || !password || !/^\d+$/.test(codpgm)) return res.status(400).json({ error: 'Informe número USP, senha e programa.' })
+// Public JupiterWeb data only: the user picks disciplines and sections, no credentials involved.
+router.get('/api/schedule/disciplines/:code', requireSession, rateLimit('disciplines', 30, 60_000), async (req, res) => {
+  const code = String(req.params.code).trim().toUpperCase()
+  if (!disciplineCodePattern.test(code)) return res.status(400).json({ error: 'Código de disciplina inválido. Use o formato ACH2001.' })
   try {
-    const entries = await fetchJupiterSchedule(codpes, password, codpgm)
-    if (req.user) {
-      const saved = await saveSchedule(req.user.sub, entries)
-      await syncBadgesFor(req.user.sub)
-      return res.json(saved)
-    }
-    res.json({ entries, importedAt: null })
+    const discipline = await fetchDiscipline(code)
+    if (!discipline.sections.length) return res.status(404).json({ error: `Nenhuma turma de ${code} encontrada no JupiterWeb.` })
+    res.json(discipline)
   } catch (error) {
-    logError('Jupiter import failed', error)
-    res.status(502).json({ error: error instanceof Error ? error.message : 'Não foi possível consultar o JupiterWeb' })
+    logError('Loading discipline from JupiterWeb failed', error)
+    res.status(502).json({ error: 'Não foi possível consultar o JupiterWeb agora. Tente de novo em instantes.' })
   }
 })
 

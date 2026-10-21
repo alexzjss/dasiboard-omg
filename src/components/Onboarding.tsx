@@ -12,7 +12,7 @@ const ONBOARDING_STEPS: { icon: IconName; title: string; body: string; cta: stri
   {
     icon: 'calendar',
     title: 'Sua grade, na órbita',
-    body: 'Importa do JupiterWeb e a gente mostra o que rola hoje e na semana. Sem copiar horário na mão.',
+    body: 'Coloca os códigos das disciplinas, escolhe a turma e a gente puxa os horários do JupiterWeb. Sem senha e sem copiar horário na mão.',
     cta: 'Próximo',
   },
   {

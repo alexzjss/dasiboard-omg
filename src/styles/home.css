@@ -147,6 +147,16 @@
 .import-button:hover { background: var(--accent-fill-2); }
 .import-button:disabled { opacity: 0.6; cursor: wait; }
 .jupiter-form .import-button { grid-column: 1 / -1; }
+.builder-list { display: grid; gap: var(--s-3); margin: var(--s-4) 0 0; padding: 0; list-style: none; max-width: 640px; }
+.builder-discipline { padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-inset); }
+.builder-discipline-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.builder-discipline-head p { margin: 0; font-weight: 700; font-size: 14px; }
+.builder-sections { display: grid; gap: var(--s-2); margin: var(--s-2) 0 0; padding: 0; border: 0; }
+.builder-sections legend { margin-bottom: var(--s-2); color: var(--text-muted); font-size: 12px; }
+.builder-section { display: flex; align-items: flex-start; gap: var(--s-2); font-size: 13px; line-height: 1.4; cursor: pointer; }
+.builder-section input { margin-top: 3px; accent-color: var(--area); }
+.builder-section-meta { display: block; color: var(--text-2); font-size: 12px; }
+.builder-save { margin-top: var(--s-4); width: 100%; max-width: 640px; }
 .schedule-error { margin-top: var(--s-3); color: var(--danger); font-size: 13px; line-height: 1.4; }
 
 .clear-schedule-button {

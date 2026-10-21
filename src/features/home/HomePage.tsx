@@ -5,7 +5,7 @@ import { useLayout } from '../../app/layoutContext'
 import { getGreeting } from '../../lib/date'
 import { AppTopbar } from './AppTopbar'
 import { DayOrbit } from './DayOrbit'
-import { JupiterImportForm } from './JupiterImportForm'
+import { ScheduleBuilder } from './ScheduleBuilder'
 import { useNow } from './useNow'
 import { useSchedule } from './useSchedule'
 import { WeekMap } from './WeekMap'
@@ -18,7 +18,7 @@ export function HomePage() {
 }
 
 function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: (trigger?: HTMLElement | null) => void }) {
-  const { schedule, hasStoredSchedule, importError, jupiterData, setJupiterData, isConsultingJupiter, consultJupiter, clearSchedule } = useSchedule(user)
+  const { schedule, hasStoredSchedule, importError, isSaving, saveSchedule, clearSchedule } = useSchedule(user)
   const now = useNow()
   const dateLabel = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now)
   const greeting = getGreeting(now)
@@ -36,12 +36,12 @@ function HomeContent({ user, onOpenUserMenu }: { user: User; onOpenUserMenu: (tr
 
       {hasStoredSchedule
         ? <WeekMap schedule={schedule} now={now} action={
-            <button type="button" className="clear-schedule-button" onClick={clearSchedule}><Icon name="trash" /><span>Importar de novo</span></button>
+            <button type="button" className="clear-schedule-button" onClick={clearSchedule}><Icon name="trash" /><span>Refazer grade</span></button>
           } />
         : <section className="section-block import-block" id="importar" aria-labelledby="import-title">
             <h2 id="import-title">Cadê sua grade?</h2>
-            <p className="section-hint">Puxa direto do JupiterWeb: número USP, senha e o código do programa. As aulas caem na órbita de hoje e no mapa da semana. A senha não fica salva no navegador.</p>
-            <JupiterImportForm jupiterData={jupiterData} setJupiterData={setJupiterData} isConsulting={isConsultingJupiter} onSubmit={consultJupiter} />
+            <p className="section-hint">Adiciona o código de cada disciplina e marca a sua turma. Os horários vêm da consulta pública do JupiterWeb, sem senha. As aulas caem na órbita de hoje e no mapa da semana.</p>
+            <ScheduleBuilder isSaving={isSaving} onSave={saveSchedule} />
             {importError && <p className="schedule-error" role="alert">{importError}</p>}
           </section>}
       </div>

@@ -30,7 +30,7 @@ export function DayOrbit({ schedule, now, hasSchedule }: { schedule: ScheduleEnt
       <div className="orbit-head">
         <h2 id="orbit-title">Hoje</h2>
         <p className="orbit-summary" aria-live="polite">
-          {summary ?? <>Sem grade ainda. <a href="#importar">Importa do JupiterWeb</a> e suas aulas aparecem aqui.</>}
+          {summary ?? <>Sem grade ainda. <a href="#importar">Monta sua grade</a> e suas aulas aparecem aqui.</>}
         </p>
       </div>
       <div className="orbit-plane">

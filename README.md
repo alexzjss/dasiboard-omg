@@ -50,7 +50,7 @@ dasiboard-omg-main/
 ## ✨ Principais Funcionalidades
 
 *   **Autenticação Google**: Login seguro e simplificado utilizando contas do Google.
-*   **Integração de Horários (Jupiter)**: Sistema para buscar, processar e exibir rotinas e grades horárias automaticamente.
+*   **Grade horária (Jupiter)**: o aluno informa os códigos das disciplinas e escolhe as turmas; os horários vêm da consulta pública do JupiterWeb (`obterTurma`), sem pedir número USP nem senha.
 *   **Dashboard Interativo**: Interface responsiva e em tempo real servida pelo React.
 *   **Sessões Persistentes**: Gerenciamento de estado de usuário integrado com o backend Supabase.
 
@@ -131,8 +131,7 @@ SUPERADMIN_EMAILS=voce@usp.br,outra.pessoa@usp.br
 
 Roteamento na Vercel: `vercel.json` reescreve toda rota `/api/*` sem arquivo
 próprio para a função `api/index.ts` (que importa `server/index.ts`), e o Express
-roteia pelo caminho original. Só `/api/auth/*`, `/api/schedule` e
-`/api/schedule/jupiter` têm arquivos próprios. Não use `api/[...path].ts`: na
+roteia pelo caminho original. Só `/api/auth/*` e `/api/schedule` têm arquivos próprios. Não use `api/[...path].ts`: na
 Vercel, fora do Next.js, ele só atende caminhos de um nível (`/api/people`, mas
 não `/api/people/:handle`).
 Antes do deploy, aplique `supabase/migrations/2026-10-20-social.sql` (veja
