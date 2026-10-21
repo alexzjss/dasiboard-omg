@@ -1,4 +1,5 @@
 import type { User } from '../auth/types'
+import type { CalendarFilters } from '../features/calendario/filters'
 import type { ScheduleEntry } from '../features/home/types'
 
 const STORAGE_USER_KEY = 'orbe_user'
@@ -71,5 +72,25 @@ export function loadSidebarCollapsed(): boolean {
 
 export function saveSidebarCollapsed(collapsed: boolean) {
   try { localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0') }
+  catch { /* storage unavailable */ }
+}
+
+const CALENDAR_FILTERS_KEY = 'orbe_calendar_filters'
+
+/** Lê os filtros salvos; devolve só os campos booleanos válidos (o resto fica a cargo de quem chama). */
+export function loadCalendarFilters(): Partial<CalendarFilters> | null {
+  try {
+    const raw = localStorage.getItem(CALENDAR_FILTERS_KEY)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    const out: Record<string, boolean> = {}
+    for (const [key, value] of Object.entries(parsed)) if (typeof value === 'boolean') out[key] = value
+    return out as Partial<CalendarFilters>
+  } catch { return null }
+}
+
+export function saveCalendarFilters(filters: CalendarFilters) {
+  try { localStorage.setItem(CALENDAR_FILTERS_KEY, JSON.stringify(filters)) }
   catch { /* storage unavailable */ }
 }

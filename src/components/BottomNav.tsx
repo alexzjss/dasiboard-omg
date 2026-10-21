@@ -6,7 +6,7 @@ import { getInitials } from '../lib/user'
 import { CountBadge } from './CountBadge'
 import { pendingRequestsSuffix } from './badgeText'
 
-export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Disciplinas', 'book'], ['Comunidade', 'people'], ['Entidades', 'building']] as [string, IconName][], badges = {}, profileAction, profileAvatar, profileName, profileBadge = 0 }: {
+export function BottomNav({ activeTab, onSelectTab, className = '', items = [['Início', 'home'], ['Calendário', 'calendar'], ['Comunidade', 'people'], ['Entidades', 'building']] as [string, IconName][], badges = {}, profileAction, profileAvatar, profileName, profileBadge = 0 }: {
   activeTab: string
   onSelectTab: (tab: string) => void
   className?: string

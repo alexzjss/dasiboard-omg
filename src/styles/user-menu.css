@@ -61,6 +61,8 @@
 
 .user-menu-item { min-height: 48px; }
 
+@media (min-width: 1024px) { .user-menu-mobile-only { display: none; } }
+
 /* Desktop: popover ancorado ao gatilho (posição vem de --pop-* definidos em UserMenu.tsx) */
 @media (min-width: 1024px) {
   .user-menu-backdrop { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }

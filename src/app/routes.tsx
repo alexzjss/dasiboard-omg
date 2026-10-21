@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '../auth/authContext'
 import { LoginScreen } from '../auth/LoginScreen'
+import { CalendarioPage } from '../features/calendario/CalendarioPage'
 import { DisciplinasPage } from '../features/disciplinas/DisciplinasPage'
 import { ComunidadePage } from '../features/comunidade/ComunidadePage'
 import { PersonPage } from '../features/comunidade/PersonPage'
@@ -34,6 +35,7 @@ export function AppRoutes() {
         <Route path="docentes" element={<Navigate to="/comunidade?aba=docentes" replace />} />
         <Route path="entidades" element={<EntidadesPage />} />
         <Route path="entidades/:slug" element={<EntidadesPage />} />
+        <Route path="calendario" element={<CalendarioPage />} />
         <Route path="notificacoes" element={<NotificacoesPage />} />
         <Route path="perfil" element={<PerfilPage />} />
         <Route path="perfil/carta" element={<CartaEditorPage />} />

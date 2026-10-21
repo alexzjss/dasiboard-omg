@@ -12,7 +12,7 @@ import { useNotificationCount } from '../features/comunidade/hooks/useNotificati
 import { findEntidadeBySlug } from '../features/entidades/data'
 import { isOnboardingDone, loadSidebarCollapsed, saveSidebarCollapsed } from '../lib/storage'
 import { LayoutContext } from './layoutContext'
-import { NAV_ITEMS, SECTION_LABEL, SECTION_SPACE_THEME, sectionFromPath } from './navItems'
+import { MOBILE_NAV_ITEMS, NAV_ITEMS, SECTION_LABEL, SECTION_SPACE_THEME, sectionFromPath } from './navItems'
 
 export function AppLayout() {
   const { user, logout } = useAuth()
@@ -72,7 +72,7 @@ export function AppLayout() {
           <BottomNav
             activeTab={SECTION_LABEL[section]}
             onSelectTab={selectTab}
-            items={NAV_ITEMS.map((i) => [i.label, i.icon])}
+            items={MOBILE_NAV_ITEMS.map((i) => [i.label, i.icon])}
             badges={badges}
             profileBadge={pendingRequests}
             className={section === 'entidades' ? 'ent-nav' : ''}
@@ -89,6 +89,7 @@ export function AppLayout() {
           onLogout={() => void logout()}
           onClose={closeUserMenu}
           onOpenProfile={() => navigate('/perfil')}
+          onOpenDisciplinas={() => navigate('/disciplinas')}
         />
       )}
       {showOnboarding && <OnboardingFlow onDone={() => setShowOnboarding(false)} />}

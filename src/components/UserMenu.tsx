@@ -5,7 +5,7 @@ import { getInitials } from '../lib/user'
 
 const POPOVER_WIDTH = 280
 
-export function UserMenu({ user, anchor, onLogout, onClose, onOpenProfile }: { user: User; anchor?: HTMLElement | null; onLogout: () => void; onClose: () => void; onOpenProfile: () => void }) {
+export function UserMenu({ user, anchor, onLogout, onClose, onOpenProfile, onOpenDisciplinas }: { user: User; anchor?: HTMLElement | null; onLogout: () => void; onClose: () => void; onOpenProfile: () => void; onOpenDisciplinas: () => void }) {
   const initials = getInitials(user)
   const sheetRef = useRef<HTMLDivElement>(null)
   useDialogFocus(sheetRef, onClose, anchor)
@@ -44,6 +44,11 @@ export function UserMenu({ user, anchor, onLogout, onClose, onOpenProfile }: { u
           <button className="user-menu-item" onClick={() => { onOpenProfile(); onClose() }}>
             <svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             <span>Meu perfil</span>
+          </button>
+          {/* No celular a barra inferior não tem Disciplinas (cedeu o lugar ao Calendário); no desktop ela está na sidebar. */}
+          <button className="user-menu-item user-menu-mobile-only" onClick={() => { onOpenDisciplinas(); onClose() }}>
+            <svg className="icon" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16ZM4 5.5v16M8 7h8M8 11h8"/></svg>
+            <span>Disciplinas</span>
           </button>
           <button className="user-menu-item user-menu-logout" onClick={() => { onLogout(); onClose() }}>
             <svg className="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>

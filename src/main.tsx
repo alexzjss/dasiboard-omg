@@ -20,6 +20,7 @@ import './styles/comunidade.css'
 import './styles/pessoa.css'
 import './styles/notificacoes.css'
 import './styles/card.css'
+import './styles/calendario.css'
 import App from './app/App.tsx'
 
 createRoot(document.getElementById('root')!).render(
