@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Icon } from '../../components/Icon'
 import { useDialogFocus } from '../../lib/useDialogFocus'
 import { entidadeSlug, type Entidade } from './data'
+import { EntidadeCardSection } from './EntidadeCardSection'
 import { EntidadeMembers } from './EntidadeMembers'
 import { InstagramEmbed } from './InstagramEmbed'
 
@@ -43,6 +44,7 @@ export function EntidadeDetail({ entidade, onClose }: { entidade: Entidade; onCl
           <h2 className="section-label">No Instagram</h2>
           <InstagramEmbed url={entidade.instagram} name={entidade.name} />
         </div>
+        <EntidadeCardSection entidade={entidade} />
         <EntidadeMembers entidadeId={entidade.id} />
       </aside>
     </>,

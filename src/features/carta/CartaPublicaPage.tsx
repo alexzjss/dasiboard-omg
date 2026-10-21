@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { CardActions } from '../../components/card/CardActions'
 import { ProfileCard } from '../../components/card/ProfileCard'
 import { paletteOf } from '../../lib/cardOptions'
 import { ApiError, collectCard, getCard, requestConnection, type CardData, type ConnectionState } from '../../lib/socialApi'
@@ -16,6 +17,7 @@ export function CartaPublicaPage() {
   const { handle = '' } = useParams()
   const [load, setLoad] = useState<Load>({ state: 'loading' })
   const [revealing, setRevealing] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [override, setOverride] = useState<{ collected?: boolean; connection?: ConnectionState }>({})
@@ -86,7 +88,8 @@ export function CartaPublicaPage() {
 
   return (
     <Shell backdrop={paletteOf(card.settings.palette).backdrop}>
-      {revealing ? <RevealCard data={card} onDone={finishReveal} /> : <ProfileCard data={card} />}
+      {revealing ? <RevealCard data={card} onDone={finishReveal} /> : <ProfileCard data={card} exportRef={cardRef} />}
+      {!revealing && <CardActions data={card} cardRef={cardRef} />}
       <div className="cartapub-actions">
         {!viewer && <Link className="pf-btn is-primary" to={login}>Entrar para colecionar</Link>}
         {viewer && isOwner && <>

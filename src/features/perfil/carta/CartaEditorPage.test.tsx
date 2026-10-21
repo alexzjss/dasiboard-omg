@@ -71,4 +71,28 @@ describe('CartaEditorPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(container.querySelector('[data-palette]')?.getAttribute('data-palette')).toBe('coral')
   })
+
+  it('no modo automático mostra as escolhas automáticas no preview mas salva entities/badges vazios', async () => {
+    const auto = card()
+    auto.card.entities = [{ entityId: 'dasi', name: 'DASI', title: null }]
+    vi.mocked(api.getMyCard).mockResolvedValue(auto)
+    vi.mocked(api.getMyProfile).mockResolvedValue({ ...profile(), entities: [{ entityId: 'dasi', name: 'DASI', title: null }] } as MyProfile)
+    const { container } = renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Oceano' }))
+    expect(container.querySelector('.pcard-ico img[alt="DASI"], .pcard-ico')).toBeTruthy()
+    expect((screen.getByRole('checkbox', { name: 'DASI' }) as HTMLInputElement).checked).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+    await waitFor(() => expect(api.updateMyCard).toHaveBeenCalledWith({ settings: { ...DEFAULT_CARD, palette: 'ocean', entities: [], badges: [] }, public: false }))
+  })
+
+  it('ao mexer na lista de entidades passa a salvar a escolha explícita', async () => {
+    const auto = card()
+    auto.card.entities = [{ entityId: 'dasi', name: 'DASI', title: null }, { entityId: 'hype', name: 'Hype USP', title: null }]
+    vi.mocked(api.getMyCard).mockResolvedValue(auto)
+    vi.mocked(api.getMyProfile).mockResolvedValue({ ...profile(), entities: [{ entityId: 'dasi', name: 'DASI', title: null }, { entityId: 'hype', name: 'Hype USP', title: null }] } as MyProfile)
+    renderPage()
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Hype USP' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+    await waitFor(() => expect(api.updateMyCard).toHaveBeenCalledWith({ settings: { ...DEFAULT_CARD, entities: ['dasi'] }, public: false }))
+  })
 })

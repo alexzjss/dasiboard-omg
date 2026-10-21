@@ -24,6 +24,7 @@
     "dotenv": "^18.0.1",
     "express": "^5.2.1",
     "google-auth-library": "^11.1.0",
+    "html-to-image": "^1.11.13",
     "jose": "^6.2.12",
     "qrcode-generator": "^2.0.4",
     "react": "^19.2.8",

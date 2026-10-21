@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { CardActions } from '../../../components/card/CardActions'
 import { ProfileCard } from '../../../components/card/ProfileCard'
 import { Icon } from '../../../components/Icon'
 import { CARD_FINISHES, CARD_PALETTES, CARD_PAPERS, CARD_SHAPES, MAX_CARD_ITEMS, type CardFinish, type CardPaper, type CardSettings, type CardShape } from '../../../lib/cardOptions'
@@ -51,6 +52,7 @@ export function CartaEditorPage() {
   const [isPublic, setIsPublic] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
@@ -73,21 +75,30 @@ export function CartaEditorPage() {
   const memberships = useMemo(() => me?.entities ?? [], [me])
   const extraBadges = useMemo(() => (me?.badges ?? []).filter((badge) => badge.kind !== 'entity_member'), [me])
 
+  // Lista vazia = modo automático: o servidor escolhe e o preview mostra essas escolhas, mas o que se salva continua vazio.
+  const effective = useMemo(() => {
+    if (!saved || !settings) return { entities: [] as string[], badges: [] as string[] }
+    return {
+      entities: settings.entities.length > 0 ? settings.entities : saved.card.entities.map((entity) => entity.entityId),
+      badges: settings.badges.length > 0 ? settings.badges : saved.card.badges.map(badgeKey),
+    }
+  }, [saved, settings])
+
   const preview = useMemo<CardData | null>(() => {
     if (!saved || !settings) return null
     const byEntity = new Map(memberships.map((membership) => [membership.entityId, membership]))
     const byKey = new Map(extraBadges.map((badge) => [badgeKey(badge), badge]))
-    const entities = settings.entities.flatMap((id) => byEntity.get(id) ?? []).map(({ entityId, name, title }) => ({ entityId, name, title }))
+    const entities = effective.entities.flatMap((id) => byEntity.get(id) ?? []).map(({ entityId, name, title }) => ({ entityId, name, title }))
     const main = entities[0]
     const { course, entryYear } = saved.card
     return {
       ...saved.card,
       settings,
       entities,
-      badges: settings.badges.flatMap((key) => byKey.get(key) ?? []),
+      badges: effective.badges.flatMap((key) => byKey.get(key) ?? []),
       subtitle: main?.title ? `${main.title} · ${main.name}` : entryYear ? `${course} · Turma ${entryYear}` : course,
     }
-  }, [saved, settings, memberships, extraBadges])
+  }, [saved, settings, effective, memberships, extraBadges])
 
   if (loadError) return <Shell><p className="pf-error" role="alert">Não deu pra carregar sua carta.</p><Link className="pf-btn" to="/perfil">Voltar ao perfil</Link></Shell>
   if (!saved || !settings || !preview) return <Shell><p className="pf-empty" role="status">Carregando sua carta…</p></Shell>
@@ -95,11 +106,11 @@ export function CartaEditorPage() {
   const { unlocks } = saved
   const set = <K extends keyof CardSettings>(key: K, value: CardSettings[K]) => { setSettings({ ...settings, [key]: value }); setMessage(null) }
   const toggle = (key: 'entities' | 'badges', id: string) => {
-    const list = settings[key]
+    const list = effective[key]
     set(key, list.includes(id) ? list.filter((item) => item !== id) : list.length < MAX_CARD_ITEMS ? [...list, id] : list)
   }
   const move = (id: string, delta: number) => {
-    const list = [...settings.entities]
+    const list = [...effective.entities]
     const from = list.indexOf(id)
     const to = from + delta
     if (from < 0 || to < 0 || to >= list.length) return
@@ -139,7 +150,7 @@ export function CartaEditorPage() {
       <h1 className="profile-name">Personalizar carta</h1>
 
       <div className="cartaed-layout">
-        <div className="cartaed-preview"><ProfileCard data={preview} /></div>
+        <div className="cartaed-preview"><ProfileCard data={preview} exportRef={cardRef} /><CardActions data={preview} cardRef={cardRef} /></div>
 
         <div className="cartaed-panel">
           <Group title="Paleta">
@@ -176,16 +187,16 @@ export function CartaEditorPage() {
             {memberships.length === 0 ? <p className="pf-hint">Você ainda não participa de entidades.</p> : (
               <ul className="cartaed-list">
                 {memberships.map((membership) => {
-                  const index = settings.entities.indexOf(membership.entityId)
+                  const index = effective.entities.indexOf(membership.entityId)
                   const on = index >= 0
                   return (
                     <li key={membership.entityId}>
-                      <label><input type="checkbox" checked={on} disabled={!on && settings.entities.length >= MAX_CARD_ITEMS} onChange={() => toggle('entities', membership.entityId)} /> {membership.name}</label>
+                      <label><input type="checkbox" checked={on} disabled={!on && effective.entities.length >= MAX_CARD_ITEMS} onChange={() => toggle('entities', membership.entityId)} /> {membership.name}</label>
                       {index === 0 && <span className="cartaed-tag">principal</span>}
                       {on && (
                         <span className="cartaed-move">
                           <button type="button" className="pf-btn is-quiet" aria-label={`Subir ${membership.name}`} disabled={index === 0} onClick={() => move(membership.entityId, -1)}>↑</button>
-                          <button type="button" className="pf-btn is-quiet" aria-label={`Descer ${membership.name}`} disabled={index === settings.entities.length - 1} onClick={() => move(membership.entityId, 1)}>↓</button>
+                          <button type="button" className="pf-btn is-quiet" aria-label={`Descer ${membership.name}`} disabled={index === effective.entities.length - 1} onClick={() => move(membership.entityId, 1)}>↓</button>
                         </span>
                       )}
                     </li>
@@ -199,8 +210,8 @@ export function CartaEditorPage() {
               <ul className="cartaed-list">
                 {extraBadges.map((badge) => {
                   const key = badgeKey(badge)
-                  const on = settings.badges.includes(key)
-                  return <li key={key}><label><input type="checkbox" checked={on} disabled={!on && settings.badges.length >= MAX_CARD_ITEMS} onChange={() => toggle('badges', key)} /> {badge.label}</label></li>
+                  const on = effective.badges.includes(key)
+                  return <li key={key}><label><input type="checkbox" checked={on} disabled={!on && effective.badges.length >= MAX_CARD_ITEMS} onChange={() => toggle('badges', key)} /> {badge.label}</label></li>
                 })}
               </ul>
             )}

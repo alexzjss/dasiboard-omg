@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CardActions } from '../../../components/card/CardActions'
 import { ProfileCard } from '../../../components/card/ProfileCard'
 import { getMyCard, type CardData } from '../../../lib/socialApi'
 
@@ -7,6 +8,7 @@ import { getMyCard, type CardData } from '../../../lib/socialApi'
 export function MyCardSection() {
   const [card, setCard] = useState<CardData | null>(null)
   const [failed, setFailed] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const controller = new AbortController()
     getMyCard(controller.signal).then((data) => setCard(data.card)).catch(() => { if (!controller.signal.aborted) setFailed(true) })
@@ -16,7 +18,8 @@ export function MyCardSection() {
   if (!card) return <p className="pf-empty" role="status">Carregando sua carta…</p>
   return (
     <div className="pf-card-block">
-      <ProfileCard data={card} />
+      <ProfileCard data={card} exportRef={cardRef} />
+      <CardActions data={card} cardRef={cardRef} />
       <Link className="pf-btn is-primary" to="/perfil/carta">Personalizar carta</Link>
       <Link className="pf-btn" to="/perfil/colecao">Minha coleção</Link>
     </div>
