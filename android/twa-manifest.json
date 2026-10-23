@@ -25,5 +25,5 @@
   "fallbackType": "customtabs",
   "enableSiteSettingsShortcut": false,
   "isChromeOSOnly": false,
-  "minSdkVersion": 21
+  "minSdkVersion": 24
 }
