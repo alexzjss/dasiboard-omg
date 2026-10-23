@@ -1,18 +1,38 @@
+import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '../auth/authContext'
 import { LoginScreen } from '../auth/LoginScreen'
-import { CalendarioPage } from '../features/calendario/CalendarioPage'
-import { DisciplinasPage } from '../features/disciplinas/DisciplinasPage'
-import { ComunidadePage } from '../features/comunidade/ComunidadePage'
-import { PersonPage } from '../features/comunidade/PersonPage'
-import { EntidadesPage } from '../features/entidades/EntidadesPage'
 import { HomePage } from '../features/home/HomePage'
-import { NotificacoesPage } from '../features/notificacoes/NotificacoesPage'
-import { PerfilPage } from '../features/perfil/PerfilPage'
-import { CartaEditorPage } from '../features/perfil/carta/CartaEditorPage'
-import { CartaPublicaPage } from '../features/carta/CartaPublicaPage'
-import { ColecaoPage } from '../features/perfil/colecao/ColecaoPage'
 import { AppLayout } from './AppLayout'
+
+// Páginas (exceto a Home) em chunks separados; pré-carregadas em idle para a navegação seguir instantânea.
+const loadCalendarioPage = () => import('../features/calendario/CalendarioPage').then((m) => ({ default: m.CalendarioPage }))
+const CalendarioPage = lazy(loadCalendarioPage)
+const loadDisciplinasPage = () => import('../features/disciplinas/DisciplinasPage').then((m) => ({ default: m.DisciplinasPage }))
+const DisciplinasPage = lazy(loadDisciplinasPage)
+const loadComunidadePage = () => import('../features/comunidade/ComunidadePage').then((m) => ({ default: m.ComunidadePage }))
+const ComunidadePage = lazy(loadComunidadePage)
+const loadPersonPage = () => import('../features/comunidade/PersonPage').then((m) => ({ default: m.PersonPage }))
+const PersonPage = lazy(loadPersonPage)
+const loadEntidadesPage = () => import('../features/entidades/EntidadesPage').then((m) => ({ default: m.EntidadesPage }))
+const EntidadesPage = lazy(loadEntidadesPage)
+const loadNotificacoesPage = () => import('../features/notificacoes/NotificacoesPage').then((m) => ({ default: m.NotificacoesPage }))
+const NotificacoesPage = lazy(loadNotificacoesPage)
+const loadPerfilPage = () => import('../features/perfil/PerfilPage').then((m) => ({ default: m.PerfilPage }))
+const PerfilPage = lazy(loadPerfilPage)
+const loadCartaEditorPage = () => import('../features/perfil/carta/CartaEditorPage').then((m) => ({ default: m.CartaEditorPage }))
+const CartaEditorPage = lazy(loadCartaEditorPage)
+const loadCartaPublicaPage = () => import('../features/carta/CartaPublicaPage').then((m) => ({ default: m.CartaPublicaPage }))
+const CartaPublicaPage = lazy(loadCartaPublicaPage)
+const loadColecaoPage = () => import('../features/perfil/colecao/ColecaoPage').then((m) => ({ default: m.ColecaoPage }))
+const ColecaoPage = lazy(loadColecaoPage)
+const prefetchRoutes = [loadCalendarioPage, loadDisciplinasPage, loadComunidadePage, loadPersonPage, loadEntidadesPage, loadNotificacoesPage, loadPerfilPage, loadCartaEditorPage, loadColecaoPage]
+
+function prefetchOnIdle() {
+  const run = () => { prefetchRoutes.forEach((load) => { void load().catch(() => undefined) }) }
+  if ('requestIdleCallback' in window) window.requestIdleCallback(run)
+  else setTimeout(run, 2000)
+}
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
@@ -22,7 +42,9 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 export function AppRoutes() {
+  useEffect(() => { prefetchOnIdle() }, [])
   return (
+    <Suspense fallback={null}>
     <Routes>
       <Route path="/entrar" element={<LoginScreen />} />
       <Route path="/c/:handle" element={<CartaPublicaPage />} />
@@ -43,5 +65,6 @@ export function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
+    </Suspense>
   )
 }

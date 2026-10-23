@@ -1,26 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
-// Keeps the previous page on screen while it fades out, then swaps to the new one.
-// While pageKey is unchanged the children are rendered live, so in-page navigation
-// (e.g. /entidades -> /entidades/dasi) and state updates are never frozen.
+// A página nova renderiza na hora; ao trocar de seção só toca a animação de entrada
+// (sem animação sob prefers-reduced-motion, via layout.css).
 export function PageTransition({ children, pageKey }: { children: React.ReactNode; pageKey: string }) {
-  const [shownKey, setShownKey] = useState(pageKey)
-  const [snapshot, setSnapshot] = useState(children)
   const [animClass, setAnimClass] = useState('page-enter-active')
+  const prevKey = useRef(pageKey)
 
-  // Remember the last live content so it can stay visible while fading out.
-  if (pageKey === shownKey && snapshot !== children) setSnapshot(children)
+  useLayoutEffect(() => {
+    if (prevKey.current === pageKey) return
+    prevKey.current = pageKey
+    setAnimClass('page-enter')
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(() => setAnimClass('page-enter-active')) })
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
+  }, [pageKey])
 
-  useEffect(() => {
-    if (pageKey === shownKey) return
-    setAnimClass('page-exit')
-    const t = setTimeout(() => {
-      setShownKey(pageKey)
-      setAnimClass('page-enter')
-      requestAnimationFrame(() => requestAnimationFrame(() => setAnimClass('page-enter-active')))
-    }, 200)
-    return () => clearTimeout(t)
-  }, [pageKey, shownKey])
-
-  return <div className={`page-transition ${animClass}`}>{pageKey === shownKey ? children : snapshot}</div>
+  return <div className={`page-transition ${animClass}`}>{children}</div>
 }

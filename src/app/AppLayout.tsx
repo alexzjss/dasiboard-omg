@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useOutlet } from 'react-router-dom'
 import { useAuth } from '../auth/authContext'
 import { BottomNav } from '../components/BottomNav'
@@ -64,7 +64,7 @@ export function AppLayout() {
       <div className="app-main">
         {section !== 'notificacoes' && <NotificationBell count={unread} className="notif-bell-floating" />}
         <LayoutContext value={layoutValue}>
-          <PageTransition pageKey={section}>{outlet}</PageTransition>
+          <PageTransition pageKey={section}><Suspense fallback={null}>{outlet}</Suspense></PageTransition>
         </LayoutContext>
       </div>
       {section !== 'perfil' && (

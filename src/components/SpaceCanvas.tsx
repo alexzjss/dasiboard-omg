@@ -76,7 +76,9 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
     function initParticles() {
       stars.length = 0
       nebulae.length = 0
-      const count = Math.min(280, Math.floor((window.innerWidth * window.innerHeight) / 5000))
+      // Telas pequenas ou CPUs fracas: menos estrelas e nebulosas
+      const lowPower = window.innerWidth < 768 || (navigator.hardwareConcurrency ?? 8) <= 4
+      const count = Math.min(lowPower ? 90 : 280, Math.floor((window.innerWidth * window.innerHeight) / 5000))
       for (let i = 0; i < count; i++) {
         const layer = Math.random() < 0.3 ? 0 : Math.random() < 0.5 ? 1 : 2
         stars.push({
@@ -89,7 +91,7 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
           layer,
         })
       }
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < (lowPower ? 3 : 6); i++) {
         nebulae.push({
           x: Math.random(),
           y: Math.random(),
@@ -117,7 +119,7 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
 
       // Blend transition
       if (!animated) blendRef.current = 1
-      else if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.018)
+      else if (blendRef.current < 1) blendRef.current = Math.min(1, blendRef.current + 0.036) // ~1 s a 30 fps
 
       // Background — slightly tinted when live accent present
       ctx.clearRect(0, 0, W, H)
@@ -235,9 +237,14 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
       frameRef.current++
     }
 
+    // Limita a ~30 fps
+    const FRAME_MS = 1000 / 30
+    let lastDraw = 0
     function loop(time: number) {
-      drawFrame(time)
       rafRef.current = requestAnimationFrame(loop)
+      if (time - lastDraw < FRAME_MS - 2) return
+      lastDraw = time
+      drawFrame(time)
     }
 
     // Quadro estático (prefers-reduced-motion) ou repintura após resize/tema
@@ -247,6 +254,12 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
       cancelAnimationFrame(rafRef.current)
       if (reducedRef.current) drawStatic()
       else rafRef.current = requestAnimationFrame(loop)
+    }
+
+    // Pausa o loop com a aba oculta
+    function onVisibility() {
+      if (document.hidden) cancelAnimationFrame(rafRef.current)
+      else if (!reducedRef.current) start()
     }
 
     function onResize() { resize(); initParticles(); if (reducedRef.current) drawStatic() }
@@ -267,6 +280,7 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
     resize()
     initParticles()
     window.addEventListener('resize', onResize)
+    document.addEventListener('visibilitychange', onVisibility)
     const unsubscribeTheme = subscribeTheme(syncEnvironment)
     motionMq.addEventListener('change', syncEnvironment)
     start()
@@ -274,6 +288,7 @@ export function SpaceCanvas({ theme, liveAccent }: { theme: string; liveAccent?:
     return () => {
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('resize', onResize)
+      document.removeEventListener('visibilitychange', onVisibility)
       unsubscribeTheme()
       motionMq.removeEventListener('change', syncEnvironment)
       redrawRef.current = null

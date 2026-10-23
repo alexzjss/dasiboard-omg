@@ -40,3 +40,12 @@
   .topbar { padding: 0 var(--s-8); }
 }
 
+
+/* Mobile: sem backdrop-filter sobre o canvas animado; fundo mais opaco compensa */
+@media (max-width: 768px) {
+  .topbar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: color-mix(in srgb, var(--surface-glass), var(--bg) 60%);
+  }
+}

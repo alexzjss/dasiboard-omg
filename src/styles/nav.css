@@ -73,3 +73,12 @@
 .bottom-nav-profile-badge { width: 24px; height: 24px; border-radius: 50%; }
 .bottom-nav-profile img { object-fit: cover; border: 1px solid var(--line-strong); }
 .bottom-nav-profile-badge { display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--text); background: var(--surface-3); }
+
+/* Mobile: sem backdrop-filter sobre o canvas animado; fundo mais opaco compensa */
+@media (max-width: 768px) {
+  .bottom-nav {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: color-mix(in srgb, var(--surface-glass), var(--bg) 60%);
+  }
+}
