@@ -1,0 +1,155 @@
+name: Android APK (TWA)
+
+on:
+  push:
+    tags: ['v*']
+    # Builds de teste (chave temporária) quando a configuração do APK muda
+    branches: ['**']
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-apk.yml'
+      - 'public/manifest.webmanifest'
+      - 'public/icons/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PACKAGE_ID: app.vercel.dasiboard.twa
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: android/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Versão do app
+        id: ver
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            NAME="${GITHUB_REF_NAME#v}"
+          else
+            NAME="0.0.0-dev.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "code=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "versionName=${NAME} versionCode=${GITHUB_RUN_NUMBER}"
+
+      - name: Gerar projeto Gradle (Bubblewrap core)
+        working-directory: android
+        run: |
+          npm ci
+          node generate.mjs "$RUNNER_TEMP/twa" "${{ steps.ver.outputs.name }}" "${{ steps.ver.outputs.code }}"
+
+      - name: Android SDK (platform + build-tools)
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          SDKM="$(ls "$SDK"/cmdline-tools/*/bin/sdkmanager | tail -n1)"
+          yes | "$SDKM" --licenses >/dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0" >/dev/null
+          echo "sdk.dir=$SDK" > "$RUNNER_TEMP/twa/local.properties"
+
+      - name: Gradle assembleRelease
+        working-directory: ${{ runner.temp }}/twa
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleRelease
+
+      - name: Alinhar e assinar APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KS="$RUNNER_TEMP/release.keystore"
+          if [ -n "$KEYSTORE_B64" ]; then
+            for v in KS_PASS KEY_ALIAS KEY_PASS; do
+              if [ -z "${!v}" ]; then echo "::error::Secret ausente para $v (veja docs/android-apk.md)"; exit 1; fi
+            done
+            echo "$KEYSTORE_B64" | base64 -d > "$KS"
+          elif [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "::error::Release sem ANDROID_KEYSTORE_BASE64 (veja docs/android-apk.md)"; exit 1
+          else
+            # Build de teste: chave descartável, o APK não serve para distribuir
+            echo "::warning::Secrets ausentes: assinando com chave temporária (APK só para teste)"
+            KS_PASS=temp-pass; KEY_PASS=temp-pass; KEY_ALIAS=temp
+            keytool -genkeypair -keystore "$KS" -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 1 \
+              -storepass "$KS_PASS" -keypass "$KEY_PASS" -dname "CN=teste" >/dev/null
+            export KS_PASS KEY_PASS
+          fi
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)"
+          UNSIGNED="$(ls "$RUNNER_TEMP"/twa/app/build/outputs/apk/release/*.apk | head -n1)"
+          OUT="$GITHUB_WORKSPACE/out"; mkdir -p "$OUT"
+          APK="$OUT/dasiboard-${{ steps.ver.outputs.name }}.apk"
+          "$BT/zipalign" -f -p 4 "$UNSIGNED" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$KS" --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KS_PASS --key-pass env:KEY_PASS \
+            --out "$APK" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" verify --verbose --print-certs "$APK"
+          FP="$(keytool -list -v -keystore "$KS" -alias "$KEY_ALIAS" -storepass "$KS_PASS" \
+                | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n1)"
+          [ -n "$FP" ] || { echo "::error::Não foi possível ler o fingerprint"; exit 1; }
+          cat > "$OUT/assetlinks.json" <<EOF
+          [
+            {
+              "relation": ["delegate_permission/common.handle_all_urls"],
+              "target": {
+                "namespace": "android_app",
+                "package_name": "${PACKAGE_ID}",
+                "sha256_cert_fingerprints": ["${FP}"]
+              }
+            }
+          ]
+          EOF
+          python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/assetlinks.json"
+          rm -f "$KS"
+          {
+            echo "## APK assinado: \`$(basename "$APK")\`"
+            echo
+            echo "- versionName: \`${{ steps.ver.outputs.name }}\` / versionCode: \`${{ steps.ver.outputs.code }}\`"
+            echo "- SHA-256 do certificado: \`${FP}\`"
+            echo
+            echo "### public/.well-known/assetlinks.json"
+            echo '```json'
+            cat "$OUT/assetlinks.json"
+            echo '```'
+            echo
+            echo "Commite este conteúdo em \`public/.well-known/assetlinks.json\` e faça deploy na Vercel (sem isso o app mostra a barra de URL)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dasiboard-apk
+          path: |
+            out/*.apk
+            out/assetlinks.json
+          if-no-files-found: error
+
+      - name: Publicar GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.apk
+            out/assetlinks.json
+          generate_release_notes: true

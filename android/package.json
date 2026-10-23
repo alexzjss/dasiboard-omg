@@ -1,0 +1,9 @@
+{
+  "name": "dasiboard-twa-builder",
+  "private": true,
+  "type": "module",
+  "description": "Gera o projeto Gradle do TWA (Bubblewrap) para o APK Android do daSIboard",
+  "dependencies": {
+    "@bubblewrap/core": "1.27.0"
+  }
+}
