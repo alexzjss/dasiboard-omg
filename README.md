@@ -1,58 +1,157 @@
-# Dasiboard 🚀
+# daSIboard 🚀
 
-![Dasiboard Home](./home.png)
+[![Online](https://img.shields.io/badge/online-dasiboard.vercel.app-7c5ce6)](https://dasiboard.vercel.app)
+![React](https://img.shields.io/badge/React-19-149eca)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6)
+![Vite](https://img.shields.io/badge/Vite-8-646cff)
+![Testes](https://img.shields.io/badge/testes-Vitest-6e9f18)
 
-O **Dasiboard** é uma aplicação web full-stack desenvolvida para facilitar a visualização e o gerenciamento de dados e horários acadêmicos. Com uma arquitetura moderna, o projeto oferece um painel interativo (dashboard) com autenticação segura e integração automatizada para extração e organização de grades horárias (incluindo suporte integrado para sistemas como o Júpiter).
+![daSIboard — início](./docs/screenshots/home.png)
+
+O **daSIboard** é a plataforma dos alunos de Sistemas de Informação da EACH-USP: reúne a **grade horária** (a partir do JupiterWeb), o **currículo** com pré-requisitos, a **comunidade** de colegas e docentes, as **entidades** estudantis e um **calendário** colaborativo de eventos, provas e prazos. O login é feito só com contas `@usp.br`.
+
+> Todos os prints abaixo foram tirados do app rodando localmente com dados fictícios (veja [Dados de demonstração](#dados-de-demonstração-para-desenvolvimento-local)). O app em produção está em <https://dasiboard.vercel.app>.
+
+## 🖼 Visão geral
+
+### Início: o dia e a semana num relance
+
+A tela inicial mostra a linha do tempo de **hoje** (com o marcador "agora"), a **semana** completa e os próximos eventos aprovados. A grade é montada informando os códigos das disciplinas e escolhendo as turmas, e pode ser editada depois sem apagar tudo.
+
+![Início](./docs/screenshots/home.png)
+
+### Disciplinas: o currículo como constelação
+
+O currículo de SI semestre a semestre, em **lista** ou em **constelação**: toque numa estrela para ver o que vem antes e o que ela libera. Há abas para obrigatórias e optativas eletivas, e as matérias com material no DriveEACH ganham uma marca.
+
+![Disciplinas](./docs/screenshots/disciplinas.png)
+
+### Comunidade: colegas, docentes e cartas
+
+Busca de alunos por nome, curso, ingresso, entidade ou matéria, com as **matérias em comum** e o fluxo de conexão (conectar, aceitar ou recusar pedidos). Cada aluno tem uma **carta** colecionável, com QR code e link público (`/c/<handle>`).
+
+![Comunidade](./docs/screenshots/comunidade.png)
+
+### Entidades
+
+DASI, Síntese Jr., PET-SI, Hype USP, CodeLab Leste, Each in The Shell, Conway USP e COSSI, com avisos, membros, cargos, badges e códigos de convite gerados pelos admins de cada entidade.
+
+![Entidades](./docs/screenshots/entidades.png)
+
+### Calendário
+
+Visão de **mês** ou **agenda** (próximos 30 dias), com filtros (USP e campus, curso e turma, minhas matérias, entidades, aulas). Qualquer aluno pode **propor eventos**, que passam por uma fila de revisão; dá para marcar **Vou** e **Tenho interesse** e **assinar o calendário no Google Calendar** por um link secreto pessoal (feed `.ics`).
+
+| Mês | Detalhe do evento |
+| --- | --- |
+| ![Calendário em visão mensal](./docs/screenshots/calendario.png) | ![Detalhe de um evento](./docs/screenshots/calendario-evento.png) |
+
+### Perfil, tema claro e celular
+
+O perfil concentra a carta, dados pessoais, matérias, entidades, privacidade e aparência. O tema segue o sistema ou pode ser fixado em claro/escuro, e a interface é responsiva, com barra de navegação inferior no celular.
+
+| Perfil | Tema claro | Celular |
+| --- | --- | --- |
+| ![Perfil](./docs/screenshots/perfil.png) | ![Tema claro](./docs/screenshots/home-claro.png) | ![Início no celular](./docs/screenshots/mobile-home.png) |
+
+### Entrar
+
+![Tela de login](./docs/screenshots/login.png)
+
+## ✨ Principais funcionalidades
+
+*   **Login com Google (`@usp.br`)**: sessão por cookie assinado (JWT) e renovação automática.
+*   **Grade horária (JupiterWeb)**: o aluno informa os códigos das disciplinas e escolhe as turmas; os horários vêm da consulta pública do JupiterWeb (`obterTurma`), sem pedir número USP nem senha.
+*   **Currículo interativo**: pré-requisitos e disciplinas liberadas, em lista ou constelação, e atalho para colegas da mesma matéria.
+*   **Comunidade**: perfis, conexões, privacidade por campo, feed de novidades e lista de docentes.
+*   **Carta e coleção**: carta pública personalizável (QR code, exportação em imagem) e coleção de cartas de colegas.
+*   **Entidades**: membros, cargos, badges, avisos e códigos de convite (guardados só como hash).
+*   **Calendário colaborativo**: propostas com revisão, denúncias, "Vou" / "Tenho interesse" e feed `.ics`.
+*   **Notificações**: central dentro do app e push no navegador (opcional, com chaves VAPID).
+*   **Onboarding, temas e responsividade**: introdução em 4 passos, tema claro/escuro e navegação adaptada ao celular.
 
 ## 🛠 Tecnologias Utilizadas
 
-Este projeto foi construído utilizando as seguintes tecnologias:
-
 ### Frontend
-*   **[React](https://reactjs.org/)**: Biblioteca JavaScript para construção da interface de usuário.
-*   **[TypeScript](https://www.typescriptlang.org/)**: Superset do JavaScript que adiciona tipagem estática.
-*   **[Vite](https://vitejs.dev/)**: Bundler ultrarrápido utilizado para o ambiente de desenvolvimento e build de produção.
+*   **[React 19](https://react.dev/)** + **[React Router 7](https://reactrouter.com/)**
+*   **[TypeScript](https://www.typescriptlang.org/)**
+*   **[Vite](https://vite.dev/)** para desenvolvimento e build
+*   `html-to-image` (exportar a carta) e `qrcode-generator` (QR da carta)
 
 ### Backend & API
-*   **Vercel Serverless Functions**: A pasta `/api` concentra as rotas do backend (`/api/auth`, `/api/schedule`), rodando de forma serverless na Vercel.
-*   **Autenticação**: Integração com Google OAuth (`api/auth/google.ts`).
-*   **Node.js / TypeScript**: Lógica de servidor, extração e tratamento de dados.
+*   **[Express 5](https://expressjs.com/)** (`server/`), publicado na Vercel como função serverless por `api/index.ts`.
+*   **Autenticação**: Google Identity Services + `google-auth-library` e sessão com `jose`.
+*   **Push**: `web-push` e service worker (`public/sw.js`).
 
 ### Banco de Dados
-*   **[Supabase](https://supabase.com/)**: Plataforma open-source baseada em PostgreSQL utilizada para armazenamento de dados e gerenciamento de esquemas (configurado via `supabase/schema.sql`).
+*   **[Supabase](https://supabase.com/)** (PostgreSQL + Storage para avatares), com RLS ligado e acesso só pelo servidor via `service_role`. Esquema em `supabase/schema.sql`.
 
-### Ferramentas de Qualidade
-*   **[Oxlint](https://oxc-project.github.io/docs/guide/usage/linter.html)**: Linter rápido escrito em Rust para manter a qualidade e padronização do código (`.oxlintrc.json`).
+### Qualidade
+*   **[Vitest](https://vitest.dev/)** + Testing Library + Supertest (front e servidor).
+*   **[Oxlint](https://oxc.rs/docs/guide/usage/linter.html)** (`.oxlintrc.json`).
+
+## 🚀 Como rodar localmente
+
+Requisitos: Node.js 20.19+ (ou 22.12+) e um projeto Supabase (de desenvolvimento) com o `supabase/schema.sql` aplicado.
+
+```bash
+npm install
+```
+
+Crie um `.env` na raiz (veja as variáveis nas seções abaixo): no mínimo `VITE_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_ID`, `SESSION_SECRET` (32+ caracteres), `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`. Depois, em dois terminais:
+
+```bash
+npm run dev:server   # API Express em http://localhost:3000
+npm run dev          # Vite em http://localhost:5173 (proxy de /api para a porta 3000)
+```
+
+### Scripts
+
+| Script | O que faz |
+| --- | --- |
+| `npm run dev` | Frontend com Vite |
+| `npm run dev:server` | API Express em modo watch |
+| `npm run build` | Checagem de tipos + build de produção do frontend |
+| `npm run build:server` | Compila o servidor para `dist-server/` |
+| `npm run start:server` | Roda o servidor compilado |
+| `npm run preview` | Serve o build do frontend |
+| `npm test` | Testes (front em jsdom, servidor em node) |
+| `npm run lint` | Oxlint |
+| `npm run seed:dev` | Popula um Supabase de desenvolvimento com alunos fictícios |
+| `npm run backfill:badges` | Recalcula badges de conquistas |
+| `npm run gen:tech-icons` | Regenera `src/lib/techIcons.generated.ts` |
 
 ## 📁 Estrutura do Projeto
 
-A estrutura de diretórios foi pensada para separar claramente o frontend do backend:
-
 ```text
-dasiboard-omg-main/
-├── api/                  # Vercel Serverless Functions (Rotas da API)
-│   ├── auth/             # Rotas de autenticação (Google, Logout, Me)
-│   └── schedule/         # Rotas de grade horária (ex: jupiter.ts)
-├── public/               # Assets públicos estáticos (ícones, favicons)
-├── server/               # Lógica interna do servidor e conexão com DB
-├── src/                  # Código fonte do Frontend (React)
-│   ├── assets/           # Imagens e SVGs utilizados na interface
-│   ├── App.tsx           # Componente raiz da aplicação
-│   └── main.tsx          # Ponto de entrada do React
-├── supabase/             # Configurações e Migrations do banco de dados
-│   └── schema.sql        # Estrutura de tabelas do PostgreSQL
-├── .oxlintrc.json        # Configuração do linter Oxlint
-├── vercel.json           # Configurações de deploy na Vercel
-├── vite.config.ts        # Configurações do Vite
-└── package.json          # Dependências e scripts do projeto
+dasiboard-omg/
+├── api/                  # Entradas serverless da Vercel
+│   ├── auth/             # google.ts, logout.ts, me.ts
+│   ├── index.ts          # Reencaminha /api/* para o Express (server/index.ts)
+│   └── schedule.ts
+├── docs/
+│   ├── plans/            # Planos e decisões de design de cada fase
+│   └── screenshots/      # Prints usados neste README
+├── public/               # Ícones, logos das entidades e service worker (sw.js)
+├── server/               # API Express
+│   ├── routes/           # Rotas: auth, schedule, social, entities, events, cards, push...
+│   ├── social/           # Regras e acesso a dados do sistema social
+│   ├── events/           # Regras, validação e feed .ics do calendário
+│   ├── lib/              # Config, sessão, middlewares e rate limit
+│   ├── scripts/          # seed:dev, backfill:badges, gen:tech-icons
+│   └── test/             # Banco em memória e helpers dos testes
+├── src/                  # Frontend React
+│   ├── app/              # Rotas, layout e navegação
+│   ├── auth/             # Login e contexto de sessão
+│   ├── components/       # Sidebar, BottomNav, cartas, onboarding...
+│   ├── features/         # home, disciplinas, comunidade, entidades, calendario,
+│   │                     # notificacoes, perfil, carta
+│   ├── lib/              # Clientes de API, storage, tema, push
+│   └── styles/           # CSS por tela e tokens de design
+├── supabase/             # schema.sql e migrations
+├── vercel.json           # Rewrites e build na Vercel
+└── vite.config.ts        # Vite + configuração do Vitest
 ```
-
-## ✨ Principais Funcionalidades
-
-*   **Autenticação Google**: Login seguro e simplificado utilizando contas do Google.
-*   **Grade horária (Jupiter)**: o aluno informa os códigos das disciplinas e escolhe as turmas; os horários vêm da consulta pública do JupiterWeb (`obterTurma`), sem pedir número USP nem senha.
-*   **Dashboard Interativo**: Interface responsiva e em tempo real servida pelo React.
-*   **Sessões Persistentes**: Gerenciamento de estado de usuário integrado com o backend Supabase.
 
 ## 🔐 Configuração do login Google
 
@@ -174,3 +273,6 @@ service worker (`public/sw.js`) só é registrado em produção ou com `VITE_ENA
 em memória).
 
 ## 📜 Licença
+
+O repositório ainda não tem um arquivo de licença.
+
