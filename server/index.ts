@@ -5,7 +5,7 @@ import express from 'express'
 import webpush from 'web-push'
 import { allowedOrigins, port, vapid } from './lib/config.js'
 import { logError } from './lib/errors.js'
-import { securityHeaders } from './lib/middleware.js'
+import { enforceOriginOnWrites, securityHeaders } from './lib/middleware.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
 import announcementsRouter from './routes/announcements.js'
@@ -44,6 +44,7 @@ app.use(express.json({ limit: '16kb' }))
 app.use(cookieParser())
 app.disable('x-powered-by')
 app.use(securityHeaders)
+app.use(enforceOriginOnWrites)
 
 app.use(authRouter)
 app.use(scheduleRouter)

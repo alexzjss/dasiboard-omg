@@ -18,9 +18,9 @@ describe('buildIcs', () => {
   })
 
   it('escapes backslash, semicolon, comma and newlines', () => {
-    expect(escapeText('a\\b;c,d\ne')).toBe('a\\\\b\;c\\,d\\ne')
+    expect(escapeText('a\\b;c,d\ne')).toBe('a\\\\b\\;c\\,d\\ne')
     const ics = unfold(build([{ ...base, title: 'Lab; sala 2, bloco A', description: 'linha 1\nlinha 2' }]))
-    expect(ics).toContain('SUMMARY:Lab\; sala 2\\, bloco A')
+    expect(ics).toContain('SUMMARY:Lab\\; sala 2\\, bloco A')
     expect(ics).toContain('DESCRIPTION:linha 1\\nlinha 2\\nTipo: Prova')
   })
 

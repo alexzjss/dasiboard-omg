@@ -46,4 +46,4 @@ Rodar `schema.sql` de novo no SQL Editor aplica a Fase 3: as colunas `card` e `c
 
 ## Calendário
 
-Rodar `schema.sql` de novo no SQL Editor aplica o calendário: as tabelas `events`, `event_reports` e `event_rsvps` são criadas com `create table if not exists`, a coluna `calendar_feed_token_hash` entra em `student_profiles`, os tipos novos de `notifications` são aceitos e tudo fica com RLS habilitado e sem políticas. O cron diário de lembretes (`/api/cron/event-reminders`) usará a variável `CRON_SECRET`, que será configurada na tarefa B2.
+Rodar `schema.sql` de novo no SQL Editor aplica o calendário: as tabelas `events`, `event_reports` e `event_rsvps` são criadas com `create table if not exists`, a coluna `calendar_feed_token_hash` entra em `student_profiles`, os tipos novos de `notifications` são aceitos e tudo fica com RLS habilitado e sem políticas. O cron diário de lembretes (`/api/cron/event-reminders`, variável `CRON_SECRET`) ainda **não foi implementado**.

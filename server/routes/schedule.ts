@@ -9,6 +9,7 @@ import { syncAutoBadgesAndNotify } from '../social/achievements.js'
 import { getUserBySub } from '../social/db.js'
 
 const router = Router()
+const isText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max
 
 // Importing a schedule can earn a badge; failing to award it must not fail the import.
 async function syncBadgesFor(sub: string) {
@@ -25,13 +26,18 @@ router.get('/api/schedule', requireSession, async (req, res) => {
 
 router.put('/api/schedule', isAllowedOrigin, requireSession, async (req, res) => {
   const entries = req.body?.entries
-  if (!Array.isArray(entries) || entries.length > 200) return res.status(400).json({ error: 'A grade horária é inválida' })
-  const validEntries = entries.every((entry: ScheduleEntry) => Number.isInteger(entry.weekday) && entry.weekday >= 0 && entry.weekday <= 6
+  if (!Array.isArray(entries) || entries.length > 80) return res.status(400).json({ error: 'A grade horária é inválida' })
+  const validEntries = entries.every((entry: ScheduleEntry) => typeof entry === 'object' && entry !== null && Number.isInteger(entry.weekday) && entry.weekday >= 0 && entry.weekday <= 6
     && /^\d{2}:\d{2}$/.test(entry.startsAt) && /^\d{2}:\d{2}$/.test(entry.endsAt)
-    && typeof entry.title === 'string' && typeof entry.code === 'string' && typeof entry.room === 'string' && typeof entry.building === 'string')
+    && isText(entry.title, 200) && isText(entry.code, 20) && isText(entry.room, 200) && isText(entry.building, 200)
+    && (entry.sectionCode === undefined || isText(entry.sectionCode, 20)))
   if (!validEntries) return res.status(400).json({ error: 'A grade horária é inválida' })
+  // Whitelist the fields: anything else the client sent never reaches the jsonb column.
+  const clean: ScheduleEntry[] = entries.map(({ weekday, startsAt, endsAt, title, code, sectionCode, room, building }: ScheduleEntry) => ({
+    weekday, startsAt, endsAt, title, code, ...(sectionCode === undefined ? {} : { sectionCode }), room, building,
+  }))
   try {
-    const saved = await saveSchedule(req.user!.sub, entries)
+    const saved = await saveSchedule(req.user!.sub, clean)
     await syncBadgesFor(req.user!.sub)
     res.json(saved)
   }

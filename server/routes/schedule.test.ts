@@ -60,3 +60,18 @@ describe('GET /api/schedule/disciplines?q=', () => {
     expect((await (await as(user)).get('/api/schedule/disciplines?q=ACH2001')).status).toBe(503)
   })
 })
+
+describe('PUT /api/schedule validation', () => {
+  const entry = { weekday: 1, startsAt: '08:00', endsAt: '09:40', title: 'IP', code: 'ACH2001', room: '101', building: 'A1' }
+
+  it('rejects oversized strings and too many entries', async () => {
+    const api = await as(user)
+    expect((await api.put('/api/schedule').send({ entries: [{ ...entry, title: 'x'.repeat(201) }] })).status).toBe(400)
+    expect((await api.put('/api/schedule').send({ entries: Array(81).fill(entry) })).status).toBe(400)
+  })
+
+  it('rejects writes from a foreign origin', async () => {
+    const response = await (await as(user)).delete('/api/me/avatar').set('Origin', 'https://evil.example')
+    expect(response.status).toBe(403)
+  })
+})

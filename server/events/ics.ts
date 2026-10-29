@@ -14,7 +14,7 @@ const RECURRENCE_DAYS = 120
 const TZID = 'America/Sao_Paulo'
 
 export function escapeText(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r\n|\r|\n/g, '\\n')
+  return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n|\r|\n/g, '\\n')
 }
 
 // Linhas de no máximo 75 octetos; as continuações começam com um espaço (que também conta).
