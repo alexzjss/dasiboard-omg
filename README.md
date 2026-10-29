@@ -5,6 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff)
 ![Testes](https://img.shields.io/badge/testes-Vitest-6e9f18)
+![Licença](https://img.shields.io/badge/licença-MIT-blue)
 
 ![daSIboard — início](./docs/screenshots/home.png)
 
@@ -274,5 +275,5 @@ em memória).
 
 ## 📜 Licença
 
-O repositório ainda não tem um arquivo de licença.
+Distribuído sob a licença [MIT](./LICENSE).
 
